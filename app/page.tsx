@@ -1,65 +1,1399 @@
-import Image from "next/image";
+import Link from "next/link";
+import CompleteTaskButton from "@/components/dashboard/CompleteTaskButton";
+import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
+import TodayTasksSection from "@/components/dashboard/TodayTasksSection";
+import { getObjects } from "@/services/objectService";
+import {
+  getPlannedPurchaseTotals,
+} from "@/services/purchaseService";
+import { getAllTasks } from "@/services/taskService";
+import { getWarehouseItems } from "@/services/warehouseService";
+import type { TaskWithObject } from "@/types/taskWithObject";
 
-export default function Home() {
+function getObjectStatusStyle(
+  status: string | null
+) {
+  switch (status) {
+    case "Новий":
+      return "bg-blue-100 text-blue-700";
+
+    case "В роботі":
+      return "bg-green-100 text-green-700";
+
+    case "Призупинено":
+      return "bg-yellow-100 text-yellow-700";
+
+    case "Завершено":
+      return "bg-gray-100 text-gray-700";
+
+    default:
+      return "bg-gray-100 text-gray-600";
+  }
+}
+
+function getTaskStatusStyle(
+  status: string
+) {
+  switch (status) {
+    case "Заплановано":
+      return "bg-blue-50 text-blue-700";
+
+    case "В роботі":
+      return "bg-yellow-50 text-yellow-700";
+
+    case "Виконано":
+      return "bg-green-50 text-green-700";
+
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+}
+
+function getPriorityStyle(
+  priority: string
+) {
+  switch (priority) {
+    case "Терміновий":
+      return "bg-red-100 text-red-700";
+
+    case "Високий":
+      return "bg-orange-100 text-orange-700";
+
+    case "Середній":
+      return "bg-violet-100 text-violet-700";
+
+    case "Низький":
+      return "bg-gray-100 text-gray-600";
+
+    default:
+      return "bg-violet-100 text-violet-700";
+  }
+}
+
+function getPriorityBorderStyle(
+  priority: string
+) {
+  switch (priority) {
+    case "Терміновий":
+      return "border-l-red-500";
+
+    case "Високий":
+      return "border-l-orange-500";
+
+    case "Середній":
+      return "border-l-violet-400";
+
+    case "Низький":
+      return "border-l-gray-300";
+
+    default:
+      return "border-l-violet-400";
+  }
+}
+
+function getPriorityOrder(
+  priority: string
+) {
+  switch (priority) {
+    case "Терміновий":
+      return 1;
+
+    case "Високий":
+      return 2;
+
+    case "Середній":
+      return 3;
+
+    case "Низький":
+      return 4;
+
+    default:
+      return 3;
+  }
+}
+
+function formatDate(
+  date: string | null
+) {
+  if (!date) {
+    return "Дата не вказана";
+  }
+
+  const [year, month, day] =
+    date.split("-");
+
+  return `${day}.${month}.${year}`;
+}
+
+function formatCreatedDate(
+  date: string
+) {
+  const datePart =
+    date.slice(0, 10);
+
+  const [year, month, day] =
+    datePart.split("-");
+
+  if (
+    !year ||
+    !month ||
+    !day
+  ) {
+    return "Невідома дата";
+  }
+
+  return `${day}.${month}.${year}`;
+}
+
+function getTodayValue() {
+  const today = new Date();
+
+  const year =
+    today.getFullYear();
+
+  const month = String(
+    today.getMonth() + 1
+  ).padStart(2, "0");
+
+  const day = String(
+    today.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function isTaskOverdue(
+  task: TaskWithObject,
+  today: string
+) {
+  return Boolean(
+    task.due_date &&
+      task.due_date < today &&
+      task.status !== "Виконано"
+  );
+}
+
+function getAttentionTaskScore(
+  task: TaskWithObject,
+  today: string
+) {
+  if (
+    isTaskOverdue(
+      task,
+      today
+    )
+  ) {
+    return 1;
+  }
+
+  if (
+    task.priority ===
+    "Терміновий"
+  ) {
+    return 2;
+  }
+
+  return 3;
+}
+
+export default async function HomePage() {
+  const [
+    objects,
+    tasks,
+    warehouseItems,
+    plannedPurchaseTotals,
+  ] = await Promise.all([
+    getObjects(),
+    getAllTasks(),
+    getWarehouseItems(),
+    getPlannedPurchaseTotals(),
+  ]);
+
+  const objectList =
+    Array.isArray(objects)
+      ? objects
+      : [];
+
+  const taskList =
+    Array.isArray(tasks)
+      ? tasks
+      : [];
+
+  const warehouseItemList =
+    Array.isArray(
+      warehouseItems
+    )
+      ? warehouseItems
+      : [];
+
+  const today =
+    getTodayValue();
+
+  const totalObjects =
+    objectList.length;
+
+  const activeObjects =
+    objectList.filter(
+      (object) =>
+        object.status ===
+        "В роботі"
+    ).length;
+
+  const completedObjects =
+    objectList.filter(
+      (object) =>
+        object.status ===
+        "Завершено"
+    ).length;
+
+  const activeTasks =
+    taskList.filter(
+      (task) =>
+        task.status !==
+        "Виконано"
+    );
+
+  const overdueTasks =
+    activeTasks.filter(
+      (task) =>
+        isTaskOverdue(
+          task,
+          today
+        )
+    );
+
+  const urgentTasks =
+    activeTasks.filter(
+      (task) =>
+        task.priority ===
+        "Терміновий"
+    );
+
+  const todayTasks =
+    activeTasks
+      .filter(
+        (task) =>
+          task.due_date ===
+          today
+      )
+      .sort(
+        (
+          firstTask,
+          secondTask
+        ) => {
+          const priorityDifference =
+            getPriorityOrder(
+              firstTask.priority
+            ) -
+            getPriorityOrder(
+              secondTask.priority
+            );
+
+          if (
+            priorityDifference !==
+            0
+          ) {
+            return priorityDifference;
+          }
+
+          return firstTask.title.localeCompare(
+            secondTask.title,
+            "uk"
+          );
+        }
+      );
+
+  const completedTasks =
+    taskList.filter(
+      (task) =>
+        task.status ===
+        "Виконано"
+    ).length;
+
+  const recentObjects =
+    objectList.slice(0, 5);
+
+  const attentionTasks =
+    activeTasks
+      .filter(
+        (task) =>
+          isTaskOverdue(
+            task,
+            today
+          ) ||
+          task.priority ===
+            "Терміновий"
+      )
+      .sort(
+        (
+          firstTask,
+          secondTask
+        ) => {
+          const firstScore =
+            getAttentionTaskScore(
+              firstTask,
+              today
+            );
+
+          const secondScore =
+            getAttentionTaskScore(
+              secondTask,
+              today
+            );
+
+          if (
+            firstScore !==
+            secondScore
+          ) {
+            return (
+              firstScore -
+              secondScore
+            );
+          }
+
+          if (
+            firstTask.due_date &&
+            secondTask.due_date
+          ) {
+            return firstTask.due_date.localeCompare(
+              secondTask.due_date
+            );
+          }
+
+          if (
+            firstTask.due_date
+          ) {
+            return -1;
+          }
+
+          if (
+            secondTask.due_date
+          ) {
+            return 1;
+          }
+
+          return firstTask.title.localeCompare(
+            secondTask.title,
+            "uk"
+          );
+        }
+      )
+      .slice(0, 6);
+
+  const nearestTasks =
+    activeTasks
+      .filter(
+        (task) =>
+          task.due_date
+      )
+      .sort(
+        (
+          firstTask,
+          secondTask
+        ) =>
+          firstTask.due_date!.localeCompare(
+            secondTask.due_date!
+          )
+      )
+      .slice(0, 5);
+
+  const lowStockItems =
+    warehouseItemList
+      .filter(
+        (item) =>
+          Number(
+            item.quantity
+          ) <=
+          Number(
+            item.min_quantity
+          )
+      )
+      .sort(
+        (
+          firstItem,
+          secondItem
+        ) => {
+          const firstQuantity =
+            Number(
+              firstItem.quantity
+            );
+
+          const secondQuantity =
+            Number(
+              secondItem.quantity
+            );
+
+          const firstPlanned =
+            Number(
+              plannedPurchaseTotals[
+                firstItem.id
+              ] || 0
+            );
+
+          const secondPlanned =
+            Number(
+              plannedPurchaseTotals[
+                secondItem.id
+              ] || 0
+            );
+
+          const firstExpected =
+            firstQuantity +
+            firstPlanned;
+
+          const secondExpected =
+            secondQuantity +
+            secondPlanned;
+
+          const firstMinimum =
+            Number(
+              firstItem.min_quantity
+            );
+
+          const secondMinimum =
+            Number(
+              secondItem.min_quantity
+            );
+
+          const firstNeedsPurchase =
+            firstExpected <
+            firstMinimum;
+
+          const secondNeedsPurchase =
+            secondExpected <
+            secondMinimum;
+
+          if (
+            firstNeedsPurchase &&
+            !secondNeedsPurchase
+          ) {
+            return -1;
+          }
+
+          if (
+            secondNeedsPurchase &&
+            !firstNeedsPurchase
+          ) {
+            return 1;
+          }
+
+          return (
+            firstExpected -
+            secondExpected
+          );
+        }
+      )
+      .slice(0, 6);
+
+  const itemsNeedingPurchase =
+    warehouseItemList.filter(
+      (item) => {
+        const quantity =
+          Number(
+            item.quantity
+          );
+
+        const minimum =
+          Number(
+            item.min_quantity
+          );
+
+        const planned =
+          Number(
+            plannedPurchaseTotals[
+              item.id
+            ] || 0
+          );
+
+        const expected =
+          quantity + planned;
+
+        return (
+          quantity <= minimum &&
+          expected < minimum
+        );
+      }
+    );
+
+  const hasAttentionTasks =
+    attentionTasks.length > 0;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">
+            Головна панель
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+
+          <p className="mt-1 text-gray-500">
+            Загальна інформація про
+            об’єкти, завдання та склад
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <Link
+          href="/objects/new"
+          className="w-fit rounded-lg bg-green-600 px-5 py-3 font-medium text-white hover:bg-green-700"
+        >
+          + Новий об’єкт
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="rounded-xl border bg-white p-5">
+          <p className="text-sm text-gray-500">
+            Усього об’єктів
+          </p>
+
+          <p className="mt-2 text-3xl font-bold">
+            {totalObjects}
+          </p>
         </div>
-      </main>
+
+        <div className="rounded-xl border bg-white p-5">
+          <p className="text-sm text-gray-500">
+            Об’єктів у роботі
+          </p>
+
+          <p className="mt-2 text-3xl font-bold text-green-600">
+            {activeObjects}
+          </p>
+        </div>
+
+        <div
+          className={`rounded-xl border bg-white p-5 ${
+            urgentTasks.length >
+            0
+              ? "border-orange-200"
+              : ""
+          }`}
+        >
+          <p className="text-sm text-gray-500">
+            Термінових завдань
+          </p>
+
+          <p
+            className={`mt-2 text-3xl font-bold ${
+              urgentTasks.length >
+              0
+                ? "text-orange-600"
+                : "text-gray-700"
+            }`}
+          >
+            {urgentTasks.length}
+          </p>
+        </div>
+
+        <div
+          className={`rounded-xl border bg-white p-5 ${
+            overdueTasks.length >
+            0
+              ? "border-red-200"
+              : ""
+          }`}
+        >
+          <p className="text-sm text-gray-500">
+            Прострочених завдань
+          </p>
+
+          <p
+            className={`mt-2 text-3xl font-bold ${
+              overdueTasks.length >
+              0
+                ? "text-red-600"
+                : "text-gray-700"
+            }`}
+          >
+            {overdueTasks.length}
+          </p>
+        </div>
+
+        <Link
+          href="/purchases"
+          className={`rounded-xl border bg-white p-5 transition hover:bg-gray-50 ${
+            itemsNeedingPurchase.length >
+            0
+              ? "border-red-200"
+              : ""
+          }`}
+        >
+          <p className="text-sm text-gray-500">
+            Потрібно закупити
+          </p>
+
+          <p
+            className={`mt-2 text-3xl font-bold ${
+              itemsNeedingPurchase.length >
+              0
+                ? "text-red-600"
+                : "text-green-600"
+            }`}
+          >
+            {
+              itemsNeedingPurchase.length
+            }
+          </p>
+        </Link>
+      </div>
+
+      {hasAttentionTasks ? (
+        <section className="overflow-hidden rounded-xl border border-red-200 bg-white">
+          <div className="flex flex-col gap-4 border-b border-red-100 bg-red-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-red-800">
+                Потребують уваги
+              </h2>
+
+              <p className="mt-1 text-sm text-red-700">
+                Термінові та
+                прострочені завдання
+              </p>
+            </div>
+
+            <Link
+              href="/task"
+              className="w-fit rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+            >
+              Переглянути завдання
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-2">
+            {attentionTasks.map(
+              (task) => {
+                const overdue =
+                  isTaskOverdue(
+                    task,
+                    today
+                  );
+
+                const priority =
+                  task.priority ||
+                  "Середній";
+
+                return (
+                  <article
+                    key={task.id}
+                    className={`rounded-xl border border-l-4 bg-white p-4 ${getPriorityBorderStyle(
+                      priority
+                    )}`}
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold">
+                          {
+                            task.title
+                          }
+                        </h3>
+
+                        {task.object && (
+                          <Link
+                            href={`/objects/${task.object.id}`}
+                            className="mt-1 block text-sm font-medium text-green-700 hover:underline"
+                          >
+                            {
+                              task
+                                .object
+                                .name
+                            }
+                          </Link>
+                        )}
+                      </div>
+
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${getPriorityStyle(
+                            priority
+                          )}`}
+                        >
+                          {priority}
+                        </span>
+
+                        {overdue && (
+                          <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
+                            Прострочено
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {task.description && (
+                      <p className="mt-3 line-clamp-2 text-sm text-gray-600">
+                        {
+                          task.description
+                        }
+                      </p>
+                    )}
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 border-t pt-3 text-sm sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs text-gray-400">
+                          Термін
+                        </p>
+
+                        <p
+                          className={`mt-1 font-medium ${
+                            overdue
+                              ? "text-red-600"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {formatDate(
+                            task.due_date
+                          )}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-400">
+                          Відповідальний
+                        </p>
+
+                        <p className="mt-1 font-medium text-gray-700">
+                          {task.assignee ||
+                            "Не призначено"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+                      <span
+                        className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${getTaskStatusStyle(
+                          task.status
+                        )}`}
+                      >
+                        {task.status}
+                      </span>
+
+                      <div className="flex flex-wrap items-start gap-2">
+                        <RescheduleTaskButton
+                          taskId={
+                            task.id
+                          }
+                          objectId={
+                            task.object_id
+                          }
+                          currentDate={
+                            task.due_date
+                          }
+                          compact
+                        />
+
+                        <CompleteTaskButton
+                          taskId={
+                            task.id
+                          }
+                          objectId={
+                            task.object_id
+                          }
+                          compact
+                        />
+
+                        <Link
+                          href="/task"
+                          className="px-2 py-2 text-sm font-medium text-green-700 hover:underline"
+                        >
+                          Відкрити →
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                );
+              }
+            )}
+          </div>
+        </section>
+      ) : (
+        <section className="flex flex-col gap-3 rounded-xl border bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-700">
+              ✓
+            </div>
+
+            <div>
+              <h2 className="font-semibold text-gray-800">
+                Усе під контролем
+              </h2>
+
+              <p className="text-sm text-gray-500">
+                Термінових і
+                прострочених завдань
+                немає
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/calendar"
+            className="text-sm font-medium text-green-700 hover:underline"
+          >
+            Відкрити календар
+          </Link>
+        </section>
+      )}
+
+      {todayTasks.length >
+        0 && (
+        <TodayTasksSection
+          tasks={todayTasks}
+          today={today}
+        />
+      )}
+
+      <section
+        className={`overflow-hidden rounded-xl border bg-white ${
+          lowStockItems.length > 0
+            ? "border-orange-200"
+            : ""
+        }`}
+      >
+        <div
+          className={`flex flex-col gap-4 border-b p-5 sm:flex-row sm:items-center sm:justify-between ${
+            lowStockItems.length >
+            0
+              ? "border-orange-100 bg-orange-50"
+              : ""
+          }`}
+        >
+          <div>
+            <h2
+              className={`text-xl font-semibold ${
+                lowStockItems.length >
+                0
+                  ? "text-orange-800"
+                  : ""
+              }`}
+            >
+              Низькі залишки складу
+            </h2>
+
+            <p
+              className={`mt-1 text-sm ${
+                lowStockItems.length >
+                0
+                  ? "text-orange-700"
+                  : "text-gray-500"
+              }`}
+            >
+              Фактичний та очікуваний
+              запас матеріалів
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/purchases"
+              className="w-fit rounded-lg border border-orange-300 bg-white px-4 py-2 text-sm font-medium text-orange-700 hover:bg-orange-100"
+            >
+              Закупівлі
+            </Link>
+
+            <Link
+              href="/warehouse"
+              className="w-fit rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
+            >
+              Відкрити склад
+            </Link>
+          </div>
+        </div>
+
+        {lowStockItems.length ===
+        0 ? (
+          <div className="flex items-center gap-3 p-5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50 font-semibold text-green-700">
+              ✓
+            </div>
+
+            <div>
+              <p className="font-medium text-gray-800">
+                Залишків достатньо
+              </p>
+
+              <p className="text-sm text-gray-500">
+                Матеріалів із низьким
+                залишком немає
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
+            {lowStockItems.map(
+              (item) => {
+                const quantity =
+                  Number(
+                    item.quantity
+                  );
+
+                const minimum =
+                  Number(
+                    item.min_quantity
+                  );
+
+                const planned =
+                  Number(
+                    plannedPurchaseTotals[
+                      item.id
+                    ] || 0
+                  );
+
+                const expected =
+                  quantity +
+                  planned;
+
+                const shortage =
+                  Math.max(
+                    minimum -
+                      expected,
+                    0
+                  );
+
+                const purchaseCovered =
+                  expected >=
+                  minimum;
+
+                const isOutOfStock =
+                  quantity <= 0;
+
+                const percentage =
+                  minimum > 0
+                    ? Math.max(
+                        0,
+                        Math.min(
+                          100,
+                          (expected /
+                            minimum) *
+                            100
+                        )
+                      )
+                    : 100;
+
+                return (
+                  <article
+                    key={item.id}
+                    className={`rounded-xl border p-4 ${
+                      purchaseCovered
+                        ? "border-green-200 bg-green-50"
+                        : isOutOfStock
+                          ? "border-red-200 bg-red-50"
+                          : "border-orange-200 bg-orange-50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-gray-900">
+                          {item.name}
+                        </h3>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                          {item.category ||
+                            "Без категорії"}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                          purchaseCovered
+                            ? "bg-green-100 text-green-700"
+                            : isOutOfStock
+                              ? "bg-red-100 text-red-700"
+                              : "bg-orange-100 text-orange-700"
+                        }`}
+                      >
+                        {purchaseCovered
+                          ? "Закупівлю заплановано"
+                          : isOutOfStock
+                            ? "Немає"
+                            : "Закінчується"}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500">
+                          На складі
+                        </p>
+
+                        <p className="mt-1 text-xl font-bold text-gray-900">
+                          {quantity}{" "}
+                          {item.unit}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-500">
+                          Мінімум
+                        </p>
+
+                        <p className="mt-1 text-xl font-bold text-gray-700">
+                          {minimum}{" "}
+                          {item.unit}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-500">
+                          Заплановано
+                        </p>
+
+                        <p
+                          className={`mt-1 text-xl font-bold ${
+                            planned > 0
+                              ? "text-blue-700"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          +{planned}{" "}
+                          {item.unit}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-500">
+                          Очікується
+                        </p>
+
+                        <p
+                          className={`mt-1 text-xl font-bold ${
+                            purchaseCovered
+                              ? "text-green-700"
+                              : "text-orange-700"
+                          }`}
+                        >
+                          {expected}{" "}
+                          {item.unit}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
+                      <div
+                        className={`h-full rounded-full ${
+                          purchaseCovered
+                            ? "bg-green-500"
+                            : isOutOfStock
+                              ? "bg-red-500"
+                              : "bg-orange-500"
+                        }`}
+                        style={{
+                          width: `${percentage}%`,
+                        }}
+                      />
+                    </div>
+
+                    {purchaseCovered ? (
+                      <div className="mt-4 rounded-lg border border-green-200 bg-white/70 p-3">
+                        <p className="text-sm font-medium text-green-700">
+                          ✓ Після
+                          оприбуткування запас
+                          буде достатнім
+                        </p>
+
+                        <Link
+                          href="/purchases"
+                          className="mt-2 inline-block text-sm font-medium text-green-700 hover:underline"
+                        >
+                          Переглянути
+                          закупівлю →
+                        </Link>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mt-4 rounded-lg border border-orange-200 bg-white/70 p-3">
+                          <p className="text-sm text-gray-600">
+                            Ще потрібно
+                            запланувати:
+                          </p>
+
+                          <p className="mt-1 font-semibold text-orange-700">
+                            {shortage}{" "}
+                            {item.unit}
+                          </p>
+                        </div>
+
+                        <div className="mt-4 border-t border-black/5 pt-4">
+                          <Link
+                            href={`/purchases?item=${item.id}#new-purchase`}
+                            className={`block w-full rounded-lg px-4 py-2.5 text-center text-sm font-medium transition ${
+                              isOutOfStock
+                                ? "bg-red-600 text-white hover:bg-red-700"
+                                : "bg-orange-600 text-white hover:bg-orange-700"
+                            }`}
+                          >
+                            + Запланувати
+                            ще {shortage}{" "}
+                            {item.unit}
+                          </Link>
+                        </div>
+                      </>
+                    )}
+                  </article>
+                );
+              }
+            )}
+          </div>
+        )}
+      </section>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <section className="order-2 rounded-xl border bg-white">
+          <div className="flex items-center justify-between border-b p-5">
+            <div>
+              <h2 className="text-xl font-semibold">
+                Найближчі завдання
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Завдання з найближчим
+                терміном
+              </p>
+            </div>
+
+            <Link
+              href="/task"
+              className="text-sm font-medium text-green-700 hover:underline"
+            >
+              Переглянути всі
+            </Link>
+          </div>
+
+          {nearestTasks.length ===
+          0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500">
+                Активних завдань із
+                терміном немає.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {nearestTasks.map(
+                (task) => {
+                  const overdue =
+                    isTaskOverdue(
+                      task,
+                      today
+                    );
+
+                  const priority =
+                    task.priority ||
+                    "Середній";
+
+                  return (
+                    <div
+                      key={task.id}
+                      className="p-5"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="font-semibold">
+                            {
+                              task.title
+                            }
+                          </p>
+
+                          {task.object && (
+                            <Link
+                              href={`/objects/${task.object.id}`}
+                              className="mt-1 block text-sm text-green-700 hover:underline"
+                            >
+                              {
+                                task
+                                  .object
+                                  .name
+                              }
+                            </Link>
+                          )}
+                        </div>
+
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                          <span
+                            className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${getPriorityStyle(
+                              priority
+                            )}`}
+                          >
+                            {priority}
+                          </span>
+
+                          <span
+                            className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${getTaskStatusStyle(
+                              task.status
+                            )}`}
+                          >
+                            {
+                              task.status
+                            }
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                        <span
+                          className={
+                            overdue
+                              ? "font-medium text-red-600"
+                              : "text-gray-500"
+                          }
+                        >
+                          До:{" "}
+                          {formatDate(
+                            task.due_date
+                          )}
+                        </span>
+
+                        {overdue && (
+                          <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
+                            Прострочено
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-start sm:justify-between">
+                        <p className="text-sm text-gray-500">
+                          Відповідальний:{" "}
+                          <span className="font-medium text-gray-700">
+                            {task.assignee ||
+                              "Не призначено"}
+                          </span>
+                        </p>
+
+                        <div className="flex flex-wrap items-start gap-2">
+                          <RescheduleTaskButton
+                            taskId={
+                              task.id
+                            }
+                            objectId={
+                              task.object_id
+                            }
+                            currentDate={
+                              task.due_date
+                            }
+                            compact
+                          />
+
+                          <CompleteTaskButton
+                            taskId={
+                              task.id
+                            }
+                            objectId={
+                              task.object_id
+                            }
+                            compact
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          )}
+        </section>
+
+        <section className="order-1 rounded-xl border bg-white">
+          <div className="flex items-center justify-between border-b p-5">
+            <div>
+              <h2 className="text-xl font-semibold">
+                Останні об’єкти
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                П’ять останніх
+                створених об’єктів
+              </p>
+            </div>
+
+            <Link
+              href="/objects"
+              className="text-sm font-medium text-green-700 hover:underline"
+            >
+              Переглянути всі
+            </Link>
+          </div>
+
+          {recentObjects.length ===
+          0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500">
+                Об’єктів поки що
+                немає.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {recentObjects.map(
+                (object) => (
+                  <Link
+                    key={object.id}
+                    href={`/objects/${object.id}`}
+                    className="flex flex-col gap-3 p-5 transition hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-semibold">
+                        {object.name}
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-500">
+                        {object.customer ||
+                          "Замовника не вказано"}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 sm:flex-col sm:items-end">
+                      <span
+                        className={`rounded-full px-3 py-1 text-sm font-medium ${getObjectStatusStyle(
+                          object.status
+                        )}`}
+                      >
+                        {object.status ||
+                          "Без статусу"}
+                      </span>
+
+                      <p className="text-xs text-gray-400">
+                        {formatCreatedDate(
+                          object.created_at
+                        )}
+                      </p>
+                    </div>
+                  </Link>
+                )
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border bg-white p-5">
+          <p className="text-sm text-gray-500">
+            Активних завдань
+          </p>
+
+          <p className="mt-2 text-2xl font-bold text-yellow-600">
+            {activeTasks.length}
+          </p>
+        </div>
+
+        <div className="rounded-xl border bg-white p-5">
+          <p className="text-sm text-gray-500">
+            Завершених об’єктів
+          </p>
+
+          <p className="mt-2 text-2xl font-bold text-gray-700">
+            {completedObjects}
+          </p>
+        </div>
+
+        <div className="rounded-xl border bg-white p-5">
+          <p className="text-sm text-gray-500">
+            Виконаних завдань
+          </p>
+
+          <p className="mt-2 text-2xl font-bold text-green-600">
+            {completedTasks}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

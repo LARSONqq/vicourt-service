@@ -1,0 +1,1829 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+} from "react";
+import {
+  deleteObjectTask,
+  updateTaskStatus,
+} from "@/app/actions/taskActions";
+import EditTaskForm from "@/components/objects/EditTaskForm";
+import type { Employee } from "@/types/employee";
+import type { TaskWithObject } from "@/types/taskWithObject";
+
+type Props = {
+  tasks: TaskWithObject[];
+  employees?: Employee[];
+};
+
+type TaskStatus =
+  | "Заплановано"
+  | "В роботі"
+  | "Виконано";
+
+type ViewMode = "list" | "board";
+
+type StatusColumn = {
+  status: TaskStatus;
+  title: string;
+  description: string;
+  headerClassName: string;
+  countClassName: string;
+  dropClassName: string;
+};
+
+const taskStatuses = [
+  "Усі",
+  "Заплановано",
+  "В роботі",
+  "Виконано",
+];
+
+const taskPriorities = [
+  "Усі",
+  "Терміновий",
+  "Високий",
+  "Середній",
+  "Низький",
+];
+
+const statusColumns: StatusColumn[] = [
+  {
+    status: "Заплановано",
+    title: "Заплановано",
+    description:
+      "Завдання, які ще не розпочаті",
+    headerClassName:
+      "border-blue-100 bg-blue-50",
+    countClassName:
+      "bg-blue-100 text-blue-700",
+    dropClassName:
+      "border-blue-400 bg-blue-50 ring-blue-200",
+  },
+  {
+    status: "В роботі",
+    title: "В роботі",
+    description:
+      "Завдання, які зараз виконуються",
+    headerClassName:
+      "border-yellow-100 bg-yellow-50",
+    countClassName:
+      "bg-yellow-100 text-yellow-700",
+    dropClassName:
+      "border-yellow-400 bg-yellow-50 ring-yellow-200",
+  },
+  {
+    status: "Виконано",
+    title: "Виконано",
+    description:
+      "Завершені завдання",
+    headerClassName:
+      "border-green-100 bg-green-50",
+    countClassName:
+      "bg-green-100 text-green-700",
+    dropClassName:
+      "border-green-400 bg-green-50 ring-green-200",
+  },
+];
+
+function formatDate(
+  date: string | null
+) {
+  if (!date) {
+    return "Не вказано";
+  }
+
+  const [year, month, day] =
+    date.split("-");
+
+  return `${day}.${month}.${year}`;
+}
+
+function getTodayValue() {
+  const today = new Date();
+
+  const year = today.getFullYear();
+
+  const month = String(
+    today.getMonth() + 1
+  ).padStart(2, "0");
+
+  const day = String(
+    today.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getStatusStyle(
+  status: string
+) {
+  switch (status) {
+    case "Заплановано":
+      return "bg-blue-50 text-blue-700";
+
+    case "В роботі":
+      return "bg-yellow-50 text-yellow-700";
+
+    case "Виконано":
+      return "bg-green-100 text-green-700";
+
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+}
+
+function getPriorityStyle(
+  priority: string
+) {
+  switch (priority) {
+    case "Терміновий":
+      return "bg-red-100 text-red-700";
+
+    case "Високий":
+      return "bg-orange-100 text-orange-700";
+
+    case "Середній":
+      return "bg-violet-100 text-violet-700";
+
+    case "Низький":
+      return "bg-gray-100 text-gray-600";
+
+    default:
+      return "bg-gray-100 text-gray-600";
+  }
+}
+
+function getPriorityBorderStyle(
+  priority: string
+) {
+  switch (priority) {
+    case "Терміновий":
+      return "border-l-red-500";
+
+    case "Високий":
+      return "border-l-orange-500";
+
+    case "Середній":
+      return "border-l-violet-400";
+
+    case "Низький":
+      return "border-l-gray-300";
+
+    default:
+      return "border-l-gray-300";
+  }
+}
+
+function getPriorityOrder(
+  priority: string
+) {
+  switch (priority) {
+    case "Терміновий":
+      return 1;
+
+    case "Високий":
+      return 2;
+
+    case "Середній":
+      return 3;
+
+    case "Низький":
+      return 4;
+
+    default:
+      return 3;
+  }
+}
+
+function isTaskStatus(
+  status: string
+): status is TaskStatus {
+  return (
+    status === "Заплановано" ||
+    status === "В роботі" ||
+    status === "Виконано"
+  );
+}
+
+function isTaskOverdue(
+  task: TaskWithObject
+) {
+  return Boolean(
+    task.due_date &&
+      task.due_date <
+        getTodayValue() &&
+      task.status !== "Виконано"
+  );
+}
+
+function getChecklistProgress(
+  task: TaskWithObject
+) {
+  const checklistItems =
+    Array.isArray(
+      task.checklist_items
+    )
+      ? task.checklist_items
+      : [];
+
+  const completed =
+    checklistItems.filter(
+      (item) => item.is_completed
+    ).length;
+
+  const total =
+    checklistItems.length;
+
+  const percent =
+    total > 0
+      ? Math.round(
+          (completed / total) * 100
+        )
+      : 0;
+
+  return {
+    completed,
+    total,
+    percent,
+  };
+}
+
+function sortTasks(
+  firstTask: TaskWithObject,
+  secondTask: TaskWithObject
+) {
+  const firstPriority =
+    firstTask.priority || "Середній";
+
+  const secondPriority =
+    secondTask.priority || "Середній";
+
+  const priorityDifference =
+    getPriorityOrder(firstPriority) -
+    getPriorityOrder(secondPriority);
+
+  if (priorityDifference !== 0) {
+    return priorityDifference;
+  }
+
+  if (
+    firstTask.due_date &&
+    secondTask.due_date
+  ) {
+    return firstTask.due_date.localeCompare(
+      secondTask.due_date
+    );
+  }
+
+  if (firstTask.due_date) {
+    return -1;
+  }
+
+  if (secondTask.due_date) {
+    return 1;
+  }
+
+  return firstTask.title.localeCompare(
+    secondTask.title,
+    "uk"
+  );
+}
+
+function sortListTasks(
+  firstTask: TaskWithObject,
+  secondTask: TaskWithObject
+) {
+  const firstCompleted =
+    firstTask.status === "Виконано";
+
+  const secondCompleted =
+    secondTask.status === "Виконано";
+
+  if (
+    firstCompleted !== secondCompleted
+  ) {
+    return firstCompleted ? 1 : -1;
+  }
+
+  return sortTasks(
+    firstTask,
+    secondTask
+  );
+}
+
+export default function TasksList({
+  tasks,
+  employees = [],
+}: Props) {
+  const router = useRouter();
+
+  const [localTasks, setLocalTasks] =
+    useState<TaskWithObject[]>(tasks);
+
+  const [viewMode, setViewMode] =
+    useState<ViewMode>("board");
+
+  const [search, setSearch] =
+    useState("");
+
+  const [
+    statusFilter,
+    setStatusFilter,
+  ] = useState("Усі");
+
+  const [
+    priorityFilter,
+    setPriorityFilter,
+  ] = useState("Усі");
+
+  const [
+    employeeFilter,
+    setEmployeeFilter,
+  ] = useState("Усі");
+
+  const [
+    editingTask,
+    setEditingTask,
+  ] =
+    useState<TaskWithObject | null>(
+      null
+    );
+
+  const [
+    updatingId,
+    setUpdatingId,
+  ] = useState<number | null>(null);
+
+  const [
+    deletingId,
+    setDeletingId,
+  ] = useState<number | null>(null);
+
+  const [
+    draggedTaskId,
+    setDraggedTaskId,
+  ] = useState<number | null>(null);
+
+  const [
+    dragOverStatus,
+    setDragOverStatus,
+  ] =
+    useState<TaskStatus | null>(
+      null
+    );
+
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] = useState("");
+
+  const draggedTaskIdRef =
+    useRef<number | null>(null);
+
+  useEffect(() => {
+    setLocalTasks(tasks);
+  }, [tasks]);
+
+  const employeesById =
+    useMemo(() => {
+      return new Map(
+        employees.map((employee) => [
+          Number(employee.id),
+          employee,
+        ])
+      );
+    }, [employees]);
+
+  function getEmployeeName(
+    task: TaskWithObject
+  ) {
+    if (
+      task.assigned_employee_id
+    ) {
+      const employee =
+        employeesById.get(
+          Number(
+            task.assigned_employee_id
+          )
+        );
+
+      if (employee) {
+        return [
+          employee.last_name,
+          employee.first_name,
+        ]
+          .filter(Boolean)
+          .join(" ");
+      }
+    }
+
+    return (
+      task.assignee ||
+      "Не призначено"
+    );
+  }
+
+  const plannedCount =
+    localTasks.filter(
+      (task) =>
+        task.status ===
+        "Заплановано"
+    ).length;
+
+  const inProgressCount =
+    localTasks.filter(
+      (task) =>
+        task.status === "В роботі"
+    ).length;
+
+  const completedCount =
+    localTasks.filter(
+      (task) =>
+        task.status === "Виконано"
+    ).length;
+
+  const filteredTasks =
+    useMemo(() => {
+      const normalizedSearch =
+        search
+          .trim()
+          .toLowerCase();
+
+      return localTasks
+        .filter((task) => {
+          const priority =
+            task.priority ||
+            "Середній";
+
+          let employeeName =
+            task.assignee ||
+            "Не призначено";
+
+          if (
+            task.assigned_employee_id
+          ) {
+            const employee =
+              employeesById.get(
+                Number(
+                  task.assigned_employee_id
+                )
+              );
+
+            if (employee) {
+              employeeName = [
+                employee.last_name,
+                employee.first_name,
+              ]
+                .filter(Boolean)
+                .join(" ");
+            }
+          }
+
+          const searchableText = [
+            task.title,
+            task.description,
+            task.assignee,
+            employeeName,
+            task.object?.name,
+            priority,
+            task.status,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+          const matchesSearch =
+            !normalizedSearch ||
+            searchableText.includes(
+              normalizedSearch
+            );
+
+          const matchesStatus =
+            statusFilter === "Усі" ||
+            task.status ===
+              statusFilter;
+
+          const matchesPriority =
+            priorityFilter === "Усі" ||
+            priority ===
+              priorityFilter;
+
+          const matchesEmployee =
+            employeeFilter === "Усі" ||
+            (employeeFilter ===
+              "Без відповідального" &&
+              !task.assigned_employee_id) ||
+            String(
+              task.assigned_employee_id
+            ) === employeeFilter;
+
+          return (
+            matchesSearch &&
+            matchesStatus &&
+            matchesPriority &&
+            matchesEmployee
+          );
+        })
+        .sort(sortListTasks);
+    }, [
+      localTasks,
+      search,
+      statusFilter,
+      priorityFilter,
+      employeeFilter,
+      employeesById,
+    ]);
+
+  const tasksByStatus =
+    useMemo(() => {
+      const result = new Map<
+        TaskStatus,
+        TaskWithObject[]
+      >([
+        ["Заплановано", []],
+        ["В роботі", []],
+        ["Виконано", []],
+      ]);
+
+      filteredTasks.forEach(
+        (task) => {
+          if (
+            !isTaskStatus(
+              task.status
+            )
+          ) {
+            return;
+          }
+
+          result
+            .get(task.status)
+            ?.push(task);
+        }
+      );
+
+      result.forEach(
+        (statusTasks) => {
+          statusTasks.sort(
+            sortTasks
+          );
+        }
+      );
+
+      return result;
+    }, [filteredTasks]);
+
+  async function handleStatusChange(
+    task: TaskWithObject,
+    newStatus: string
+  ) {
+    if (
+      !isTaskStatus(newStatus) ||
+      task.status === newStatus ||
+      updatingId !== null
+    ) {
+      return;
+    }
+
+    const previousStatus =
+      task.status;
+
+    setUpdatingId(task.id);
+    setErrorMessage("");
+
+    setLocalTasks(
+      (currentTasks) =>
+        currentTasks.map(
+          (currentTask) =>
+            currentTask.id ===
+            task.id
+              ? {
+                  ...currentTask,
+                  status: newStatus,
+                }
+              : currentTask
+        )
+    );
+
+    try {
+      await updateTaskStatus(
+        task.id,
+        task.object_id,
+        newStatus
+      );
+
+      setEditingTask(
+        (
+          currentEditingTask
+        ) =>
+          currentEditingTask?.id ===
+          task.id
+            ? {
+                ...currentEditingTask,
+                status: newStatus,
+              }
+            : currentEditingTask
+      );
+    } catch (error) {
+      setLocalTasks(
+        (currentTasks) =>
+          currentTasks.map(
+            (currentTask) =>
+              currentTask.id ===
+              task.id
+                ? {
+                    ...currentTask,
+                    status:
+                      previousStatus,
+                  }
+                : currentTask
+          )
+      );
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Не вдалося змінити статус."
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function handleDeleteTask(
+    task: TaskWithObject
+  ) {
+    const confirmed =
+      window.confirm(
+        `Видалити завдання «${task.title}»?\n\nЦю дію неможливо скасувати.`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const previousTasks =
+      localTasks;
+
+    setDeletingId(task.id);
+    setErrorMessage("");
+
+    setLocalTasks(
+      (currentTasks) =>
+        currentTasks.filter(
+          (currentTask) =>
+            currentTask.id !==
+            task.id
+        )
+    );
+
+    try {
+      await deleteObjectTask(
+        task.id,
+        task.object_id
+      );
+
+      if (
+        editingTask?.id ===
+        task.id
+      ) {
+        setEditingTask(null);
+      }
+    } catch (error) {
+      setLocalTasks(
+        previousTasks
+      );
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Не вдалося видалити завдання."
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function handleDragStart(
+    event: DragEvent<HTMLElement>,
+    task: TaskWithObject
+  ) {
+    if (
+      updatingId !== null ||
+      deletingId !== null
+    ) {
+      event.preventDefault();
+      return;
+    }
+
+    draggedTaskIdRef.current =
+      task.id;
+
+    setDraggedTaskId(task.id);
+    setErrorMessage("");
+
+    event.dataTransfer.effectAllowed =
+      "move";
+
+    event.dataTransfer.setData(
+      "text/plain",
+      String(task.id)
+    );
+
+    const card =
+      event.currentTarget.closest(
+        "article"
+      );
+
+    if (
+      card instanceof HTMLElement
+    ) {
+      event.dataTransfer.setDragImage(
+        card,
+        24,
+        24
+      );
+    }
+  }
+
+  function handleDragEnd() {
+    draggedTaskIdRef.current =
+      null;
+
+    setDraggedTaskId(null);
+    setDragOverStatus(null);
+  }
+
+  function handleDragOver(
+    event: DragEvent<HTMLElement>,
+    status: TaskStatus
+  ) {
+    if (
+      draggedTaskIdRef.current ===
+      null
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    event.dataTransfer.dropEffect =
+      "move";
+
+    setDragOverStatus(status);
+  }
+
+  function handleDragLeave(
+    event: DragEvent<HTMLElement>,
+    status: TaskStatus
+  ) {
+    const nextElement =
+      event.relatedTarget as
+        | Node
+        | null;
+
+    if (
+      nextElement &&
+      event.currentTarget.contains(
+        nextElement
+      )
+    ) {
+      return;
+    }
+
+    setDragOverStatus(
+      (currentStatus) =>
+        currentStatus === status
+          ? null
+          : currentStatus
+    );
+  }
+
+  async function handleDrop(
+    event: DragEvent<HTMLElement>,
+    newStatus: TaskStatus
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const transferredId =
+      Number(
+        event.dataTransfer.getData(
+          "text/plain"
+        )
+      );
+
+    const taskId =
+      draggedTaskIdRef.current ??
+      transferredId;
+
+    const task = localTasks.find(
+      (currentTask) =>
+        currentTask.id === taskId
+    );
+
+    draggedTaskIdRef.current =
+      null;
+
+    setDraggedTaskId(null);
+    setDragOverStatus(null);
+
+    if (
+      !task ||
+      !Number.isInteger(taskId) ||
+      updatingId !== null
+    ) {
+      return;
+    }
+
+    if (
+      task.status === newStatus
+    ) {
+      return;
+    }
+
+    await handleStatusChange(
+      task,
+      newStatus
+    );
+  }
+
+  function clearFilters() {
+    setSearch("");
+    setStatusFilter("Усі");
+    setPriorityFilter("Усі");
+    setEmployeeFilter("Усі");
+  }
+
+  function closeEditForm() {
+    setEditingTask(null);
+    router.refresh();
+  }
+
+  function renderBoardTask(
+    task: TaskWithObject
+  ) {
+    const priority =
+      task.priority || "Середній";
+
+    const overdue =
+      isTaskOverdue(task);
+
+    const completed =
+      task.status === "Виконано";
+
+    const isUpdating =
+      updatingId === task.id;
+
+    const isDeleting =
+      deletingId === task.id;
+
+    const isDragging =
+      draggedTaskId === task.id;
+
+    const checklistProgress =
+      getChecklistProgress(task);
+
+    return (
+      <article
+        key={task.id}
+        className={`rounded-xl border border-l-4 bg-white p-4 transition ${getPriorityBorderStyle(
+          priority
+        )} ${
+          completed
+            ? "bg-green-50/40 opacity-80"
+            : overdue
+              ? "border-red-200"
+              : ""
+        } ${
+          isDragging
+            ? "scale-95 opacity-30"
+            : "hover:border-green-300"
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <span
+            role="button"
+            tabIndex={0}
+            draggable={
+              !isUpdating &&
+              !isDeleting
+            }
+            title="Перетягни завдання"
+            onDragStart={(event) =>
+              handleDragStart(
+                event,
+                task
+              )
+            }
+            onDragEnd={
+              handleDragEnd
+            }
+            className="mt-0.5 cursor-grab select-none rounded px-1 text-lg leading-none text-gray-400 active:cursor-grabbing hover:bg-gray-100 hover:text-gray-600"
+          >
+            ⋮⋮
+          </span>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <h3
+                className={`font-semibold ${
+                  completed
+                    ? "text-gray-500 line-through"
+                    : "text-gray-900"
+                }`}
+              >
+                {task.title}
+              </h3>
+
+              <span
+                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                  completed
+                    ? "bg-gray-100 text-gray-500"
+                    : getPriorityStyle(
+                        priority
+                      )
+                }`}
+              >
+                {priority}
+              </span>
+            </div>
+
+            {task.object ? (
+              <Link
+                href={`/objects/${task.object.id}`}
+                className={`mt-1 block text-sm font-medium hover:underline ${
+                  completed
+                    ? "text-gray-400"
+                    : "text-green-700"
+                }`}
+              >
+                {task.object.name}
+              </Link>
+            ) : (
+              <p className="mt-1 text-sm text-gray-400">
+                Об’єкт не знайдено
+              </p>
+            )}
+          </div>
+        </div>
+
+        {task.description && (
+          <p
+            className={`mt-3 line-clamp-3 whitespace-pre-wrap text-sm ${
+              completed
+                ? "text-gray-400"
+                : "text-gray-600"
+            }`}
+          >
+            {task.description}
+          </p>
+        )}
+
+        {checklistProgress.total >
+          0 && (
+          <div
+            className={`mt-4 rounded-lg border p-3 ${
+              checklistProgress.percent ===
+              100
+                ? "border-green-200 bg-green-50"
+                : "bg-gray-50"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span
+                className={`font-medium ${
+                  checklistProgress.percent ===
+                  100
+                    ? "text-green-700"
+                    : "text-gray-600"
+                }`}
+              >
+                Чекліст
+              </span>
+
+              <span
+                className={`font-semibold ${
+                  checklistProgress.percent ===
+                  100
+                    ? "text-green-700"
+                    : "text-gray-700"
+                }`}
+              >
+                {
+                  checklistProgress.completed
+                }{" "}
+                із{" "}
+                {
+                  checklistProgress.total
+                }{" "}
+                •{" "}
+                {
+                  checklistProgress.percent
+                }
+                %
+              </span>
+            </div>
+
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+              <div
+                className="h-full rounded-full bg-green-600 transition-all"
+                style={{
+                  width: `${checklistProgress.percent}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 space-y-2 border-t pt-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-gray-400">
+              Термін
+            </span>
+
+            <span
+              className={`text-right font-medium ${
+                completed
+                  ? "text-gray-400"
+                  : overdue
+                    ? "text-red-600"
+                    : "text-gray-700"
+              }`}
+            >
+              {formatDate(
+                task.due_date
+              )}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-gray-400">
+              Відповідальний
+            </span>
+
+            <span
+              className={`text-right font-medium ${
+                completed
+                  ? "text-gray-400"
+                  : "text-gray-700"
+              }`}
+            >
+              {getEmployeeName(
+                task
+              )}
+            </span>
+          </div>
+        </div>
+
+        {overdue && (
+          <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+            Завдання прострочене
+          </div>
+        )}
+
+        <div className="mt-4">
+          <label className="text-xs text-gray-500">
+            Статус
+          </label>
+
+          <select
+            value={task.status}
+            disabled={
+              isUpdating ||
+              isDeleting
+            }
+            onChange={(event) =>
+              handleStatusChange(
+                task,
+                event.target.value
+              )
+            }
+            className="mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option value="Заплановано">
+              Заплановано
+            </option>
+
+            <option value="В роботі">
+              В роботі
+            </option>
+
+            <option value="Виконано">
+              Виконано
+            </option>
+          </select>
+        </div>
+
+        <div className="mt-4 flex items-center justify-end gap-2 border-t pt-3">
+          <button
+            type="button"
+            disabled={
+              isUpdating ||
+              isDeleting
+            }
+            onClick={() =>
+              setEditingTask(task)
+            }
+            className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-60"
+          >
+            Редагувати
+          </button>
+
+          <button
+            type="button"
+            disabled={
+              isUpdating ||
+              isDeleting
+            }
+            onClick={() =>
+              handleDeleteTask(task)
+            }
+            className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isDeleting
+              ? "Видалення..."
+              : "Видалити"}
+          </button>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-xl border bg-white p-5">
+          <p className="text-sm text-gray-500">
+            Усього завдань
+          </p>
+
+          <p className="mt-2 text-3xl font-bold">
+            {localTasks.length}
+          </p>
+        </div>
+
+        <div className="rounded-xl border bg-white p-5">
+          <p className="text-sm text-gray-500">
+            Заплановано
+          </p>
+
+          <p className="mt-2 text-3xl font-bold text-blue-700">
+            {plannedCount}
+          </p>
+        </div>
+
+        <div className="rounded-xl border bg-white p-5">
+          <p className="text-sm text-gray-500">
+            В роботі
+          </p>
+
+          <p className="mt-2 text-3xl font-bold text-yellow-700">
+            {inProgressCount}
+          </p>
+        </div>
+
+        <div className="rounded-xl border bg-white p-5">
+          <p className="text-sm text-gray-500">
+            Виконано
+          </p>
+
+          <p className="mt-2 text-3xl font-bold text-green-700">
+            {completedCount}
+          </p>
+        </div>
+      </div>
+
+      {errorMessage && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      )}
+
+      <div className="rounded-xl border bg-white p-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="inline-flex w-fit rounded-lg border bg-gray-50 p-1">
+            <button
+              type="button"
+              onClick={() =>
+                setViewMode("list")
+              }
+              className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                viewMode === "list"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              ☰ Список
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setViewMode("board")
+              }
+              className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                viewMode === "board"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              ▦ Дошка
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-gray-500">
+              Знайдено завдань:{" "}
+              <span className="font-semibold text-gray-800">
+                {
+                  filteredTasks.length
+                }
+              </span>
+            </p>
+
+            <button
+              type="button"
+              onClick={
+                clearFilters
+              }
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+            >
+              Очистити фільтри
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_180px_180px_240px]">
+          <input
+            type="search"
+            value={search}
+            onChange={(event) =>
+              setSearch(
+                event.target.value
+              )
+            }
+            placeholder="Пошук завдання"
+            className="w-full rounded-lg border px-4 py-3 outline-none focus:border-green-600"
+          />
+
+          <select
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(
+                event.target.value
+              )
+            }
+            className="w-full rounded-lg border bg-white px-4 py-3"
+          >
+            {taskStatuses.map(
+              (status) => (
+                <option
+                  key={status}
+                  value={status}
+                >
+                  {status === "Усі"
+                    ? "Усі статуси"
+                    : status}
+                </option>
+              )
+            )}
+          </select>
+
+          <select
+            value={priorityFilter}
+            onChange={(event) =>
+              setPriorityFilter(
+                event.target.value
+              )
+            }
+            className="w-full rounded-lg border bg-white px-4 py-3"
+          >
+            {taskPriorities.map(
+              (priority) => (
+                <option
+                  key={priority}
+                  value={
+                    priority
+                  }
+                >
+                  {priority ===
+                  "Усі"
+                    ? "Усі пріоритети"
+                    : priority}
+                </option>
+              )
+            )}
+          </select>
+
+          <select
+            value={employeeFilter}
+            onChange={(event) =>
+              setEmployeeFilter(
+                event.target.value
+              )
+            }
+            className="w-full rounded-lg border bg-white px-4 py-3"
+          >
+            <option value="Усі">
+              Усі працівники
+            </option>
+
+            <option value="Без відповідального">
+              Без відповідального
+            </option>
+
+            {employees.map(
+              (employee) => (
+                <option
+                  key={employee.id}
+                  value={String(
+                    employee.id
+                  )}
+                >
+                  {
+                    employee.last_name
+                  }{" "}
+                  {
+                    employee.first_name
+                  }
+
+                  {employee.position
+                    ? ` — ${employee.position}`
+                    : ""}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+      </div>
+
+      {filteredTasks.length === 0 ? (
+        <div className="rounded-xl border bg-white p-8 text-center">
+          <p className="text-gray-500">
+            Завдань за цими
+            параметрами не знайдено.
+          </p>
+        </div>
+      ) : viewMode === "board" ? (
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+          {statusColumns.map(
+            (column) => {
+              const columnTasks =
+                tasksByStatus.get(
+                  column.status
+                ) || [];
+
+              const isDropTarget =
+                dragOverStatus ===
+                column.status;
+
+              return (
+                <section
+                  key={
+                    column.status
+                  }
+                  onDragEnter={(
+                    event
+                  ) =>
+                    handleDragOver(
+                      event,
+                      column.status
+                    )
+                  }
+                  onDragOver={(
+                    event
+                  ) =>
+                    handleDragOver(
+                      event,
+                      column.status
+                    )
+                  }
+                  onDragLeave={(
+                    event
+                  ) =>
+                    handleDragLeave(
+                      event,
+                      column.status
+                    )
+                  }
+                  onDrop={(
+                    event
+                  ) =>
+                    handleDrop(
+                      event,
+                      column.status
+                    )
+                  }
+                  className={`min-w-0 overflow-hidden rounded-xl border transition ${
+                    isDropTarget
+                      ? `${column.dropClassName} ring-2`
+                      : "bg-gray-50/60"
+                  }`}
+                >
+                  <div
+                    className={`border-b p-4 ${column.headerClassName}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="font-semibold">
+                          {
+                            column.title
+                          }
+                        </h2>
+
+                        <p className="mt-1 text-xs text-gray-500">
+                          {
+                            column.description
+                          }
+                        </p>
+                      </div>
+
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold ${column.countClassName}`}
+                      >
+                        {
+                          columnTasks.length
+                        }
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="min-h-[320px] space-y-3 p-3">
+                    {isDropTarget && (
+                      <div className="rounded-lg border border-dashed border-current bg-white/70 px-3 py-4 text-center text-xs font-medium">
+                        Відпусти
+                        завдання тут
+                      </div>
+                    )}
+
+                    {columnTasks.length ===
+                    0 ? (
+                      <div className="rounded-lg border border-dashed bg-white px-4 py-10 text-center text-sm text-gray-400">
+                        {isDropTarget
+                          ? "Відпусти завдання тут"
+                          : "У цій колонці завдань немає"}
+                      </div>
+                    ) : (
+                      columnTasks.map(
+                        renderBoardTask
+                      )
+                    )}
+                  </div>
+                </section>
+              );
+            }
+          )}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredTasks.map(
+            (task) => {
+              const overdue =
+                isTaskOverdue(task);
+
+              const completed =
+                task.status ===
+                "Виконано";
+
+              const priority =
+                task.priority ||
+                "Середній";
+
+              const isUpdating =
+                updatingId ===
+                task.id;
+
+              const isDeleting =
+                deletingId ===
+                task.id;
+
+              const checklistProgress =
+                getChecklistProgress(
+                  task
+                );
+
+              return (
+                <article
+                  key={task.id}
+                  className={`rounded-xl border p-5 transition ${
+                    completed
+                      ? "border-green-200 bg-green-50/50"
+                      : overdue
+                        ? "border-red-300 bg-white"
+                        : "bg-white"
+                  }`}
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        {completed && (
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-bold text-green-700">
+                            ✓
+                          </span>
+                        )}
+
+                        <h3
+                          className={`text-lg font-semibold ${
+                            completed
+                              ? "text-gray-500 line-through"
+                              : ""
+                          }`}
+                        >
+                          {task.title}
+                        </h3>
+                      </div>
+
+                      {task.object ? (
+                        <Link
+                          href={`/objects/${task.object.id}`}
+                          className={`mt-1 block text-sm font-medium hover:underline ${
+                            completed
+                              ? "text-gray-400"
+                              : "text-green-700"
+                          }`}
+                        >
+                          {
+                            task
+                              .object
+                              .name
+                          }
+                        </Link>
+                      ) : (
+                        <p className="mt-1 text-sm text-gray-400">
+                          Об’єкт не
+                          знайдено
+                        </p>
+                      )}
+
+                      {task.description && (
+                        <p
+                          className={`mt-3 whitespace-pre-wrap text-sm ${
+                            completed
+                              ? "text-gray-400"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {
+                            task.description
+                          }
+                        </p>
+                      )}
+
+                      {checklistProgress.total >
+                        0 && (
+                        <div className="mt-3 flex items-center gap-3">
+                          <div className="h-2 w-28 overflow-hidden rounded-full bg-gray-200">
+                            <div
+                              className="h-full rounded-full bg-green-600"
+                              style={{
+                                width: `${checklistProgress.percent}%`,
+                              }}
+                            />
+                          </div>
+
+                          <span className="text-xs font-medium text-gray-600">
+                            {
+                              checklistProgress.completed
+                            }{" "}
+                            із{" "}
+                            {
+                              checklistProgress.total
+                            }{" "}
+                            •{" "}
+                            {
+                              checklistProgress.percent
+                            }
+                            %
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <span
+                        className={`rounded-full px-3 py-1 text-sm font-medium ${
+                          completed
+                            ? "bg-gray-100 text-gray-500"
+                            : getPriorityStyle(
+                                priority
+                              )
+                        }`}
+                      >
+                        {priority}
+                      </span>
+
+                      <span
+                        className={`rounded-full px-3 py-1 text-sm font-medium ${getStatusStyle(
+                          task.status
+                        )}`}
+                      >
+                        {completed
+                          ? "✓ Виконано"
+                          : task.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`mt-5 grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-3 ${
+                      completed
+                        ? "border-green-100"
+                        : ""
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs text-gray-500">
+                        Термін виконання
+                      </p>
+
+                      <p
+                        className={`mt-1 font-medium ${
+                          completed
+                            ? "text-gray-400"
+                            : overdue
+                              ? "text-red-600"
+                              : "text-gray-700"
+                        }`}
+                      >
+                        {formatDate(
+                          task.due_date
+                        )}
+                      </p>
+
+                      {overdue && (
+                        <p className="mt-1 text-xs font-medium text-red-600">
+                          Завдання
+                          прострочене
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500">
+                        Відповідальний
+                      </p>
+
+                      <p
+                        className={`mt-1 font-medium ${
+                          completed
+                            ? "text-gray-400"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {getEmployeeName(
+                          task
+                        )}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs text-gray-500">
+                        Швидка зміна
+                        статусу
+                      </label>
+
+                      <select
+                        value={
+                          task.status
+                        }
+                        disabled={
+                          isUpdating ||
+                          isDeleting
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          handleStatusChange(
+                            task,
+                            event.target
+                              .value
+                          )
+                        }
+                        className="mt-1 w-full rounded-lg border bg-white px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <option value="Заплановано">
+                          Заплановано
+                        </option>
+
+                        <option value="В роботі">
+                          В роботі
+                        </option>
+
+                        <option value="Виконано">
+                          Виконано
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      disabled={
+                        isUpdating ||
+                        isDeleting
+                      }
+                      onClick={() =>
+                        setEditingTask(
+                          task
+                        )
+                      }
+                      className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-60"
+                    >
+                      Редагувати
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={
+                        isUpdating ||
+                        isDeleting
+                      }
+                      onClick={() =>
+                        handleDeleteTask(
+                          task
+                        )
+                      }
+                      className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isDeleting
+                        ? "Видалення..."
+                        : "Видалити"}
+                    </button>
+                  </div>
+                </article>
+              );
+            }
+          )}
+        </div>
+      )}
+
+      {editingTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 md:p-8"
+          onMouseDown={(event) => {
+            if (
+              event.target ===
+                event.currentTarget &&
+              deletingId === null
+            ) {
+              closeEditForm();
+            }
+          }}
+        >
+          <div className="w-full max-w-3xl">
+            <div className="mb-3 flex items-start justify-between gap-4 rounded-xl bg-white px-5 py-4 shadow-lg">
+              <div>
+                <h2 className="text-lg font-semibold">
+                  Редагування
+                  завдання
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  {
+                    editingTask.title
+                  }
+
+                  {editingTask.object
+                    ? ` • ${editingTask.object.name}`
+                    : ""}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  closeEditForm
+                }
+                className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+              >
+                Закрити
+              </button>
+            </div>
+
+            <EditTaskForm
+              task={editingTask}
+              objectId={
+                editingTask.object_id
+              }
+              employees={
+                employees
+              }
+              onCancel={
+                closeEditForm
+              }
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
