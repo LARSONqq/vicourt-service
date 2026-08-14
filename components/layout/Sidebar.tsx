@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { getAppSettings } from "@/services/settingsService";
 import { getCurrentUserProfile } from "@/services/profileService";
 
@@ -111,13 +109,13 @@ export async function Sidebar() {
       <nav className="space-y-2">
         {visibleMenuItems.map(
           (item) => (
-            <Link
+            <a
               key={item.href}
               href={item.href}
               className="block rounded-lg px-4 py-3 font-medium text-gray-700 transition hover:bg-green-50 hover:text-green-700"
             >
               {item.name}
-            </Link>
+            </a>
           )
         )}
       </nav>
