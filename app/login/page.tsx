@@ -1,18 +1,36 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+
+import {
+  FormEvent,
+  useState,
+} from "react";
+
+import {
+  useRouter,
+} from "next/navigation";
+
+import {
+  createClient,
+} from "@/lib/supabase/client";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const supabase = createClient();
+  const router =
+    useRouter();
 
-  const [email, setEmail] =
-    useState("");
+  const supabase =
+    createClient();
 
-  const [password, setPassword] =
-    useState("");
+  const [
+    email,
+    setEmail,
+  ] = useState("");
+
+  const [
+    password,
+    setPassword,
+  ] = useState("");
 
   const [
     isSubmitting,
@@ -33,9 +51,13 @@ export default function LoginPage() {
     setErrorMessage("");
 
     try {
-      const { error } =
+      const {
+        error,
+      } =
         await supabase.auth.signInWithPassword({
-          email: email.trim(),
+          email:
+            email.trim(),
+
           password,
         });
 
@@ -45,10 +67,12 @@ export default function LoginPage() {
 
       router.replace("/");
       router.refresh();
+
     } catch {
       setErrorMessage(
         "Неправильний email або пароль."
       );
+
     } finally {
       setIsSubmitting(false);
     }
@@ -140,6 +164,19 @@ export default function LoginPage() {
               : "Увійти"}
           </button>
         </form>
+
+        <div className="mt-6 border-t pt-6 text-center">
+          <p className="text-sm text-gray-500">
+            Ще немає облікового запису?
+          </p>
+
+          <Link
+            href="/register"
+            className="mt-2 inline-block text-sm font-semibold text-green-700 transition hover:text-green-800"
+          >
+            Створити акаунт
+          </Link>
+        </div>
 
         <p className="mt-6 text-center text-xs text-gray-400">
           ViCourt Service

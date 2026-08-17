@@ -19,8 +19,10 @@ export async function updateSession(
     createServerClient(
       process.env
         .NEXT_PUBLIC_SUPABASE_URL!,
+
       process.env
         .NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+
       {
         cookies: {
           getAll() {
@@ -34,12 +36,11 @@ export async function updateSession(
               ({
                 name,
                 value,
-              }) => {
+              }) =>
                 request.cookies.set(
                   name,
                   value
-                );
-              }
+                )
             );
 
             supabaseResponse =
@@ -52,13 +53,12 @@ export async function updateSession(
                 name,
                 value,
                 options,
-              }) => {
+              }) =>
                 supabaseResponse.cookies.set(
                   name,
                   value,
                   options
-                );
-              }
+                )
             );
           },
         },
@@ -79,37 +79,45 @@ export async function updateSession(
   const pathname =
     request.nextUrl.pathname;
 
-  const isLoginPage =
-    pathname === "/login";
+  const isPublicRoute =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/auth/confirm";
 
-  // Неавторизований користувач
-  // може бачити тільки /login
+  const isGuestOnlyPage =
+    pathname === "/login" ||
+    pathname === "/register";
+
   if (
     !claims &&
-    !isLoginPage
+    !isPublicRoute
   ) {
     const url =
       request.nextUrl.clone();
 
-    url.pathname = "/login";
-    url.search = "";
+    url.pathname =
+      "/login";
+
+    url.search =
+      "";
 
     return NextResponse.redirect(
       url
     );
   }
 
-  // Якщо користувач уже увійшов,
-  // сторінка /login йому не потрібна
   if (
     claims &&
-    isLoginPage
+    isGuestOnlyPage
   ) {
     const url =
       request.nextUrl.clone();
 
-    url.pathname = "/";
-    url.search = "";
+    url.pathname =
+      "/";
+
+    url.search =
+      "";
 
     return NextResponse.redirect(
       url

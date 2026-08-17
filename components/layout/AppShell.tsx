@@ -1,6 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import {
+  usePathname,
+} from "next/navigation";
 
 type Props = {
   children: React.ReactNode;
@@ -13,10 +15,12 @@ export default function AppShell({
   sidebar,
   header,
 }: Props) {
-  const pathname = usePathname();
+  const pathname =
+    usePathname();
 
   const isAuthPage =
-    pathname === "/login";
+    pathname === "/login" ||
+    pathname === "/register";
 
   if (isAuthPage) {
     return (
