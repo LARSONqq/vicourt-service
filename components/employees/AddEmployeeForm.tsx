@@ -206,17 +206,42 @@ export default function AddEmployeeForm({
         </div>
       </div>
 
-      {/* HIRE DATE */}
-      <div className="min-w-0 sm:max-w-md">
-        <label className="mb-2 block text-sm font-medium text-gray-700">
-          Дата прийняття на роботу
-        </label>
+      {/* DATE + RATE */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Дата прийняття на роботу
+          </label>
 
-        <input
-          type="date"
-          name="hire_date"
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-        />
+          <input
+            type="date"
+            name="hire_date"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+          />
+        </div>
+
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Погодинна ставка, грн/год
+          </label>
+
+          <input
+            type="number"
+            name="hourly_rate"
+            min="0"
+            step="0.01"
+            inputMode="decimal"
+            defaultValue="0"
+            placeholder="Наприклад, 250"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          />
+
+          <p className="mt-2 text-xs leading-4 text-gray-400">
+            Використовується для
+            розрахунку вартості робіт
+            на об’єктах.
+          </p>
+        </div>
       </div>
 
       {/* NOTES */}

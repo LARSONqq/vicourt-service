@@ -47,6 +47,7 @@ async function getEmployeeAssignment(
       employeeId: null,
       workers:
         workersValue || null,
+      hourlyRate: 0,
     };
   }
 
@@ -75,7 +76,8 @@ async function getEmployeeAssignment(
     .select(`
       id,
       first_name,
-      last_name
+      last_name,
+      hourly_rate
     `)
     .eq(
       "id",
@@ -102,6 +104,20 @@ async function getEmployeeAssignment(
     .filter(Boolean)
     .join(" ");
 
+  const rawHourlyRate =
+    Number(
+      employee.hourly_rate ??
+        0
+    );
+
+  const hourlyRate =
+    Number.isFinite(
+      rawHourlyRate
+    ) &&
+    rawHourlyRate >= 0
+      ? rawHourlyRate
+      : 0;
+
   return {
     employeeId:
       employee.id,
@@ -110,6 +126,8 @@ async function getEmployeeAssignment(
       fullName ||
       workersValue ||
       null,
+
+    hourlyRate,
   };
 }
 
@@ -121,6 +139,7 @@ function refreshWorkLogPages(
 ) {
   revalidatePath("/");
   revalidatePath("/objects");
+
   revalidatePath(
     `/objects/${objectId}`
   );
@@ -261,6 +280,9 @@ export async function createWorkLog(
         assignment.workers,
 
       hours,
+
+      hourly_rate:
+        assignment.hourlyRate,
     });
 
   if (error) {
@@ -369,9 +391,10 @@ export async function updateWorkLog(
     error: previousWorkLogError,
   } = await supabase
     .from("work_logs")
-    .select(
-      "employee_id"
-    )
+    .select(`
+      employee_id,
+      hourly_rate
+    `)
     .eq(
       "id",
       workLogId
@@ -404,6 +427,32 @@ export async function updateWorkLog(
       workersValue
     );
 
+  const previousEmployeeId =
+    previousWorkLog.employee_id
+      ? Number(
+          previousWorkLog.employee_id
+        )
+      : null;
+
+  const previousHourlyRate =
+    Number(
+      previousWorkLog.hourly_rate ??
+        0
+    );
+
+  const hourlyRate =
+    assignment.employeeId ===
+      previousEmployeeId
+      ? (
+          Number.isFinite(
+            previousHourlyRate
+          ) &&
+          previousHourlyRate >= 0
+            ? previousHourlyRate
+            : 0
+        )
+      : assignment.hourlyRate;
+
   const {
     error,
   } = await supabase
@@ -421,6 +470,9 @@ export async function updateWorkLog(
         assignment.workers,
 
       hours,
+
+      hourly_rate:
+        hourlyRate,
     })
     .eq(
       "id",
@@ -440,13 +492,7 @@ export async function updateWorkLog(
   refreshWorkLogPages(
     objectId,
     [
-      previousWorkLog
-        .employee_id
-        ? Number(
-            previousWorkLog.employee_id
-          )
-        : null,
-
+      previousEmployeeId,
       assignment.employeeId,
     ]
   );

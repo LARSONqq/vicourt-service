@@ -151,6 +151,82 @@ export default async function ObjectPage({
       0
     );
 
+  const materialsCost =
+    materialList.reduce(
+      (
+        sum,
+        material
+      ) => {
+        const quantity =
+          Number(
+            material.quantity ||
+              0
+          );
+
+        const price =
+          Number(
+            material.price ||
+              0
+          );
+
+        if (
+          !Number.isFinite(
+            quantity
+          ) ||
+          !Number.isFinite(
+            price
+          )
+        ) {
+          return sum;
+        }
+
+        return (
+          sum +
+          quantity *
+            price
+        );
+      },
+      0
+    );
+
+  const laborCost =
+    workLogList.reduce(
+      (
+        sum,
+        workLog
+      ) => {
+        const hours =
+          Number(
+            workLog.hours ||
+              0
+          );
+
+        const hourlyRate =
+          Number(
+            workLog.hourly_rate ||
+              0
+          );
+
+        if (
+          !Number.isFinite(
+            hours
+          ) ||
+          !Number.isFinite(
+            hourlyRate
+          )
+        ) {
+          return sum;
+        }
+
+        return (
+          sum +
+          hours *
+            hourlyRate
+        );
+      },
+      0
+    );
+
   return (
     <div className="min-w-0 space-y-5 sm:space-y-8">
       {/* BACK */}
@@ -219,6 +295,12 @@ export default async function ObjectPage({
         }
         photosCount={
           photoList.length
+        }
+        materialsCost={
+          materialsCost
+        }
+        laborCost={
+          laborCost
         }
       />
 

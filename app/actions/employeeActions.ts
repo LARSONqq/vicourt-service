@@ -50,13 +50,42 @@ function getText(
   ).trim();
 }
 
+function getNonNegativeNumber(
+  formData: FormData,
+  field: string
+) {
+  const rawValue =
+    String(
+      formData.get(field) ?? ""
+    ).trim();
+
+  if (!rawValue) {
+    return 0;
+  }
+
+  const value =
+    Number(rawValue);
+
+  if (
+    !Number.isFinite(value) ||
+    value < 0
+  ) {
+    throw new Error(
+      "Погодинна ставка має бути правильним невід’ємним числом."
+    );
+  }
+
+  return value;
+}
+
 function validateEmployee(
   firstName: string,
   lastName: string,
   email: string,
   position: string,
   employmentType: string,
-  status: string
+  status: string,
+  hourlyRate: number
 ) {
   if (!firstName) {
     throw new Error(
@@ -107,6 +136,17 @@ function validateEmployee(
   ) {
     throw new Error(
       "Вкажи правильну електронну адресу."
+    );
+  }
+
+  if (
+    !Number.isFinite(
+      hourlyRate
+    ) ||
+    hourlyRate < 0
+  ) {
+    throw new Error(
+      "Погодинна ставка має бути правильним невід’ємним числом."
     );
   }
 }
@@ -173,13 +213,20 @@ export async function createEmployee(
       "notes"
     );
 
+  const hourlyRate =
+    getNonNegativeNumber(
+      formData,
+      "hourly_rate"
+    );
+
   validateEmployee(
     firstName,
     lastName,
     email,
     position,
     employmentType,
-    status
+    status,
+    hourlyRate
   );
 
   const { error } =
@@ -211,6 +258,9 @@ export async function createEmployee(
 
         notes:
           notes || null,
+
+        hourly_rate:
+          hourlyRate,
       });
 
   if (error) {
@@ -309,6 +359,12 @@ export async function updateEmployee(
       "notes"
     );
 
+  const hourlyRate =
+    getNonNegativeNumber(
+      formData,
+      "hourly_rate"
+    );
+
   if (
     !Number.isInteger(
       employeeId
@@ -326,7 +382,8 @@ export async function updateEmployee(
     email,
     position,
     employmentType,
-    status
+    status,
+    hourlyRate
   );
 
   const { error } =
@@ -358,6 +415,9 @@ export async function updateEmployee(
 
         notes:
           notes || null,
+
+        hourly_rate:
+          hourlyRate,
       })
       .eq(
         "id",

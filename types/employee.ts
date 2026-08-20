@@ -7,18 +7,30 @@ export type EmployeeStatus =
   | "Активний"
   | "У відпустці"
   | "На лікарняному"
-  | "Неактивний"
+  | "Неактивний";
 
 export interface Employee {
   id: number;
+
   first_name: string;
+
   last_name: string;
+
   phone: string | null;
+
   email: string | null;
+
   position: string | null;
+
   employment_type: EmploymentType;
+
   status: EmployeeStatus;
+
   hire_date: string | null;
+
   notes: string | null;
+
+  hourly_rate: number;
+
   created_at: string;
 }
