@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+  createClient as createAdminClient,
+} from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/server";
 
 import type {
@@ -26,6 +30,39 @@ function validateProfileId(
       "Не вдалося визначити користувача."
     );
   }
+}
+
+function getAdminClient() {
+  const supabaseUrl =
+    process.env
+      .NEXT_PUBLIC_SUPABASE_URL;
+
+  const serviceRoleKey =
+    process.env
+      .SUPABASE_SERVICE_ROLE_KEY;
+
+  if (
+    !supabaseUrl ||
+    !serviceRoleKey
+  ) {
+    throw new Error(
+      "Не налаштовано серверний ключ Supabase для керування користувачами."
+    );
+  }
+
+  return createAdminClient(
+    supabaseUrl,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken:
+          false,
+
+        persistSession:
+          false,
+      },
+    }
+  );
 }
 
 async function requireAdmin() {
@@ -66,7 +103,9 @@ async function requireAdmin() {
     )
     .maybeSingle();
 
-  if (currentProfileError) {
+  if (
+    currentProfileError
+  ) {
     throw new Error(
       `Не вдалося перевірити права користувача: ${currentProfileError.message}`
     );
@@ -90,6 +129,43 @@ async function requireAdmin() {
   };
 }
 
+async function getActiveAdminCount(
+  supabase: Awaited<
+    ReturnType<
+      typeof createClient
+    >
+  >
+) {
+  const {
+    count,
+    error,
+  } = await supabase
+    .from("profiles")
+    .select(
+      "id",
+      {
+        count: "exact",
+        head: true,
+      }
+    )
+    .eq(
+      "role",
+      "admin"
+    )
+    .eq(
+      "is_active",
+      true
+    );
+
+  if (error) {
+    throw new Error(
+      `Не вдалося перевірити адміністраторів: ${error.message}`
+    );
+  }
+
+  return count ?? 0;
+}
+
 function refreshUserPages() {
   revalidatePath(
     "/users"
@@ -104,17 +180,26 @@ function refreshUserPages() {
 export async function updateUserProfile(
   formData: FormData
 ) {
-  const profileId = String(
-    formData.get("profile_id") ?? ""
-  ).trim();
+  const profileId =
+    String(
+      formData.get(
+        "profile_id"
+      ) ?? ""
+    ).trim();
 
-  const roleValue = String(
-    formData.get("role") ?? ""
-  ).trim();
+  const roleValue =
+    String(
+      formData.get(
+        "role"
+      ) ?? ""
+    ).trim();
 
-  const employeeValue = String(
-    formData.get("employee_id") ?? ""
-  ).trim();
+  const employeeValue =
+    String(
+      formData.get(
+        "employee_id"
+      ) ?? ""
+    ).trim();
 
   validateProfileId(
     profileId
@@ -210,36 +295,13 @@ export async function updateUserProfile(
       "admin" &&
     targetProfile.is_active
   ) {
-    const {
-      count,
-      error:
-        adminCountError,
-    } = await supabase
-      .from("profiles")
-      .select(
-        "id",
-        {
-          count: "exact",
-          head: true,
-        }
-      )
-      .eq(
-        "role",
-        "admin"
-      )
-      .eq(
-        "is_active",
-        true
+    const adminCount =
+      await getActiveAdminCount(
+        supabase
       );
-
-    if (adminCountError) {
-      throw new Error(
-        `Не вдалося перевірити адміністраторів: ${adminCountError.message}`
-      );
-    }
 
     if (
-      (count ?? 0) <= 1
+      adminCount <= 1
     ) {
       throw new Error(
         "Не можна забрати роль у останнього активного адміністратора."
@@ -379,36 +441,13 @@ export async function setUserActiveStatus(
       "admin" &&
     targetProfile.is_active
   ) {
-    const {
-      count,
-      error:
-        adminCountError,
-    } = await supabase
-      .from("profiles")
-      .select(
-        "id",
-        {
-          count: "exact",
-          head: true,
-        }
-      )
-      .eq(
-        "role",
-        "admin"
-      )
-      .eq(
-        "is_active",
-        true
+    const adminCount =
+      await getActiveAdminCount(
+        supabase
       );
-
-    if (adminCountError) {
-      throw new Error(
-        `Не вдалося перевірити адміністраторів: ${adminCountError.message}`
-      );
-    }
 
     if (
-      (count ?? 0) <= 1
+      adminCount <= 1
     ) {
       throw new Error(
         "Не можна заблокувати останнього активного адміністратора."
@@ -450,5 +489,128 @@ export async function setUserActiveStatus(
       Boolean(
         isActive
       ),
+  };
+}
+
+export async function deleteUserAccount(
+  profileId: string
+) {
+  const normalizedProfileId =
+    String(
+      profileId ?? ""
+    ).trim();
+
+  validateProfileId(
+    normalizedProfileId
+  );
+
+  const {
+    supabase,
+    currentUserId,
+  } =
+    await requireAdmin();
+
+  if (
+    normalizedProfileId ===
+    currentUserId
+  ) {
+    throw new Error(
+      "Не можна видалити власний акаунт."
+    );
+  }
+
+  const {
+    data: targetProfile,
+    error:
+      targetProfileError,
+  } = await supabase
+    .from("profiles")
+    .select(`
+      id,
+      role,
+      is_active
+    `)
+    .eq(
+      "id",
+      normalizedProfileId
+    )
+    .maybeSingle();
+
+  if (
+    targetProfileError
+  ) {
+    throw new Error(
+      `Не вдалося перевірити користувача: ${targetProfileError.message}`
+    );
+  }
+
+  if (!targetProfile) {
+    throw new Error(
+      "Користувача не знайдено."
+    );
+  }
+
+  if (
+    targetProfile.role ===
+      "admin" &&
+    targetProfile.is_active
+  ) {
+    const adminCount =
+      await getActiveAdminCount(
+        supabase
+      );
+
+    if (
+      adminCount <= 1
+    ) {
+      throw new Error(
+        "Не можна видалити останнього активного адміністратора."
+      );
+    }
+  }
+
+  const adminClient =
+    getAdminClient();
+
+  const {
+    error:
+      deleteAuthError,
+  } =
+    await adminClient.auth.admin.deleteUser(
+      normalizedProfileId
+    );
+
+  if (
+    deleteAuthError
+  ) {
+    throw new Error(
+      `Не вдалося видалити акаунт із Supabase Authentication: ${deleteAuthError.message}`
+    );
+  }
+
+  const {
+    error:
+      deleteProfileError,
+  } = await adminClient
+    .from("profiles")
+    .delete()
+    .eq(
+      "id",
+      normalizedProfileId
+    );
+
+  if (
+    deleteProfileError
+  ) {
+    throw new Error(
+      `Акаунт видалено, але не вдалося очистити профіль: ${deleteProfileError.message}`
+    );
+  }
+
+  refreshUserPages();
+
+  return {
+    id:
+      normalizedProfileId,
   };
 }

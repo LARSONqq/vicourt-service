@@ -10,6 +10,7 @@ import {
 } from "next/navigation";
 
 import {
+  deleteUserAccount,
   setUserActiveStatus,
   updateUserProfile,
 } from "@/app/actions/profileActions";
@@ -100,6 +101,11 @@ function UserRow({
   ] = useState(false);
 
   const [
+    isDeleting,
+    setIsDeleting,
+  ] = useState(false);
+
+  const [
     errorMessage,
     setErrorMessage,
   ] = useState("");
@@ -128,13 +134,15 @@ function UserRow({
     profile.email ||
     "Користувач";
 
+  const isBusy =
+    isSubmitting ||
+    isChangingStatus ||
+    isDeleting;
+
   async function handleSubmit(
     formData: FormData
   ) {
-    if (
-      isSubmitting ||
-      isChangingStatus
-    ) {
+    if (isBusy) {
       return;
     }
 
@@ -164,10 +172,7 @@ function UserRow({
   }
 
   async function handleStatusChange() {
-    if (
-      isChangingStatus ||
-      isSubmitting
-    ) {
+    if (isBusy) {
       return;
     }
 
@@ -214,6 +219,53 @@ function UserRow({
       );
     } finally {
       setIsChangingStatus(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (
+      isBusy ||
+      isCurrentUser
+    ) {
+      return;
+    }
+
+    const firstConfirmation =
+      window.confirm(
+        `Видалити акаунт "${displayName}"?`
+      );
+
+    if (!firstConfirmation) {
+      return;
+    }
+
+    const secondConfirmation =
+      window.confirm(
+        "Цю дію не можна скасувати. Користувач буде повністю видалений із системи та більше не зможе увійти. Продовжити?"
+      );
+
+    if (!secondConfirmation) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      await deleteUserAccount(
+        profile.id
+      );
+
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Не вдалося видалити користувача."
+      );
+
+      setIsDeleting(false);
     }
   }
 
@@ -288,8 +340,8 @@ function UserRow({
           </div>
         </div>
 
-        {/* ACCOUNT STATUS */}
-        <div className="flex min-w-0 flex-col gap-3 lg:w-[220px] lg:shrink-0 lg:items-end">
+        {/* ACCOUNT ACTIONS */}
+        <div className="flex min-w-0 flex-col gap-3 lg:w-[240px] lg:shrink-0 lg:items-end">
           <div className="min-w-0 rounded-lg bg-gray-50 p-3 text-xs text-gray-400 lg:w-full">
             <p>
               ID акаунта
@@ -301,27 +353,43 @@ function UserRow({
           </div>
 
           {!isCurrentUser && (
-            <button
-              type="button"
-              onClick={
-                handleStatusChange
-              }
-              disabled={
-                isChangingStatus ||
-                isSubmitting
-              }
-              className={`min-h-10 w-full rounded-lg border px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 lg:w-fit ${
-                isActive
-                  ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-                  : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
-              }`}
-            >
-              {isChangingStatus
-                ? "Збереження..."
-                : isActive
-                  ? "Заблокувати"
-                  : "Розблокувати"}
-            </button>
+            <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:justify-end">
+              <button
+                type="button"
+                onClick={
+                  handleStatusChange
+                }
+                disabled={
+                  isBusy
+                }
+                className={`min-h-10 rounded-lg border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  isActive
+                    ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                    : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+                }`}
+              >
+                {isChangingStatus
+                  ? "Збереження..."
+                  : isActive
+                    ? "Заблокувати"
+                    : "Розблокувати"}
+              </button>
+
+              <button
+                type="button"
+                onClick={
+                  handleDelete
+                }
+                disabled={
+                  isBusy
+                }
+                className="min-h-10 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeleting
+                  ? "Видалення..."
+                  : "Видалити"}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -358,7 +426,6 @@ function UserRow({
         )}
 
         <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto]">
-          {/* ROLE */}
           <div className="min-w-0">
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Роль
@@ -373,8 +440,7 @@ function UserRow({
               value={role}
               disabled={
                 isCurrentUser ||
-                isSubmitting ||
-                isChangingStatus
+                isBusy
               }
               onChange={(
                 event
@@ -408,7 +474,6 @@ function UserRow({
             )}
           </div>
 
-          {/* EMPLOYEE */}
           <div className="min-w-0">
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Прив’язаний працівник
@@ -418,8 +483,7 @@ function UserRow({
               name="employee_id"
               value={employeeId}
               disabled={
-                isSubmitting ||
-                isChangingStatus
+                isBusy
               }
               onChange={(
                 event
@@ -483,13 +547,11 @@ function UserRow({
             </p>
           </div>
 
-          {/* SAVE */}
           <div className="flex min-w-0 items-end">
             <button
               type="submit"
               disabled={
-                isSubmitting ||
-                isChangingStatus
+                isBusy
               }
               className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
             >
@@ -645,7 +707,6 @@ export default function UserManagement({
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
-      {/* STATS */}
       <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
           <p className="text-xs leading-4 text-gray-500 sm:text-sm">
@@ -712,9 +773,7 @@ export default function UserManagement({
         </div>
       </div>
 
-      {/* USERS */}
       <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
-        {/* HEADER */}
         <div className="border-b p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
             Користувачі системи
@@ -726,7 +785,6 @@ export default function UserManagement({
           </p>
         </div>
 
-        {/* FILTERS */}
         <div className="grid min-w-0 grid-cols-1 gap-3 border-b bg-gray-50 p-3 sm:p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_220px]">
           <div className="min-w-0 md:col-span-2 xl:col-span-1">
             <input
@@ -810,7 +868,6 @@ export default function UserManagement({
           </select>
         </div>
 
-        {/* COUNT */}
         <div className="border-b px-4 py-3 sm:px-5">
           <p className="text-sm text-gray-500">
             Знайдено:{" "}
@@ -822,7 +879,6 @@ export default function UserManagement({
           </p>
         </div>
 
-        {/* EMPTY */}
         {filteredProfiles.length ===
         0 ? (
           <div className="p-6 text-center sm:p-8">

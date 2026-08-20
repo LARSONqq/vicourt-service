@@ -115,9 +115,9 @@ export default function EmployeeList({
   const [
     editingId,
     setEditingId,
-  ] = useState<
-    number | null
-  >(null);
+  ] = useState<number | null>(
+    null
+  );
 
   const [
     tasks,
@@ -421,7 +421,6 @@ export default function EmployeeList({
 
   return (
     <div className="min-w-0 space-y-5">
-      {/* WORKLOAD ERROR */}
       {workloadError && (
         <div className="rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm leading-5 text-orange-700 sm:p-4">
           Працівники завантажилися,
@@ -430,14 +429,11 @@ export default function EmployeeList({
         </div>
       )}
 
-      {/* FILTERS */}
       <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_210px_210px]">
         <input
           type="search"
           value={search}
-          onChange={(
-            event
-          ) =>
+          onChange={(event) =>
             setSearch(
               event.target.value
             )
@@ -448,9 +444,7 @@ export default function EmployeeList({
 
         <select
           value={status}
-          onChange={(
-            event
-          ) =>
+          onChange={(event) =>
             setStatus(
               event.target.value
             )
@@ -463,8 +457,7 @@ export default function EmployeeList({
                 key={item}
                 value={item}
               >
-                {item ===
-                "Усі"
+                {item === "Усі"
                   ? "Усі статуси"
                   : item}
               </option>
@@ -473,12 +466,8 @@ export default function EmployeeList({
         </select>
 
         <select
-          value={
-            employmentType
-          }
-          onChange={(
-            event
-          ) =>
+          value={employmentType}
+          onChange={(event) =>
             setEmploymentType(
               event.target.value
             )
@@ -491,8 +480,7 @@ export default function EmployeeList({
                 key={item}
                 value={item}
               >
-                {item ===
-                "Усі"
+                {item === "Усі"
                   ? "Усі типи роботи"
                   : item}
               </option>
@@ -501,7 +489,6 @@ export default function EmployeeList({
         </select>
       </div>
 
-      {/* COUNT */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500">
           Знайдено працівників:{" "}
@@ -519,7 +506,6 @@ export default function EmployeeList({
         )}
       </div>
 
-      {/* EMPTY */}
       {filteredEmployees.length ===
       0 ? (
         <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
@@ -561,9 +547,7 @@ export default function EmployeeList({
 
               return (
                 <article
-                  key={
-                    employee.id
-                  }
+                  key={employee.id}
                   className={`min-w-0 overflow-hidden rounded-xl border bg-white ${
                     isEditing
                       ? "xl:col-span-2 2xl:col-span-3"
@@ -571,13 +555,11 @@ export default function EmployeeList({
                   }`}
                 >
                   {isEditing ? (
-                    /* EDIT MODE */
                     <div className="min-w-0 p-3 sm:p-5">
                       <div className="mb-4 flex min-w-0 items-center justify-between gap-3 sm:mb-5">
                         <div className="min-w-0">
                           <h3 className="text-base font-semibold text-gray-900 sm:text-lg">
-                            Редагування
-                            працівника
+                            Редагування працівника
                           </h3>
 
                           <p className="mt-1 truncate text-sm text-gray-500">
@@ -623,9 +605,7 @@ export default function EmployeeList({
                     </div>
                   ) : (
                     <>
-                      {/* CARD BODY */}
                       <div className="min-w-0 p-4 sm:p-5">
-                        {/* PERSON */}
                         <div className="flex min-w-0 items-start justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-3">
                             <Link
@@ -669,7 +649,6 @@ export default function EmployeeList({
                           </span>
                         </div>
 
-                        {/* CONTACTS + WORK */}
                         <div className="mt-5 space-y-3 border-t pt-4 text-sm">
                           {employee.phone && (
                             <div className="grid min-w-0 grid-cols-[90px_minmax(0,1fr)] gap-3">
@@ -732,7 +711,6 @@ export default function EmployeeList({
                           )}
                         </div>
 
-                        {/* WORKLOAD */}
                         <div className="mt-5 border-t pt-4">
                           <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">
                             Навантаження
@@ -743,9 +721,7 @@ export default function EmployeeList({
                               {[0, 1, 2].map(
                                 (item) => (
                                   <div
-                                    key={
-                                      item
-                                    }
+                                    key={item}
                                     className="h-[66px] animate-pulse rounded-lg bg-gray-100"
                                   />
                                 )
@@ -792,7 +768,6 @@ export default function EmployeeList({
                           )}
                         </div>
 
-                        {/* NOTES */}
                         {employee.notes && (
                           <div className="mt-4 border-t pt-4">
                             <p className="text-xs text-gray-500">
@@ -808,9 +783,8 @@ export default function EmployeeList({
                         )}
                       </div>
 
-                      {/* ACTIONS */}
                       <div
-                        className={`grid gap-2 border-t bg-gray-50 p-3 sm:flex sm:flex-wrap sm:justify-end sm:px-5 ${
+                        className={`grid gap-2 border-t bg-gray-50 p-3 sm:px-5 ${
                           canManage
                             ? "grid-cols-3"
                             : "grid-cols-1"
@@ -818,7 +792,7 @@ export default function EmployeeList({
                       >
                         <Link
                           href={`/employees/${employee.id}`}
-                          className="flex min-h-10 items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-medium text-green-700 transition hover:bg-green-50"
+                          className="flex min-h-10 min-w-0 items-center justify-center rounded-lg px-2 py-2 text-center text-sm font-medium text-green-700 transition hover:bg-green-50"
                         >
                           Відкрити
                         </Link>
@@ -832,7 +806,7 @@ export default function EmployeeList({
                                   employee.id
                                 )
                               }
-                              className="min-h-10 rounded-lg px-2 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50 sm:px-3"
+                              className="min-h-10 min-w-0 rounded-lg px-2 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
                             >
                               Редагувати
                             </button>
@@ -842,25 +816,21 @@ export default function EmployeeList({
                                 null,
                                 employee.id
                               )}
-                              onSubmit={(
-                                event
-                              ) => {
+                              onSubmit={(event) => {
                                 const confirmed =
                                   window.confirm(
                                     `Видалити працівника «${employee.last_name} ${employee.first_name}»?`
                                   );
 
-                                if (
-                                  !confirmed
-                                ) {
+                                if (!confirmed) {
                                   event.preventDefault();
                                 }
                               }}
-                              className="w-full"
+                              className="min-w-0"
                             >
                               <button
                                 type="submit"
-                                className="min-h-10 w-full rounded-lg px-2 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 sm:px-3"
+                                className="min-h-10 w-full min-w-0 rounded-lg px-2 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
                               >
                                 Видалити
                               </button>
