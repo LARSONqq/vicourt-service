@@ -39,6 +39,61 @@ function formatDate(
   ).format(parsedDate);
 }
 
+function formatMoney(
+  value: number
+) {
+  const safeValue =
+    Number.isFinite(value)
+      ? value
+      : 0;
+
+  return new Intl.NumberFormat(
+    "uk-UA",
+    {
+      style: "currency",
+      currency: "UAH",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }
+  ).format(safeValue);
+}
+
+function formatQuantity(
+  value: number
+) {
+  const safeValue =
+    Number.isFinite(value)
+      ? value
+      : 0;
+
+  return new Intl.NumberFormat(
+    "uk-UA",
+    {
+      maximumFractionDigits: 3,
+    }
+  ).format(safeValue);
+}
+
+function getPerformerName(
+  movement: WarehouseMovement
+) {
+  const name =
+    movement.performed_by_name
+      ?.trim();
+
+  if (name) {
+    return name;
+  }
+
+  if (
+    movement.performed_by
+  ) {
+    return "Користувач";
+  }
+
+  return "Не зафіксовано";
+}
+
 export default function WarehouseMovements({
   movements = [],
 }: Props) {
@@ -125,6 +180,8 @@ export default function WarehouseMovements({
               movement.object
                 ?.name,
               movement.note,
+              movement
+                .performed_by_name,
             ]
               .filter(Boolean)
               .join(" ")
@@ -145,9 +202,11 @@ export default function WarehouseMovements({
           const matchesObject =
             selectedObjectId ===
               "Усі" ||
-            (selectedObjectId ===
-              "Без об’єкта" &&
-              !movement.object) ||
+            (
+              selectedObjectId ===
+                "Без об’єкта" &&
+              !movement.object
+            ) ||
             String(
               movement.object
                 ?.id
@@ -177,8 +236,9 @@ export default function WarehouseMovements({
         </h2>
 
         <p className="mt-1 text-sm text-gray-500">
-          Приходи та списання
-          матеріалів
+          Приходи, списання,
+          вартість та виконавці
+          складських операцій
         </p>
       </div>
 
@@ -196,7 +256,7 @@ export default function WarehouseMovements({
                 event.target.value
               )
             }
-            placeholder="Пошук за матеріалом, об’єктом або приміткою"
+            placeholder="Матеріал, об’єкт, виконавець або примітка"
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
           />
 
@@ -322,6 +382,20 @@ export default function WarehouseMovements({
                   movement.movement_type ===
                   "Прихід";
 
+                const quantity =
+                  Number(
+                    movement.quantity
+                  ) || 0;
+
+                const unitPrice =
+                  Number(
+                    movement.unit_price
+                  ) || 0;
+
+                const totalPrice =
+                  quantity *
+                  unitPrice;
+
                 return (
                   <article
                     key={
@@ -385,13 +459,52 @@ export default function WarehouseMovements({
                         {isIncome
                           ? "+"
                           : "−"}
-                        {Number(
-                          movement.quantity
+                        {formatQuantity(
+                          quantity
                         )}{" "}
                         {movement.item
                           ?.unit ||
                           ""}
                       </p>
+                    </div>
+
+                    {/* PRICE */}
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <div className="min-w-0 rounded-lg bg-gray-50 p-3">
+                        <p className="text-xs text-gray-500">
+                          Ціна
+                        </p>
+
+                        <p className="mt-1 break-words font-semibold text-gray-800">
+                          {formatMoney(
+                            unitPrice
+                          )}
+                        </p>
+
+                        {movement.item
+                          ?.unit && (
+                          <p className="mt-0.5 text-[11px] text-gray-400">
+                            за{" "}
+                            {
+                              movement
+                                .item
+                                .unit
+                            }
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 rounded-lg bg-gray-50 p-3">
+                        <p className="text-xs text-gray-500">
+                          Сума
+                        </p>
+
+                        <p className="mt-1 break-words font-semibold text-gray-900">
+                          {formatMoney(
+                            totalPrice
+                          )}
+                        </p>
+                      </div>
                     </div>
 
                     {/* DETAILS */}
@@ -421,6 +534,18 @@ export default function WarehouseMovements({
 
                       <div className="min-w-0">
                         <p className="text-xs text-gray-500">
+                          Виконав
+                        </p>
+
+                        <p className="mt-1 break-words text-sm font-medium text-gray-800">
+                          {getPerformerName(
+                            movement
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">
                           Примітка
                         </p>
 
@@ -438,7 +563,7 @@ export default function WarehouseMovements({
 
           {/* DESKTOP TABLE */}
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[900px]">
+            <table className="w-full min-w-[1400px]">
               <thead className="bg-gray-50 text-left">
                 <tr>
                   <th className="p-4">
@@ -458,7 +583,19 @@ export default function WarehouseMovements({
                   </th>
 
                   <th className="p-4">
+                    Ціна
+                  </th>
+
+                  <th className="p-4">
+                    Сума
+                  </th>
+
+                  <th className="p-4">
                     Об’єкт
+                  </th>
+
+                  <th className="p-4">
+                    Виконав
                   </th>
 
                   <th className="p-4">
@@ -474,12 +611,26 @@ export default function WarehouseMovements({
                       movement.movement_type ===
                       "Прихід";
 
+                    const quantity =
+                      Number(
+                        movement.quantity
+                      ) || 0;
+
+                    const unitPrice =
+                      Number(
+                        movement.unit_price
+                      ) || 0;
+
+                    const totalPrice =
+                      quantity *
+                      unitPrice;
+
                     return (
                       <tr
                         key={
                           movement.id
                         }
-                        className="border-t"
+                        className="border-t align-top"
                       >
                         <td className="whitespace-nowrap p-4 text-sm text-gray-500">
                           {formatDate(
@@ -501,14 +652,14 @@ export default function WarehouseMovements({
                           </span>
                         </td>
 
-                        <td className="p-4 font-medium">
+                        <td className="p-4 font-medium text-gray-900">
                           {movement.item
                             ?.name ||
                             "Позицію видалено"}
                         </td>
 
                         <td
-                          className={`p-4 font-semibold ${
+                          className={`whitespace-nowrap p-4 font-semibold ${
                             isIncome
                               ? "text-green-700"
                               : "text-orange-700"
@@ -517,12 +668,26 @@ export default function WarehouseMovements({
                           {isIncome
                             ? "+"
                             : "−"}
-                          {Number(
-                            movement.quantity
+
+                          {formatQuantity(
+                            quantity
                           )}{" "}
+
                           {movement.item
                             ?.unit ||
                             ""}
+                        </td>
+
+                        <td className="whitespace-nowrap p-4 text-gray-700">
+                          {formatMoney(
+                            unitPrice
+                          )}
+                        </td>
+
+                        <td className="whitespace-nowrap p-4 font-semibold text-gray-900">
+                          {formatMoney(
+                            totalPrice
+                          )}
                         </td>
 
                         <td className="p-4">
@@ -544,9 +709,19 @@ export default function WarehouseMovements({
                           )}
                         </td>
 
-                        <td className="p-4 text-gray-600">
-                          {movement.note ||
-                            "Без примітки"}
+                        <td className="p-4">
+                          <span className="break-words text-sm font-medium text-gray-700">
+                            {getPerformerName(
+                              movement
+                            )}
+                          </span>
+                        </td>
+
+                        <td className="max-w-[300px] p-4 text-gray-600">
+                          <span className="whitespace-pre-wrap break-words">
+                            {movement.note ||
+                              "Без примітки"}
+                          </span>
                         </td>
                       </tr>
                     );

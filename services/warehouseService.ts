@@ -51,6 +51,9 @@ export async function getWarehouseMovements(): Promise<
       quantity,
       note,
       created_at,
+      performed_by,
+      performed_by_name,
+      unit_price,
       item:warehouse_items (
         id,
         name,
