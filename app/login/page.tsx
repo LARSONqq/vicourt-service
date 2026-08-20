@@ -61,6 +61,17 @@ export default function LoginPage() {
       setBlockedMessage(
         "Ваш акаунт заблоковано. Зверніться до адміністратора ViCourt."
       );
+
+      return;
+    }
+
+    if (
+      params.get("error") ===
+      "confirmation"
+    ) {
+      setErrorMessage(
+        "Не вдалося підтвердити email. Посилання могло застаріти або вже бути використане."
+      );
     }
   }, []);
 
