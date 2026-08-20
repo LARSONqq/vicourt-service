@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ObjectItem } from "@/types/object";
-import { WarehouseItem } from "@/types/warehouseItem";
+
+import type { ObjectItem } from "@/types/object";
+import type { WarehouseItem } from "@/types/warehouseItem";
+
 import AddWarehouseItemForm from "./AddWarehouseItemForm";
 import AddWarehouseMovementForm from "./AddWarehouseMovementForm";
 
@@ -11,67 +13,128 @@ type Props = {
   objects: ObjectItem[];
 };
 
-type ActiveForm = "item" | "movement" | null;
+type ActiveForm =
+  | "item"
+  | "movement"
+  | null;
 
 export default function WarehouseActions({
   items,
   objects,
 }: Props) {
-  const [activeForm, setActiveForm] =
-    useState<ActiveForm>(null);
+  const [
+    activeForm,
+    setActiveForm,
+  ] = useState<ActiveForm>(
+    null
+  );
 
-  function toggleForm(form: ActiveForm) {
-    setActiveForm((current) =>
-      current === form ? null : form
+  function toggleForm(
+    form: ActiveForm
+  ) {
+    setActiveForm(
+      (current) =>
+        current === form
+          ? null
+          : form
     );
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap gap-3">
+    <div className="min-w-0">
+      {/* ACTION BUTTONS */}
+      <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-3">
         <button
           type="button"
-          onClick={() => toggleForm("item")}
-          className="rounded-lg bg-green-600 px-5 py-3 font-medium text-white hover:bg-green-700"
+          onClick={() =>
+            toggleForm(
+              "item"
+            )
+          }
+          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium transition sm:w-auto ${
+            activeForm ===
+            "item"
+              ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+              : "bg-green-600 text-white hover:bg-green-700"
+          }`}
         >
-          {activeForm === "item"
-            ? "Закрити"
+          {activeForm ===
+          "item"
+            ? "Закрити форму"
             : "+ Додати позицію"}
         </button>
 
         <button
           type="button"
-          onClick={() => toggleForm("movement")}
-          className="rounded-lg border border-green-600 px-5 py-3 font-medium text-green-700 hover:bg-green-50"
+          onClick={() =>
+            toggleForm(
+              "movement"
+            )
+          }
+          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium transition sm:w-auto ${
+            activeForm ===
+            "movement"
+              ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+              : "border border-green-600 bg-white text-green-700 hover:bg-green-50"
+          }`}
         >
-          {activeForm === "movement"
-            ? "Закрити"
+          {activeForm ===
+          "movement"
+            ? "Закрити форму"
             : "Прихід / списання"}
         </button>
       </div>
 
-      {activeForm === "item" && (
-        <div className="mt-5 rounded-xl border bg-white p-5">
-          <h2 className="mb-5 text-xl font-semibold">
-            Нова позиція складу
-          </h2>
+      {/* ADD ITEM */}
+      {activeForm ===
+        "item" && (
+        <div className="mt-4 min-w-0 rounded-xl border bg-white p-4 sm:mt-5 sm:p-5">
+          <div className="mb-4 sm:mb-5">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+              Нова позиція складу
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Додай новий матеріал
+              або товар на склад
+            </p>
+          </div>
 
           <AddWarehouseItemForm
-            onCreated={() => setActiveForm(null)}
+            onCreated={() =>
+              setActiveForm(
+                null
+              )
+            }
           />
         </div>
       )}
 
-      {activeForm === "movement" && (
-        <div className="mt-5 rounded-xl border bg-white p-5">
-          <h2 className="mb-5 text-xl font-semibold">
-            Рух товару
-          </h2>
+      {/* MOVEMENT */}
+      {activeForm ===
+        "movement" && (
+        <div className="mt-4 min-w-0 rounded-xl border bg-white p-4 sm:mt-5 sm:p-5">
+          <div className="mb-4 sm:mb-5">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+              Рух товару
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Прихід, списання або
+              передача матеріалу
+            </p>
+          </div>
 
           <AddWarehouseMovementForm
             items={items}
-            objects={objects}
-            onCreated={() => setActiveForm(null)}
+            objects={
+              objects
+            }
+            onCreated={() =>
+              setActiveForm(
+                null
+              )
+            }
           />
         </div>
       )}

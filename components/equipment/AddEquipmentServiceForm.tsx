@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+
 import { createEquipmentServiceRecord } from "@/app/actions/equipmentServiceActions";
+
 import { equipmentServiceTypes } from "@/constants/equipmentService";
+
 import type { AppCurrency } from "@/types/appSettings";
 import type { Equipment } from "@/types/equipment";
 
@@ -14,10 +17,15 @@ type Props = {
 
 function getToday() {
   const date = new Date();
-  const timezoneOffset = date.getTimezoneOffset();
+
+  const timezoneOffset =
+    date.getTimezoneOffset();
 
   return new Date(
-    date.getTime() - timezoneOffset * 60 * 1000
+    date.getTime() -
+      timezoneOffset *
+        60 *
+        1000
   )
     .toISOString()
     .split("T")[0];
@@ -28,15 +36,31 @@ export default function AddEquipmentServiceForm({
   currency,
   onCreated,
 }: Props) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [
+    isSubmitting,
+    setIsSubmitting,
+  ] = useState(false);
 
-  async function handleSubmit(formData: FormData) {
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] = useState("");
+
+  async function handleSubmit(
+    formData: FormData
+  ) {
+    if (isSubmitting) {
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage("");
 
     try {
-      await createEquipmentServiceRecord(formData);
+      await createEquipmentServiceRecord(
+        formData
+      );
+
       onCreated();
     } catch (error) {
       setErrorMessage(
@@ -49,68 +73,102 @@ export default function AddEquipmentServiceForm({
     }
   }
 
-  if (equipment.length === 0) {
+  if (
+    equipment.length ===
+    0
+  ) {
     return (
-      <p className="text-gray-500">
-        Спочатку додай хоча б одну одиницю техніки.
-      </p>
+      <div className="rounded-xl border border-dashed bg-gray-50 p-6 text-center">
+        <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white">
+          🔧
+        </div>
+
+        <p className="mt-3 font-medium text-gray-700">
+          Техніки ще немає
+        </p>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Спочатку додай хоча б одну
+          одиницю техніки.
+        </p>
+      </div>
     );
   }
 
   return (
-    <form action={handleSubmit} className="space-y-5">
+    <form
+      action={handleSubmit}
+      className="min-w-0 space-y-5"
+    >
+      {/* ERROR */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
           {errorMessage}
         </div>
       )}
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">
+      {/* EQUIPMENT */}
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
           Техніка
         </label>
 
         <select
           name="equipment_id"
           defaultValue=""
-          className="w-full rounded-lg border bg-white p-3"
+          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           required
         >
-          <option value="" disabled>
+          <option
+            value=""
+            disabled
+          >
             Обери техніку
           </option>
 
-          {equipment.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name} —{" "}
-              {item.inventory_number || "без номера"}
-            </option>
-          ))}
+          {equipment.map(
+            (item) => (
+              <option
+                key={item.id}
+                value={item.id}
+              >
+                {item.name} —{" "}
+                {item.inventory_number ||
+                  "без номера"}
+              </option>
+            )
+          )}
         </select>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+      {/* TYPE + DATE */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Тип обслуговування
           </label>
 
           <select
             name="service_type"
             defaultValue="Планове обслуговування"
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           >
-            {equipmentServiceTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
+            {equipmentServiceTypes.map(
+              (type) => (
+                <option
+                  key={type}
+                  value={type}
+                >
+                  {type}
+                </option>
+              )
+            )}
           </select>
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Дата обслуговування
           </label>
 
@@ -118,35 +176,41 @@ export default function AddEquipmentServiceForm({
             type="date"
             name="service_date"
             defaultValue={getToday()}
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+      {/* COST + PERFORMED BY + NEXT DATE */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Вартість
           </label>
 
           <input
             type="number"
             name="cost"
+            inputMode="decimal"
             min="0"
             step="0.01"
             defaultValue="0"
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           />
 
           <p className="mt-2 text-xs text-gray-500">
-            Вартість у валюті {currency}.
+            Вартість у валюті{" "}
+            <span className="font-medium text-gray-700">
+              {currency}
+            </span>
+            .
           </p>
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Хто виконав
           </label>
 
@@ -154,29 +218,31 @@ export default function AddEquipmentServiceForm({
             type="text"
             name="performed_by"
             placeholder="Працівник або сервісний центр"
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
           />
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0 md:col-span-2 xl:col-span-1">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Наступне обслуговування
           </label>
 
           <input
             type="date"
             name="next_service_date"
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           />
 
-          <p className="mt-2 text-xs text-gray-500">
-            Дата оновиться в картці техніки.
+          <p className="mt-2 text-xs leading-4 text-gray-500">
+            Дата оновиться в картці
+            техніки.
           </p>
         </div>
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">
+      {/* DESCRIPTION */}
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
           Опис робіт
         </label>
 
@@ -184,19 +250,22 @@ export default function AddEquipmentServiceForm({
           name="description"
           rows={4}
           placeholder="Що було зроблено, які запчастини замінено та які проблеми виявлено"
-          className="w-full resize-none rounded-lg border bg-white p-3"
+          className="w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="rounded-lg bg-green-600 px-5 py-3 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSubmitting
-          ? "Збереження..."
-          : "Додати запис обслуговування"}
-      </button>
+      {/* SAVE */}
+      <div className="border-t pt-4">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+        >
+          {isSubmitting
+            ? "Збереження..."
+            : "Додати запис обслуговування"}
+        </button>
+      </div>
     </form>
   );
 }

@@ -88,6 +88,64 @@ export async function updateSession(
     pathname === "/login" ||
     pathname === "/register";
 
+  let isActiveUser = false;
+
+  if (
+    claims?.sub
+  ) {
+    const {
+      data: profile,
+      error: profileError,
+    } = await supabase
+      .from("profiles")
+      .select("is_active")
+      .eq(
+        "id",
+        claims.sub
+      )
+      .maybeSingle();
+
+    if (
+      !profileError &&
+      profile?.is_active ===
+        true
+    ) {
+      isActiveUser = true;
+    }
+  }
+
+  // Заблокований користувач
+  // не може відкривати ViCourt.
+  if (
+    claims &&
+    !isActiveUser
+  ) {
+    if (
+      pathname === "/login"
+    ) {
+      return supabaseResponse;
+    }
+
+    const url =
+      request.nextUrl.clone();
+
+    url.pathname =
+      "/login";
+
+    url.search =
+      "";
+
+    url.searchParams.set(
+      "blocked",
+      "1"
+    );
+
+    return NextResponse.redirect(
+      url
+    );
+  }
+
+  // Неавторизований користувач
   if (
     !claims &&
     !isPublicRoute
@@ -106,8 +164,11 @@ export async function updateSession(
     );
   }
 
+  // Активний авторизований користувач
+  // не повинен бачити login/register.
   if (
     claims &&
+    isActiveUser &&
     isGuestOnlyPage
   ) {
     const url =

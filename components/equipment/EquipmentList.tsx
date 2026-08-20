@@ -89,6 +89,20 @@ export default function EquipmentList({
   employees,
   canManage = false,
 }: Props) {
+  const safeEquipment =
+    Array.isArray(
+      equipment
+    )
+      ? equipment
+      : [];
+
+  const safeEmployees =
+    Array.isArray(
+      employees
+    )
+      ? employees
+      : [];
+
   const [
     search,
     setSearch,
@@ -107,14 +121,14 @@ export default function EquipmentList({
   const [
     editingId,
     setEditingId,
-  ] = useState<number | null>(
-    null
-  );
+  ] = useState<
+    number | null
+  >(null);
 
   const categories =
     useMemo(() => {
       const values =
-        equipment
+        safeEquipment
           .map(
             (item) =>
               item.category
@@ -132,12 +146,12 @@ export default function EquipmentList({
           new Set(values)
         ),
       ];
-    }, [equipment]);
+    }, [safeEquipment]);
 
   const statuses =
     useMemo(() => {
       const values =
-        equipment
+        safeEquipment
           .map(
             (item) =>
               item.status
@@ -150,7 +164,7 @@ export default function EquipmentList({
           new Set(values)
         ),
       ];
-    }, [equipment]);
+    }, [safeEquipment]);
 
   const filteredEquipment =
     useMemo(() => {
@@ -159,7 +173,7 @@ export default function EquipmentList({
           .trim()
           .toLowerCase();
 
-      return equipment.filter(
+      return safeEquipment.filter(
         (item) => {
           const searchableText =
             [
@@ -180,13 +194,16 @@ export default function EquipmentList({
             );
 
           const matchesCategory =
-            category === "Усі" ||
+            category ===
+              "Усі" ||
             item.category ===
               category;
 
           const matchesStatus =
-            status === "Усі" ||
-            item.status === status;
+            status ===
+              "Усі" ||
+            item.status ===
+              status;
 
           return (
             matchesSearch &&
@@ -196,7 +213,7 @@ export default function EquipmentList({
         }
       );
     }, [
-      equipment,
+      safeEquipment,
       search,
       category,
       status,
@@ -223,28 +240,33 @@ export default function EquipmentList({
       : 7;
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-3 rounded-xl border bg-white p-4 lg:grid-cols-[1fr_220px_220px]">
+    <div className="min-w-0 space-y-5">
+      {/* FILTERS */}
+      <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_220px_220px]">
         <input
           type="search"
           value={search}
-          onChange={(event) =>
+          onChange={(
+            event
+          ) =>
             setSearch(
               event.target.value
             )
           }
           placeholder="Пошук за назвою, номером, відповідальним або локацією"
-          className="w-full rounded-lg border px-4 py-3 outline-none focus:border-green-600"
+          className="min-h-11 w-full min-w-0 rounded-lg border px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
         />
 
         <select
           value={category}
-          onChange={(event) =>
+          onChange={(
+            event
+          ) =>
             setCategory(
               event.target.value
             )
           }
-          className="w-full rounded-lg border bg-white px-4 py-3"
+          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
         >
           {categories.map(
             (item) => (
@@ -252,7 +274,8 @@ export default function EquipmentList({
                 key={item}
                 value={item}
               >
-                {item === "Усі"
+                {item ===
+                "Усі"
                   ? "Усі категорії"
                   : item}
               </option>
@@ -262,12 +285,14 @@ export default function EquipmentList({
 
         <select
           value={status}
-          onChange={(event) =>
+          onChange={(
+            event
+          ) =>
             setStatus(
               event.target.value
             )
           }
-          className="w-full rounded-lg border bg-white px-4 py-3"
+          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
         >
           {statuses.map(
             (item) => (
@@ -275,7 +300,8 @@ export default function EquipmentList({
                 key={item}
                 value={item}
               >
-                {item === "Усі"
+                {item ===
+                "Усі"
                   ? "Усі статуси"
                   : item}
               </option>
@@ -284,12 +310,15 @@ export default function EquipmentList({
         </select>
       </div>
 
+      {/* COUNT */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500">
           Знайдено одиниць техніки:{" "}
-          {
-            filteredEquipment.length
-          }
+          <span className="font-semibold text-gray-800">
+            {
+              filteredEquipment.length
+            }
+          </span>
         </p>
 
         {!canManage && (
@@ -299,226 +328,442 @@ export default function EquipmentList({
         )}
       </div>
 
+      {/* EMPTY */}
       {filteredEquipment.length ===
       0 ? (
-        <div className="rounded-xl border bg-white p-8 text-center">
-          <p className="text-gray-500">
-            Техніки за цими
-            параметрами не знайдено.
+        <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+            🛠️
+          </div>
+
+          <p className="mt-3 font-medium text-gray-700">
+            Техніки не знайдено
+          </p>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Спробуй змінити пошук,
+            категорію або статус.
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-white">
-          <table
-            className={`w-full ${
-              canManage
-                ? "min-w-[1250px]"
-                : "min-w-[1100px]"
-            }`}
-          >
-            <thead className="bg-gray-50 text-left">
-              <tr>
-                <th className="p-4">
-                  Назва
-                </th>
+        <>
+          {/* MOBILE CARDS */}
+          <div className="space-y-3 md:hidden">
+            {filteredEquipment.map(
+              (item) => {
+                const serviceOverdue =
+                  isServiceOverdue(
+                    item.next_service_date
+                  );
 
-                <th className="p-4">
-                  Категорія
-                </th>
+                const isEditing =
+                  canManage &&
+                  editingId ===
+                    item.id;
 
-                <th className="p-4">
-                  Інвентарний номер
-                </th>
+                return (
+                  <article
+                    key={
+                      item.id
+                    }
+                    className={`min-w-0 rounded-xl border bg-white p-4 ${
+                      serviceOverdue
+                        ? "border-red-200"
+                        : ""
+                    }`}
+                  >
+                    {/* TOP */}
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="break-words font-semibold text-gray-900">
+                          {
+                            item.name
+                          }
+                        </h3>
 
-                <th className="p-4">
-                  Статус
-                </th>
-
-                <th className="p-4">
-                  Відповідальний
-                </th>
-
-                <th className="p-4">
-                  Локація
-                </th>
-
-                <th className="p-4">
-                  Наступний сервіс
-                </th>
-
-                {canManage && (
-                  <th className="p-4 text-right">
-                    Дії
-                  </th>
-                )}
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredEquipment.map(
-                (item) => {
-                  const serviceOverdue =
-                    isServiceOverdue(
-                      item.next_service_date
-                    );
-
-                  const isEditing =
-                    canManage &&
-                    editingId ===
-                      item.id;
-
-                  return (
-                    <Fragment
-                      key={item.id}
-                    >
-                      <tr className="border-t">
-                        <td className="p-4">
-                          <p className="font-medium">
-                            {
-                              item.name
-                            }
-                          </p>
-
-                          {item.notes && (
-                            <p className="mt-1 max-w-xs truncate text-sm text-gray-500">
-                              {
-                                item.notes
-                              }
-                            </p>
-                          )}
-                        </td>
-
-                        <td className="p-4 text-gray-600">
+                        <p className="mt-1 break-words text-xs text-gray-500">
                           {item.category ||
                             "Без категорії"}
-                        </td>
+                        </p>
+                      </div>
 
-                        <td className="p-4 font-medium">
-                          {item.inventory_number ||
-                            "Не вказано"}
-                        </td>
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${getStatusClasses(
+                          item.status
+                        )}`}
+                      >
+                        {
+                          item.status
+                        }
+                      </span>
+                    </div>
 
-                        <td className="p-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-sm font-medium ${getStatusClasses(
-                              item.status
-                            )}`}
-                          >
-                            {
-                              item.status
-                            }
-                          </span>
-                        </td>
+                    {/* INVENTORY */}
+                    <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                      <p className="text-xs text-gray-500">
+                        Інвентарний номер
+                      </p>
 
-                        <td className="p-4 text-gray-600">
+                      <p className="mt-1 break-all font-semibold text-gray-800">
+                        {item.inventory_number ||
+                          "Не вказано"}
+                      </p>
+                    </div>
+
+                    {/* DETAILS */}
+                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-4">
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">
+                          Відповідальний
+                        </p>
+
+                        <p className="mt-1 break-words text-sm font-medium text-gray-800">
                           {item.responsible ||
                             "Не призначено"}
-                        </td>
+                        </p>
+                      </div>
 
-                        <td className="p-4 text-gray-600">
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">
+                          Локація
+                        </p>
+
+                        <p className="mt-1 break-words text-sm font-medium text-gray-800">
                           {item.location ||
                             "Не вказано"}
-                        </td>
+                        </p>
+                      </div>
 
-                        <td className="p-4">
-                          <span
-                            className={
-                              serviceOverdue
-                                ? "font-medium text-red-600"
-                                : "text-gray-600"
-                            }
-                          >
-                            {formatDate(
-                              item.next_service_date
-                            )}
-                          </span>
+                      <div className="col-span-2 min-w-0">
+                        <p className="text-xs text-gray-500">
+                          Наступний сервіс
+                        </p>
 
-                          {serviceOverdue && (
-                            <p className="mt-1 text-xs font-medium text-red-600">
-                              Сервіс
-                              прострочено
-                            </p>
+                        <p
+                          className={`mt-1 text-sm font-semibold ${
+                            serviceOverdue
+                              ? "text-red-600"
+                              : "text-gray-800"
+                          }`}
+                        >
+                          {formatDate(
+                            item.next_service_date
                           )}
-                        </td>
+                        </p>
 
-                        {canManage && (
+                        {serviceOverdue && (
+                          <p className="mt-1 text-xs font-medium text-red-600">
+                            ⚠ Сервіс
+                            прострочено
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* NOTES */}
+                    {item.notes && (
+                      <div className="mt-4 border-t pt-4">
+                        <p className="text-xs text-gray-500">
+                          Примітки
+                        </p>
+
+                        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-gray-700">
+                          {
+                            item.notes
+                          }
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ACTIONS */}
+                    {canManage && (
+                      <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-4">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleEdit(
+                              item.id
+                            )
+                          }
+                          className="min-h-10 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
+                        >
+                          {isEditing
+                            ? "Закрити"
+                            : "Редагувати"}
+                        </button>
+
+                        <form
+                          action={deleteEquipment.bind(
+                            null,
+                            item.id
+                          )}
+                          onSubmit={(
+                            event
+                          ) => {
+                            const confirmed =
+                              window.confirm(
+                                `Видалити техніку «${item.name}»?`
+                              );
+
+                            if (
+                              !confirmed
+                            ) {
+                              event.preventDefault();
+                            }
+                          }}
+                          className="w-full"
+                        >
+                          <button
+                            type="submit"
+                            className="min-h-10 w-full rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                          >
+                            Видалити
+                          </button>
+                        </form>
+                      </div>
+                    )}
+
+                    {/* MOBILE EDIT */}
+                    {isEditing && (
+                      <div className="mt-4 min-w-0 border-t pt-4">
+                        <EditEquipmentForm
+                          equipment={
+                            item
+                          }
+                          employees={
+                            safeEmployees
+                          }
+                          onCancel={() =>
+                            setEditingId(
+                              null
+                            )
+                          }
+                        />
+                      </div>
+                    )}
+                  </article>
+                );
+              }
+            )}
+          </div>
+
+          {/* DESKTOP TABLE */}
+          <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
+            <table
+              className={`w-full ${
+                canManage
+                  ? "min-w-[1250px]"
+                  : "min-w-[1100px]"
+              }`}
+            >
+              <thead className="bg-gray-50 text-left">
+                <tr>
+                  <th className="p-4">
+                    Назва
+                  </th>
+
+                  <th className="p-4">
+                    Категорія
+                  </th>
+
+                  <th className="p-4">
+                    Інвентарний номер
+                  </th>
+
+                  <th className="p-4">
+                    Статус
+                  </th>
+
+                  <th className="p-4">
+                    Відповідальний
+                  </th>
+
+                  <th className="p-4">
+                    Локація
+                  </th>
+
+                  <th className="p-4">
+                    Наступний сервіс
+                  </th>
+
+                  {canManage && (
+                    <th className="p-4 text-right">
+                      Дії
+                    </th>
+                  )}
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredEquipment.map(
+                  (item) => {
+                    const serviceOverdue =
+                      isServiceOverdue(
+                        item.next_service_date
+                      );
+
+                    const isEditing =
+                      canManage &&
+                      editingId ===
+                        item.id;
+
+                    return (
+                      <Fragment
+                        key={
+                          item.id
+                        }
+                      >
+                        <tr className="border-t">
                           <td className="p-4">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  toggleEdit(
+                            <p className="font-medium">
+                              {
+                                item.name
+                              }
+                            </p>
+
+                            {item.notes && (
+                              <p className="mt-1 max-w-xs truncate text-sm text-gray-500">
+                                {
+                                  item.notes
+                                }
+                              </p>
+                            )}
+                          </td>
+
+                          <td className="p-4 text-gray-600">
+                            {item.category ||
+                              "Без категорії"}
+                          </td>
+
+                          <td className="p-4 font-medium">
+                            {item.inventory_number ||
+                              "Не вказано"}
+                          </td>
+
+                          <td className="p-4">
+                            <span
+                              className={`rounded-full px-3 py-1 text-sm font-medium ${getStatusClasses(
+                                item.status
+                              )}`}
+                            >
+                              {
+                                item.status
+                              }
+                            </span>
+                          </td>
+
+                          <td className="p-4 text-gray-600">
+                            {item.responsible ||
+                              "Не призначено"}
+                          </td>
+
+                          <td className="p-4 text-gray-600">
+                            {item.location ||
+                              "Не вказано"}
+                          </td>
+
+                          <td className="p-4">
+                            <span
+                              className={
+                                serviceOverdue
+                                  ? "font-medium text-red-600"
+                                  : "text-gray-600"
+                              }
+                            >
+                              {formatDate(
+                                item.next_service_date
+                              )}
+                            </span>
+
+                            {serviceOverdue && (
+                              <p className="mt-1 text-xs font-medium text-red-600">
+                                Сервіс
+                                прострочено
+                              </p>
+                            )}
+                          </td>
+
+                          {canManage && (
+                            <td className="p-4">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    toggleEdit(
+                                      item.id
+                                    )
+                                  }
+                                  className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+                                >
+                                  {isEditing
+                                    ? "Закрити"
+                                    : "Редагувати"}
+                                </button>
+
+                                <form
+                                  action={deleteEquipment.bind(
+                                    null,
                                     item.id
+                                  )}
+                                  onSubmit={(
+                                    event
+                                  ) => {
+                                    const confirmed =
+                                      window.confirm(
+                                        `Видалити техніку «${item.name}»?`
+                                      );
+
+                                    if (
+                                      !confirmed
+                                    ) {
+                                      event.preventDefault();
+                                    }
+                                  }}
+                                >
+                                  <button
+                                    type="submit"
+                                    className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                                  >
+                                    Видалити
+                                  </button>
+                                </form>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+
+                        {isEditing && (
+                          <tr className="border-t">
+                            <td
+                              colSpan={
+                                columnCount
+                              }
+                              className="p-4"
+                            >
+                              <EditEquipmentForm
+                                equipment={
+                                  item
+                                }
+                                employees={
+                                  safeEmployees
+                                }
+                                onCancel={() =>
+                                  setEditingId(
+                                    null
                                   )
                                 }
-                                className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
-                              >
-                                Редагувати
-                              </button>
-
-                              <form
-                                action={deleteEquipment.bind(
-                                  null,
-                                  item.id
-                                )}
-                                onSubmit={(
-                                  event
-                                ) => {
-                                  const confirmed =
-                                    window.confirm(
-                                      `Видалити техніку «${item.name}»?`
-                                    );
-
-                                  if (
-                                    !confirmed
-                                  ) {
-                                    event.preventDefault();
-                                  }
-                                }}
-                              >
-                                <button
-                                  type="submit"
-                                  className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                                >
-                                  Видалити
-                                </button>
-                              </form>
-                            </div>
-                          </td>
+                              />
+                            </td>
+                          </tr>
                         )}
-                      </tr>
-
-                      {isEditing && (
-                        <tr className="border-t">
-                          <td
-                            colSpan={
-                              columnCount
-                            }
-                            className="p-4"
-                          >
-                            <EditEquipmentForm
-                              equipment={
-                                item
-                              }
-                              employees={
-                                employees
-                              }
-                              onCancel={() =>
-                                setEditingId(
-                                  null
-                                )
-                              }
-                            />
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  );
-                }
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </Fragment>
+                    );
+                  }
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

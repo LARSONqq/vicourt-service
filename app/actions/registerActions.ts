@@ -108,10 +108,55 @@ export async function registerUser(
   });
 
   if (error) {
+    const errorMessage =
+      error.message.toLowerCase();
+
+    if (
+      errorMessage.includes(
+        "user already registered"
+      ) ||
+      errorMessage.includes(
+        "already registered"
+      ) ||
+      errorMessage.includes(
+        "already exists"
+      )
+    ) {
+      return {
+        success: false,
+        message:
+          "Користувач із таким email уже зареєстрований. Спробуй увійти у свій акаунт.",
+      };
+    }
+
+    if (
+      errorMessage.includes(
+        "password"
+      )
+    ) {
+      return {
+        success: false,
+        message:
+          "Не вдалося використати цей пароль. Спробуй інший пароль.",
+      };
+    }
+
+    if (
+      errorMessage.includes(
+        "email"
+      )
+    ) {
+      return {
+        success: false,
+        message:
+          "Не вдалося використати цей email. Перевір адресу та спробуй ще раз.",
+      };
+    }
+
     return {
       success: false,
       message:
-        `Не вдалося створити акаунт: ${error.message}`,
+        "Не вдалося створити акаунт. Спробуй ще раз.",
     };
   }
 

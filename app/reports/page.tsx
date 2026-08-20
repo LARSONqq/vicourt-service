@@ -53,10 +53,12 @@ function formatMoney(
   const absoluteValue =
     Math.abs(safeValue);
 
-  const [wholePart, decimalPart] =
-    absoluteValue
-      .toFixed(2)
-      .split(".");
+  const [
+    wholePart,
+    decimalPart,
+  ] = absoluteValue
+    .toFixed(2)
+    .split(".");
 
   const formattedWhole =
     wholePart.replace(
@@ -64,8 +66,11 @@ function formatMoney(
       " "
     );
 
-  return `${negative ? "−" : ""}${formattedWhole},${decimalPart} ${
-    symbols[currency] || currency
+  return `${
+    negative ? "−" : ""
+  }${formattedWhole},${decimalPart} ${
+    symbols[currency] ||
+    currency
   }`;
 }
 
@@ -75,8 +80,11 @@ function formatDate(
   const datePart =
     date.slice(0, 10);
 
-  const [year, month, day] =
-    datePart.split("-");
+  const [
+    year,
+    month,
+    day,
+  ] = datePart.split("-");
 
   if (
     !year ||
@@ -118,7 +126,10 @@ export default async function ReportsPage() {
 
   const warehouseValue =
     warehouseItems.reduce(
-      (sum, item) =>
+      (
+        sum,
+        item
+      ) =>
         sum +
         Number(
           item.quantity
@@ -151,7 +162,10 @@ export default async function ReportsPage() {
 
   const totalServiceCost =
     serviceRecords.reduce(
-      (sum, record) =>
+      (
+        sum,
+        record
+      ) =>
         sum +
         Number(
           record.cost
@@ -188,195 +202,205 @@ export default async function ReportsPage() {
     );
 
   const objectReportExport =
-    objects.map((object) => {
-      const objectWorkLogs =
-        reportWorkLogs.filter(
-          (log) =>
-            Number(
-              log.object_id
-            ) ===
-            Number(
-              object.id
-            )
-        );
-
-      const objectMaterials =
-        reportMaterials.filter(
-          (material) =>
-            Number(
-              material.object_id
-            ) ===
-            Number(
-              object.id
-            )
-        );
-
-      const totalHours =
-        objectWorkLogs.reduce(
-          (sum, log) =>
-            sum +
-            Number(
-              log.hours
-            ),
-          0
-        );
-
-      const totalMaterialCost =
-        objectMaterials.reduce(
-          (
-            sum,
-            material
-          ) =>
-            sum +
-            Number(
-              material.quantity
-            ) *
+    objects.map(
+      (object) => {
+        const objectWorkLogs =
+          reportWorkLogs.filter(
+            (log) =>
               Number(
-                material.price
+                log.object_id
+              ) ===
+              Number(
+                object.id
+              )
+          );
+
+        const objectMaterials =
+          reportMaterials.filter(
+            (material) =>
+              Number(
+                material.object_id
+              ) ===
+              Number(
+                object.id
+              )
+          );
+
+        const totalHours =
+          objectWorkLogs.reduce(
+            (
+              sum,
+              log
+            ) =>
+              sum +
+              Number(
+                log.hours
               ),
-          0
-        );
+            0
+          );
 
-      return {
-        object_id:
-          object.id,
+        const totalMaterialCost =
+          objectMaterials.reduce(
+            (
+              sum,
+              material
+            ) =>
+              sum +
+              Number(
+                material.quantity
+              ) *
+                Number(
+                  material.price
+                ),
+            0
+          );
 
-        object_name:
-          object.name,
+        return {
+          object_id:
+            object.id,
 
-        total_hours:
-          totalHours,
+          object_name:
+            object.name,
 
-        material_positions:
-          objectMaterials.length,
+          total_hours:
+            totalHours,
 
-        material_cost:
-          totalMaterialCost,
-      };
-    });
+          material_positions:
+            objectMaterials.length,
+
+          material_cost:
+            totalMaterialCost,
+        };
+      }
+    );
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">
+    <div className="min-w-0 space-y-6 sm:space-y-8">
+      {/* HEADER */}
+      <div className="min-w-0">
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
           Звіти
         </h1>
 
-        <p className="mt-1 text-gray-500">
+        <p className="mt-1 break-words text-sm text-gray-500 sm:text-base">
           Загальне зведення роботи{" "}
           {settings.company_name}
         </p>
       </div>
 
-      <ReportExportButtons
-        datasets={[
-          {
-            title:
-              "Об’єкти",
+      {/* EXPORT */}
+      <div className="min-w-0">
+        <ReportExportButtons
+          datasets={[
+            {
+              title:
+                "Об’єкти",
 
-            filename:
-              "vicourt-objects.csv",
+              filename:
+                "vicourt-objects.csv",
 
-            rows:
-              objects,
-          },
+              rows:
+                objects,
+            },
 
-          {
-            title:
-              "Звіт по об’єктах",
+            {
+              title:
+                "Звіт по об’єктах",
 
-            filename:
-              "vicourt-object-report.csv",
+              filename:
+                "vicourt-object-report.csv",
 
-            rows:
-              objectReportExport,
-          },
+              rows:
+                objectReportExport,
+            },
 
-          {
-            title:
-              "Склад",
+            {
+              title:
+                "Склад",
 
-            filename:
-              "vicourt-warehouse.csv",
+              filename:
+                "vicourt-warehouse.csv",
 
-            rows:
-              warehouseItems,
-          },
+              rows:
+                warehouseItems,
+            },
 
-          {
-            title:
-              "Рухи складу",
+            {
+              title:
+                "Рухи складу",
 
-            filename:
-              "vicourt-warehouse-movements.csv",
+              filename:
+                "vicourt-warehouse-movements.csv",
 
-            rows:
-              warehouseMovements,
-          },
+              rows:
+                warehouseMovements,
+            },
 
-          {
-            title:
-              "Техніка",
+            {
+              title:
+                "Техніка",
 
-            filename:
-              "vicourt-equipment.csv",
+              filename:
+                "vicourt-equipment.csv",
 
-            rows:
-              equipment,
-          },
+              rows:
+                equipment,
+            },
 
-          {
-            title:
-              "Обслуговування техніки",
+            {
+              title:
+                "Обслуговування техніки",
 
-            filename:
-              "vicourt-equipment-service.csv",
+              filename:
+                "vicourt-equipment-service.csv",
 
-            rows:
-              serviceRecords,
-          },
+              rows:
+                serviceRecords,
+            },
 
-          {
-            title:
-              "Працівники",
+            {
+              title:
+                "Працівники",
 
-            filename:
-              "vicourt-employees.csv",
+              filename:
+                "vicourt-employees.csv",
 
-            rows:
-              employees,
-          },
-        ]}
-      />
+              rows:
+                employees,
+            },
+          ]}
+        />
+      </div>
 
-      <section>
-        <h2 className="mb-4 text-xl font-semibold">
+      {/* GENERAL */}
+      <section className="min-w-0">
+        <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">
           Загальні показники
         </h2>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
           <Link
             href="/objects"
-            className="rounded-xl border bg-white p-5 transition hover:border-green-300 hover:shadow-sm"
+            className="min-w-0 rounded-xl border bg-white p-3 transition hover:border-green-300 hover:shadow-sm sm:p-5"
           >
-            <p className="text-sm text-gray-500">
+            <p className="text-xs leading-4 text-gray-500 sm:text-sm">
               Об’єкти
             </p>
 
-            <p className="mt-2 text-3xl font-bold">
+            <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
               {objects.length}
             </p>
           </Link>
 
           <Link
             href="/warehouse"
-            className="rounded-xl border bg-white p-5 transition hover:border-green-300 hover:shadow-sm"
+            className="min-w-0 rounded-xl border bg-white p-3 transition hover:border-green-300 hover:shadow-sm sm:p-5"
           >
-            <p className="text-sm text-gray-500">
+            <p className="text-xs leading-4 text-gray-500 sm:text-sm">
               Позиції на складі
             </p>
 
-            <p className="mt-2 text-3xl font-bold">
+            <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
               {
                 warehouseItems.length
               }
@@ -385,26 +409,26 @@ export default async function ReportsPage() {
 
           <Link
             href="/equipment"
-            className="rounded-xl border bg-white p-5 transition hover:border-green-300 hover:shadow-sm"
+            className="min-w-0 rounded-xl border bg-white p-3 transition hover:border-green-300 hover:shadow-sm sm:p-5"
           >
-            <p className="text-sm text-gray-500">
+            <p className="text-xs leading-4 text-gray-500 sm:text-sm">
               Одиниці техніки
             </p>
 
-            <p className="mt-2 text-3xl font-bold">
+            <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
               {equipment.length}
             </p>
           </Link>
 
           <Link
             href="/employees"
-            className="rounded-xl border bg-white p-5 transition hover:border-green-300 hover:shadow-sm"
+            className="min-w-0 rounded-xl border bg-white p-3 transition hover:border-green-300 hover:shadow-sm sm:p-5"
           >
-            <p className="text-sm text-gray-500">
+            <p className="text-xs leading-4 text-gray-500 sm:text-sm">
               Працівники
             </p>
 
-            <p className="mt-2 text-3xl font-bold">
+            <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
               {
                 employees.length
               }
@@ -413,40 +437,48 @@ export default async function ReportsPage() {
         </div>
       </section>
 
-      <EmployeeWorkReport
-        employees={
-          employees
-        }
-        workLogs={
-          reportWorkLogs
-        }
-      />
+      {/* EMPLOYEE REPORT */}
+      <div className="min-w-0">
+        <EmployeeWorkReport
+          employees={
+            employees
+          }
+          workLogs={
+            reportWorkLogs
+          }
+        />
+      </div>
 
-      <ObjectCostReport
-        workLogs={
-          reportWorkLogs
-        }
-        materials={
-          reportMaterials
-        }
-        currency={
-          settings.currency
-        }
-      />
+      {/* OBJECT COST REPORT */}
+      <div className="min-w-0">
+        <ObjectCostReport
+          workLogs={
+            reportWorkLogs
+          }
+          materials={
+            reportMaterials
+          }
+          currency={
+            settings.currency
+          }
+        />
+      </div>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div className="rounded-xl border bg-white p-5">
-          <h2 className="text-lg font-semibold">
+      {/* SUMMARY */}
+      <section className="grid min-w-0 grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-3">
+        {/* WAREHOUSE */}
+        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+          <h2 className="text-lg font-semibold text-gray-900">
             Склад
           </h2>
 
-          <div className="mt-5 space-y-4">
-            <div className="flex items-center justify-between border-b pb-4">
-              <span className="text-gray-500">
+          <div className="mt-4 space-y-4 sm:mt-5">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b pb-4">
+              <span className="min-w-0 text-sm text-gray-500 sm:text-base">
                 Вартість залишків
               </span>
 
-              <span className="font-semibold text-green-700">
+              <span className="max-w-[150px] break-words text-right text-sm font-semibold text-green-700 sm:max-w-none sm:text-base">
                 {formatMoney(
                   warehouseValue,
                   settings.currency
@@ -454,31 +486,28 @@ export default async function ReportsPage() {
               </span>
             </div>
 
-            <div className="flex items-center justify-between border-b pb-4">
-              <span className="text-gray-500">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b pb-4">
+              <span className="text-sm text-gray-500 sm:text-base">
                 Низький залишок
               </span>
 
               <span
-                className={
-                  lowStockCount >
-                  0
-                    ? "font-semibold text-red-600"
-                    : "font-semibold text-green-700"
-                }
+                className={`font-semibold ${
+                  lowStockCount > 0
+                    ? "text-red-600"
+                    : "text-green-700"
+                }`}
               >
-                {
-                  lowStockCount
-                }
+                {lowStockCount}
               </span>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+              <span className="text-sm text-gray-500 sm:text-base">
                 Операцій зі складом
               </span>
 
-              <span className="font-semibold">
+              <span className="font-semibold text-gray-900">
                 {
                   warehouseMovements.length
                 }
@@ -487,24 +516,25 @@ export default async function ReportsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <h2 className="text-lg font-semibold">
+        {/* EQUIPMENT */}
+        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+          <h2 className="text-lg font-semibold text-gray-900">
             Техніка
           </h2>
 
-          <div className="mt-5 space-y-4">
-            <div className="flex items-center justify-between border-b pb-4">
-              <span className="text-gray-500">
+          <div className="mt-4 space-y-4 sm:mt-5">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b pb-4">
+              <span className="text-sm text-gray-500 sm:text-base">
                 Потребує ремонту
               </span>
 
               <span
-                className={
+                className={`font-semibold ${
                   equipmentRepairCount >
                   0
-                    ? "font-semibold text-orange-600"
-                    : "font-semibold text-green-700"
-                }
+                    ? "text-orange-600"
+                    : "text-green-700"
+                }`}
               >
                 {
                   equipmentRepairCount
@@ -512,25 +542,26 @@ export default async function ReportsPage() {
               </span>
             </div>
 
-            <div className="flex items-center justify-between border-b pb-4">
-              <span className="text-gray-500">
-                Записів обслуговування
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b pb-4">
+              <span className="text-sm text-gray-500 sm:text-base">
+                Записів
+                обслуговування
               </span>
 
-              <span className="font-semibold">
+              <span className="font-semibold text-gray-900">
                 {
                   serviceRecords.length
                 }
               </span>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+              <span className="min-w-0 text-sm text-gray-500 sm:text-base">
                 Витрати на
                 обслуговування
               </span>
 
-              <span className="font-semibold text-green-700">
+              <span className="max-w-[150px] break-words text-right text-sm font-semibold text-green-700 sm:max-w-none sm:text-base">
                 {formatMoney(
                   totalServiceCost,
                   settings.currency
@@ -540,26 +571,27 @@ export default async function ReportsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <h2 className="text-lg font-semibold">
+        {/* TEAM */}
+        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+          <h2 className="text-lg font-semibold text-gray-900">
             Команда
           </h2>
 
-          <div className="mt-5 space-y-4">
-            <div className="flex items-center justify-between border-b pb-4">
-              <span className="text-gray-500">
+          <div className="mt-4 space-y-4 sm:mt-5">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b pb-4">
+              <span className="text-sm text-gray-500 sm:text-base">
                 Усього працівників
               </span>
 
-              <span className="font-semibold">
+              <span className="font-semibold text-gray-900">
                 {
                   employees.length
                 }
               </span>
             </div>
 
-            <div className="flex items-center justify-between border-b pb-4">
-              <span className="text-gray-500">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b pb-4">
+              <span className="text-sm text-gray-500 sm:text-base">
                 Активні
               </span>
 
@@ -570,8 +602,8 @@ export default async function ReportsPage() {
               </span>
             </div>
 
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+              <span className="text-sm text-gray-500 sm:text-base">
                 Тимчасово відсутні
               </span>
 
@@ -585,25 +617,28 @@ export default async function ReportsPage() {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <div className="overflow-hidden rounded-xl border bg-white">
-          <div className="border-b p-5">
-            <h2 className="text-xl font-semibold">
+      {/* RECENT ACTIVITY */}
+      <section className="grid min-w-0 grid-cols-1 gap-5 sm:gap-6 xl:grid-cols-2">
+        {/* WAREHOUSE MOVEMENTS */}
+        <div className="min-w-0 overflow-hidden rounded-xl border bg-white">
+          <div className="border-b p-4 sm:p-5">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
               Останні рухи складу
             </h2>
           </div>
 
           {recentWarehouseMovements.length ===
           0 ? (
-            <p className="p-6 text-gray-500">
-              Операцій поки що немає.
-            </p>
+            <div className="p-5 text-center sm:p-6">
+              <p className="text-sm text-gray-500 sm:text-base">
+                Операцій поки що
+                немає.
+              </p>
+            </div>
           ) : (
             <div className="divide-y">
               {recentWarehouseMovements.map(
-                (
-                  movement
-                ) => {
+                (movement) => {
                   const isIncome =
                     movement.movement_type ===
                     "Прихід";
@@ -613,17 +648,17 @@ export default async function ReportsPage() {
                       key={
                         movement.id
                       }
-                      className="flex items-center justify-between gap-4 p-5"
+                      className="flex min-w-0 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-5"
                     >
-                      <div>
-                        <p className="font-medium">
+                      <div className="min-w-0">
+                        <p className="break-words font-medium text-gray-900">
                           {movement
                             .item
                             ?.name ||
                             "Позицію видалено"}
                         </p>
 
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 break-words text-sm leading-5 text-gray-500">
                           {formatDate(
                             movement.created_at
                           )}
@@ -635,20 +670,18 @@ export default async function ReportsPage() {
                       </div>
 
                       <span
-                        className={
+                        className={`w-fit shrink-0 rounded-lg px-3 py-2 text-sm font-semibold ${
                           isIncome
-                            ? "font-semibold text-green-700"
-                            : "font-semibold text-orange-600"
-                        }
+                            ? "bg-green-50 text-green-700"
+                            : "bg-orange-50 text-orange-600"
+                        }`}
                       >
                         {isIncome
                           ? "+"
                           : "−"}
-
                         {Number(
                           movement.quantity
                         )}{" "}
-
                         {movement
                           .item
                           ?.unit ||
@@ -662,19 +695,22 @@ export default async function ReportsPage() {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border bg-white">
-          <div className="border-b p-5">
-            <h2 className="text-xl font-semibold">
-              Останні
-              обслуговування
+        {/* SERVICE RECORDS */}
+        <div className="min-w-0 overflow-hidden rounded-xl border bg-white">
+          <div className="border-b p-4 sm:p-5">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+              Останні обслуговування
             </h2>
           </div>
 
           {recentServiceRecords.length ===
           0 ? (
-            <p className="p-6 text-gray-500">
-              Записів поки що немає.
-            </p>
+            <div className="p-5 text-center sm:p-6">
+              <p className="text-sm text-gray-500 sm:text-base">
+                Записів поки що
+                немає.
+              </p>
+            </div>
           ) : (
             <div className="divide-y">
               {recentServiceRecords.map(
@@ -683,17 +719,17 @@ export default async function ReportsPage() {
                     key={
                       record.id
                     }
-                    className="flex items-center justify-between gap-4 p-5"
+                    className="flex min-w-0 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:p-5"
                   >
-                    <div>
-                      <p className="font-medium">
+                    <div className="min-w-0">
+                      <p className="break-words font-medium text-gray-900">
                         {record
                           .equipment
                           ?.name ||
                           "Техніку видалено"}
                       </p>
 
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 break-words text-sm leading-5 text-gray-500">
                         {
                           record.service_type
                         }{" "}
@@ -704,7 +740,7 @@ export default async function ReportsPage() {
                       </p>
                     </div>
 
-                    <span className="font-semibold">
+                    <span className="w-fit shrink-0 rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-green-700">
                       {formatMoney(
                         Number(
                           record.cost

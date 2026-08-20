@@ -36,10 +36,12 @@ function formatMoney(
   const absoluteValue =
     Math.abs(safeValue);
 
-  const [wholePart, decimalPart] =
-    absoluteValue
-      .toFixed(2)
-      .split(".");
+  const [
+    wholePart,
+    decimalPart,
+  ] = absoluteValue
+    .toFixed(2)
+    .split(".");
 
   const formattedWholePart =
     wholePart.replace(
@@ -53,8 +55,9 @@ function formatMoney(
       : "";
 
   const symbol =
-    currencySymbols[currency] ??
-    currency;
+    currencySymbols[
+      currency
+    ] ?? currency;
 
   return `${sign}${formattedWholePart},${decimalPart} ${symbol}`;
 }
@@ -88,7 +91,9 @@ export default async function WarehousePage() {
       : [];
 
   const movementList =
-    Array.isArray(movements)
+    Array.isArray(
+      movements
+    )
       ? movements
       : [];
 
@@ -110,7 +115,10 @@ export default async function WarehousePage() {
 
   const totalValue =
     itemList.reduce(
-      (sum, item) =>
+      (
+        sum,
+        item
+      ) =>
         sum +
         Number(
           item.quantity
@@ -132,70 +140,99 @@ export default async function WarehousePage() {
     ).size;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
+      {/* HEADER */}
+      <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             Склад
           </h1>
 
-          <p className="mt-1 text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 sm:text-base">
             Матеріали, залишки та рух
             товарів
           </p>
         </div>
 
         {canManage && (
-          <WarehouseActions
-            items={itemList}
-            objects={objectList}
-          />
+          <div className="min-w-0">
+            <WarehouseActions
+              items={
+                itemList
+              }
+              objects={
+                objectList
+              }
+            />
+          </div>
         )}
       </div>
 
+      {/* READ ONLY */}
       {!canManage && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-4">
-          <p className="font-medium text-blue-800">
-            Режим перегляду
-          </p>
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 sm:px-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm">
+              👁
+            </div>
 
-          <p className="mt-1 text-sm text-blue-700">
-            Ти можеш переглядати
-            залишки та історію руху
-            матеріалів, але змінювати
-            склад може лише
-            адміністратор.
-          </p>
+            <div className="min-w-0">
+              <p className="font-medium text-blue-800">
+                Режим перегляду
+              </p>
+
+              <p className="mt-1 text-sm leading-5 text-blue-700">
+                Ти можеш переглядати
+                залишки та історію руху
+                матеріалів, але змінювати
+                склад може лише
+                адміністратор.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+      {/* STATS */}
+      <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs text-gray-500 sm:text-sm">
             Позицій на складі
           </p>
 
-          <p className="mt-2 text-3xl font-bold">
+          <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
             {itemList.length}
           </p>
         </div>
 
-        <div className="rounded-xl border border-red-200 bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div
+          className={`min-w-0 rounded-xl border bg-white p-3 sm:p-5 ${
+            lowStockItems > 0
+              ? "border-red-200"
+              : ""
+          }`}
+        >
+          <p className="text-xs text-gray-500 sm:text-sm">
             Низький залишок
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-red-600">
+          <p
+            className={`mt-2 text-2xl font-bold sm:text-3xl ${
+              lowStockItems > 0
+                ? "text-red-600"
+                : "text-gray-900"
+            }`}
+          >
             {lowStockItems}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs text-gray-500 sm:text-sm">
             Вартість залишків
           </p>
 
-          <p className="mt-2 text-2xl font-bold text-green-700">
+          <p className="mt-2 break-words text-lg font-bold text-green-700 sm:text-2xl">
             {formatMoney(
               totalValue,
               settings.currency
@@ -203,27 +240,43 @@ export default async function WarehousePage() {
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs text-gray-500 sm:text-sm">
             Постачальники
           </p>
 
-          <p className="mt-2 text-3xl font-bold">
+          <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
             {suppliersCount}
           </p>
         </div>
       </div>
 
-      <WarehouseList
-        items={itemList}
-        objects={objectList}
-        currency={settings.currency}
-        canManage={canManage}
-      />
+      {/* ITEMS */}
+      <div className="min-w-0">
+        <WarehouseList
+          items={
+            itemList
+          }
+          objects={
+            objectList
+          }
+          currency={
+            settings.currency
+          }
+          canManage={
+            canManage
+          }
+        />
+      </div>
 
-      <WarehouseMovements
-        movements={movementList}
-      />
+      {/* MOVEMENTS */}
+      <div className="min-w-0">
+        <WarehouseMovements
+          movements={
+            movementList
+          }
+        />
+      </div>
     </div>
   );
 }

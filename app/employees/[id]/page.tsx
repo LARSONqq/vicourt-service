@@ -183,18 +183,19 @@ export default async function EmployeePage({
     );
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="min-w-0 space-y-5 sm:space-y-6">
+      {/* HEADER */}
+      <div className="min-w-0">
         <Link
           href="/employees"
-          className="text-sm font-medium text-green-700 hover:underline"
+          className="inline-flex min-h-10 items-center text-sm font-medium text-green-700 hover:underline"
         >
           ← Назад до працівників
         </Link>
 
-        <div className="mt-4 flex flex-col gap-4 rounded-xl border bg-white p-6 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">
+        <div className="mt-3 flex min-w-0 flex-col gap-4 rounded-xl border bg-white p-4 sm:mt-4 sm:p-6 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            <h1 className="break-words text-2xl font-bold text-gray-900 sm:text-3xl">
               {
                 employee.last_name
               }{" "}
@@ -203,14 +204,14 @@ export default async function EmployeePage({
               }
             </h1>
 
-            <p className="mt-1 text-gray-500">
+            <p className="mt-1 break-words text-sm text-gray-500 sm:text-base">
               {employee.position ||
                 "Посаду не вказано"}
             </p>
           </div>
 
           <span
-            className={`w-fit rounded-full px-4 py-2 text-sm font-medium ${getEmployeeStatusClasses(
+            className={`w-fit shrink-0 rounded-full px-3 py-1.5 text-sm font-medium sm:px-4 sm:py-2 ${getEmployeeStatusClasses(
               employee.status
             )}`}
           >
@@ -221,71 +222,72 @@ export default async function EmployeePage({
         </div>
       </div>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+      {/* STATS */}
+      <section className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Активні завдання
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-blue-700">
+          <p className="mt-2 text-2xl font-bold text-blue-700 sm:text-3xl">
             {
               activeTasks.length
             }
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Виконані завдання
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-green-700">
+          <p className="mt-2 text-2xl font-bold text-green-700 sm:text-3xl">
             {
               completedTasks.length
             }
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Відпрацьовано годин
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-purple-700">
+          <p className="mt-2 text-2xl font-bold text-purple-700 sm:text-3xl">
             {formatHours(
               totalHours
             )}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Записів у журналі
           </p>
 
-          <p className="mt-2 text-3xl font-bold">
+          <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
             {workLogs.length}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Об’єкти
           </p>
 
-          <p className="mt-2 text-3xl font-bold">
+          <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
             {
               employeeObjects.length
             }
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Закріплена техніка
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-orange-600">
+          <p className="mt-2 text-2xl font-bold text-orange-600 sm:text-3xl">
             {
               employeeEquipment.length
             }
@@ -293,35 +295,36 @@ export default async function EmployeePage({
         </div>
       </section>
 
-      <section className="rounded-xl border bg-white p-6">
-        <h2 className="text-xl font-semibold">
+      {/* INFO */}
+      <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+        <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
           Інформація
         </h2>
 
-        <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <p className="text-sm text-gray-500">
+        <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:mt-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Телефон
             </p>
 
             {employee.phone ? (
               <a
                 href={`tel:${employee.phone}`}
-                className="mt-1 block font-medium text-green-700 hover:underline"
+                className="mt-1 block break-all font-medium text-green-700 hover:underline"
               >
                 {
                   employee.phone
                 }
               </a>
             ) : (
-              <p className="mt-1 font-medium">
+              <p className="mt-1 font-medium text-gray-800">
                 Не вказано
               </p>
             )}
           </div>
 
-          <div>
-            <p className="text-sm text-gray-500">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Email
             </p>
 
@@ -335,29 +338,29 @@ export default async function EmployeePage({
                 }
               </a>
             ) : (
-              <p className="mt-1 font-medium">
+              <p className="mt-1 font-medium text-gray-800">
                 Не вказано
               </p>
             )}
           </div>
 
-          <div>
-            <p className="text-sm text-gray-500">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Тип роботи
             </p>
 
-            <p className="mt-1 font-medium">
+            <p className="mt-1 break-words font-medium text-gray-800">
               {employee.employment_type ||
                 "Не вказано"}
             </p>
           </div>
 
-          <div>
-            <p className="text-sm text-gray-500">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Дата прийняття
             </p>
 
-            <p className="mt-1 font-medium">
+            <p className="mt-1 font-medium text-gray-800">
               {formatDate(
                 employee.hire_date
               )}
@@ -366,12 +369,12 @@ export default async function EmployeePage({
         </div>
 
         {employee.notes && (
-          <div className="mt-6 border-t pt-5">
-            <p className="text-sm text-gray-500">
+          <div className="mt-5 min-w-0 border-t pt-4 sm:mt-6 sm:pt-5">
+            <p className="text-xs text-gray-500 sm:text-sm">
               Примітки
             </p>
 
-            <p className="mt-2 whitespace-pre-wrap">
+            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-gray-700 sm:text-base">
               {
                 employee.notes
               }
@@ -380,9 +383,10 @@ export default async function EmployeePage({
         )}
       </section>
 
-      <section className="rounded-xl border bg-white p-6">
-        <div className="mb-5">
-          <h2 className="text-xl font-semibold">
+      {/* WORK LOGS */}
+      <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+        <div className="mb-4 sm:mb-5">
+          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
             Історія виконаних робіт
           </h2>
 
@@ -394,25 +398,25 @@ export default async function EmployeePage({
 
         {workLogs.length ===
         0 ? (
-          <div className="rounded-xl border border-dashed p-8 text-center">
-            <p className="text-gray-500">
+          <div className="rounded-xl border border-dashed p-6 text-center sm:p-8">
+            <p className="text-sm text-gray-500 sm:text-base">
               Записів про виконані
               роботи немає.
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {workLogs.map(
               (workLog) => (
                 <article
                   key={
                     workLog.id
                   }
-                  className="rounded-xl border p-5"
+                  className="min-w-0 rounded-xl border p-4 sm:p-5"
                 >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="font-semibold">
+                  <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900">
                         {formatDate(
                           workLog.work_date
                         )}
@@ -421,7 +425,7 @@ export default async function EmployeePage({
                       {workLog.object ? (
                         <Link
                           href={`/objects/${workLog.object.id}`}
-                          className="mt-1 inline-block text-sm font-medium text-green-700 hover:underline"
+                          className="mt-1 inline-block break-words text-sm font-medium text-green-700 hover:underline"
                         >
                           {
                             workLog
@@ -437,7 +441,7 @@ export default async function EmployeePage({
                       )}
                     </div>
 
-                    <span className="w-fit rounded-full bg-purple-50 px-3 py-1 text-sm font-medium text-purple-700">
+                    <span className="w-fit shrink-0 rounded-full bg-purple-50 px-3 py-1 text-sm font-medium text-purple-700">
                       {formatHours(
                         Number(
                           workLog.hours ||
@@ -448,7 +452,7 @@ export default async function EmployeePage({
                     </span>
                   </div>
 
-                  <p className="mt-4 whitespace-pre-wrap text-gray-700">
+                  <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-gray-700 sm:text-base">
                     {
                       workLog.description
                     }
@@ -460,10 +464,11 @@ export default async function EmployeePage({
         )}
       </section>
 
-      <section className="rounded-xl border bg-white p-6">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">
+      {/* ACTIVE TASKS */}
+      <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+        <div className="mb-4 flex min-w-0 flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
               Активні завдання
             </h2>
 
@@ -475,7 +480,7 @@ export default async function EmployeePage({
 
           <Link
             href="/task"
-            className="text-sm font-medium text-green-700 hover:underline"
+            className="flex min-h-10 w-full items-center justify-center rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-100 sm:w-fit sm:border-0 sm:bg-transparent sm:p-0 sm:hover:bg-transparent sm:hover:underline"
           >
             Відкрити всі завдання
           </Link>
@@ -483,20 +488,24 @@ export default async function EmployeePage({
 
         {activeTasks.length ===
         0 ? (
-          <p className="text-gray-500">
-            Активних завдань немає.
-          </p>
+          <div className="rounded-xl border border-dashed p-5 text-center">
+            <p className="text-sm text-gray-500 sm:text-base">
+              Активних завдань немає.
+            </p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2">
             {activeTasks.map(
               (task) => (
                 <article
-                  key={task.id}
-                  className="rounded-xl border p-5"
+                  key={
+                    task.id
+                  }
+                  className="min-w-0 rounded-xl border p-4 sm:p-5"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words font-semibold text-gray-900">
                         {
                           task.title
                         }
@@ -505,7 +514,7 @@ export default async function EmployeePage({
                       {task.object && (
                         <Link
                           href={`/objects/${task.object.id}`}
-                          className="mt-1 block text-sm text-green-700 hover:underline"
+                          className="mt-1 block break-words text-sm text-green-700 hover:underline"
                         >
                           {
                             task.object
@@ -516,7 +525,7 @@ export default async function EmployeePage({
                     </div>
 
                     <span
-                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getTaskStatusClasses(
+                      className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getTaskStatusClasses(
                         task.status
                       )}`}
                     >
@@ -527,7 +536,7 @@ export default async function EmployeePage({
                   </div>
 
                   {task.description && (
-                    <p className="mt-3 text-sm text-gray-600">
+                    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-5 text-gray-600">
                       {
                         task.description
                       }
@@ -549,20 +558,24 @@ export default async function EmployeePage({
         )}
       </section>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <div className="rounded-xl border bg-white p-6">
-          <h2 className="text-xl font-semibold">
+      {/* OBJECTS + EQUIPMENT */}
+      <section className="grid min-w-0 grid-cols-1 gap-5 sm:gap-6 xl:grid-cols-2">
+        {/* OBJECTS */}
+        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
             Об’єкти
           </h2>
 
           {employeeObjects.length ===
           0 ? (
-            <p className="mt-5 text-gray-500">
-              Закріплених об’єктів
-              немає.
-            </p>
+            <div className="mt-4 rounded-xl border border-dashed p-5 text-center sm:mt-5">
+              <p className="text-sm text-gray-500 sm:text-base">
+                Закріплених об’єктів
+                немає.
+              </p>
+            </div>
           ) : (
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-3 sm:mt-5">
               {employeeObjects.map(
                 (object) => (
                   <Link
@@ -570,15 +583,15 @@ export default async function EmployeePage({
                       object.id
                     }
                     href={`/objects/${object.id}`}
-                    className="block rounded-lg border p-4 hover:border-green-300 hover:bg-green-50"
+                    className="block min-w-0 rounded-lg border p-3 transition hover:border-green-300 hover:bg-green-50 sm:p-4"
                   >
-                    <p className="font-medium">
+                    <p className="break-words font-medium text-gray-900">
                       {
                         object.name
                       }
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 break-words text-sm text-gray-500">
                       {object.address ||
                         "Адресу не вказано"}
                     </p>
@@ -589,40 +602,43 @@ export default async function EmployeePage({
           )}
         </div>
 
-        <div className="rounded-xl border bg-white p-6">
-          <h2 className="text-xl font-semibold">
+        {/* EQUIPMENT */}
+        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
             Закріплена техніка
           </h2>
 
           {employeeEquipment.length ===
           0 ? (
-            <p className="mt-5 text-gray-500">
-              Закріпленої техніки
-              немає.
-            </p>
+            <div className="mt-4 rounded-xl border border-dashed p-5 text-center sm:mt-5">
+              <p className="text-sm text-gray-500 sm:text-base">
+                Закріпленої техніки
+                немає.
+              </p>
+            </div>
           ) : (
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-3 sm:mt-5">
               {employeeEquipment.map(
                 (item) => (
                   <div
                     key={item.id}
-                    className="rounded-lg border p-4"
+                    className="min-w-0 rounded-lg border p-3 sm:p-4"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium">
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                      <div className="min-w-0">
+                        <p className="break-words font-medium text-gray-900">
                           {
                             item.name
                           }
                         </p>
 
-                        <p className="mt-1 text-sm text-gray-500">
+                        <p className="mt-1 break-all text-sm text-gray-500">
                           {item.inventory_number ||
                             "Без інвентарного номера"}
                         </p>
                       </div>
 
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                      <span className="w-fit shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
                         {
                           item.status
                         }
@@ -630,14 +646,17 @@ export default async function EmployeePage({
                     </div>
 
                     {item.location && (
-                      <p className="mt-3 text-sm text-gray-500">
-                        Локація:{" "}
-                        <span className="font-medium text-gray-700">
+                      <div className="mt-3 border-t pt-3">
+                        <p className="text-xs text-gray-500">
+                          Локація
+                        </p>
+
+                        <p className="mt-1 break-words text-sm font-medium text-gray-700">
                           {
                             item.location
                           }
-                        </span>
-                      </p>
+                        </p>
+                      </div>
                     )}
                   </div>
                 )

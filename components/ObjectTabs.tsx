@@ -1,6 +1,10 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import {
+  ReactNode,
+  useRef,
+  useState,
+} from "react";
 
 type TabId =
   | "info"
@@ -17,6 +21,38 @@ type Props = {
   photos: ReactNode;
 };
 
+const tabs: Array<{
+  id: TabId;
+  label: string;
+  icon: string;
+}> = [
+  {
+    id: "info",
+    label: "Інформація",
+    icon: "📋",
+  },
+  {
+    id: "tasks",
+    label: "Завдання",
+    icon: "✓",
+  },
+  {
+    id: "materials",
+    label: "Матеріали",
+    icon: "📦",
+  },
+  {
+    id: "journal",
+    label: "Роботи",
+    icon: "📝",
+  },
+  {
+    id: "photos",
+    label: "Фото",
+    icon: "📷",
+  },
+];
+
 export default function ObjectTabs({
   info,
   tasks,
@@ -24,45 +60,94 @@ export default function ObjectTabs({
   journal,
   photos,
 }: Props) {
-  const [tab, setTab] = useState<TabId>("info");
+  const [tab, setTab] =
+    useState<TabId>("info");
 
-  const tabs: Array<{
-    id: TabId;
-    label: string;
-  }> = [
-    { id: "info", label: "Інформація" },
-    { id: "tasks", label: "Завдання" },
-    { id: "materials", label: "Матеріали" },
-    { id: "journal", label: "Роботи" },
-    { id: "photos", label: "Фото" },
-  ];
+  const scrollContainerRef =
+    useRef<HTMLDivElement | null>(
+      null
+    );
+
+  function handleTabChange(
+    tabId: TabId,
+    button: HTMLButtonElement
+  ) {
+    setTab(tabId);
+
+    button.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }
 
   return (
-    <div>
-      <div className="mb-6 overflow-x-auto border-b">
+    <div className="min-w-0">
+      {/* TABS */}
+      <div
+        ref={scrollContainerRef}
+        className="-mx-4 mb-5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mb-6 sm:px-0"
+      >
         <div className="flex min-w-max gap-2">
-          {tabs.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setTab(item.id)}
-              className={`border-b-2 px-4 py-3 transition ${
-                tab === item.id
-                  ? "border-green-600 font-semibold text-green-600"
-                  : "border-transparent text-gray-500 hover:text-black"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+          {tabs.map(
+            (item) => {
+              const isActive =
+                tab === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={(
+                    event
+                  ) =>
+                    handleTabChange(
+                      item.id,
+                      event.currentTarget
+                    )
+                  }
+                  className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition sm:px-4 ${
+                    isActive
+                      ? "border-green-200 bg-green-50 text-green-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="text-sm"
+                  >
+                    {item.icon}
+                  </span>
+
+                  <span>
+                    {item.label}
+                  </span>
+                </button>
+              );
+            }
+          )}
         </div>
       </div>
 
-      {tab === "info" && info}
-      {tab === "tasks" && tasks}
-      {tab === "materials" && materials}
-      {tab === "journal" && journal}
-      {tab === "photos" && photos}
+      {/* TAB CONTENT */}
+      <div className="min-w-0">
+        {tab === "info" &&
+          info}
+
+        {tab === "tasks" &&
+          tasks}
+
+        {tab ===
+          "materials" &&
+          materials}
+
+        {tab ===
+          "journal" &&
+          journal}
+
+        {tab === "photos" &&
+          photos}
+      </div>
     </div>
   );
 }

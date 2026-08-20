@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+
 import { createEquipment } from "@/app/actions/equipmentActions";
+
 import {
   equipmentCategories,
   equipmentStatuses,
 } from "@/constants/equipment";
+
 import type { Employee } from "@/types/employee";
 
 type Props = {
@@ -17,18 +20,31 @@ export default function AddEquipmentForm({
   employees,
   onCreated,
 }: Props) {
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [
+    isSubmitting,
+    setIsSubmitting,
+  ] = useState(false);
 
-  const [errorMessage, setErrorMessage] =
-    useState("");
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] = useState("");
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit(
+    formData: FormData
+  ) {
+    if (isSubmitting) {
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage("");
 
     try {
-      await createEquipment(formData);
+      await createEquipment(
+        formData
+      );
+
       onCreated();
     } catch (error) {
       setErrorMessage(
@@ -42,15 +58,20 @@ export default function AddEquipmentForm({
   }
 
   return (
-    <form action={handleSubmit} className="space-y-5">
+    <form
+      action={handleSubmit}
+      className="min-w-0 space-y-5"
+    >
+      {/* ERROR */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
           {errorMessage}
         </div>
       )}
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">
+      {/* NAME */}
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
           Назва техніки
         </label>
 
@@ -58,58 +79,73 @@ export default function AddEquipmentForm({
           type="text"
           name="name"
           placeholder="Наприклад: Газонокосарка Husqvarna LC 247"
-          className="w-full rounded-lg border bg-white p-3"
+          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
           required
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+      {/* CATEGORY + STATUS */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Категорія
           </label>
 
           <select
             name="category"
             defaultValue=""
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           >
-            <option value="" disabled>
+            <option
+              value=""
+              disabled
+            >
               Обери категорію
             </option>
 
-            {equipmentCategories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
+            {equipmentCategories.map(
+              (category) => (
+                <option
+                  key={category}
+                  value={category}
+                >
+                  {category}
+                </option>
+              )
+            )}
           </select>
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Статус
           </label>
 
           <select
             name="status"
             defaultValue="Справна"
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           >
-            {equipmentStatuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
+            {equipmentStatuses.map(
+              (status) => (
+                <option
+                  key={status}
+                  value={status}
+                >
+                  {status}
+                </option>
+              )
+            )}
           </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+      {/* INVENTORY + EMPLOYEE + LOCATION */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Інвентарний номер
           </label>
 
@@ -117,52 +153,58 @@ export default function AddEquipmentForm({
             type="text"
             name="inventory_number"
             placeholder="Автоматично, якщо не вказати"
-            className="w-full rounded-lg border bg-white p-3 uppercase"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 uppercase outline-none transition placeholder:normal-case placeholder:text-gray-400 focus:border-green-600"
           />
 
-          <p className="mt-2 text-xs text-gray-500">
-            Якщо залишити поле порожнім, номер створиться
+          <p className="mt-2 text-xs leading-4 text-gray-500">
+            Якщо залишити поле
+            порожнім, номер створиться
             автоматично.
           </p>
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Відповідальний працівник
           </label>
 
           <select
             name="responsible_employee_id"
             defaultValue=""
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           >
             <option value="">
               Не призначати
             </option>
 
-            {employees.map((employee) => (
-              <option
-                key={employee.id}
-                value={employee.id}
-              >
-                {employee.last_name}{" "}
-                {employee.first_name}
-                {employee.position
-                  ? ` — ${employee.position}`
-                  : ""}
-              </option>
-            ))}
+            {employees.map(
+              (employee) => (
+                <option
+                  key={employee.id}
+                  value={employee.id}
+                >
+                  {employee.last_name}{" "}
+                  {employee.first_name}
+                  {employee.position
+                    ? ` — ${employee.position}`
+                    : ""}
+                </option>
+              )
+            )}
           </select>
 
-          {employees.length === 0 && (
-            <p className="mt-2 text-xs text-gray-500">
-              У розділі «Працівники» ще немає записів.
+          {employees.length ===
+            0 && (
+            <p className="mt-2 text-xs leading-4 text-gray-500">
+              У розділі
+              «Працівники» ще немає
+              записів.
             </p>
           )}
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0 md:col-span-2 xl:col-span-1">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Поточна локація
           </label>
 
@@ -170,39 +212,41 @@ export default function AddEquipmentForm({
             type="text"
             name="location"
             placeholder="Склад, офіс або об’єкт"
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+      {/* DATES */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Дата придбання
           </label>
 
           <input
             type="date"
             name="purchase_date"
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           />
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Наступне обслуговування
           </label>
 
           <input
             type="date"
             name="next_service_date"
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           />
         </div>
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">
+      {/* NOTES */}
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
           Примітки
         </label>
 
@@ -210,19 +254,22 @@ export default function AddEquipmentForm({
           name="notes"
           rows={4}
           placeholder="Стан техніки, комплектація, особливості використання"
-          className="w-full resize-none rounded-lg border bg-white p-3"
+          className="w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="rounded-lg bg-green-600 px-5 py-3 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSubmitting
-          ? "Збереження..."
-          : "Додати техніку"}
-      </button>
+      {/* SAVE */}
+      <div className="border-t pt-4">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+        >
+          {isSubmitting
+            ? "Збереження..."
+            : "Додати техніку"}
+        </button>
+      </div>
     </form>
   );
 }

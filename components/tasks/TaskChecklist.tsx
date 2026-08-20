@@ -1,18 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+
 import {
   useEffect,
   useMemo,
   useState,
   type KeyboardEvent,
 } from "react";
+
 import {
   addTaskChecklistItem,
   deleteTaskChecklistItem,
   getTaskChecklistItems,
   toggleTaskChecklistItem,
 } from "@/app/actions/taskChecklistActions";
+
 import type { TaskChecklistItem } from "@/types/taskChecklistItem";
 
 type Props = {
@@ -26,9 +29,8 @@ export default function TaskChecklist({
 }: Props) {
   const router = useRouter();
 
-  const [items, setItems] = useState<
-    TaskChecklistItem[]
-  >([]);
+  const [items, setItems] =
+    useState<TaskChecklistItem[]>([]);
 
   const [
     newItemTitle,
@@ -93,11 +95,13 @@ export default function TaskChecklist({
     };
   }, [taskId]);
 
-  const completedCount = useMemo(() => {
-    return items.filter(
-      (item) => item.is_completed
-    ).length;
-  }, [items]);
+  const completedCount =
+    useMemo(() => {
+      return items.filter(
+        (item) =>
+          item.is_completed
+      ).length;
+    }, [items]);
 
   const progressPercent =
     items.length > 0
@@ -112,7 +116,10 @@ export default function TaskChecklist({
     const normalizedTitle =
       newItemTitle.trim();
 
-    if (!normalizedTitle || isAdding) {
+    if (
+      !normalizedTitle ||
+      isAdding
+    ) {
       return;
     }
 
@@ -127,12 +134,15 @@ export default function TaskChecklist({
           normalizedTitle
         );
 
-      setItems((currentItems) => [
-        ...currentItems,
-        createdItem,
-      ]);
+      setItems(
+        (currentItems) => [
+          ...currentItems,
+          createdItem,
+        ]
+      );
 
       setNewItemTitle("");
+
       router.refresh();
     } catch (error) {
       setErrorMessage(
@@ -148,29 +158,37 @@ export default function TaskChecklist({
   async function handleToggleItem(
     item: TaskChecklistItem
   ) {
-    if (pendingItemId !== null) {
+    if (
+      pendingItemId !== null
+    ) {
       return;
     }
 
-    const previousItems = items;
+    const previousItems =
+      items;
 
     const nextCompleted =
       !item.is_completed;
 
-    setPendingItemId(item.id);
+    setPendingItemId(
+      item.id
+    );
+
     setErrorMessage("");
 
-    setItems((currentItems) =>
-      currentItems.map(
-        (currentItem) =>
-          currentItem.id === item.id
-            ? {
-                ...currentItem,
-                is_completed:
-                  nextCompleted,
-              }
-            : currentItem
-      )
+    setItems(
+      (currentItems) =>
+        currentItems.map(
+          (currentItem) =>
+            currentItem.id ===
+            item.id
+              ? {
+                  ...currentItem,
+                  is_completed:
+                    nextCompleted,
+                }
+              : currentItem
+        )
     );
 
     try {
@@ -182,19 +200,22 @@ export default function TaskChecklist({
           nextCompleted
         );
 
-      setItems((currentItems) =>
-        currentItems.map(
-          (currentItem) =>
-            currentItem.id ===
-            updatedItem.id
-              ? updatedItem
-              : currentItem
-        )
+      setItems(
+        (currentItems) =>
+          currentItems.map(
+            (currentItem) =>
+              currentItem.id ===
+              updatedItem.id
+                ? updatedItem
+                : currentItem
+          )
       );
 
       router.refresh();
     } catch (error) {
-      setItems(previousItems);
+      setItems(
+        previousItems
+      );
 
       setErrorMessage(
         error instanceof Error
@@ -202,16 +223,19 @@ export default function TaskChecklist({
           : "Не вдалося оновити пункт."
       );
     } finally {
-      setPendingItemId(null);
+      setPendingItemId(
+        null
+      );
     }
   }
 
   async function handleDeleteItem(
     item: TaskChecklistItem
   ) {
-    const confirmed = window.confirm(
-      `Видалити пункт «${item.title}»?`
-    );
+    const confirmed =
+      window.confirm(
+        `Видалити пункт «${item.title}»?`
+      );
 
     if (
       !confirmed ||
@@ -220,16 +244,22 @@ export default function TaskChecklist({
       return;
     }
 
-    const previousItems = items;
+    const previousItems =
+      items;
 
-    setPendingItemId(item.id);
+    setPendingItemId(
+      item.id
+    );
+
     setErrorMessage("");
 
-    setItems((currentItems) =>
-      currentItems.filter(
-        (currentItem) =>
-          currentItem.id !== item.id
-      )
+    setItems(
+      (currentItems) =>
+        currentItems.filter(
+          (currentItem) =>
+            currentItem.id !==
+            item.id
+        )
     );
 
     try {
@@ -241,7 +271,9 @@ export default function TaskChecklist({
 
       router.refresh();
     } catch (error) {
-      setItems(previousItems);
+      setItems(
+        previousItems
+      );
 
       setErrorMessage(
         error instanceof Error
@@ -249,14 +281,18 @@ export default function TaskChecklist({
           : "Не вдалося видалити пункт."
       );
     } finally {
-      setPendingItemId(null);
+      setPendingItemId(
+        null
+      );
     }
   }
 
   function handleInputKeyDown(
     event: KeyboardEvent<HTMLInputElement>
   ) {
-    if (event.key !== "Enter") {
+    if (
+      event.key !== "Enter"
+    ) {
       return;
     }
 
@@ -267,10 +303,11 @@ export default function TaskChecklist({
   }
 
   return (
-    <section className="rounded-xl border bg-white p-4">
+    <section className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+      {/* HEADER */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="font-semibold">
+        <div className="min-w-0">
+          <h3 className="font-semibold text-gray-800">
             Чекліст
           </h3>
 
@@ -280,12 +317,13 @@ export default function TaskChecklist({
           </p>
         </div>
 
-        <span className="w-fit rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+        <span className="w-fit shrink-0 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
           {completedCount} із{" "}
           {items.length} виконано
         </span>
       </div>
 
+      {/* PROGRESS */}
       {items.length > 0 && (
         <div className="mt-4">
           <div className="h-2 overflow-hidden rounded-full bg-gray-100">
@@ -297,19 +335,27 @@ export default function TaskChecklist({
             />
           </div>
 
-          <p className="mt-1 text-right text-xs text-gray-500">
-            {progressPercent}%
-          </p>
+          <div className="mt-1 flex justify-between text-xs text-gray-500">
+            <span>
+              Прогрес
+            </span>
+
+            <span>
+              {progressPercent}%
+            </span>
+          </div>
         </div>
       )}
 
+      {/* ERROR */}
       {errorMessage && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {errorMessage}
         </div>
       )}
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+      {/* ADD ITEM */}
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
         <input
           type="text"
           value={newItemTitle}
@@ -324,7 +370,7 @@ export default function TaskChecklist({
           }
           placeholder="Новий пункт чекліста"
           maxLength={250}
-          className="min-w-0 flex-1 rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600 disabled:opacity-60"
+          className="min-h-11 min-w-0 w-full rounded-lg border bg-white px-3 py-2.5 outline-none transition placeholder:text-gray-400 focus:border-green-600 disabled:opacity-60"
         />
 
         <button
@@ -333,8 +379,10 @@ export default function TaskChecklist({
             isAdding ||
             !newItemTitle.trim()
           }
-          onClick={handleAddItem}
-          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={
+            handleAddItem
+          }
+          className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {isAdding
             ? "Додавання..."
@@ -342,76 +390,95 @@ export default function TaskChecklist({
         </button>
       </div>
 
+      {/* ITEMS */}
       <div className="mt-4 space-y-2">
         {isLoading ? (
           <div className="rounded-lg bg-gray-50 px-4 py-5 text-center text-sm text-gray-500">
             Завантаження чекліста...
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-gray-500">
-            Пунктів поки що немає
+          <div className="rounded-lg border border-dashed bg-gray-50/50 px-4 py-6 text-center">
+            <p className="text-sm font-medium text-gray-600">
+              Пунктів поки немає
+            </p>
+
+            <p className="mt-1 text-xs text-gray-400">
+              Додай перший етап вище
+            </p>
           </div>
         ) : (
-          items.map((item) => {
-            const isPending =
-              pendingItemId === item.id;
+          items.map(
+            (item) => {
+              const isPending =
+                pendingItemId ===
+                item.id;
 
-            return (
-              <div
-                key={item.id}
-                className={`flex items-start gap-3 rounded-lg border px-3 py-3 transition ${
-                  item.is_completed
-                    ? "border-green-100 bg-green-50/50"
-                    : "bg-white"
-                }`}
-              >
-                <button
-                  type="button"
-                  disabled={
-                    pendingItemId !== null
-                  }
-                  aria-pressed={
+              return (
+                <div
+                  key={item.id}
+                  className={`grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 rounded-lg border p-3 transition sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start ${
                     item.is_completed
-                  }
-                  onClick={() =>
-                    handleToggleItem(item)
-                  }
-                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                    item.is_completed
-                      ? "border-green-600 bg-green-600 text-white"
-                      : "border-gray-300 bg-white text-transparent hover:border-green-500"
+                      ? "border-green-100 bg-green-50/50"
+                      : "bg-white"
                   }`}
                 >
-                  ✓
-                </button>
+                  {/* CHECK */}
+                  <button
+                    type="button"
+                    disabled={
+                      pendingItemId !==
+                      null
+                    }
+                    aria-pressed={
+                      item.is_completed
+                    }
+                    onClick={() =>
+                      handleToggleItem(
+                        item
+                      )
+                    }
+                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                      item.is_completed
+                        ? "border-green-600 bg-green-600 text-white"
+                        : "border-gray-300 bg-white text-transparent hover:border-green-500"
+                    }`}
+                  >
+                    ✓
+                  </button>
 
-                <p
-                  className={`min-w-0 flex-1 text-sm ${
-                    item.is_completed
-                      ? "text-gray-500 line-through"
-                      : "text-gray-800"
-                  }`}
-                >
-                  {item.title}
-                </p>
+                  {/* TITLE */}
+                  <p
+                    className={`min-w-0 break-words pt-1 text-sm leading-5 ${
+                      item.is_completed
+                        ? "text-gray-500 line-through"
+                        : "text-gray-800"
+                    }`}
+                  >
+                    {item.title}
+                  </p>
 
-                <button
-                  type="button"
-                  disabled={
-                    pendingItemId !== null
-                  }
-                  onClick={() =>
-                    handleDeleteItem(item)
-                  }
-                  className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isPending
-                    ? "..."
-                    : "Видалити"}
-                </button>
-              </div>
-            );
-          })
+                  {/* DELETE */}
+                  <button
+                    type="button"
+                    disabled={
+                      pendingItemId !==
+                      null
+                    }
+                    onClick={() =>
+                      handleDeleteItem(
+                        item
+                      )
+                    }
+                    className="col-start-2 w-fit rounded-md px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 sm:col-start-3 sm:row-start-1"
+                  >
+                    {isPending
+                      ? "..."
+                      : "Видалити"}
+                  </button>
+                </div>
+              );
+            }
+          )
         )}
       </div>
     </section>

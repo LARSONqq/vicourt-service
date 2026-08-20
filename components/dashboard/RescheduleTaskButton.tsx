@@ -110,6 +110,11 @@ export default function RescheduleTaskButton({
   ] = useState(false);
 
   const [
+    isMobile,
+    setIsMobile,
+  ] = useState(false);
+
+  const [
     isOpen,
     setIsOpen,
   ] = useState(false);
@@ -147,9 +152,60 @@ export default function RescheduleTaskButton({
 
   useEffect(() => {
     setIsMounted(true);
+
+    const mediaQuery =
+      window.matchMedia(
+        "(max-width: 639px)"
+      );
+
+    function updateMobileState() {
+      setIsMobile(
+        mediaQuery.matches
+      );
+    }
+
+    updateMobileState();
+
+    mediaQuery.addEventListener(
+      "change",
+      updateMobileState
+    );
+
+    return () => {
+      mediaQuery.removeEventListener(
+        "change",
+        updateMobileState
+      );
+    };
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) {
+      document.body.style.overflow =
+        "";
+
+      return;
+    }
+
+    if (isMobile) {
+      document.body.style.overflow =
+        "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow =
+        "";
+    };
+  }, [
+    isOpen,
+    isMobile,
+  ]);
+
   function updatePopupPosition() {
+    if (isMobile) {
+      return;
+    }
+
     const button =
       buttonRef.current;
 
@@ -160,8 +216,11 @@ export default function RescheduleTaskButton({
     const rect =
       button.getBoundingClientRect();
 
-    const popupWidth = 288;
-    const viewportPadding = 16;
+    const popupWidth =
+      288;
+
+    const viewportPadding =
+      16;
 
     let left =
       rect.right -
@@ -187,17 +246,38 @@ export default function RescheduleTaskButton({
         viewportPadding;
     }
 
-    setPopupPosition({
-      top:
-        rect.bottom +
-        8,
+    let top =
+      rect.bottom + 8;
 
+    const estimatedPopupHeight =
+      390;
+
+    if (
+      top +
+        estimatedPopupHeight >
+      window.innerHeight -
+        viewportPadding
+    ) {
+      top =
+        Math.max(
+          viewportPadding,
+          rect.top -
+            estimatedPopupHeight -
+            8
+        );
+    }
+
+    setPopupPosition({
+      top,
       left,
     });
   }
 
   useEffect(() => {
-    if (!isOpen) {
+    if (
+      !isOpen ||
+      isMobile
+    ) {
       return;
     }
 
@@ -234,12 +314,19 @@ export default function RescheduleTaskButton({
         true
       );
     };
-  }, [isOpen]);
+  }, [
+    isOpen,
+    isMobile,
+  ]);
 
   useEffect(() => {
     function handleOutsideClick(
       event: PointerEvent
     ) {
+      if (!isOpen) {
+        return;
+      }
+
       const target =
         event.target as Node;
 
@@ -272,7 +359,7 @@ export default function RescheduleTaskButton({
         handleOutsideClick
       );
     };
-  }, []);
+  }, [isOpen]);
 
   async function saveNewDate(
     newDate: string
@@ -297,11 +384,13 @@ export default function RescheduleTaskButton({
         updatedTask.dueDate
       );
 
-      setSuccessMessage(
-        `Перенесено на ${formatDisplayDate(
-          updatedTask.dueDate
-        )}`
-      );
+      if (!compact) {
+        setSuccessMessage(
+          `Перенесено на ${formatDisplayDate(
+            updatedTask.dueDate
+          )}`
+        );
+      }
 
       setIsOpen(false);
 
@@ -334,7 +423,10 @@ export default function RescheduleTaskButton({
     setErrorMessage("");
     setSuccessMessage("");
 
-    if (!isOpen) {
+    if (
+      !isOpen &&
+      !isMobile
+    ) {
       updatePopupPosition();
     }
 
@@ -344,156 +436,178 @@ export default function RescheduleTaskButton({
     );
   }
 
+  const popupContent = (
+    <div
+      ref={popupRef}
+      className="w-full rounded-2xl border bg-white p-4 shadow-2xl sm:w-72 sm:rounded-xl sm:p-3"
+      onClick={(event) =>
+        event.stopPropagation()
+      }
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-base font-semibold text-gray-800 sm:text-sm">
+            Перенести завдання
+          </p>
+
+          {currentDate && (
+            <p className="mt-1 text-sm text-gray-500 sm:text-xs">
+              Поточна дата:{" "}
+              {formatDisplayDate(
+                currentDate
+              )}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() =>
+            setIsOpen(false)
+          }
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-lg text-gray-500 hover:bg-gray-200 sm:hidden"
+          aria-label="Закрити"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:mt-3">
+        <button
+          type="button"
+          disabled={
+            isSaving
+          }
+          onClick={() =>
+            saveNewDate(
+              getDateAfterDays(
+                0
+              )
+            )
+          }
+          className="rounded-lg border px-3 py-3 text-left text-sm transition hover:border-green-300 hover:bg-green-50 disabled:opacity-60 sm:py-2"
+        >
+          Сьогодні
+        </button>
+
+        <button
+          type="button"
+          disabled={
+            isSaving
+          }
+          onClick={() =>
+            saveNewDate(
+              getDateAfterDays(
+                1
+              )
+            )
+          }
+          className="rounded-lg border px-3 py-3 text-left text-sm transition hover:border-green-300 hover:bg-green-50 disabled:opacity-60 sm:py-2"
+        >
+          Завтра
+        </button>
+
+        <button
+          type="button"
+          disabled={
+            isSaving
+          }
+          onClick={() =>
+            saveNewDate(
+              getDateAfterDays(
+                7
+              )
+            )
+          }
+          className="rounded-lg border px-3 py-3 text-left text-sm transition hover:border-green-300 hover:bg-green-50 disabled:opacity-60 sm:py-2"
+        >
+          Через тиждень
+        </button>
+      </div>
+
+      <div className="mt-4 border-t pt-4 sm:mt-3 sm:pt-3">
+        <label className="text-sm font-medium text-gray-600 sm:text-xs">
+          Конкретна дата
+        </label>
+
+        <input
+          type="date"
+          value={
+            customDate
+          }
+          onChange={(
+            event
+          ) =>
+            setCustomDate(
+              event.target.value
+            )
+          }
+          className="mt-2 w-full rounded-lg border px-3 py-3 text-base outline-none focus:border-green-500 sm:py-2 sm:text-sm"
+        />
+
+        <button
+          type="button"
+          disabled={
+            isSaving ||
+            !customDate
+          }
+          onClick={() =>
+            saveNewDate(
+              customDate
+            )
+          }
+          className="mt-3 w-full rounded-lg bg-green-600 px-3 py-3 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:mt-2 sm:py-2"
+        >
+          {isSaving
+            ? "Збереження..."
+            : "Зберегти дату"}
+        </button>
+      </div>
+
+      {errorMessage && (
+        <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+          {errorMessage}
+        </p>
+      )}
+    </div>
+  );
+
   const popup =
     isMounted &&
     isOpen
       ? createPortal(
-          <div
-            ref={popupRef}
-            style={{
-              position:
-                "fixed",
-
-              top:
-                popupPosition.top,
-
-              left:
-                popupPosition.left,
-
-              width:
-                "288px",
-
-              zIndex:
-                9999,
-            }}
-            className="max-w-[calc(100vw-2rem)] rounded-xl border bg-white p-3 shadow-2xl"
-            onClick={(
-              event
-            ) =>
-              event.stopPropagation()
-            }
-          >
-            <p className="px-1 text-sm font-semibold text-gray-800">
-              Перенести завдання
-            </p>
-
-            {currentDate && (
-              <p className="mt-1 px-1 text-xs text-gray-500">
-                Поточна дата:{" "}
-                {formatDisplayDate(
-                  currentDate
-                )}
-              </p>
-            )}
-
-            <div className="mt-3 grid grid-cols-1 gap-2">
-              <button
-                type="button"
-                disabled={
-                  isSaving
-                }
-                onClick={() =>
-                  saveNewDate(
-                    getDateAfterDays(
-                      0
-                    )
-                  )
-                }
-                className="rounded-lg border px-3 py-2 text-left text-sm transition hover:border-green-300 hover:bg-green-50 disabled:opacity-60"
-              >
-                Сьогодні
-              </button>
-
-              <button
-                type="button"
-                disabled={
-                  isSaving
-                }
-                onClick={() =>
-                  saveNewDate(
-                    getDateAfterDays(
-                      1
-                    )
-                  )
-                }
-                className="rounded-lg border px-3 py-2 text-left text-sm transition hover:border-green-300 hover:bg-green-50 disabled:opacity-60"
-              >
-                Завтра
-              </button>
-
-              <button
-                type="button"
-                disabled={
-                  isSaving
-                }
-                onClick={() =>
-                  saveNewDate(
-                    getDateAfterDays(
-                      7
-                    )
-                  )
-                }
-                className="rounded-lg border px-3 py-2 text-left text-sm transition hover:border-green-300 hover:bg-green-50 disabled:opacity-60"
-              >
-                Через тиждень
-              </button>
+          isMobile ? (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+              <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto">
+                {popupContent}
+              </div>
             </div>
+          ) : (
+            <div
+              style={{
+                position:
+                  "fixed",
 
-            <div className="mt-3 border-t pt-3">
-              <label className="text-xs font-medium text-gray-600">
-                Конкретна дата
-              </label>
+                top:
+                  popupPosition.top,
 
-              <input
-                type="date"
-                value={
-                  customDate
-                }
-                onChange={(
-                  event
-                ) =>
-                  setCustomDate(
-                    event.target
-                      .value
-                  )
-                }
-                className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-green-500"
-              />
+                left:
+                  popupPosition.left,
 
-              <button
-                type="button"
-                disabled={
-                  isSaving ||
-                  !customDate
-                }
-                onClick={() =>
-                  saveNewDate(
-                    customDate
-                  )
-                }
-                className="mt-2 w-full rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSaving
-                  ? "Збереження..."
-                  : "Зберегти дату"}
-              </button>
+                zIndex:
+                  9999,
+              }}
+            >
+              {popupContent}
             </div>
-
-            {errorMessage && (
-              <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
-                {
-                  errorMessage
-                }
-              </p>
-            )}
-          </div>,
+          ),
           document.body
         )
       : null;
 
   return (
     <>
-      <div className="inline-flex flex-col items-end">
+      <div className="inline-flex w-fit flex-col items-start">
         <button
           ref={buttonRef}
           type="button"
@@ -523,21 +637,19 @@ export default function RescheduleTaskButton({
           </span>
         </button>
 
-        {!isOpen &&
+        {!compact &&
+          !isOpen &&
           errorMessage && (
-            <p className="mt-2 max-w-64 text-right text-xs text-red-600">
-              {
-                errorMessage
-              }
+            <p className="mt-2 max-w-64 text-xs text-red-600">
+              {errorMessage}
             </p>
           )}
 
-        {!isOpen &&
+        {!compact &&
+          !isOpen &&
           successMessage && (
-            <p className="mt-2 max-w-64 text-right text-xs text-green-700">
-              {
-                successMessage
-              }
+            <p className="mt-2 max-w-64 text-xs text-green-700">
+              {successMessage}
             </p>
           )}
       </div>

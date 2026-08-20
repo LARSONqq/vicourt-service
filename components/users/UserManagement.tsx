@@ -1,11 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import {
+  useMemo,
+  useState,
+} from "react";
 
-import { updateUserProfile } from "@/app/actions/profileActions";
+import {
+  useRouter,
+} from "next/navigation";
 
-import type { Employee } from "@/types/employee";
+import {
+  setUserActiveStatus,
+  updateUserProfile,
+} from "@/app/actions/profileActions";
+
+import type {
+  Employee,
+} from "@/types/employee";
+
 import type {
   UserProfile,
   UserRole,
@@ -45,15 +57,19 @@ function UserRow({
   profiles,
   currentUserId,
 }: UserRowProps) {
-  const router = useRouter();
+  const router =
+    useRouter();
 
   const isCurrentUser =
-    profile.id === currentUserId;
+    profile.id ===
+    currentUserId;
 
-  const [role, setRole] =
-    useState<UserRole>(
-      profile.role
-    );
+  const [
+    role,
+    setRole,
+  ] = useState<UserRole>(
+    profile.role
+  );
 
   const [
     employeeId,
@@ -67,8 +83,20 @@ function UserRow({
   );
 
   const [
+    isActive,
+    setIsActive,
+  ] = useState(
+    profile.is_active
+  );
+
+  const [
     isSubmitting,
     setIsSubmitting,
+  ] = useState(false);
+
+  const [
+    isChangingStatus,
+    setIsChangingStatus,
   ] = useState(false);
 
   const [
@@ -90,17 +118,26 @@ function UserRow({
 
   const displayName =
     profile.full_name?.trim() ||
-    (linkedEmployee
-      ? getEmployeeName(
-          linkedEmployee
-        )
-      : "") ||
+    (
+      linkedEmployee
+        ? getEmployeeName(
+            linkedEmployee
+          )
+        : ""
+    ) ||
     profile.email ||
     "Користувач";
 
   async function handleSubmit(
     formData: FormData
   ) {
+    if (
+      isSubmitting ||
+      isChangingStatus
+    ) {
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage("");
     setSuccessMessage("");
@@ -126,18 +163,89 @@ function UserRow({
     }
   }
 
+  async function handleStatusChange() {
+    if (
+      isChangingStatus ||
+      isSubmitting
+    ) {
+      return;
+    }
+
+    const nextStatus =
+      !isActive;
+
+    if (!nextStatus) {
+      const confirmed =
+        window.confirm(
+          `Заблокувати користувача "${displayName}"?`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setIsChangingStatus(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      await setUserActiveStatus(
+        profile.id,
+        nextStatus
+      );
+
+      setIsActive(
+        nextStatus
+      );
+
+      setSuccessMessage(
+        nextStatus
+          ? "Користувача розблоковано."
+          : "Користувача заблоковано."
+      );
+
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Не вдалося змінити статус користувача."
+      );
+    } finally {
+      setIsChangingStatus(false);
+    }
+  }
+
   return (
-    <article className="rounded-xl border bg-white p-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <article
+      className={`min-w-0 rounded-xl border bg-white p-4 transition sm:p-5 ${
+        !isActive
+          ? "opacity-75"
+          : ""
+      }`}
+    >
+      {/* USER HEADER */}
+      <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold text-gray-900">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h3 className="min-w-0 break-words font-semibold text-gray-900">
               {displayName}
             </h3>
 
             {isCurrentUser && (
-              <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+              <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
                 Це ви
+              </span>
+            )}
+
+            {isActive ? (
+              <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                ● Активний
+              </span>
+            ) : (
+              <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700">
+                ● Заблокований
               </span>
             )}
           </div>
@@ -147,9 +255,9 @@ function UserRow({
               "Email не вказано"}
           </p>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex min-w-0 flex-wrap gap-2">
             <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${
+              className={`max-w-full break-words rounded-full px-3 py-1 text-xs font-medium ${
                 profile.role ===
                 "admin"
                   ? "bg-green-100 text-green-700"
@@ -165,14 +273,14 @@ function UserRow({
             </span>
 
             {linkedEmployee ? (
-              <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
+              <span className="max-w-full break-words rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700">
                 👤{" "}
                 {getEmployeeName(
                   linkedEmployee
                 )}
               </span>
             ) : (
-              <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
+              <span className="max-w-full break-words rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
                 Не прив’язаний до
                 працівника
               </span>
@@ -180,18 +288,48 @@ function UserRow({
           </div>
         </div>
 
-        <div className="text-xs text-gray-400">
-          ID акаунта:
-          <br />
-          <span className="break-all">
-            {profile.id}
-          </span>
+        {/* ACCOUNT STATUS */}
+        <div className="flex min-w-0 flex-col gap-3 lg:w-[220px] lg:shrink-0 lg:items-end">
+          <div className="min-w-0 rounded-lg bg-gray-50 p-3 text-xs text-gray-400 lg:w-full">
+            <p>
+              ID акаунта
+            </p>
+
+            <p className="mt-1 break-all font-mono leading-5 text-gray-500">
+              {profile.id}
+            </p>
+          </div>
+
+          {!isCurrentUser && (
+            <button
+              type="button"
+              onClick={
+                handleStatusChange
+              }
+              disabled={
+                isChangingStatus ||
+                isSubmitting
+              }
+              className={`min-h-10 w-full rounded-lg border px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 lg:w-fit ${
+                isActive
+                  ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                  : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+              }`}
+            >
+              {isChangingStatus
+                ? "Збереження..."
+                : isActive
+                  ? "Заблокувати"
+                  : "Розблокувати"}
+            </button>
+          )}
         </div>
       </div>
 
+      {/* EDIT FORM */}
       <form
         action={handleSubmit}
-        className="mt-5 border-t pt-5"
+        className="mt-5 min-w-0 border-t pt-5"
       >
         <input
           type="hidden"
@@ -208,19 +346,20 @@ function UserRow({
         ) : null}
 
         {errorMessage && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-700">
             {errorMessage}
           </div>
         )}
 
         {successMessage && (
-          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm leading-5 text-green-700">
             {successMessage}
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr_auto]">
-          <div>
+        <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[220px_minmax(0,1fr)_auto]">
+          {/* ROLE */}
+          <div className="min-w-0">
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Роль
             </label>
@@ -233,7 +372,9 @@ function UserRow({
               }
               value={role}
               disabled={
-                isCurrentUser
+                isCurrentUser ||
+                isSubmitting ||
+                isChangingStatus
               }
               onChange={(
                 event
@@ -243,7 +384,7 @@ function UserRow({
                     .value as UserRole
                 )
               }
-              className="w-full rounded-lg border bg-white px-4 py-3 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
             >
               <option value="admin">
                 Адміністратор
@@ -259,7 +400,7 @@ function UserRow({
             </select>
 
             {isCurrentUser && (
-              <p className="mt-2 text-xs text-gray-400">
+              <p className="mt-2 text-xs leading-4 text-gray-400">
                 Власну роль
                 адміністратора змінити
                 не можна.
@@ -267,7 +408,8 @@ function UserRow({
             )}
           </div>
 
-          <div>
+          {/* EMPLOYEE */}
+          <div className="min-w-0">
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Прив’язаний працівник
             </label>
@@ -275,6 +417,10 @@ function UserRow({
             <select
               name="employee_id"
               value={employeeId}
+              disabled={
+                isSubmitting ||
+                isChangingStatus
+              }
               onChange={(
                 event
               ) =>
@@ -282,7 +428,7 @@ function UserRow({
                   event.target.value
                 )
               }
-              className="w-full rounded-lg border bg-white px-4 py-3"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 disabled:cursor-not-allowed disabled:bg-gray-100"
             >
               <option value="">
                 Не прив’язувати
@@ -330,20 +476,22 @@ function UserRow({
               )}
             </select>
 
-            <p className="mt-2 text-xs text-gray-400">
+            <p className="mt-2 text-xs leading-4 text-gray-400">
               Один працівник може бути
               прив’язаний тільки до
               одного акаунта.
             </p>
           </div>
 
-          <div className="flex items-end">
+          {/* SAVE */}
+          <div className="flex min-w-0 items-end">
             <button
               type="submit"
               disabled={
-                isSubmitting
+                isSubmitting ||
+                isChangingStatus
               }
-              className="w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+              className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
             >
               {isSubmitting
                 ? "Збереження..."
@@ -362,22 +510,39 @@ export default function UserManagement({
   currentUserId,
 }: Props) {
   const safeProfiles =
-    Array.isArray(profiles)
+    Array.isArray(
+      profiles
+    )
       ? profiles
       : [];
 
   const safeEmployees =
-    Array.isArray(employees)
+    Array.isArray(
+      employees
+    )
       ? employees
       : [];
 
-  const [search, setSearch] =
-    useState("");
+  const [
+    search,
+    setSearch,
+  ] = useState("");
 
-  const [roleFilter, setRoleFilter] =
-    useState<
-      UserRole | "all"
-    >("all");
+  const [
+    roleFilter,
+    setRoleFilter,
+  ] = useState<
+    UserRole | "all"
+  >("all");
+
+  const [
+    statusFilter,
+    setStatusFilter,
+  ] = useState<
+    | "all"
+    | "active"
+    | "blocked"
+  >("all");
 
   const filteredProfiles =
     useMemo(() => {
@@ -395,16 +560,17 @@ export default function UserManagement({
                 profile.employee_id
             );
 
-          const searchableText = [
-            profile.email,
-            profile.full_name,
-            employee?.first_name,
-            employee?.last_name,
-            employee?.position,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
+          const searchableText =
+            [
+              profile.email,
+              profile.full_name,
+              employee?.first_name,
+              employee?.last_name,
+              employee?.position,
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
 
           const matchesSearch =
             !query ||
@@ -413,13 +579,29 @@ export default function UserManagement({
             );
 
           const matchesRole =
-            roleFilter === "all" ||
+            roleFilter ===
+              "all" ||
             profile.role ===
               roleFilter;
 
+          const matchesStatus =
+            statusFilter ===
+              "all" ||
+            (
+              statusFilter ===
+                "active" &&
+              profile.is_active
+            ) ||
+            (
+              statusFilter ===
+                "blocked" &&
+              !profile.is_active
+            );
+
           return (
             matchesSearch &&
-            matchesRole
+            matchesRole &&
+            matchesStatus
           );
         }
       );
@@ -428,104 +610,146 @@ export default function UserManagement({
       safeEmployees,
       search,
       roleFilter,
+      statusFilter,
     ]);
 
   const adminCount =
     safeProfiles.filter(
       (profile) =>
         profile.role ===
-        "admin"
+          "admin" &&
+        profile.is_active
     ).length;
 
   const managerCount =
     safeProfiles.filter(
       (profile) =>
         profile.role ===
-        "object_manager"
+          "object_manager" &&
+        profile.is_active
     ).length;
 
   const workerCount =
     safeProfiles.filter(
       (profile) =>
         profile.role ===
-        "worker"
+          "worker" &&
+        profile.is_active
+    ).length;
+
+  const blockedCount =
+    safeProfiles.filter(
+      (profile) =>
+        !profile.is_active
     ).length;
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
+      {/* STATS */}
+      <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Усього акаунтів
           </p>
 
-          <p className="mt-2 text-3xl font-bold">
+          <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
             {
               safeProfiles.length
             }
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Адміністратори
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-green-700">
+          <p className="mt-2 text-2xl font-bold text-green-700 sm:text-3xl">
             {adminCount}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Керівники об’єктів
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-blue-700">
+          <p className="mt-2 text-2xl font-bold text-blue-700 sm:text-3xl">
             {managerCount}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
             Працівники
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-gray-700">
+          <p className="mt-2 text-2xl font-bold text-gray-700 sm:text-3xl">
             {workerCount}
+          </p>
+        </div>
+
+        <div
+          className={`col-span-2 min-w-0 rounded-xl border bg-white p-3 sm:p-5 xl:col-span-1 ${
+            blockedCount > 0
+              ? "border-red-200"
+              : ""
+          }`}
+        >
+          <p className="text-xs leading-4 text-gray-500 sm:text-sm">
+            Заблоковані
+          </p>
+
+          <p
+            className={`mt-2 text-2xl font-bold sm:text-3xl ${
+              blockedCount > 0
+                ? "text-red-600"
+                : "text-gray-900"
+            }`}
+          >
+            {blockedCount}
           </p>
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-xl border bg-white">
-        <div className="border-b p-5">
-          <h2 className="text-xl font-semibold">
+      {/* USERS */}
+      <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+        {/* HEADER */}
+        <div className="border-b p-4 sm:p-5">
+          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
             Користувачі системи
           </h2>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Ролі та зв’язок акаунтів
-            із працівниками
+          <p className="mt-1 text-sm leading-5 text-gray-500">
+            Ролі, статуси та зв’язок
+            акаунтів із працівниками
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 border-b bg-gray-50 p-4 md:grid-cols-[1fr_240px]">
-          <input
-            type="search"
-            value={search}
-            onChange={(
-              event
-            ) =>
-              setSearch(
-                event.target.value
-              )
-            }
-            placeholder="Пошук за ім’ям або email"
-            className="w-full rounded-lg border bg-white px-4 py-3 outline-none focus:border-green-600"
-          />
+        {/* FILTERS */}
+        <div className="grid min-w-0 grid-cols-1 gap-3 border-b bg-gray-50 p-3 sm:p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_220px]">
+          <div className="min-w-0 md:col-span-2 xl:col-span-1">
+            <input
+              type="search"
+              value={
+                search
+              }
+              onChange={(
+                event
+              ) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              placeholder="Пошук за ім’ям або email"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            />
+          </div>
 
           <select
-            value={roleFilter}
+            value={
+              roleFilter
+            }
             onChange={(
               event
             ) =>
@@ -536,7 +760,7 @@ export default function UserManagement({
                   | "all"
               )
             }
-            className="w-full rounded-lg border bg-white px-4 py-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           >
             <option value="all">
               Усі ролі
@@ -554,24 +778,70 @@ export default function UserManagement({
               Працівники
             </option>
           </select>
+
+          <select
+            value={
+              statusFilter
+            }
+            onChange={(
+              event
+            ) =>
+              setStatusFilter(
+                event.target
+                  .value as
+                  | "all"
+                  | "active"
+                  | "blocked"
+              )
+            }
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+          >
+            <option value="all">
+              Усі статуси
+            </option>
+
+            <option value="active">
+              Активні
+            </option>
+
+            <option value="blocked">
+              Заблоковані
+            </option>
+          </select>
         </div>
 
-        <div className="border-b px-5 py-3">
+        {/* COUNT */}
+        <div className="border-b px-4 py-3 sm:px-5">
           <p className="text-sm text-gray-500">
             Знайдено:{" "}
-            {
-              filteredProfiles.length
-            }
+            <span className="font-semibold text-gray-800">
+              {
+                filteredProfiles.length
+              }
+            </span>
           </p>
         </div>
 
+        {/* EMPTY */}
         {filteredProfiles.length ===
         0 ? (
-          <div className="p-8 text-center text-gray-500">
-            Користувачів не знайдено.
+          <div className="p-6 text-center sm:p-8">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+              👤
+            </div>
+
+            <p className="mt-3 font-medium text-gray-700">
+              Користувачів не
+              знайдено
+            </p>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Спробуй змінити пошук,
+              роль або статус.
+            </p>
           </div>
         ) : (
-          <div className="space-y-4 bg-gray-50 p-5">
+          <div className="space-y-3 bg-gray-50 p-3 sm:space-y-4 sm:p-5">
             {filteredProfiles.map(
               (profile) => (
                 <UserRow

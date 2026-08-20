@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
 import {
   useEffect,
   useMemo,
@@ -10,13 +11,16 @@ import {
   type DragEvent,
   type MouseEvent,
 } from "react";
+
 import {
   deleteObjectTask,
   updateTaskDueDate,
   updateTaskStatus,
 } from "@/app/actions/taskActions";
+
 import EditTaskForm from "@/components/objects/EditTaskForm";
 import AddGlobalTaskForm from "@/components/tasks/AddGlobalTaskForm";
+
 import type { Employee } from "@/types/employee";
 import type { ObjectItem } from "@/types/object";
 import type { TaskWithObject } from "@/types/taskWithObject";
@@ -32,6 +36,7 @@ type TaskCardProps = {
   employeesById: Map<number, Employee>;
   isUpdating: boolean;
   isMoving: boolean;
+  canDrag: boolean;
   onOpen: () => void;
   onDragStart: (
     event: DragEvent<HTMLElement>
@@ -42,7 +47,8 @@ type TaskCardProps = {
   ) => void;
 };
 
-const NO_DATE_DROP_TARGET = "__NO_DATE__";
+const NO_DATE_DROP_TARGET =
+  "__NO_DATE__";
 
 const weekDays = [
   "Понеділок",
@@ -54,8 +60,11 @@ const weekDays = [
   "Неділя",
 ];
 
-function formatInputDate(date: Date) {
-  const year = date.getFullYear();
+function formatInputDate(
+  date: Date
+) {
+  const year =
+    date.getFullYear();
 
   const month = String(
     date.getMonth() + 1
@@ -68,30 +77,52 @@ function formatInputDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function getMonday(date: Date) {
-  const result = new Date(date);
-  const day = result.getDay();
+function getMonday(
+  date: Date
+) {
+  const result =
+    new Date(date);
+
+  const day =
+    result.getDay();
 
   const difference =
     result.getDate() -
     day +
     (day === 0 ? -6 : 1);
 
-  result.setDate(difference);
-  result.setHours(0, 0, 0, 0);
+  result.setDate(
+    difference
+  );
+
+  result.setHours(
+    0,
+    0,
+    0,
+    0
+  );
 
   return result;
 }
 
-function addDays(date: Date, days: number) {
-  const result = new Date(date);
+function addDays(
+  date: Date,
+  days: number
+) {
+  const result =
+    new Date(date);
 
-  result.setDate(result.getDate() + days);
+  result.setDate(
+    result.getDate() +
+      days
+  );
 
   return result;
 }
 
-function formatDayDate(date: Date) {
+function formatDayDate(
+  date: Date
+) {
   return new Intl.DateTimeFormat(
     "uk-UA",
     {
@@ -101,7 +132,9 @@ function formatDayDate(date: Date) {
   ).format(date);
 }
 
-function formatFullDate(date: Date) {
+function formatFullDate(
+  date: Date
+) {
   return new Intl.DateTimeFormat(
     "uk-UA",
     {
@@ -112,7 +145,9 @@ function formatFullDate(date: Date) {
   ).format(date);
 }
 
-function formatSelectedDate(date: string) {
+function formatSelectedDate(
+  date: string
+) {
   return new Intl.DateTimeFormat(
     "uk-UA",
     {
@@ -121,11 +156,15 @@ function formatSelectedDate(date: string) {
       year: "numeric",
     }
   ).format(
-    new Date(`${date}T00:00:00`)
+    new Date(
+      `${date}T00:00:00`
+    )
   );
 }
 
-function getStatusClasses(status: string) {
+function getStatusClasses(
+  status: string
+) {
   switch (status) {
     case "Заплановано":
       return "bg-blue-50 text-blue-700";
@@ -209,24 +248,36 @@ function sortCalendarTasks(
   secondTask: TaskWithObject
 ) {
   const firstCompleted =
-    firstTask.status === "Виконано";
+    firstTask.status ===
+    "Виконано";
 
   const secondCompleted =
-    secondTask.status === "Виконано";
+    secondTask.status ===
+    "Виконано";
 
-  if (firstCompleted !== secondCompleted) {
-    return firstCompleted ? 1 : -1;
+  if (
+    firstCompleted !==
+    secondCompleted
+  ) {
+    return firstCompleted
+      ? 1
+      : -1;
   }
 
   const priorityDifference =
     getPriorityOrder(
-      firstTask.priority || "Середній"
+      firstTask.priority ||
+        "Середній"
     ) -
     getPriorityOrder(
-      secondTask.priority || "Середній"
+      secondTask.priority ||
+        "Середній"
     );
 
-  if (priorityDifference !== 0) {
+  if (
+    priorityDifference !==
+    0
+  ) {
     return priorityDifference;
   }
 
@@ -238,19 +289,30 @@ function sortCalendarTasks(
 
 function getEmployeeName(
   task: TaskWithObject,
-  employeesById: Map<number, Employee>
+  employeesById: Map<
+    number,
+    Employee
+  >
 ) {
-  if (task.assigned_employee_id) {
-    const employee = employeesById.get(
-      Number(task.assigned_employee_id)
-    );
+  if (
+    task.assigned_employee_id
+  ) {
+    const employee =
+      employeesById.get(
+        Number(
+          task.assigned_employee_id
+        )
+      );
 
     if (employee) {
       return `${employee.last_name} ${employee.first_name}`;
     }
   }
 
-  return task.assignee || "Не призначено";
+  return (
+    task.assignee ||
+    "Не призначено"
+  );
 }
 
 function TaskCard({
@@ -258,35 +320,51 @@ function TaskCard({
   employeesById,
   isUpdating,
   isMoving,
+  canDrag,
   onOpen,
   onDragStart,
   onDragEnd,
   onQuickStatus,
 }: TaskCardProps) {
   const priority =
-    task.priority || "Середній";
+    task.priority ||
+    "Середній";
 
   const isCompleted =
-    task.status === "Виконано";
+    task.status ===
+    "Виконано";
 
   return (
     <article
       role="button"
       tabIndex={0}
-      draggable={!isMoving}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onClick={onOpen}
-      onKeyDown={(event) => {
+      draggable={
+        canDrag &&
+        !isMoving
+      }
+      onDragStart={
+        onDragStart
+      }
+      onDragEnd={
+        onDragEnd
+      }
+      onClick={
+        onOpen
+      }
+      onKeyDown={(
+        event
+      ) => {
         if (
-          event.key === "Enter" ||
+          event.key ===
+            "Enter" ||
           event.key === " "
         ) {
           event.preventDefault();
+
           onOpen();
         }
       }}
-      className={`cursor-grab rounded-lg border p-3 transition active:cursor-grabbing hover:border-green-300 ${getPriorityBorderClasses(
+      className={`min-w-0 cursor-pointer rounded-xl border p-3 transition hover:border-green-300 md:cursor-grab md:active:cursor-grabbing ${getPriorityBorderClasses(
         priority
       )} ${
         isCompleted
@@ -298,13 +376,16 @@ function TaskCard({
           : ""
       }`}
     >
-      <div className="flex items-start gap-2">
-        <span
-          title="Перетягни завдання"
-          className="select-none text-sm text-gray-400"
-        >
-          ⋮⋮
-        </span>
+      {/* TITLE */}
+      <div className="flex min-w-0 items-start gap-2">
+        {canDrag && (
+          <span
+            title="Перетягни завдання"
+            className="mt-0.5 hidden shrink-0 select-none text-sm text-gray-400 md:block"
+          >
+            ⋮⋮
+          </span>
+        )}
 
         {isCompleted && (
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-xs font-bold text-green-700">
@@ -313,22 +394,25 @@ function TaskCard({
         )}
 
         <h3
-          className={`text-sm font-semibold ${
+          className={`min-w-0 break-words text-sm font-semibold ${
             isCompleted
               ? "text-gray-500 line-through"
-              : ""
+              : "text-gray-900"
           }`}
         >
           {task.title}
         </h3>
       </div>
 
+      {/* BADGES */}
       <div className="mt-2 flex flex-wrap gap-1.5">
         <span
           className={`rounded-full px-2 py-1 text-[10px] font-medium ${
             isCompleted
               ? "bg-gray-100 text-gray-500"
-              : getPriorityClasses(priority)
+              : getPriorityClasses(
+                  priority
+                )
           }`}
         >
           {priority}
@@ -345,64 +429,90 @@ function TaskCard({
         </span>
       </div>
 
+      {/* OBJECT */}
       {task.object && (
         <Link
           href={`/objects/${task.object.id}`}
           draggable={false}
-          onPointerDown={(event) =>
+          onPointerDown={(
+            event
+          ) =>
             event.stopPropagation()
           }
-          onClick={(event) =>
+          onClick={(
+            event
+          ) =>
             event.stopPropagation()
           }
-          className={`mt-3 block text-xs font-medium hover:underline ${
+          className={`mt-3 block break-words text-xs font-medium hover:underline ${
             isCompleted
               ? "text-gray-400"
               : "text-green-700"
           }`}
         >
-          {task.object.name}
+          {
+            task.object
+              .name
+          }
         </Link>
       )}
 
-      <p className="mt-2 text-xs text-gray-500">
+      {/* EMPLOYEE */}
+      <p className="mt-2 break-words text-xs text-gray-500">
         {getEmployeeName(
           task,
           employeesById
         )}
       </p>
 
+      {/* DESCRIPTION */}
       {task.description && (
         <p
-          className={`mt-2 line-clamp-3 text-xs ${
+          className={`mt-2 line-clamp-3 whitespace-pre-wrap break-words text-xs leading-5 ${
             isCompleted
               ? "text-gray-400"
               : "text-gray-600"
           }`}
         >
-          {task.description}
+          {
+            task.description
+          }
         </p>
       )}
 
+      {/* QUICK STATUS */}
       <button
         type="button"
         draggable={false}
-        disabled={isUpdating || isMoving}
-        onPointerDown={(event) => {
+        disabled={
+          isUpdating ||
+          isMoving
+        }
+        onPointerDown={(
+          event
+        ) => {
           event.stopPropagation();
         }}
-        onMouseDown={(event) => {
+        onMouseDown={(
+          event
+        ) => {
           event.stopPropagation();
         }}
-        onDragStart={(event) => {
+        onDragStart={(
+          event
+        ) => {
           event.preventDefault();
           event.stopPropagation();
         }}
-        onClick={onQuickStatus}
-        onKeyDown={(event) => {
+        onClick={
+          onQuickStatus
+        }
+        onKeyDown={(
+          event
+        ) => {
           event.stopPropagation();
         }}
-        className={`mt-3 w-full rounded-lg border px-3 py-2 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`mt-3 min-h-10 w-full rounded-lg border px-3 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
           isCompleted
             ? "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
             : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
@@ -416,7 +526,8 @@ function TaskCard({
       </button>
 
       <p className="mt-3 border-t pt-2 text-[11px] text-gray-400">
-        Натисни картку, щоб редагувати
+        Натисни картку, щоб
+        редагувати
       </p>
     </article>
   );
@@ -427,29 +538,48 @@ export default function WeeklyTaskCalendar({
   employees,
   objects,
 }: Props) {
-  const router = useRouter();
+  const router =
+    useRouter();
 
-  const [localTasks, setLocalTasks] =
-    useState<TaskWithObject[]>(tasks);
+  const [
+    localTasks,
+    setLocalTasks,
+  ] =
+    useState<TaskWithObject[]>(
+      tasks
+    );
 
-  const [selectedDate, setSelectedDate] =
-    useState(new Date());
+  const [
+    selectedDate,
+    setSelectedDate,
+  ] = useState(
+    new Date()
+  );
 
   const [
     selectedTaskDate,
     setSelectedTaskDate,
-  ] = useState<string | null>(null);
+  ] = useState<
+    string | null
+  >(null);
 
-  const [selectedTask, setSelectedTask] =
-    useState<TaskWithObject | null>(null);
+  const [
+    selectedTask,
+    setSelectedTask,
+  ] =
+    useState<TaskWithObject | null>(
+      null
+    );
 
   const [
     employeeFilter,
     setEmployeeFilter,
   ] = useState("Усі");
 
-  const [statusFilter, setStatusFilter] =
-    useState("Усі");
+  const [
+    statusFilter,
+    setStatusFilter,
+  ] = useState("Усі");
 
   const [
     priorityFilter,
@@ -464,27 +594,37 @@ export default function WeeklyTaskCalendar({
   const [
     deletingTaskId,
     setDeletingTaskId,
-  ] = useState<number | null>(null);
+  ] = useState<
+    number | null
+  >(null);
 
   const [
     updatingTaskId,
     setUpdatingTaskId,
-  ] = useState<number | null>(null);
+  ] = useState<
+    number | null
+  >(null);
 
   const [
     movingTaskId,
     setMovingTaskId,
-  ] = useState<number | null>(null);
+  ] = useState<
+    number | null
+  >(null);
 
   const [
     draggedTaskId,
     setDraggedTaskId,
-  ] = useState<number | null>(null);
+  ] = useState<
+    number | null
+  >(null);
 
   const [
     dragOverTarget,
     setDragOverTarget,
-  ] = useState<string | null>(null);
+  ] = useState<
+    string | null
+  >(null);
 
   const [
     deleteErrorMessage,
@@ -496,148 +636,299 @@ export default function WeeklyTaskCalendar({
     setQuickActionError,
   ] = useState("");
 
+  const [
+    canDrag,
+    setCanDrag,
+  ] = useState(false);
+
   const draggedTaskIdRef =
-    useRef<number | null>(null);
+    useRef<
+      number | null
+    >(null);
 
   const ignoreTaskClickRef =
     useRef(false);
 
   useEffect(() => {
-    setLocalTasks(tasks);
+    setLocalTasks(
+      tasks
+    );
   }, [tasks]);
 
-  const weekStart = useMemo(
-    () => getMonday(selectedDate),
-    [selectedDate]
-  );
-
-  const weekDates = useMemo(
-    () =>
-      Array.from(
-        { length: 7 },
-        (_, index) =>
-          addDays(weekStart, index)
-      ),
-    [weekStart]
-  );
-
-  const weekEnd = weekDates[6];
-
-  const employeesById = useMemo(() => {
-    return new Map(
-      employees.map((employee) => [
-        employee.id,
-        employee,
-      ])
-    );
-  }, [employees]);
-
-  const filteredTasks = useMemo(() => {
-    return localTasks.filter((task) => {
-      const matchesEmployee =
-        employeeFilter === "Усі" ||
-        (employeeFilter ===
-          "Без відповідального" &&
-          !task.assigned_employee_id) ||
-        String(
-          task.assigned_employee_id
-        ) === employeeFilter;
-
-      const priority =
-        task.priority || "Середній";
-
-      const matchesStatus =
-        statusFilter === "Усі" ||
-        task.status === statusFilter;
-
-      const matchesPriority =
-        priorityFilter === "Усі" ||
-        priority === priorityFilter;
-
-      const matchesActive =
-        !showOnlyActive ||
-        task.status !== "Виконано";
-
-      return (
-        matchesEmployee &&
-        matchesStatus &&
-        matchesPriority &&
-        matchesActive
+  // Drag-and-drop тільки
+  // на більших екранах.
+  useEffect(() => {
+    const media =
+      window.matchMedia(
+        "(min-width: 768px)"
       );
-    });
+
+    function updateDragMode() {
+      setCanDrag(
+        media.matches
+      );
+    }
+
+    updateDragMode();
+
+    media.addEventListener(
+      "change",
+      updateDragMode
+    );
+
+    return () => {
+      media.removeEventListener(
+        "change",
+        updateDragMode
+      );
+    };
+  }, []);
+
+  // Блокуємо сторінку позаду
+  // відкритого popup.
+  useEffect(() => {
+    const isModalOpen =
+      Boolean(
+        selectedTaskDate ||
+          selectedTask
+      );
+
+    if (!isModalOpen) {
+      document.body.style.overflow =
+        "";
+
+      return;
+    }
+
+    document.body.style.overflow =
+      "hidden";
+
+    return () => {
+      document.body.style.overflow =
+        "";
+    };
   }, [
-    localTasks,
-    employeeFilter,
-    statusFilter,
-    priorityFilter,
-    showOnlyActive,
+    selectedTaskDate,
+    selectedTask,
   ]);
 
-  const tasksByDate = useMemo(() => {
-    const result = new Map<
-      string,
-      TaskWithObject[]
-    >();
+  const weekStart =
+    useMemo(
+      () =>
+        getMonday(
+          selectedDate
+        ),
+      [selectedDate]
+    );
 
-    weekDates.forEach((date) => {
-      result.set(
-        formatInputDate(date),
-        []
+  const weekDates =
+    useMemo(
+      () =>
+        Array.from(
+          {
+            length: 7,
+          },
+          (
+            _,
+            index
+          ) =>
+            addDays(
+              weekStart,
+              index
+            )
+        ),
+      [weekStart]
+    );
+
+  const weekEnd =
+    weekDates[6];
+
+  const employeesById =
+    useMemo(() => {
+      return new Map(
+        employees.map(
+          (employee) => [
+            employee.id,
+            employee,
+          ]
+        )
       );
-    });
+    }, [employees]);
 
-    filteredTasks.forEach((task) => {
-      if (
-        !task.due_date ||
-        !result.has(task.due_date)
-      ) {
-        return;
-      }
+  const filteredTasks =
+    useMemo(() => {
+      return localTasks.filter(
+        (task) => {
+          const matchesEmployee =
+            employeeFilter ===
+              "Усі" ||
+            (employeeFilter ===
+              "Без відповідального" &&
+              !task.assigned_employee_id) ||
+            String(
+              task.assigned_employee_id
+            ) ===
+              employeeFilter;
 
-      result
-        .get(task.due_date)
-        ?.push(task);
-    });
+          const priority =
+            task.priority ||
+            "Середній";
 
-    result.forEach((dayTasks) => {
-      dayTasks.sort(sortCalendarTasks);
-    });
+          const matchesStatus =
+            statusFilter ===
+              "Усі" ||
+            task.status ===
+              statusFilter;
 
-    return result;
-  }, [filteredTasks, weekDates]);
+          const matchesPriority =
+            priorityFilter ===
+              "Усі" ||
+            priority ===
+              priorityFilter;
 
-  const tasksWithoutDate = useMemo(() => {
-    return filteredTasks
-      .filter((task) => !task.due_date)
-      .sort(sortCalendarTasks);
-  }, [filteredTasks]);
+          const matchesActive =
+            !showOnlyActive ||
+            task.status !==
+              "Виконано";
+
+          return (
+            matchesEmployee &&
+            matchesStatus &&
+            matchesPriority &&
+            matchesActive
+          );
+        }
+      );
+    }, [
+      localTasks,
+      employeeFilter,
+      statusFilter,
+      priorityFilter,
+      showOnlyActive,
+    ]);
+
+  const tasksByDate =
+    useMemo(() => {
+      const result =
+        new Map<
+          string,
+          TaskWithObject[]
+        >();
+
+      weekDates.forEach(
+        (date) => {
+          result.set(
+            formatInputDate(
+              date
+            ),
+            []
+          );
+        }
+      );
+
+      filteredTasks.forEach(
+        (task) => {
+          if (
+            !task.due_date ||
+            !result.has(
+              task.due_date
+            )
+          ) {
+            return;
+          }
+
+          result
+            .get(
+              task.due_date
+            )
+            ?.push(task);
+        }
+      );
+
+      result.forEach(
+        (dayTasks) => {
+          dayTasks.sort(
+            sortCalendarTasks
+          );
+        }
+      );
+
+      return result;
+    }, [
+      filteredTasks,
+      weekDates,
+    ]);
+
+  const tasksWithoutDate =
+    useMemo(() => {
+      return filteredTasks
+        .filter(
+          (task) =>
+            !task.due_date
+        )
+        .sort(
+          sortCalendarTasks
+        );
+    }, [filteredTasks]);
 
   function openTask(
     task: TaskWithObject
   ) {
-    setSelectedTaskDate(null);
-    setDeleteErrorMessage("");
-    setQuickActionError("");
-    setSelectedTask(task);
+    setSelectedTaskDate(
+      null
+    );
+
+    setDeleteErrorMessage(
+      ""
+    );
+
+    setQuickActionError(
+      ""
+    );
+
+    setSelectedTask(
+      task
+    );
   }
 
-  function openAddTask(date: string) {
-    setSelectedTask(null);
-    setDeleteErrorMessage("");
-    setQuickActionError("");
-    setSelectedTaskDate(date);
+  function openAddTask(
+    date: string
+  ) {
+    setSelectedTask(
+      null
+    );
+
+    setDeleteErrorMessage(
+      ""
+    );
+
+    setQuickActionError(
+      ""
+    );
+
+    setSelectedTaskDate(
+      date
+    );
   }
 
   function closeEditForm() {
-    setSelectedTask(null);
-    setDeleteErrorMessage("");
+    setSelectedTask(
+      null
+    );
+
+    setDeleteErrorMessage(
+      ""
+    );
+
     router.refresh();
   }
 
   function handleTaskClick(
     task: TaskWithObject
   ) {
-    if (ignoreTaskClickRef.current) {
+    if (
+      ignoreTaskClickRef.current
+    ) {
       return;
     }
 
@@ -648,16 +939,29 @@ export default function WeeklyTaskCalendar({
     event: DragEvent<HTMLElement>,
     task: TaskWithObject
   ) {
-    if (movingTaskId !== null) {
+    if (
+      !canDrag ||
+      movingTaskId !==
+        null
+    ) {
       event.preventDefault();
+
       return;
     }
 
-    draggedTaskIdRef.current = task.id;
-    ignoreTaskClickRef.current = true;
+    draggedTaskIdRef.current =
+      task.id;
 
-    setDraggedTaskId(task.id);
-    setQuickActionError("");
+    ignoreTaskClickRef.current =
+      true;
+
+    setDraggedTaskId(
+      task.id
+    );
+
+    setQuickActionError(
+      ""
+    );
 
     event.dataTransfer.effectAllowed =
       "move";
@@ -669,35 +973,57 @@ export default function WeeklyTaskCalendar({
   }
 
   function handleDragEnd() {
-    draggedTaskIdRef.current = null;
+    draggedTaskIdRef.current =
+      null;
 
-    setDraggedTaskId(null);
-    setDragOverTarget(null);
+    setDraggedTaskId(
+      null
+    );
 
-    window.setTimeout(() => {
-      ignoreTaskClickRef.current = false;
-    }, 200);
+    setDragOverTarget(
+      null
+    );
+
+    window.setTimeout(
+      () => {
+        ignoreTaskClickRef.current =
+          false;
+      },
+      200
+    );
   }
 
   function handleDragOver(
     event: DragEvent<HTMLElement>,
     target: string
   ) {
+    if (!canDrag) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
 
     event.dataTransfer.dropEffect =
       "move";
 
-    setDragOverTarget(target);
+    setDragOverTarget(
+      target
+    );
   }
 
   function handleDragLeave(
     event: DragEvent<HTMLElement>,
     target: string
   ) {
+    if (!canDrag) {
+      return;
+    }
+
     const nextElement =
-      event.relatedTarget as Node | null;
+      event.relatedTarget as
+        | Node
+        | null;
 
     if (
       nextElement &&
@@ -710,7 +1036,8 @@ export default function WeeklyTaskCalendar({
 
     setDragOverTarget(
       (currentTarget) =>
-        currentTarget === target
+        currentTarget ===
+        target
           ? null
           : currentTarget
     );
@@ -718,35 +1045,53 @@ export default function WeeklyTaskCalendar({
 
   async function handleTaskDrop(
     event: DragEvent<HTMLElement>,
-    dueDate: string | null
+    dueDate:
+      | string
+      | null
   ) {
+    if (!canDrag) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
 
-    const transferredId = Number(
-      event.dataTransfer.getData(
-        "text/plain"
-      )
-    );
+    const transferredId =
+      Number(
+        event.dataTransfer.getData(
+          "text/plain"
+        )
+      );
 
     const taskId =
       draggedTaskIdRef.current ??
       transferredId;
 
-    const task = localTasks.find(
-      (currentTask) =>
-        currentTask.id === taskId
+    const task =
+      localTasks.find(
+        (currentTask) =>
+          currentTask.id ===
+          taskId
+      );
+
+    draggedTaskIdRef.current =
+      null;
+
+    setDraggedTaskId(
+      null
     );
 
-    draggedTaskIdRef.current = null;
-
-    setDraggedTaskId(null);
-    setDragOverTarget(null);
+    setDragOverTarget(
+      null
+    );
 
     if (
       !task ||
-      !Number.isInteger(taskId) ||
-      movingTaskId !== null
+      !Number.isInteger(
+        taskId
+      ) ||
+      movingTaskId !==
+        null
     ) {
       return;
     }
@@ -755,33 +1100,45 @@ export default function WeeklyTaskCalendar({
       dueDate || null;
 
     const currentDueDate =
-      task.due_date || null;
+      task.due_date ||
+      null;
 
     if (
       currentDueDate ===
       normalizedDueDate
     ) {
-      window.setTimeout(() => {
-        ignoreTaskClickRef.current =
-          false;
-      }, 200);
+      window.setTimeout(
+        () => {
+          ignoreTaskClickRef.current =
+            false;
+        },
+        200
+      );
 
       return;
     }
 
-    setMovingTaskId(task.id);
-    setQuickActionError("");
+    setMovingTaskId(
+      task.id
+    );
 
-    setLocalTasks((currentTasks) =>
-      currentTasks.map((currentTask) =>
-        currentTask.id === task.id
-          ? {
-              ...currentTask,
-              due_date:
-                normalizedDueDate,
-            }
-          : currentTask
-      )
+    setQuickActionError(
+      ""
+    );
+
+    setLocalTasks(
+      (currentTasks) =>
+        currentTasks.map(
+          (currentTask) =>
+            currentTask.id ===
+            task.id
+              ? {
+                  ...currentTask,
+                  due_date:
+                    normalizedDueDate,
+                }
+              : currentTask
+        )
     );
 
     try {
@@ -791,17 +1148,19 @@ export default function WeeklyTaskCalendar({
         normalizedDueDate
       );
     } catch (error) {
-      setLocalTasks((currentTasks) =>
-        currentTasks.map(
-          (currentTask) =>
-            currentTask.id === task.id
-              ? {
-                  ...currentTask,
-                  due_date:
-                    currentDueDate,
-                }
-              : currentTask
-        )
+      setLocalTasks(
+        (currentTasks) =>
+          currentTasks.map(
+            (currentTask) =>
+              currentTask.id ===
+              task.id
+                ? {
+                    ...currentTask,
+                    due_date:
+                      currentDueDate,
+                  }
+                : currentTask
+          )
       );
 
       setQuickActionError(
@@ -810,12 +1169,17 @@ export default function WeeklyTaskCalendar({
           : "Не вдалося перенести завдання."
       );
     } finally {
-      setMovingTaskId(null);
+      setMovingTaskId(
+        null
+      );
 
-      window.setTimeout(() => {
-        ignoreTaskClickRef.current =
-          false;
-      }, 200);
+      window.setTimeout(
+        () => {
+          ignoreTaskClickRef.current =
+            false;
+        },
+        200
+      );
     }
   }
 
@@ -827,8 +1191,10 @@ export default function WeeklyTaskCalendar({
     event.stopPropagation();
 
     if (
-      updatingTaskId !== null ||
-      movingTaskId !== null
+      updatingTaskId !==
+        null ||
+      movingTaskId !==
+        null
     ) {
       return;
     }
@@ -837,22 +1203,32 @@ export default function WeeklyTaskCalendar({
       task.status;
 
     const nextStatus =
-      previousStatus === "Виконано"
+      previousStatus ===
+      "Виконано"
         ? "В роботі"
         : "Виконано";
 
-    setUpdatingTaskId(task.id);
-    setQuickActionError("");
+    setUpdatingTaskId(
+      task.id
+    );
 
-    setLocalTasks((currentTasks) =>
-      currentTasks.map((currentTask) =>
-        currentTask.id === task.id
-          ? {
-              ...currentTask,
-              status: nextStatus,
-            }
-          : currentTask
-      )
+    setQuickActionError(
+      ""
+    );
+
+    setLocalTasks(
+      (currentTasks) =>
+        currentTasks.map(
+          (currentTask) =>
+            currentTask.id ===
+            task.id
+              ? {
+                  ...currentTask,
+                  status:
+                    nextStatus,
+                }
+              : currentTask
+        )
     );
 
     try {
@@ -862,17 +1238,19 @@ export default function WeeklyTaskCalendar({
         nextStatus
       );
     } catch (error) {
-      setLocalTasks((currentTasks) =>
-        currentTasks.map(
-          (currentTask) =>
-            currentTask.id === task.id
-              ? {
-                  ...currentTask,
-                  status:
-                    previousStatus,
-                }
-              : currentTask
-        )
+      setLocalTasks(
+        (currentTasks) =>
+          currentTasks.map(
+            (currentTask) =>
+              currentTask.id ===
+              task.id
+                ? {
+                    ...currentTask,
+                    status:
+                      previousStatus,
+                  }
+                : currentTask
+          )
       );
 
       setQuickActionError(
@@ -881,23 +1259,31 @@ export default function WeeklyTaskCalendar({
           : "Не вдалося змінити статус завдання."
       );
     } finally {
-      setUpdatingTaskId(null);
+      setUpdatingTaskId(
+        null
+      );
     }
   }
 
   async function handleDeleteTask(
     task: TaskWithObject
   ) {
-    const confirmed = window.confirm(
-      `Видалити завдання «${task.title}»?\n\nЦю дію неможливо скасувати.`
-    );
+    const confirmed =
+      window.confirm(
+        `Видалити завдання «${task.title}»?\n\nЦю дію неможливо скасувати.`
+      );
 
     if (!confirmed) {
       return;
     }
 
-    setDeletingTaskId(task.id);
-    setDeleteErrorMessage("");
+    setDeletingTaskId(
+      task.id
+    );
+
+    setDeleteErrorMessage(
+      ""
+    );
 
     try {
       await deleteObjectTask(
@@ -905,14 +1291,18 @@ export default function WeeklyTaskCalendar({
         task.object_id
       );
 
-      setLocalTasks((currentTasks) =>
-        currentTasks.filter(
-          (currentTask) =>
-            currentTask.id !== task.id
-        )
+      setLocalTasks(
+        (currentTasks) =>
+          currentTasks.filter(
+            (currentTask) =>
+              currentTask.id !==
+              task.id
+          )
       );
 
-      setSelectedTask(null);
+      setSelectedTask(
+        null
+      );
     } catch (error) {
       setDeleteErrorMessage(
         error instanceof Error
@@ -920,81 +1310,128 @@ export default function WeeklyTaskCalendar({
           : "Не вдалося видалити завдання."
       );
     } finally {
-      setDeletingTaskId(null);
+      setDeletingTaskId(
+        null
+      );
     }
   }
 
   function openPreviousWeek() {
     setSelectedDate(
-      addDays(weekStart, -7)
+      addDays(
+        weekStart,
+        -7
+      )
     );
   }
 
   function openNextWeek() {
     setSelectedDate(
-      addDays(weekStart, 7)
+      addDays(
+        weekStart,
+        7
+      )
     );
   }
 
   function openCurrentWeek() {
-    setSelectedDate(new Date());
+    setSelectedDate(
+      new Date()
+    );
   }
 
   const today =
-    formatInputDate(new Date());
+    formatInputDate(
+      new Date()
+    );
 
   return (
-    <div className="space-y-5">
-      <div className="rounded-xl border bg-white p-4">
+    <div className="min-w-0 space-y-5">
+      {/* CONTROLS */}
+      <div className="min-w-0 rounded-xl border bg-white p-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
+          <div className="min-w-0">
             <p className="text-sm text-gray-500">
               Тиждень
             </p>
 
-            <h2 className="mt-1 text-xl font-semibold">
-              {formatFullDate(weekStart)}
+            <h2 className="mt-1 break-words text-base font-semibold sm:text-xl">
+              {formatFullDate(
+                weekStart
+              )}
               {" — "}
-              {formatFullDate(weekEnd)}
+              {formatFullDate(
+                weekEnd
+              )}
             </h2>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          {/* WEEK NAVIGATION */}
+          <div className="grid w-full grid-cols-3 gap-2 xl:w-auto">
             <button
               type="button"
-              onClick={openPreviousWeek}
-              className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-gray-50"
+              onClick={
+                openPreviousWeek
+              }
+              className="min-h-10 rounded-lg border bg-white px-2 py-2 text-xs font-medium hover:bg-gray-50 sm:px-4 sm:text-sm"
             >
-              ← Попередній
+              <span className="sm:hidden">
+                ← Назад
+              </span>
+
+              <span className="hidden sm:inline">
+                ← Попередній
+              </span>
             </button>
 
             <button
               type="button"
-              onClick={openCurrentWeek}
-              className="rounded-lg border bg-white px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50"
+              onClick={
+                openCurrentWeek
+              }
+              className="min-h-10 rounded-lg border bg-white px-2 py-2 text-xs font-medium text-green-700 hover:bg-green-50 sm:px-4 sm:text-sm"
             >
-              Цей тиждень
+              <span className="sm:hidden">
+                Сьогодні
+              </span>
+
+              <span className="hidden sm:inline">
+                Цей тиждень
+              </span>
             </button>
 
             <button
               type="button"
-              onClick={openNextWeek}
-              className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-gray-50"
+              onClick={
+                openNextWeek
+              }
+              className="min-h-10 rounded-lg border bg-white px-2 py-2 text-xs font-medium hover:bg-gray-50 sm:px-4 sm:text-sm"
             >
-              Наступний →
+              <span className="sm:hidden">
+                Вперед →
+              </span>
+
+              <span className="hidden sm:inline">
+                Наступний →
+              </span>
             </button>
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {/* FILTERS */}
+        <div className="mt-5 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <select
-            value={employeeFilter}
-            onChange={(event) =>
+            value={
+              employeeFilter
+            }
+            onChange={(
+              event
+            ) =>
               setEmployeeFilter(
                 event.target.value
               )
             }
-            className="w-full rounded-lg border bg-white px-4 py-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
           >
             <option value="Усі">
               Усі працівники
@@ -1004,33 +1441,51 @@ export default function WeeklyTaskCalendar({
               Без відповідального
             </option>
 
-            {employees.map((employee) => (
-              <option
-                key={employee.id}
-                value={String(employee.id)}
-              >
-                {employee.last_name}{" "}
-                {employee.first_name}
-              </option>
-            ))}
+            {employees.map(
+              (employee) => (
+                <option
+                  key={
+                    employee.id
+                  }
+                  value={String(
+                    employee.id
+                  )}
+                >
+                  {
+                    employee.last_name
+                  }{" "}
+                  {
+                    employee.first_name
+                  }
+                </option>
+              )
+            )}
           </select>
 
           <select
-            value={statusFilter}
-            onChange={(event) => {
+            value={
+              statusFilter
+            }
+            onChange={(
+              event
+            ) => {
               const nextStatus =
                 event.target.value;
 
-              setStatusFilter(nextStatus);
+              setStatusFilter(
+                nextStatus
+              );
 
               if (
                 nextStatus ===
                 "Виконано"
               ) {
-                setShowOnlyActive(false);
+                setShowOnlyActive(
+                  false
+                );
               }
             }}
-            className="w-full rounded-lg border bg-white px-4 py-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
           >
             <option value="Усі">
               Усі статуси
@@ -1050,13 +1505,17 @@ export default function WeeklyTaskCalendar({
           </select>
 
           <select
-            value={priorityFilter}
-            onChange={(event) =>
+            value={
+              priorityFilter
+            }
+            onChange={(
+              event
+            ) =>
               setPriorityFilter(
                 event.target.value
               )
             }
-            className="w-full rounded-lg border bg-white px-4 py-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
           >
             <option value="Усі">
               Усі пріоритети
@@ -1086,11 +1545,15 @@ export default function WeeklyTaskCalendar({
             }
             onClick={() => {
               setShowOnlyActive(
-                (currentValue) => {
+                (
+                  currentValue
+                ) => {
                   const nextValue =
                     !currentValue;
 
-                  if (nextValue) {
+                  if (
+                    nextValue
+                  ) {
                     setStatusFilter(
                       "Усі"
                     );
@@ -1100,7 +1563,7 @@ export default function WeeklyTaskCalendar({
                 }
               );
             }}
-            className={`w-full rounded-lg border px-4 py-3 text-left text-sm font-medium transition ${
+            className={`min-h-11 w-full rounded-lg border px-4 py-3 text-left text-sm font-medium transition ${
               showOnlyActive
                 ? "border-green-300 bg-green-50 text-green-700"
                 : "bg-white text-gray-700 hover:bg-gray-50"
@@ -1112,7 +1575,7 @@ export default function WeeklyTaskCalendar({
               </span>
 
               <span
-                className={`flex h-5 w-5 items-center justify-center rounded border text-xs ${
+                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
                   showOnlyActive
                     ? "border-green-600 bg-green-600 text-white"
                     : "border-gray-300 bg-white text-transparent"
@@ -1124,23 +1587,37 @@ export default function WeeklyTaskCalendar({
           </button>
         </div>
 
-        <p className="mt-4 text-xs text-gray-500">
-          Затисни картку та перетягни
-          її на потрібний день.
+        <p className="mt-4 text-xs text-gray-500 md:hidden">
+          Натисни на картку, щоб
+          відкрити та редагувати
+          завдання.
+        </p>
+
+        <p className="mt-4 hidden text-xs text-gray-500 md:block">
+          Затисни картку та
+          перетягни її на потрібний
+          день.
         </p>
       </div>
 
+      {/* ERROR */}
       {quickActionError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
           {quickActionError}
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-7">
+      {/* WEEK */}
+      <div className="grid min-w-0 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 2xl:grid-cols-7">
         {weekDates.map(
-          (date, index) => {
+          (
+            date,
+            index
+          ) => {
             const dateValue =
-              formatInputDate(date);
+              formatInputDate(
+                date
+              );
 
             const dayTasks =
               tasksByDate.get(
@@ -1148,7 +1625,8 @@ export default function WeeklyTaskCalendar({
               ) || [];
 
             const isToday =
-              dateValue === today;
+              dateValue ===
+              today;
 
             const isDropTarget =
               dragOverTarget ===
@@ -1156,26 +1634,36 @@ export default function WeeklyTaskCalendar({
 
             return (
               <section
-                key={dateValue}
-                onDragEnter={(event) =>
+                key={
+                  dateValue
+                }
+                onDragEnter={(
+                  event
+                ) =>
                   handleDragOver(
                     event,
                     dateValue
                   )
                 }
-                onDragOver={(event) =>
+                onDragOver={(
+                  event
+                ) =>
                   handleDragOver(
                     event,
                     dateValue
                   )
                 }
-                onDragLeave={(event) =>
+                onDragLeave={(
+                  event
+                ) =>
                   handleDragLeave(
                     event,
                     dateValue
                   )
                 }
-                onDrop={(event) =>
+                onDrop={(
+                  event
+                ) =>
                   handleTaskDrop(
                     event,
                     dateValue
@@ -1189,8 +1677,9 @@ export default function WeeklyTaskCalendar({
                       : "bg-white"
                 }`}
               >
+                {/* DAY HEADER */}
                 <div
-                  className={`border-b p-4 ${
+                  className={`border-b p-3 sm:p-4 ${
                     isDropTarget
                       ? "bg-blue-100"
                       : isToday
@@ -1198,11 +1687,23 @@ export default function WeeklyTaskCalendar({
                         : "bg-gray-50"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold">
-                        {weekDays[index]}
-                      </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold">
+                          {
+                            weekDays[
+                              index
+                            ]
+                          }
+                        </p>
+
+                        {isToday && (
+                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                            Сьогодні
+                          </span>
+                        )}
+                      </div>
 
                       <p
                         className={`mt-1 text-sm ${
@@ -1214,10 +1715,9 @@ export default function WeeklyTaskCalendar({
                         {formatDayDate(
                           date
                         )}
-
-                        {isToday
-                          ? " • Сьогодні"
-                          : ""}
+                        {" • "}
+                        {dayTasks.length}{" "}
+                        завд.
                       </p>
                     </div>
 
@@ -1228,18 +1728,22 @@ export default function WeeklyTaskCalendar({
                           dateValue
                         )
                       }
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-600 text-lg font-medium text-white hover:bg-green-700"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-600 text-xl font-medium text-white transition hover:bg-green-700"
+                      aria-label={`Додати завдання на ${formatDayDate(
+                        date
+                      )}`}
                     >
                       +
                     </button>
                   </div>
                 </div>
 
-                <div className="min-h-32 space-y-3 p-3">
+                {/* DAY TASKS */}
+                <div className="min-h-24 space-y-3 p-3 xl:min-h-32">
                   {isDropTarget && (
                     <div className="rounded-lg border border-dashed border-blue-400 bg-blue-50 px-3 py-3 text-center text-xs font-medium text-blue-700">
-                      Відпусти завдання
-                      тут
+                      Відпусти
+                      завдання тут
                     </div>
                   )}
 
@@ -1252,16 +1756,21 @@ export default function WeeklyTaskCalendar({
                           dateValue
                         )
                       }
-                      className="w-full rounded-lg border border-dashed py-5 text-center text-sm text-gray-400 hover:border-green-300 hover:bg-green-50 hover:text-green-700"
+                      className="min-h-16 w-full rounded-lg border border-dashed px-3 py-4 text-center text-sm text-gray-400 transition hover:border-green-300 hover:bg-green-50 hover:text-green-700"
                     >
-                      + Додати завдання
+                      + Додати
+                      завдання
                     </button>
                   ) : (
                     dayTasks.map(
                       (task) => (
                         <TaskCard
-                          key={task.id}
-                          task={task}
+                          key={
+                            task.id
+                          }
+                          task={
+                            task
+                          }
                           employeesById={
                             employeesById
                           }
@@ -1274,6 +1783,9 @@ export default function WeeklyTaskCalendar({
                               task.id ||
                             draggedTaskId ===
                               task.id
+                          }
+                          canDrag={
+                            canDrag
                           }
                           onOpen={() =>
                             handleTaskClick(
@@ -1304,7 +1816,8 @@ export default function WeeklyTaskCalendar({
                     )
                   )}
 
-                  {dayTasks.length > 0 && (
+                  {dayTasks.length >
+                    0 && (
                     <button
                       type="button"
                       onClick={() =>
@@ -1312,7 +1825,7 @@ export default function WeeklyTaskCalendar({
                           dateValue
                         )
                       }
-                      className="w-full rounded-lg border border-dashed px-3 py-2 text-xs font-medium text-green-700 hover:border-green-300 hover:bg-green-50"
+                      className="min-h-10 w-full rounded-lg border border-dashed px-3 py-2 text-xs font-medium text-green-700 transition hover:border-green-300 hover:bg-green-50"
                     >
                       + Ще завдання
                     </button>
@@ -1324,58 +1837,76 @@ export default function WeeklyTaskCalendar({
         )}
       </div>
 
+      {/* WITHOUT DATE */}
       <section
-        onDragEnter={(event) =>
+        onDragEnter={(
+          event
+        ) =>
           handleDragOver(
             event,
             NO_DATE_DROP_TARGET
           )
         }
-        onDragOver={(event) =>
+        onDragOver={(
+          event
+        ) =>
           handleDragOver(
             event,
             NO_DATE_DROP_TARGET
           )
         }
-        onDragLeave={(event) =>
+        onDragLeave={(
+          event
+        ) =>
           handleDragLeave(
             event,
             NO_DATE_DROP_TARGET
           )
         }
-        onDrop={(event) =>
-          handleTaskDrop(event, null)
+        onDrop={(
+          event
+        ) =>
+          handleTaskDrop(
+            event,
+            null
+          )
         }
-        className={`rounded-xl border p-5 transition ${
+        className={`min-w-0 rounded-xl border p-4 transition sm:p-5 ${
           dragOverTarget ===
           NO_DATE_DROP_TARGET
             ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
             : "bg-white"
         }`}
       >
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-lg font-semibold sm:text-xl">
           Завдання без дати
         </h2>
 
         <p className="mt-1 text-sm text-gray-500">
-          Перетягни сюди завдання,
-          щоб прибрати дату виконання
+          {canDrag
+            ? "Перетягни сюди завдання, щоб прибрати дату виконання."
+            : "Завдання, для яких ще не вказано дату виконання."}
         </p>
 
-        {tasksWithoutDate.length === 0 ? (
-          <div className="mt-5 rounded-xl border border-dashed px-5 py-8 text-center text-sm text-gray-400">
+        {tasksWithoutDate.length ===
+        0 ? (
+          <div className="mt-4 rounded-xl border border-dashed px-4 py-6 text-center text-sm text-gray-400 sm:mt-5 sm:px-5 sm:py-8">
             {dragOverTarget ===
             NO_DATE_DROP_TARGET
               ? "Відпусти завдання тут"
               : "Завдань без дати немає"}
           </div>
         ) : (
-          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:mt-5 md:grid-cols-2 xl:grid-cols-3">
             {tasksWithoutDate.map(
               (task) => (
                 <TaskCard
-                  key={task.id}
-                  task={task}
+                  key={
+                    task.id
+                  }
+                  task={
+                    task
+                  }
                   employeesById={
                     employeesById
                   }
@@ -1389,10 +1920,17 @@ export default function WeeklyTaskCalendar({
                     draggedTaskId ===
                       task.id
                   }
-                  onOpen={() =>
-                    handleTaskClick(task)
+                  canDrag={
+                    canDrag
                   }
-                  onDragStart={(event) =>
+                  onOpen={() =>
+                    handleTaskClick(
+                      task
+                    )
+                  }
+                  onDragStart={(
+                    event
+                  ) =>
                     handleDragStart(
                       event,
                       task
@@ -1416,10 +1954,13 @@ export default function WeeklyTaskCalendar({
         )}
       </section>
 
+      {/* ADD TASK MODAL */}
       {selectedTaskDate && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 md:p-8"
-          onMouseDown={(event) => {
+          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 sm:items-start sm:overflow-y-auto sm:p-4 md:p-8"
+          onMouseDown={(
+            event
+          ) => {
             if (
               event.target ===
               event.currentTarget
@@ -1430,14 +1971,15 @@ export default function WeeklyTaskCalendar({
             }
           }}
         >
-          <div className="w-full max-w-3xl">
-            <div className="mb-3 flex items-center justify-between rounded-xl bg-white px-5 py-4 shadow-lg">
-              <div>
+          <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:max-w-3xl sm:rounded-2xl">
+            {/* HEADER */}
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b bg-white px-4 py-4 sm:px-5">
+              <div className="min-w-0">
                 <h2 className="text-lg font-semibold">
                   Нове завдання
                 </h2>
 
-                <p className="text-sm text-gray-500">
+                <p className="mt-1 text-sm text-gray-500">
                   {formatSelectedDate(
                     selectedTaskDate
                   )}
@@ -1451,55 +1993,78 @@ export default function WeeklyTaskCalendar({
                     null
                   )
                 }
-                className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xl text-gray-600 transition hover:bg-gray-200"
+                aria-label="Закрити"
               >
-                Закрити
+                ×
               </button>
             </div>
 
-            <AddGlobalTaskForm
-              key={selectedTaskDate}
-              objects={objects}
-              employees={employees}
-              initialDueDate={
-                selectedTaskDate
-              }
-              defaultOpen
-              hideToggleButton
-              onClose={() =>
-                setSelectedTaskDate(
-                  null
-                )
-              }
-            />
+            {/* CONTENT */}
+            <div className="min-w-0 flex-1 overflow-y-auto p-3 sm:p-4">
+              <AddGlobalTaskForm
+                key={
+                  selectedTaskDate
+                }
+                objects={
+                  objects
+                }
+                employees={
+                  employees
+                }
+                initialDueDate={
+                  selectedTaskDate
+                }
+                defaultOpen
+                hideToggleButton
+                onClose={() =>
+                  setSelectedTaskDate(
+                    null
+                  )
+                }
+              />
+            </div>
           </div>
         </div>
       )}
 
+      {/* EDIT TASK MODAL */}
       {selectedTask && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 md:p-8"
-          onMouseDown={(event) => {
+          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 sm:items-start sm:overflow-y-auto sm:p-4 md:p-8"
+          onMouseDown={(
+            event
+          ) => {
             if (
               event.target ===
                 event.currentTarget &&
-              deletingTaskId === null
+              deletingTaskId ===
+                null
             ) {
-              setSelectedTask(null);
-              setDeleteErrorMessage("");
+              setSelectedTask(
+                null
+              );
+
+              setDeleteErrorMessage(
+                ""
+              );
             }
           }}
         >
-          <div className="w-full max-w-3xl">
-            <div className="mb-3 rounded-xl bg-white px-5 py-4 shadow-lg">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
+          <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:max-w-3xl sm:rounded-2xl">
+            {/* HEADER */}
+            <div className="shrink-0 border-b bg-white px-4 py-4 sm:px-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
                   <h2 className="text-lg font-semibold">
-                    Редагування завдання
+                    Редагування
+                    завдання
                   </h2>
 
-                  <p className="mt-1 text-sm text-gray-500">
-                    {selectedTask.title}
+                  <p className="mt-1 line-clamp-2 break-words text-sm text-gray-500">
+                    {
+                      selectedTask.title
+                    }
 
                     {selectedTask.object
                       ? ` • ${selectedTask.object.name}`
@@ -1507,60 +2072,73 @@ export default function WeeklyTaskCalendar({
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={
-                      deletingTaskId ===
-                      selectedTask.id
-                    }
-                    onClick={() =>
-                      handleDeleteTask(
-                        selectedTask
-                      )
-                    }
-                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {deletingTaskId ===
-                    selectedTask.id
-                      ? "Видалення..."
-                      : "Видалити"}
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={
-                      deletingTaskId !==
+                <button
+                  type="button"
+                  disabled={
+                    deletingTaskId !==
+                    null
+                  }
+                  onClick={() => {
+                    setSelectedTask(
                       null
-                    }
-                    onClick={() => {
-                      setSelectedTask(null);
-                      setDeleteErrorMessage(
-                        ""
-                      );
-                    }}
-                    className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-60"
-                  >
-                    Закрити
-                  </button>
-                </div>
+                    );
+
+                    setDeleteErrorMessage(
+                      ""
+                    );
+                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xl text-gray-600 transition hover:bg-gray-200 disabled:opacity-60"
+                  aria-label="Закрити"
+                >
+                  ×
+                </button>
               </div>
+
+              <button
+                type="button"
+                disabled={
+                  deletingTaskId ===
+                  selectedTask.id
+                }
+                onClick={() =>
+                  handleDeleteTask(
+                    selectedTask
+                  )
+                }
+                className="mt-3 min-h-10 w-full rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              >
+                {deletingTaskId ===
+                selectedTask.id
+                  ? "Видалення..."
+                  : "Видалити завдання"}
+              </button>
             </div>
 
-            {deleteErrorMessage && (
-              <div className="mb-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-lg">
-                {deleteErrorMessage}
-              </div>
-            )}
+            {/* CONTENT */}
+            <div className="min-w-0 flex-1 overflow-y-auto p-3 sm:p-4">
+              {deleteErrorMessage && (
+                <div className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
+                  {
+                    deleteErrorMessage
+                  }
+                </div>
+              )}
 
-            <EditTaskForm
-              task={selectedTask}
-              objectId={
-                selectedTask.object_id
-              }
-              employees={employees}
-              onCancel={closeEditForm}
-            />
+              <EditTaskForm
+                task={
+                  selectedTask
+                }
+                objectId={
+                  selectedTask.object_id
+                }
+                employees={
+                  employees
+                }
+                onCancel={
+                  closeEditForm
+                }
+              />
+            </div>
           </div>
         </div>
       )}

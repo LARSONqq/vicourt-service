@@ -92,6 +92,11 @@ export default function AddPhotoForm({
     setErrorMessage,
   ] = useState("");
 
+  const [
+    selectedFileName,
+    setSelectedFileName,
+  ] = useState("");
+
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
   ) {
@@ -273,6 +278,10 @@ export default function AddPhotoForm({
 
       form.reset();
 
+      setSelectedFileName(
+        ""
+      );
+
       router.refresh();
 
       onUploaded?.();
@@ -299,10 +308,23 @@ export default function AddPhotoForm({
       onSubmit={
         handleSubmit
       }
-      className="space-y-4"
+      className="min-w-0 space-y-5"
     >
+      {/* HEADER */}
       <div>
-        <label className="mb-2 block text-sm font-medium">
+        <h3 className="text-base font-semibold text-gray-800">
+          Нове фото
+        </h3>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Завантаж фотографію з
+          галереї або камери телефона
+        </p>
+      </div>
+
+      {/* PHOTO */}
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
           Фотографія
         </label>
 
@@ -310,48 +332,95 @@ export default function AddPhotoForm({
           type="file"
           name="photo"
           accept="image/*"
-          className="w-full rounded-lg border bg-white p-3"
+          disabled={
+            isUploading
+          }
+          onChange={(
+            event
+          ) => {
+            const file =
+              event.target.files?.[
+                0
+              ];
+
+            setSelectedFileName(
+              file?.name || ""
+            );
+
+            setErrorMessage(
+              ""
+            );
+          }}
+          className="block min-h-11 w-full min-w-0 overflow-hidden rounded-lg border bg-white text-sm text-gray-600 file:mr-3 file:border-0 file:border-r file:bg-gray-50 file:px-4 file:py-3 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
           required
         />
 
-        <p className="mt-2 text-xs text-gray-500">
-          Максимальний
-          розмір — 10 МБ.
+        {selectedFileName && (
+          <p className="mt-2 break-all text-xs text-gray-500">
+            Обрано:{" "}
+            <span className="font-medium text-gray-700">
+              {
+                selectedFileName
+              }
+            </span>
+          </p>
+        )}
+
+        <p className="mt-2 text-xs text-gray-400">
+          Максимальний розмір —
+          10 МБ.
         </p>
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">
+      {/* CAPTION */}
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
           Підпис
         </label>
 
         <input
           type="text"
           name="caption"
+          disabled={
+            isUploading
+          }
           placeholder="Наприклад: ділянка після висаджування"
-          className="w-full rounded-lg border bg-white p-3"
+          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600 disabled:opacity-60"
         />
+
+        <p className="mt-2 text-xs text-gray-400">
+          Необов’язково
+        </p>
       </div>
 
+      {/* ERROR */}
       {errorMessage && (
-        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          {
-            errorMessage
-          }
-        </p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {errorMessage}
+        </div>
       )}
 
-      <button
-        type="submit"
-        disabled={
-          isUploading
-        }
-        className="rounded-lg bg-green-600 px-5 py-3 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isUploading
-          ? "Завантаження..."
-          : "Завантажити фото"}
-      </button>
+      {/* SAVE */}
+      <div className="border-t pt-4">
+        <button
+          type="submit"
+          disabled={
+            isUploading
+          }
+          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+        >
+          {isUploading
+            ? "Завантаження..."
+            : "Завантажити фото"}
+        </button>
+
+        {isUploading && (
+          <p className="mt-2 text-xs text-gray-500">
+            Не закривай сторінку,
+            поки фото завантажується.
+          </p>
+        )}
+      </div>
     </form>
   );
 }

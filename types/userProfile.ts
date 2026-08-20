@@ -9,6 +9,7 @@ export interface UserProfile {
   full_name: string | null;
   role: UserRole;
   employee_id: number | null;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }

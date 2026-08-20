@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import {
+  createClient,
+} from "@/lib/supabase/server";
+
 import type {
   UserProfile,
 } from "@/types/userProfile";
@@ -15,7 +18,10 @@ export async function getCurrentUserProfile(): Promise<
   } =
     await supabase.auth.getUser();
 
-  if (userError || !user) {
+  if (
+    userError ||
+    !user
+  ) {
     return null;
   }
 
@@ -30,10 +36,14 @@ export async function getCurrentUserProfile(): Promise<
       full_name,
       role,
       employee_id,
+      is_active,
       created_at,
       updated_at
     `)
-    .eq("id", user.id)
+    .eq(
+      "id",
+      user.id
+    )
     .maybeSingle();
 
   if (error) {
@@ -42,7 +52,10 @@ export async function getCurrentUserProfile(): Promise<
     );
   }
 
-  if (!data) {
+  if (
+    !data ||
+    data.is_active !== true
+  ) {
     return null;
   }
 
@@ -81,12 +94,16 @@ export async function getUserProfiles(): Promise<
       full_name,
       role,
       employee_id,
+      is_active,
       created_at,
       updated_at
     `)
-    .order("created_at", {
-      ascending: true,
-    });
+    .order(
+      "created_at",
+      {
+        ascending: true,
+      }
+    );
 
   if (error) {
     throw new Error(

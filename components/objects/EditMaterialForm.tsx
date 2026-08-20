@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
 import { updateMaterial } from "@/app/actions/materialActions";
+
 import type { Material } from "@/types/material";
 import type { WarehouseItem } from "@/types/warehouseItem";
 
@@ -38,13 +40,6 @@ export default function EditMaterialForm({
     String(material.quantity)
   );
 
-  const [
-    manualPrice,
-    setManualPrice,
-  ] = useState(
-    String(material.price || 0)
-  );
-
   const isWarehouseMaterial =
     Boolean(
       material.warehouse_item_id
@@ -56,10 +51,6 @@ export default function EditMaterialForm({
         Number(warehouseItem.quantity)
       : undefined;
 
-  const manualTotal =
-    Number(manualQuantity || 0) *
-    Number(manualPrice || 0);
-
   async function handleSubmit(
     formData: FormData
   ) {
@@ -67,9 +58,12 @@ export default function EditMaterialForm({
     setErrorMessage("");
 
     try {
-      await updateMaterial(formData);
+      await updateMaterial(
+        formData
+      );
 
       router.refresh();
+
       onCancel();
     } catch (error) {
       setErrorMessage(
@@ -85,7 +79,7 @@ export default function EditMaterialForm({
   return (
     <form
       action={handleSubmit}
-      className="space-y-4 rounded-lg border bg-gray-50 p-4"
+      className="min-w-0 space-y-5 rounded-xl border bg-gray-50 p-3 sm:p-4"
     >
       <input
         type="hidden"
@@ -99,6 +93,26 @@ export default function EditMaterialForm({
         value={objectId}
       />
 
+      {!isWarehouseMaterial && (
+        <input
+          type="hidden"
+          name="price"
+          value={material.price || 0}
+        />
+      )}
+
+      {/* HEADER */}
+      <div>
+        <h3 className="text-base font-semibold text-gray-800">
+          Редагування матеріалу
+        </h3>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Зміни інформацію про матеріал
+        </p>
+      </div>
+
+      {/* ERROR */}
       {errorMessage && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {errorMessage}
@@ -107,112 +121,101 @@ export default function EditMaterialForm({
 
       {isWarehouseMaterial ? (
         <>
-          <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
+          {/* WAREHOUSE INFO */}
+          <div className="min-w-0 rounded-xl border border-blue-100 bg-blue-50 p-3 sm:p-4">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-blue-600">
                   Матеріал зі складу
                 </p>
 
-                <p className="mt-1 font-semibold text-blue-900">
+                <p className="mt-1 break-words font-semibold text-blue-900">
                   {material.name}
                 </p>
               </div>
 
-              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+              <span className="w-fit shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
                 {material.unit}
               </span>
             </div>
 
-            <div className="mt-3 border-t border-blue-100 pt-3 text-sm text-blue-800">
-              <p>
-                Зараз на об’єкті:{" "}
-                <strong>
+            <div className="mt-3 grid grid-cols-1 gap-3 border-t border-blue-100 pt-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs text-blue-600">
+                  Зараз на об’єкті
+                </p>
+
+                <p className="mt-1 text-lg font-bold text-blue-900">
                   {material.quantity}{" "}
                   {material.unit}
-                </strong>
-              </p>
-
-              {Number(material.price) >
-                0 && (
-                <p className="mt-1">
-                  Облікова ціна:{" "}
-                  <strong>
-                    {Number(
-                      material.price
-                    ).toFixed(2)}{" "}
-                    ₴ /{" "}
-                    {material.unit}
-                  </strong>
                 </p>
-              )}
+              </div>
 
               {warehouseItem && (
-                <p className="mt-1">
-                  Доступно на складі для
-                  додаткового списання:{" "}
-                  <strong>
-                    {
-                      warehouseItem.quantity
-                    }{" "}
-                    {
-                      warehouseItem.unit
-                    }
-                  </strong>
-                </p>
+                <div>
+                  <p className="text-xs text-blue-600">
+                    Доступно на складі
+                  </p>
+
+                  <p className="mt-1 text-lg font-bold text-blue-900">
+                    {warehouseItem.quantity}{" "}
+                    {warehouseItem.unit}
+                  </p>
+                </div>
               )}
             </div>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Нова загальна кількість на
-              об’єкті
+          {/* QUANTITY */}
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Нова загальна кількість на об’єкті
             </label>
 
-            <div className="flex items-center gap-3">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
               <input
                 name="quantity"
                 type="number"
+                inputMode="decimal"
                 min="0.01"
                 step="0.01"
                 max={maximumQuantity}
                 defaultValue={
                   material.quantity
                 }
-                className="min-w-0 flex-1 rounded-lg border bg-white p-3"
+                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
                 required
               />
 
-              <span className="shrink-0 rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-700">
+              <span className="flex min-h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-medium text-gray-700">
                 {material.unit}
               </span>
             </div>
 
-            <p className="mt-2 text-xs text-gray-500">
-              При збільшенні різниця
-              спишеться зі складу. При
-              зменшенні різниця
-              повернеться на склад.
-            </p>
+            <div className="mt-3 rounded-lg bg-white p-3 text-xs leading-5 text-gray-500">
+              При збільшенні кількості різниця
+              автоматично спишеться зі складу.
+              При зменшенні — повернеться на склад.
+            </div>
           </div>
         </>
       ) : (
         <>
-          <div className="rounded-lg border border-green-100 bg-green-50 p-4">
+          {/* MANUAL INFO */}
+          <div className="rounded-xl border border-green-100 bg-green-50 p-3 sm:p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-green-700">
               Матеріал додано вручну
             </p>
 
             <p className="mt-1 text-sm text-green-700">
-              Для нього можна вручну
-              змінювати назву, кількість,
-              одиницю та ціну.
+              Можна змінити назву, кількість
+              та одиницю виміру.
             </p>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">
+          {/* NAME */}
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Назва матеріалу
             </label>
 
@@ -221,20 +224,22 @@ export default function EditMaterialForm({
               defaultValue={
                 material.name
               }
-              className="w-full rounded-lg border bg-white p-3"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
               required
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium">
+          {/* QUANTITY + UNIT */}
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="min-w-0">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Кількість
               </label>
 
               <input
                 name="quantity"
                 type="number"
+                inputMode="decimal"
                 min="0.01"
                 step="0.01"
                 value={
@@ -245,13 +250,13 @@ export default function EditMaterialForm({
                     event.target.value
                   )
                 }
-                className="w-full rounded-lg border bg-white p-3"
+                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
                 required
               />
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">
+            <div className="min-w-0">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Одиниця
               </label>
 
@@ -260,7 +265,7 @@ export default function EditMaterialForm({
                 defaultValue={
                   material.unit
                 }
-                className="w-full rounded-lg border bg-white p-3"
+                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
                 required
               >
                 <option value="шт">
@@ -293,65 +298,15 @@ export default function EditMaterialForm({
               </select>
             </div>
           </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Ціна за одиницю
-            </label>
-
-            <input
-              name="price"
-              type="number"
-              min="0"
-              step="0.01"
-              value={manualPrice}
-              onChange={(event) =>
-                setManualPrice(
-                  event.target.value
-                )
-              }
-              placeholder="0.00"
-              className="w-full rounded-lg border bg-white p-3"
-            />
-
-            <p className="mt-2 text-xs text-gray-500">
-              Собівартість однієї
-              одиниці матеріалу.
-            </p>
-          </div>
-
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm text-green-700">
-                  Загальна вартість
-                </p>
-
-                <p className="mt-1 text-xs text-green-600">
-                  Кількість × ціна
-                </p>
-              </div>
-
-              <p className="text-xl font-bold text-green-800">
-                {Number.isFinite(
-                  manualTotal
-                )
-                  ? manualTotal.toFixed(
-                      2
-                    )
-                  : "0.00"}{" "}
-                ₴
-              </p>
-            </div>
-          </div>
         </>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      {/* ACTIONS */}
+      <div className="grid grid-cols-1 gap-2 border-t pt-4 sm:flex sm:flex-wrap sm:gap-3">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."
@@ -362,7 +317,7 @@ export default function EditMaterialForm({
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="rounded-lg border bg-white px-4 py-2 hover:bg-gray-100 disabled:opacity-60"
+          className="min-h-11 w-full rounded-lg border bg-white px-4 py-3 font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-60 sm:w-fit"
         >
           Скасувати
         </button>

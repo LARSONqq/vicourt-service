@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
 import {
   useEffect,
   useMemo,
@@ -9,11 +10,14 @@ import {
   useState,
   type DragEvent,
 } from "react";
+
 import {
   deleteObjectTask,
   updateTaskStatus,
 } from "@/app/actions/taskActions";
+
 import EditTaskForm from "@/components/objects/EditTaskForm";
+
 import type { Employee } from "@/types/employee";
 import type { TaskWithObject } from "@/types/taskWithObject";
 
@@ -27,7 +31,9 @@ type TaskStatus =
   | "В роботі"
   | "Виконано";
 
-type ViewMode = "list" | "board";
+type ViewMode =
+  | "list"
+  | "board";
 
 type StatusColumn = {
   status: TaskStatus;
@@ -99,16 +105,21 @@ function formatDate(
     return "Не вказано";
   }
 
-  const [year, month, day] =
-    date.split("-");
+  const [
+    year,
+    month,
+    day,
+  ] = date.split("-");
 
   return `${day}.${month}.${year}`;
 }
 
 function getTodayValue() {
-  const today = new Date();
+  const today =
+    new Date();
 
-  const year = today.getFullYear();
+  const year =
+    today.getFullYear();
 
   const month = String(
     today.getMonth() + 1
@@ -219,7 +230,8 @@ function isTaskOverdue(
     task.due_date &&
       task.due_date <
         getTodayValue() &&
-      task.status !== "Виконано"
+      task.status !==
+        "Виконано"
   );
 }
 
@@ -235,7 +247,8 @@ function getChecklistProgress(
 
   const completed =
     checklistItems.filter(
-      (item) => item.is_completed
+      (item) =>
+        item.is_completed
     ).length;
 
   const total =
@@ -244,7 +257,8 @@ function getChecklistProgress(
   const percent =
     total > 0
       ? Math.round(
-          (completed / total) * 100
+          (completed / total) *
+            100
         )
       : 0;
 
@@ -260,16 +274,24 @@ function sortTasks(
   secondTask: TaskWithObject
 ) {
   const firstPriority =
-    firstTask.priority || "Середній";
+    firstTask.priority ||
+    "Середній";
 
   const secondPriority =
-    secondTask.priority || "Середній";
+    secondTask.priority ||
+    "Середній";
 
   const priorityDifference =
-    getPriorityOrder(firstPriority) -
-    getPriorityOrder(secondPriority);
+    getPriorityOrder(
+      firstPriority
+    ) -
+    getPriorityOrder(
+      secondPriority
+    );
 
-  if (priorityDifference !== 0) {
+  if (
+    priorityDifference !== 0
+  ) {
     return priorityDifference;
   }
 
@@ -301,15 +323,20 @@ function sortListTasks(
   secondTask: TaskWithObject
 ) {
   const firstCompleted =
-    firstTask.status === "Виконано";
+    firstTask.status ===
+    "Виконано";
 
   const secondCompleted =
-    secondTask.status === "Виконано";
+    secondTask.status ===
+    "Виконано";
 
   if (
-    firstCompleted !== secondCompleted
+    firstCompleted !==
+    secondCompleted
   ) {
-    return firstCompleted ? 1 : -1;
+    return firstCompleted
+      ? 1
+      : -1;
   }
 
   return sortTasks(
@@ -322,16 +349,29 @@ export default function TasksList({
   tasks,
   employees = [],
 }: Props) {
-  const router = useRouter();
+  const router =
+    useRouter();
 
-  const [localTasks, setLocalTasks] =
-    useState<TaskWithObject[]>(tasks);
+  const [
+    localTasks,
+    setLocalTasks,
+  ] =
+    useState<TaskWithObject[]>(
+      tasks
+    );
 
-  const [viewMode, setViewMode] =
-    useState<ViewMode>("board");
+  const [
+    viewMode,
+    setViewMode,
+  ] =
+    useState<ViewMode>(
+      "board"
+    );
 
-  const [search, setSearch] =
-    useState("");
+  const [
+    search,
+    setSearch,
+  ] = useState("");
 
   const [
     statusFilter,
@@ -359,17 +399,23 @@ export default function TasksList({
   const [
     updatingId,
     setUpdatingId,
-  ] = useState<number | null>(null);
+  ] = useState<number | null>(
+    null
+  );
 
   const [
     deletingId,
     setDeletingId,
-  ] = useState<number | null>(null);
+  ] = useState<number | null>(
+    null
+  );
 
   const [
     draggedTaskId,
     setDraggedTaskId,
-  ] = useState<number | null>(null);
+  ] = useState<number | null>(
+    null
+  );
 
   const [
     dragOverStatus,
@@ -385,19 +431,59 @@ export default function TasksList({
   ] = useState("");
 
   const draggedTaskIdRef =
-    useRef<number | null>(null);
+    useRef<number | null>(
+      null
+    );
 
   useEffect(() => {
-    setLocalTasks(tasks);
+    setLocalTasks(
+      tasks
+    );
   }, [tasks]);
+
+  // На телефоні список зручніший,
+  // ніж kanban-дошка.
+  useEffect(() => {
+    const isMobile =
+      window.matchMedia(
+        "(max-width: 767px)"
+      ).matches;
+
+    if (isMobile) {
+      setViewMode("list");
+    }
+  }, []);
+
+  // Блокуємо прокрутку сторінки,
+  // коли відкрите редагування.
+  useEffect(() => {
+    if (!editingTask) {
+      document.body.style.overflow =
+        "";
+
+      return;
+    }
+
+    document.body.style.overflow =
+      "hidden";
+
+    return () => {
+      document.body.style.overflow =
+        "";
+    };
+  }, [editingTask]);
 
   const employeesById =
     useMemo(() => {
       return new Map(
-        employees.map((employee) => [
-          Number(employee.id),
-          employee,
-        ])
+        employees.map(
+          (employee) => [
+            Number(
+              employee.id
+            ),
+            employee,
+          ]
+        )
       );
     }, [employees]);
 
@@ -440,13 +526,15 @@ export default function TasksList({
   const inProgressCount =
     localTasks.filter(
       (task) =>
-        task.status === "В роботі"
+        task.status ===
+        "В роботі"
     ).length;
 
   const completedCount =
     localTasks.filter(
       (task) =>
-        task.status === "Виконано"
+        task.status ===
+        "Виконано"
     ).length;
 
   const filteredTasks =
@@ -457,81 +545,93 @@ export default function TasksList({
           .toLowerCase();
 
       return localTasks
-        .filter((task) => {
-          const priority =
-            task.priority ||
-            "Середній";
+        .filter(
+          (task) => {
+            const priority =
+              task.priority ||
+              "Середній";
 
-          let employeeName =
-            task.assignee ||
-            "Не призначено";
+            let employeeName =
+              task.assignee ||
+              "Не призначено";
 
-          if (
-            task.assigned_employee_id
-          ) {
-            const employee =
-              employeesById.get(
-                Number(
-                  task.assigned_employee_id
-                )
-              );
+            if (
+              task.assigned_employee_id
+            ) {
+              const employee =
+                employeesById.get(
+                  Number(
+                    task.assigned_employee_id
+                  )
+                );
 
-            if (employee) {
-              employeeName = [
-                employee.last_name,
-                employee.first_name,
+              if (employee) {
+                employeeName =
+                  [
+                    employee.last_name,
+                    employee.first_name,
+                  ]
+                    .filter(
+                      Boolean
+                    )
+                    .join(" ");
+              }
+            }
+
+            const searchableText =
+              [
+                task.title,
+                task.description,
+                task.assignee,
+                employeeName,
+                task.object?.name,
+                priority,
+                task.status,
               ]
                 .filter(Boolean)
-                .join(" ");
-            }
-          }
+                .join(" ")
+                .toLowerCase();
 
-          const searchableText = [
-            task.title,
-            task.description,
-            task.assignee,
-            employeeName,
-            task.object?.name,
-            priority,
-            task.status,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
+            const matchesSearch =
+              !normalizedSearch ||
+              searchableText.includes(
+                normalizedSearch
+              );
 
-          const matchesSearch =
-            !normalizedSearch ||
-            searchableText.includes(
-              normalizedSearch
+            const matchesStatus =
+              statusFilter ===
+                "Усі" ||
+              task.status ===
+                statusFilter;
+
+            const matchesPriority =
+              priorityFilter ===
+                "Усі" ||
+              priority ===
+                priorityFilter;
+
+            const matchesEmployee =
+              employeeFilter ===
+                "Усі" ||
+              (employeeFilter ===
+                "Без відповідального" &&
+                !task.assigned_employee_id) ||
+              String(
+                task.assigned_employee_id
+              ) ===
+                employeeFilter;
+
+            return (
+              matchesSearch &&
+              matchesStatus &&
+              matchesPriority &&
+              matchesEmployee
             );
-
-          const matchesStatus =
-            statusFilter === "Усі" ||
-            task.status ===
-              statusFilter;
-
-          const matchesPriority =
-            priorityFilter === "Усі" ||
-            priority ===
-              priorityFilter;
-
-          const matchesEmployee =
-            employeeFilter === "Усі" ||
-            (employeeFilter ===
-              "Без відповідального" &&
-              !task.assigned_employee_id) ||
-            String(
-              task.assigned_employee_id
-            ) === employeeFilter;
-
-          return (
-            matchesSearch &&
-            matchesStatus &&
-            matchesPriority &&
-            matchesEmployee
-          );
-        })
-        .sort(sortListTasks);
+          }
+        )
+        .sort(
+          sortListTasks
+        );
     }, [
       localTasks,
       search,
@@ -543,14 +643,24 @@ export default function TasksList({
 
   const tasksByStatus =
     useMemo(() => {
-      const result = new Map<
-        TaskStatus,
-        TaskWithObject[]
-      >([
-        ["Заплановано", []],
-        ["В роботі", []],
-        ["Виконано", []],
-      ]);
+      const result =
+        new Map<
+          TaskStatus,
+          TaskWithObject[]
+        >([
+          [
+            "Заплановано",
+            [],
+          ],
+          [
+            "В роботі",
+            [],
+          ],
+          [
+            "Виконано",
+            [],
+          ],
+        ]);
 
       filteredTasks.forEach(
         (task) => {
@@ -563,7 +673,9 @@ export default function TasksList({
           }
 
           result
-            .get(task.status)
+            .get(
+              task.status
+            )
             ?.push(task);
         }
       );
@@ -584,8 +696,11 @@ export default function TasksList({
     newStatus: string
   ) {
     if (
-      !isTaskStatus(newStatus) ||
-      task.status === newStatus ||
+      !isTaskStatus(
+        newStatus
+      ) ||
+      task.status ===
+        newStatus ||
       updatingId !== null
     ) {
       return;
@@ -594,7 +709,10 @@ export default function TasksList({
     const previousStatus =
       task.status;
 
-    setUpdatingId(task.id);
+    setUpdatingId(
+      task.id
+    );
+
     setErrorMessage("");
 
     setLocalTasks(
@@ -605,7 +723,8 @@ export default function TasksList({
             task.id
               ? {
                   ...currentTask,
-                  status: newStatus,
+                  status:
+                    newStatus,
                 }
               : currentTask
         )
@@ -626,7 +745,8 @@ export default function TasksList({
           task.id
             ? {
                 ...currentEditingTask,
-                status: newStatus,
+                status:
+                  newStatus,
               }
             : currentEditingTask
       );
@@ -652,7 +772,9 @@ export default function TasksList({
           : "Не вдалося змінити статус."
       );
     } finally {
-      setUpdatingId(null);
+      setUpdatingId(
+        null
+      );
     }
   }
 
@@ -671,7 +793,10 @@ export default function TasksList({
     const previousTasks =
       localTasks;
 
-    setDeletingId(task.id);
+    setDeletingId(
+      task.id
+    );
+
     setErrorMessage("");
 
     setLocalTasks(
@@ -693,7 +818,9 @@ export default function TasksList({
         editingTask?.id ===
         task.id
       ) {
-        setEditingTask(null);
+        setEditingTask(
+          null
+        );
       }
     } catch (error) {
       setLocalTasks(
@@ -706,7 +833,9 @@ export default function TasksList({
           : "Не вдалося видалити завдання."
       );
     } finally {
-      setDeletingId(null);
+      setDeletingId(
+        null
+      );
     }
   }
 
@@ -719,13 +848,17 @@ export default function TasksList({
       deletingId !== null
     ) {
       event.preventDefault();
+
       return;
     }
 
     draggedTaskIdRef.current =
       task.id;
 
-    setDraggedTaskId(task.id);
+    setDraggedTaskId(
+      task.id
+    );
+
     setErrorMessage("");
 
     event.dataTransfer.effectAllowed =
@@ -742,7 +875,8 @@ export default function TasksList({
       );
 
     if (
-      card instanceof HTMLElement
+      card instanceof
+      HTMLElement
     ) {
       event.dataTransfer.setDragImage(
         card,
@@ -756,8 +890,13 @@ export default function TasksList({
     draggedTaskIdRef.current =
       null;
 
-    setDraggedTaskId(null);
-    setDragOverStatus(null);
+    setDraggedTaskId(
+      null
+    );
+
+    setDragOverStatus(
+      null
+    );
   }
 
   function handleDragOver(
@@ -777,7 +916,9 @@ export default function TasksList({
     event.dataTransfer.dropEffect =
       "move";
 
-    setDragOverStatus(status);
+    setDragOverStatus(
+      status
+    );
   }
 
   function handleDragLeave(
@@ -800,7 +941,8 @@ export default function TasksList({
 
     setDragOverStatus(
       (currentStatus) =>
-        currentStatus === status
+        currentStatus ===
+        status
           ? null
           : currentStatus
     );
@@ -824,27 +966,37 @@ export default function TasksList({
       draggedTaskIdRef.current ??
       transferredId;
 
-    const task = localTasks.find(
-      (currentTask) =>
-        currentTask.id === taskId
-    );
+    const task =
+      localTasks.find(
+        (currentTask) =>
+          currentTask.id ===
+          taskId
+      );
 
     draggedTaskIdRef.current =
       null;
 
-    setDraggedTaskId(null);
-    setDragOverStatus(null);
+    setDraggedTaskId(
+      null
+    );
+
+    setDragOverStatus(
+      null
+    );
 
     if (
       !task ||
-      !Number.isInteger(taskId) ||
+      !Number.isInteger(
+        taskId
+      ) ||
       updatingId !== null
     ) {
       return;
     }
 
     if (
-      task.status === newStatus
+      task.status ===
+      newStatus
     ) {
       return;
     }
@@ -857,13 +1009,22 @@ export default function TasksList({
 
   function clearFilters() {
     setSearch("");
-    setStatusFilter("Усі");
-    setPriorityFilter("Усі");
-    setEmployeeFilter("Усі");
+    setStatusFilter(
+      "Усі"
+    );
+    setPriorityFilter(
+      "Усі"
+    );
+    setEmployeeFilter(
+      "Усі"
+    );
   }
 
   function closeEditForm() {
-    setEditingTask(null);
+    setEditingTask(
+      null
+    );
+
     router.refresh();
   }
 
@@ -871,30 +1032,39 @@ export default function TasksList({
     task: TaskWithObject
   ) {
     const priority =
-      task.priority || "Середній";
+      task.priority ||
+      "Середній";
 
     const overdue =
-      isTaskOverdue(task);
+      isTaskOverdue(
+        task
+      );
 
     const completed =
-      task.status === "Виконано";
+      task.status ===
+      "Виконано";
 
     const isUpdating =
-      updatingId === task.id;
+      updatingId ===
+      task.id;
 
     const isDeleting =
-      deletingId === task.id;
+      deletingId ===
+      task.id;
 
     const isDragging =
-      draggedTaskId === task.id;
+      draggedTaskId ===
+      task.id;
 
     const checklistProgress =
-      getChecklistProgress(task);
+      getChecklistProgress(
+        task
+      );
 
     return (
       <article
         key={task.id}
-        className={`rounded-xl border border-l-4 bg-white p-4 transition ${getPriorityBorderStyle(
+        className={`min-w-0 rounded-xl border border-l-4 bg-white p-3 transition sm:p-4 ${getPriorityBorderStyle(
           priority
         )} ${
           completed
@@ -908,7 +1078,8 @@ export default function TasksList({
             : "hover:border-green-300"
         }`}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 items-start gap-2 sm:gap-3">
+          {/* DRAG HANDLE — desktop */}
           <span
             role="button"
             tabIndex={0}
@@ -917,7 +1088,9 @@ export default function TasksList({
               !isDeleting
             }
             title="Перетягни завдання"
-            onDragStart={(event) =>
+            onDragStart={(
+              event
+            ) =>
               handleDragStart(
                 event,
                 task
@@ -926,15 +1099,15 @@ export default function TasksList({
             onDragEnd={
               handleDragEnd
             }
-            className="mt-0.5 cursor-grab select-none rounded px-1 text-lg leading-none text-gray-400 active:cursor-grabbing hover:bg-gray-100 hover:text-gray-600"
+            className="mt-0.5 hidden cursor-grab select-none rounded px-1 text-lg leading-none text-gray-400 active:cursor-grabbing hover:bg-gray-100 hover:text-gray-600 md:inline-flex"
           >
             ⋮⋮
           </span>
 
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <h3
-                className={`font-semibold ${
+                className={`min-w-0 break-words font-semibold ${
                   completed
                     ? "text-gray-500 line-through"
                     : "text-gray-900"
@@ -944,7 +1117,7 @@ export default function TasksList({
               </h3>
 
               <span
-                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                className={`w-fit shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${
                   completed
                     ? "bg-gray-100 text-gray-500"
                     : getPriorityStyle(
@@ -959,13 +1132,16 @@ export default function TasksList({
             {task.object ? (
               <Link
                 href={`/objects/${task.object.id}`}
-                className={`mt-1 block text-sm font-medium hover:underline ${
+                className={`mt-1 block break-words text-sm font-medium hover:underline ${
                   completed
                     ? "text-gray-400"
                     : "text-green-700"
                 }`}
               >
-                {task.object.name}
+                {
+                  task.object
+                    .name
+                }
               </Link>
             ) : (
               <p className="mt-1 text-sm text-gray-400">
@@ -977,7 +1153,7 @@ export default function TasksList({
 
         {task.description && (
           <p
-            className={`mt-3 line-clamp-3 whitespace-pre-wrap text-sm ${
+            className={`mt-3 line-clamp-3 whitespace-pre-wrap break-words text-sm ${
               completed
                 ? "text-gray-400"
                 : "text-gray-600"
@@ -1043,14 +1219,14 @@ export default function TasksList({
           </div>
         )}
 
-        <div className="mt-4 space-y-2 border-t pt-3 text-sm">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-gray-400">
+        <div className="mt-4 grid grid-cols-1 gap-3 border-t pt-3 text-sm sm:grid-cols-2">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-400">
               Термін
-            </span>
+            </p>
 
-            <span
-              className={`text-right font-medium ${
+            <p
+              className={`mt-1 break-words font-medium ${
                 completed
                   ? "text-gray-400"
                   : overdue
@@ -1061,16 +1237,16 @@ export default function TasksList({
               {formatDate(
                 task.due_date
               )}
-            </span>
+            </p>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-gray-400">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-400">
               Відповідальний
-            </span>
+            </p>
 
-            <span
-              className={`text-right font-medium ${
+            <p
+              className={`mt-1 break-words font-medium ${
                 completed
                   ? "text-gray-400"
                   : "text-gray-700"
@@ -1079,7 +1255,7 @@ export default function TasksList({
               {getEmployeeName(
                 task
               )}
-            </span>
+            </p>
           </div>
         </div>
 
@@ -1095,18 +1271,22 @@ export default function TasksList({
           </label>
 
           <select
-            value={task.status}
+            value={
+              task.status
+            }
             disabled={
               isUpdating ||
               isDeleting
             }
-            onChange={(event) =>
+            onChange={(
+              event
+            ) =>
               handleStatusChange(
                 task,
                 event.target.value
               )
             }
-            className="mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-1 min-h-10 w-full min-w-0 rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-green-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <option value="Заплановано">
               Заплановано
@@ -1122,7 +1302,7 @@ export default function TasksList({
           </select>
         </div>
 
-        <div className="mt-4 flex items-center justify-end gap-2 border-t pt-3">
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-3">
           <button
             type="button"
             disabled={
@@ -1130,9 +1310,11 @@ export default function TasksList({
               isDeleting
             }
             onClick={() =>
-              setEditingTask(task)
+              setEditingTask(
+                task
+              )
             }
-            className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-60"
+            className="min-h-10 rounded-lg border px-3 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50 disabled:opacity-60"
           >
             Редагувати
           </button>
@@ -1144,12 +1326,14 @@ export default function TasksList({
               isDeleting
             }
             onClick={() =>
-              handleDeleteTask(task)
+              handleDeleteTask(
+                task
+              )
             }
-            className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-10 rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isDeleting
-              ? "Видалення..."
+              ? "..."
               : "Видалити"}
           </button>
         </div>
@@ -1158,65 +1342,74 @@ export default function TasksList({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+    <div className="min-w-0 space-y-5">
+      {/* STATS */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <div className="rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs text-gray-500 sm:text-sm">
             Усього завдань
           </p>
 
-          <p className="mt-2 text-3xl font-bold">
-            {localTasks.length}
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">
+            {
+              localTasks.length
+            }
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs text-gray-500 sm:text-sm">
             Заплановано
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-blue-700">
+          <p className="mt-2 text-2xl font-bold text-blue-700 sm:text-3xl">
             {plannedCount}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs text-gray-500 sm:text-sm">
             В роботі
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-yellow-700">
+          <p className="mt-2 text-2xl font-bold text-yellow-700 sm:text-3xl">
             {inProgressCount}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <p className="text-sm text-gray-500">
+        <div className="rounded-xl border bg-white p-3 sm:p-5">
+          <p className="text-xs text-gray-500 sm:text-sm">
             Виконано
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-green-700">
+          <p className="mt-2 text-2xl font-bold text-green-700 sm:text-3xl">
             {completedCount}
           </p>
         </div>
       </div>
 
+      {/* ERROR */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
           {errorMessage}
         </div>
       )}
 
-      <div className="rounded-xl border bg-white p-4">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="inline-flex w-fit rounded-lg border bg-gray-50 p-1">
+      {/* FILTERS */}
+      <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* VIEW MODE */}
+          <div className="grid w-full grid-cols-2 rounded-lg border bg-gray-50 p-1 sm:inline-grid sm:w-auto">
             <button
               type="button"
               onClick={() =>
-                setViewMode("list")
+                setViewMode(
+                  "list"
+                )
               }
-              className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                viewMode === "list"
+              className={`min-h-10 rounded-md px-3 py-2 text-sm font-medium transition sm:px-4 ${
+                viewMode ===
+                "list"
                   ? "bg-white text-gray-900 shadow-sm"
                   : "text-gray-500 hover:text-gray-900"
               }`}
@@ -1227,10 +1420,13 @@ export default function TasksList({
             <button
               type="button"
               onClick={() =>
-                setViewMode("board")
+                setViewMode(
+                  "board"
+                )
               }
-              className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-                viewMode === "board"
+              className={`min-h-10 rounded-md px-3 py-2 text-sm font-medium transition sm:px-4 ${
+                viewMode ===
+                "board"
                   ? "bg-white text-gray-900 shadow-sm"
                   : "text-gray-500 hover:text-gray-900"
               }`}
@@ -1239,9 +1435,9 @@ export default function TasksList({
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center justify-between gap-3 sm:justify-end">
             <p className="text-sm text-gray-500">
-              Знайдено завдань:{" "}
+              Знайдено:{" "}
               <span className="font-semibold text-gray-800">
                 {
                   filteredTasks.length
@@ -1254,42 +1450,53 @@ export default function TasksList({
               onClick={
                 clearFilters
               }
-              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+              className="text-sm font-medium text-green-700 hover:underline"
             >
-              Очистити фільтри
+              Очистити
             </button>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_180px_180px_240px]">
+        <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_180px_180px_240px]">
           <input
             type="search"
             value={search}
-            onChange={(event) =>
+            onChange={(
+              event
+            ) =>
               setSearch(
                 event.target.value
               )
             }
-            placeholder="Пошук завдання"
-            className="w-full rounded-lg border px-4 py-3 outline-none focus:border-green-600"
+            placeholder="Пошук завдання..."
+            className="min-h-11 w-full min-w-0 rounded-lg border px-4 py-3 outline-none transition focus:border-green-600"
           />
 
           <select
-            value={statusFilter}
-            onChange={(event) =>
+            value={
+              statusFilter
+            }
+            onChange={(
+              event
+            ) =>
               setStatusFilter(
                 event.target.value
               )
             }
-            className="w-full rounded-lg border bg-white px-4 py-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
           >
             {taskStatuses.map(
               (status) => (
                 <option
-                  key={status}
-                  value={status}
+                  key={
+                    status
+                  }
+                  value={
+                    status
+                  }
                 >
-                  {status === "Усі"
+                  {status ===
+                  "Усі"
                     ? "Усі статуси"
                     : status}
                 </option>
@@ -1298,18 +1505,26 @@ export default function TasksList({
           </select>
 
           <select
-            value={priorityFilter}
-            onChange={(event) =>
+            value={
+              priorityFilter
+            }
+            onChange={(
+              event
+            ) =>
               setPriorityFilter(
                 event.target.value
               )
             }
-            className="w-full rounded-lg border bg-white px-4 py-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
           >
             {taskPriorities.map(
-              (priority) => (
+              (
+                priority
+              ) => (
                 <option
-                  key={priority}
+                  key={
+                    priority
+                  }
                   value={
                     priority
                   }
@@ -1324,13 +1539,17 @@ export default function TasksList({
           </select>
 
           <select
-            value={employeeFilter}
-            onChange={(event) =>
+            value={
+              employeeFilter
+            }
+            onChange={(
+              event
+            ) =>
               setEmployeeFilter(
                 event.target.value
               )
             }
-            className="w-full rounded-lg border bg-white px-4 py-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
           >
             <option value="Усі">
               Усі працівники
@@ -1343,7 +1562,9 @@ export default function TasksList({
             {employees.map(
               (employee) => (
                 <option
-                  key={employee.id}
+                  key={
+                    employee.id
+                  }
                   value={String(
                     employee.id
                   )}
@@ -1354,7 +1575,6 @@ export default function TasksList({
                   {
                     employee.first_name
                   }
-
                   {employee.position
                     ? ` — ${employee.position}`
                     : ""}
@@ -1365,15 +1585,27 @@ export default function TasksList({
         </div>
       </div>
 
-      {filteredTasks.length === 0 ? (
-        <div className="rounded-xl border bg-white p-8 text-center">
-          <p className="text-gray-500">
-            Завдань за цими
-            параметрами не знайдено.
+      {/* EMPTY */}
+      {filteredTasks.length ===
+      0 ? (
+        <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+            ✓
+          </div>
+
+          <p className="mt-3 font-medium text-gray-700">
+            Завдань не знайдено
+          </p>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Спробуй змінити пошук або
+            фільтри.
           </p>
         </div>
-      ) : viewMode === "board" ? (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+      ) : viewMode ===
+        "board" ? (
+        /* BOARD */
+        <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-3 xl:gap-5">
           {statusColumns.map(
             (column) => {
               const columnTasks =
@@ -1429,10 +1661,10 @@ export default function TasksList({
                   }`}
                 >
                   <div
-                    className={`border-b p-4 ${column.headerClassName}`}
+                    className={`border-b p-3 sm:p-4 ${column.headerClassName}`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <h2 className="font-semibold">
                           {
                             column.title
@@ -1447,7 +1679,7 @@ export default function TasksList({
                       </div>
 
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${column.countClassName}`}
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${column.countClassName}`}
                       >
                         {
                           columnTasks.length
@@ -1456,7 +1688,7 @@ export default function TasksList({
                     </div>
                   </div>
 
-                  <div className="min-h-[320px] space-y-3 p-3">
+                  <div className="min-h-[140px] space-y-3 p-3 sm:min-h-[220px] xl:min-h-[320px]">
                     {isDropTarget && (
                       <div className="rounded-lg border border-dashed border-current bg-white/70 px-3 py-4 text-center text-xs font-medium">
                         Відпусти
@@ -1466,7 +1698,7 @@ export default function TasksList({
 
                     {columnTasks.length ===
                     0 ? (
-                      <div className="rounded-lg border border-dashed bg-white px-4 py-10 text-center text-sm text-gray-400">
+                      <div className="rounded-lg border border-dashed bg-white px-4 py-6 text-center text-sm text-gray-400 sm:py-10">
                         {isDropTarget
                           ? "Відпусти завдання тут"
                           : "У цій колонці завдань немає"}
@@ -1483,11 +1715,14 @@ export default function TasksList({
           )}
         </div>
       ) : (
-        <div className="space-y-4">
+        /* LIST */
+        <div className="space-y-3 sm:space-y-4">
           {filteredTasks.map(
             (task) => {
               const overdue =
-                isTaskOverdue(task);
+                isTaskOverdue(
+                  task
+                );
 
               const completed =
                 task.status ===
@@ -1512,8 +1747,10 @@ export default function TasksList({
 
               return (
                 <article
-                  key={task.id}
-                  className={`rounded-xl border p-5 transition ${
+                  key={
+                    task.id
+                  }
+                  className={`min-w-0 rounded-xl border p-4 transition sm:p-5 ${
                     completed
                       ? "border-green-200 bg-green-50/50"
                       : overdue
@@ -1521,30 +1758,33 @@ export default function TasksList({
                         : "bg-white"
                   }`}
                 >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  {/* TOP */}
+                  <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 items-start gap-2">
                         {completed && (
-                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-bold text-green-700">
+                          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-bold text-green-700">
                             ✓
                           </span>
                         )}
 
                         <h3
-                          className={`text-lg font-semibold ${
+                          className={`min-w-0 break-words text-base font-semibold sm:text-lg ${
                             completed
                               ? "text-gray-500 line-through"
-                              : ""
+                              : "text-gray-900"
                           }`}
                         >
-                          {task.title}
+                          {
+                            task.title
+                          }
                         </h3>
                       </div>
 
                       {task.object ? (
                         <Link
                           href={`/objects/${task.object.id}`}
-                          className={`mt-1 block text-sm font-medium hover:underline ${
+                          className={`mt-1 block break-words text-sm font-medium hover:underline ${
                             completed
                               ? "text-gray-400"
                               : "text-green-700"
@@ -1565,7 +1805,7 @@ export default function TasksList({
 
                       {task.description && (
                         <p
-                          className={`mt-3 whitespace-pre-wrap text-sm ${
+                          className={`mt-3 whitespace-pre-wrap break-words text-sm leading-6 ${
                             completed
                               ? "text-gray-400"
                               : "text-gray-700"
@@ -1576,40 +1816,11 @@ export default function TasksList({
                           }
                         </p>
                       )}
-
-                      {checklistProgress.total >
-                        0 && (
-                        <div className="mt-3 flex items-center gap-3">
-                          <div className="h-2 w-28 overflow-hidden rounded-full bg-gray-200">
-                            <div
-                              className="h-full rounded-full bg-green-600"
-                              style={{
-                                width: `${checklistProgress.percent}%`,
-                              }}
-                            />
-                          </div>
-
-                          <span className="text-xs font-medium text-gray-600">
-                            {
-                              checklistProgress.completed
-                            }{" "}
-                            із{" "}
-                            {
-                              checklistProgress.total
-                            }{" "}
-                            •{" "}
-                            {
-                              checklistProgress.percent
-                            }
-                            %
-                          </span>
-                        </div>
-                      )}
                     </div>
 
-                    <div className="flex shrink-0 flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <span
-                        className={`rounded-full px-3 py-1 text-sm font-medium ${
+                        className={`rounded-full px-3 py-1 text-xs font-medium sm:text-sm ${
                           completed
                             ? "bg-gray-100 text-gray-500"
                             : getPriorityStyle(
@@ -1621,7 +1832,7 @@ export default function TasksList({
                       </span>
 
                       <span
-                        className={`rounded-full px-3 py-1 text-sm font-medium ${getStatusStyle(
+                        className={`rounded-full px-3 py-1 text-xs font-medium sm:text-sm ${getStatusStyle(
                           task.status
                         )}`}
                       >
@@ -1632,20 +1843,57 @@ export default function TasksList({
                     </div>
                   </div>
 
+                  {/* CHECKLIST */}
+                  {checklistProgress.total >
+                    0 && (
+                    <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-medium text-gray-600">
+                          Чекліст
+                        </p>
+
+                        <p className="text-xs font-semibold text-gray-700">
+                          {
+                            checklistProgress.completed
+                          }{" "}
+                          із{" "}
+                          {
+                            checklistProgress.total
+                          }{" "}
+                          •{" "}
+                          {
+                            checklistProgress.percent
+                          }
+                          %
+                        </p>
+                      </div>
+
+                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+                        <div
+                          className="h-full rounded-full bg-green-600"
+                          style={{
+                            width: `${checklistProgress.percent}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* INFO */}
                   <div
-                    className={`mt-5 grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-3 ${
+                    className={`mt-4 grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2 lg:grid-cols-3 ${
                       completed
                         ? "border-green-100"
                         : ""
                     }`}
                   >
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-500">
                         Термін виконання
                       </p>
 
                       <p
-                        className={`mt-1 font-medium ${
+                        className={`mt-1 break-words font-medium ${
                           completed
                             ? "text-gray-400"
                             : overdue
@@ -1666,13 +1914,13 @@ export default function TasksList({
                       )}
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-xs text-gray-500">
                         Відповідальний
                       </p>
 
                       <p
-                        className={`mt-1 font-medium ${
+                        className={`mt-1 break-words font-medium ${
                           completed
                             ? "text-gray-400"
                             : "text-gray-700"
@@ -1684,7 +1932,7 @@ export default function TasksList({
                       </p>
                     </div>
 
-                    <div>
+                    <div className="min-w-0 sm:col-span-2 lg:col-span-1">
                       <label className="text-xs text-gray-500">
                         Швидка зміна
                         статусу
@@ -1703,11 +1951,10 @@ export default function TasksList({
                         ) =>
                           handleStatusChange(
                             task,
-                            event.target
-                              .value
+                            event.target.value
                           )
                         }
-                        className="mt-1 w-full rounded-lg border bg-white px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="mt-1 min-h-10 w-full min-w-0 rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <option value="Заплановано">
                           Заплановано
@@ -1724,7 +1971,8 @@ export default function TasksList({
                     </div>
                   </div>
 
-                  <div className="mt-4 flex justify-end gap-2">
+                  {/* ACTIONS */}
+                  <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:flex sm:justify-end">
                     <button
                       type="button"
                       disabled={
@@ -1736,7 +1984,7 @@ export default function TasksList({
                           task
                         )
                       }
-                      className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-60"
+                      className="min-h-10 rounded-lg border px-3 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50 disabled:opacity-60"
                     >
                       Редагувати
                     </button>
@@ -1752,10 +2000,10 @@ export default function TasksList({
                           task
                         )
                       }
-                      className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="min-h-10 rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isDeleting
-                        ? "Видалення..."
+                        ? "..."
                         : "Видалити"}
                     </button>
                   </div>
@@ -1766,10 +2014,13 @@ export default function TasksList({
         </div>
       )}
 
+      {/* EDIT MODAL */}
       {editingTask && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 md:p-8"
-          onMouseDown={(event) => {
+          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 sm:items-start sm:overflow-y-auto sm:p-4 md:p-8"
+          onMouseDown={(
+            event
+          ) => {
             if (
               event.target ===
                 event.currentTarget &&
@@ -1779,15 +2030,15 @@ export default function TasksList({
             }
           }}
         >
-          <div className="w-full max-w-3xl">
-            <div className="mb-3 flex items-start justify-between gap-4 rounded-xl bg-white px-5 py-4 shadow-lg">
-              <div>
+          <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:max-w-3xl sm:rounded-2xl">
+            {/* MODAL HEADER */}
+            <div className="flex shrink-0 items-start justify-between gap-3 border-b bg-white px-4 py-4 sm:px-5">
+              <div className="min-w-0">
                 <h2 className="text-lg font-semibold">
-                  Редагування
-                  завдання
+                  Редагування завдання
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 line-clamp-2 break-words text-sm text-gray-500">
                   {
                     editingTask.title
                   }
@@ -1803,24 +2054,30 @@ export default function TasksList({
                 onClick={
                   closeEditForm
                 }
-                className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xl text-gray-600 transition hover:bg-gray-200"
+                aria-label="Закрити"
               >
-                Закрити
+                ×
               </button>
             </div>
 
-            <EditTaskForm
-              task={editingTask}
-              objectId={
-                editingTask.object_id
-              }
-              employees={
-                employees
-              }
-              onCancel={
-                closeEditForm
-              }
-            />
+            {/* MODAL CONTENT */}
+            <div className="min-w-0 flex-1 overflow-y-auto p-3 sm:p-4">
+              <EditTaskForm
+                task={
+                  editingTask
+                }
+                objectId={
+                  editingTask.object_id
+                }
+                employees={
+                  employees
+                }
+                onCancel={
+                  closeEditForm
+                }
+              />
+            </div>
           </div>
         </div>
       )}

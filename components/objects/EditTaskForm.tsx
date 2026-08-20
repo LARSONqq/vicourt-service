@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
+
 import { updateObjectTask } from "@/app/actions/taskActions";
+
 import TaskChecklist from "@/components/tasks/TaskChecklist";
+
 import type { Employee } from "@/types/employee";
+
 import type {
   ObjectTask,
   TaskPriority,
@@ -44,7 +48,10 @@ export default function EditTaskForm({
     setErrorMessage("");
 
     try {
-      await updateObjectTask(formData);
+      await updateObjectTask(
+        formData
+      );
+
       onCancel();
     } catch (error) {
       setErrorMessage(
@@ -60,7 +67,7 @@ export default function EditTaskForm({
   return (
     <form
       action={handleSubmit}
-      className="space-y-5 rounded-xl border bg-gray-50 p-5"
+      className="min-w-0 space-y-5 rounded-xl border bg-gray-50 p-4 sm:p-5"
     >
       <input
         type="hidden"
@@ -80,14 +87,24 @@ export default function EditTaskForm({
         value={task.assignee || ""}
       />
 
+      <div>
+        <h3 className="text-base font-semibold text-gray-800">
+          Редагування завдання
+        </h3>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Зміни дані завдання або його статус
+        </p>
+      </div>
+
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
           {errorMessage}
         </div>
       )}
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
           Назва завдання
         </label>
 
@@ -95,13 +112,13 @@ export default function EditTaskForm({
           type="text"
           name="title"
           defaultValue={task.title}
-          className="w-full rounded-lg border bg-white p-3"
+          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           required
         />
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
           Опис
         </label>
 
@@ -111,13 +128,13 @@ export default function EditTaskForm({
           defaultValue={
             task.description || ""
           }
-          className="w-full resize-none rounded-lg border bg-white p-3"
+          className="w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Термін виконання
           </label>
 
@@ -127,12 +144,12 @@ export default function EditTaskForm({
             defaultValue={
               task.due_date || ""
             }
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           />
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Відповідальний працівник
           </label>
 
@@ -145,7 +162,7 @@ export default function EditTaskForm({
                   )
                 : ""
             }
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           >
             <option value="">
               Не призначати
@@ -159,11 +176,9 @@ export default function EditTaskForm({
                 >
                   {employee.last_name}{" "}
                   {employee.first_name}
-
                   {employee.position
                     ? ` — ${employee.position}`
                     : ""}
-
                   {employee.status !==
                   "Активний"
                     ? ` (${employee.status})`
@@ -175,9 +190,8 @@ export default function EditTaskForm({
 
           {!task.assigned_employee_id &&
             task.assignee && (
-              <p className="mt-2 text-xs text-orange-600">
-                Раніше було вказано
-                вручну:{" "}
+              <p className="mt-2 break-words text-xs text-orange-600">
+                Раніше було вказано вручну:{" "}
                 {task.assignee}
               </p>
             )}
@@ -189,17 +203,18 @@ export default function EditTaskForm({
           )}
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Пріоритет
           </label>
 
           <select
             name="priority"
             defaultValue={
-              task.priority || "Середній"
+              task.priority ||
+              "Середній"
             }
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           >
             {priorities.map(
               (priority) => (
@@ -214,15 +229,15 @@ export default function EditTaskForm({
           </select>
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Статус
           </label>
 
           <select
             name="status"
             defaultValue={task.status}
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           >
             <option value="Заплановано">
               Заплановано
@@ -239,16 +254,18 @@ export default function EditTaskForm({
         </div>
       </div>
 
-      <TaskChecklist
-        taskId={task.id}
-        objectId={objectId}
-      />
+      <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+        <TaskChecklist
+          taskId={task.id}
+          objectId={objectId}
+        />
+      </div>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="grid grid-cols-1 gap-2 border-t pt-5 sm:flex sm:flex-wrap sm:gap-3">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."
@@ -259,7 +276,7 @@ export default function EditTaskForm({
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="rounded-lg border bg-white px-4 py-2 hover:bg-gray-100 disabled:opacity-60"
+          className="min-h-11 w-full rounded-lg border bg-white px-4 py-3 font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-60 sm:w-fit"
         >
           Скасувати
         </button>

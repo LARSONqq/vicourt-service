@@ -5,8 +5,11 @@ import {
   useRef,
   useState,
 } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { createWarehouseMovement } from "@/app/actions/warehouseMovementActions";
+
 import type { ObjectItem } from "@/types/object";
 import type { WarehouseItem } from "@/types/warehouseItem";
 
@@ -33,16 +36,18 @@ export default function AddWarehouseMovementForm({
   lockItem = false,
   lockMovementType = false,
 }: Props) {
-  const router = useRouter();
+  const router =
+    useRouter();
 
   const formRef =
     useRef<HTMLFormElement | null>(
       null
     );
 
-  const safeItems = Array.isArray(items)
-    ? items
-    : [];
+  const safeItems =
+    Array.isArray(items)
+      ? items
+      : [];
 
   const safeObjects =
     Array.isArray(objects)
@@ -69,7 +74,9 @@ export default function AddWarehouseMovementForm({
   const [
     selectedItemId,
     setSelectedItemId,
-  ] = useState(initialSelectedItem);
+  ] = useState(
+    initialSelectedItem
+  );
 
   const [
     isSubmitting,
@@ -81,24 +88,35 @@ export default function AddWarehouseMovementForm({
     setErrorMessage,
   ] = useState("");
 
-  const selectedItem = useMemo(() => {
-    return (
-      safeItems.find(
-        (item) =>
-          String(item.id) ===
-          selectedItemId
-      ) || null
-    );
-  }, [safeItems, selectedItemId]);
+  const selectedItem =
+    useMemo(() => {
+      return (
+        safeItems.find(
+          (item) =>
+            String(item.id) ===
+            selectedItemId
+        ) || null
+      );
+    }, [
+      safeItems,
+      selectedItemId,
+    ]);
 
   const isOutOfStock =
-    movementType === "Списання" &&
+    movementType ===
+      "Списання" &&
     selectedItem !== null &&
-    Number(selectedItem.quantity) <= 0;
+    Number(
+      selectedItem.quantity
+    ) <= 0;
 
   async function handleSubmit(
     formData: FormData
   ) {
+    if (isSubmitting) {
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMessage("");
 
@@ -110,14 +128,21 @@ export default function AddWarehouseMovementForm({
       formRef.current?.reset();
 
       if (!lockItem) {
-        setSelectedItemId("");
+        setSelectedItemId(
+          ""
+        );
       }
 
-      if (!lockMovementType) {
-        setMovementType("Прихід");
+      if (
+        !lockMovementType
+      ) {
+        setMovementType(
+          "Прихід"
+        );
       }
 
       router.refresh();
+
       onCreated();
     } catch (error) {
       setErrorMessage(
@@ -130,12 +155,20 @@ export default function AddWarehouseMovementForm({
     }
   }
 
-  if (safeItems.length === 0) {
+  if (
+    safeItems.length === 0
+  ) {
     return (
-      <p className="text-gray-500">
-        Спочатку додай хоча б одну
-        позицію на склад.
-      </p>
+      <div className="rounded-xl border border-dashed bg-gray-50 p-5 text-center">
+        <p className="font-medium text-gray-700">
+          На складі ще немає позицій
+        </p>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Спочатку додай хоча б одну
+          позицію на склад.
+        </p>
+      </div>
     );
   }
 
@@ -143,56 +176,66 @@ export default function AddWarehouseMovementForm({
     <form
       ref={formRef}
       action={handleSubmit}
-      className="space-y-5"
+      className="min-w-0 space-y-5"
     >
+      {/* ERROR */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
           {errorMessage}
         </div>
       )}
 
+      {/* MOVEMENT TYPE */}
       {lockMovementType ? (
-        <div>
+        <div className="min-w-0">
           <input
             type="hidden"
             name="movement_type"
-            value={movementType}
+            value={
+              movementType
+            }
           />
 
-          <p className="mb-2 text-sm font-medium">
+          <p className="mb-2 text-sm font-medium text-gray-700">
             Тип операції
           </p>
 
           <div
-            className={`rounded-lg border p-4 ${
-              movementType === "Прихід"
+            className={`rounded-xl border p-3 sm:p-4 ${
+              movementType ===
+              "Прихід"
                 ? "border-green-200 bg-green-50 text-green-800"
                 : "border-orange-200 bg-orange-50 text-orange-800"
             }`}
           >
             <p className="font-semibold">
-              {movementType === "Прихід"
+              {movementType ===
+              "Прихід"
                 ? "Прихід товару"
                 : "Списання товару"}
             </p>
           </div>
         </div>
       ) : (
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Тип операції
           </label>
 
           <select
             name="movement_type"
-            value={movementType}
-            onChange={(event) =>
+            value={
+              movementType
+            }
+            onChange={(
+              event
+            ) =>
               setMovementType(
                 event.target
                   .value as MovementType
               )
             }
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           >
             <option value="Прихід">
@@ -206,67 +249,98 @@ export default function AddWarehouseMovementForm({
         </div>
       )}
 
-      {lockItem && selectedItem ? (
-        <div>
+      {/* ITEM */}
+      {lockItem &&
+      selectedItem ? (
+        <div className="min-w-0">
           <input
             type="hidden"
             name="item_id"
-            value={selectedItem.id}
+            value={
+              selectedItem.id
+            }
           />
 
-          <p className="mb-2 text-sm font-medium">
+          <p className="mb-2 text-sm font-medium text-gray-700">
             Позиція складу
           </p>
 
-          <div className="rounded-lg border bg-white p-4">
-            <p className="font-semibold">
-              {selectedItem.name}
+          <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+            <p className="break-words font-semibold text-gray-900">
+              {
+                selectedItem.name
+              }
             </p>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Зараз на складі:{" "}
-              <strong>
-                {selectedItem.quantity}{" "}
-                {selectedItem.unit}
-              </strong>
-            </p>
+            <div className="mt-3 border-t pt-3">
+              <p className="text-xs text-gray-500">
+                Зараз на складі
+              </p>
+
+              <p className="mt-1 text-lg font-bold text-gray-800">
+                {
+                  selectedItem.quantity
+                }{" "}
+                {
+                  selectedItem.unit
+                }
+              </p>
+            </div>
           </div>
         </div>
       ) : (
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Позиція складу
           </label>
 
           <select
             name="item_id"
-            value={selectedItemId}
-            onChange={(event) =>
+            value={
+              selectedItemId
+            }
+            onChange={(
+              event
+            ) =>
               setSelectedItemId(
                 event.target.value
               )
             }
-            className="w-full rounded-lg border bg-white p-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           >
             <option value="">
               Обери товар
             </option>
 
-            {safeItems.map((item) => (
-              <option
-                key={item.id}
-                value={item.id}
-              >
-                {item.name} —{" "}
-                {item.quantity}{" "}
-                {item.unit}
-              </option>
-            ))}
+            {safeItems.map(
+              (item) => (
+                <option
+                  key={
+                    item.id
+                  }
+                  value={
+                    item.id
+                  }
+                >
+                  {
+                    item.name
+                  }{" "}
+                  —{" "}
+                  {
+                    item.quantity
+                  }{" "}
+                  {
+                    item.unit
+                  }
+                </option>
+              )
+            )}
           </select>
         </div>
       )}
 
+      {/* AVAILABLE STOCK */}
       {selectedItem && (
         <div
           className={`rounded-lg border p-3 text-sm ${
@@ -275,24 +349,42 @@ export default function AddWarehouseMovementForm({
               : "border-gray-200 bg-gray-50 text-gray-700"
           }`}
         >
-          Доступний залишок:{" "}
-          <strong>
-            {selectedItem.quantity}{" "}
-            {selectedItem.unit}
-          </strong>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span>
+              Доступний залишок
+            </span>
+
+            <strong className="text-base">
+              {
+                selectedItem.quantity
+              }{" "}
+              {
+                selectedItem.unit
+              }
+            </strong>
+          </div>
+
+          {isOutOfStock && (
+            <p className="mt-2 text-xs font-medium">
+              Цю позицію зараз
+              неможливо списати.
+            </p>
+          )}
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
+      {/* QUANTITY + OBJECT */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Кількість
           </label>
 
-          <div className="flex items-center gap-3">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
             <input
               type="number"
               name="quantity"
+              inputMode="decimal"
               min="0.01"
               step="0.01"
               max={
@@ -305,13 +397,15 @@ export default function AddWarehouseMovementForm({
                   : undefined
               }
               placeholder="0"
-              className="min-w-0 flex-1 rounded-lg border bg-white p-3"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
               required
             />
 
             {selectedItem && (
-              <span className="shrink-0 rounded-lg bg-gray-100 px-4 py-3 text-sm font-medium">
-                {selectedItem.unit}
+              <span className="flex min-h-11 items-center justify-center rounded-lg bg-gray-100 px-4 text-sm font-medium text-gray-700">
+                {
+                  selectedItem.unit
+                }
               </span>
             )}
           </div>
@@ -319,15 +413,15 @@ export default function AddWarehouseMovementForm({
 
         {movementType ===
           "Списання" && (
-          <div>
-            <label className="mb-2 block text-sm font-medium">
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Об’єкт
             </label>
 
             <select
               name="object_id"
               defaultValue=""
-              className="w-full rounded-lg border bg-white p-3"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             >
               <option value="">
                 Не прив’язувати до
@@ -337,25 +431,32 @@ export default function AddWarehouseMovementForm({
               {safeObjects.map(
                 (object) => (
                   <option
-                    key={object.id}
-                    value={object.id}
+                    key={
+                      object.id
+                    }
+                    value={
+                      object.id
+                    }
                   >
-                    {object.name}
+                    {
+                      object.name
+                    }
                   </option>
                 )
               )}
             </select>
 
             <p className="mt-2 text-xs text-gray-500">
-              Об’єкт буде показаний в
-              історії руху товару.
+              Об’єкт буде показаний
+              в історії руху товару.
             </p>
           </div>
         )}
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">
+      {/* NOTE */}
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
           Примітка
         </label>
 
@@ -363,45 +464,53 @@ export default function AddWarehouseMovementForm({
           name="note"
           rows={3}
           placeholder={
-            movementType === "Прихід"
+            movementType ===
+            "Прихід"
               ? "Наприклад: закупівля у постачальника"
               : "Наприклад: пошкоджено або використано"
           }
-          className="w-full resize-none rounded-lg border bg-white p-3"
+          className="w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
         />
       </div>
 
+      {/* INFO */}
       {movementType ===
         "Списання" && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm leading-5 text-blue-700 sm:p-4">
           Списання на цій сторінці
-          змінює залишок та записує рух.
-          Щоб матеріал також з’явився у
-          вкладці «Матеріали» об’єкта,
-          додавай його безпосередньо у
-          картці об’єкта.
+          змінює залишок та записує
+          рух. Щоб матеріал також
+          з’явився у вкладці
+          «Матеріали» об’єкта,
+          додавай його безпосередньо
+          у картці об’єкта.
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={
-          isSubmitting ||
-          !selectedItem ||
-          isOutOfStock
-        }
-        className={`rounded-lg px-5 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 ${
-          movementType === "Прихід"
-            ? "bg-green-600 hover:bg-green-700"
-            : "bg-orange-600 hover:bg-orange-700"
-        }`}
-      >
-        {isSubmitting
-          ? "Збереження..."
-          : movementType === "Прихід"
-            ? "Додати на склад"
-            : "Списати зі складу"}
-      </button>
+      {/* SAVE */}
+      <div className="border-t pt-4">
+        <button
+          type="submit"
+          disabled={
+            isSubmitting ||
+            !selectedItem ||
+            isOutOfStock
+          }
+          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium text-white transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit ${
+            movementType ===
+            "Прихід"
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-orange-600 hover:bg-orange-700"
+          }`}
+        >
+          {isSubmitting
+            ? "Збереження..."
+            : movementType ===
+                "Прихід"
+              ? "Додати на склад"
+              : "Списати зі складу"}
+        </button>
+      </div>
     </form>
   );
 }

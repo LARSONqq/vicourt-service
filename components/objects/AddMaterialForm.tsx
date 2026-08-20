@@ -5,8 +5,11 @@ import {
   useRef,
   useState,
 } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { createMaterial } from "@/app/actions/materialActions";
+
 import type { WarehouseItem } from "@/types/warehouseItem";
 
 type Props = {
@@ -31,11 +34,18 @@ export default function AddMaterialForm({
       null
     );
 
+  const safeWarehouseItems =
+    Array.isArray(
+      warehouseItems
+    )
+      ? warehouseItems
+      : [];
+
   const [
     sourceType,
     setSourceType,
   ] = useState<MaterialSource>(
-    warehouseItems.length > 0
+    safeWarehouseItems.length > 0
       ? "warehouse"
       : "manual"
   );
@@ -43,16 +53,6 @@ export default function AddMaterialForm({
   const [
     selectedWarehouseItemId,
     setSelectedWarehouseItemId,
-  ] = useState("");
-
-  const [
-    manualQuantity,
-    setManualQuantity,
-  ] = useState("");
-
-  const [
-    manualPrice,
-    setManualPrice,
   ] = useState("");
 
   const [
@@ -64,11 +64,6 @@ export default function AddMaterialForm({
     errorMessage,
     setErrorMessage,
   ] = useState("");
-
-  const safeWarehouseItems =
-    Array.isArray(warehouseItems)
-      ? warehouseItems
-      : [];
 
   const selectedWarehouseItem =
     useMemo(() => {
@@ -84,10 +79,6 @@ export default function AddMaterialForm({
       selectedWarehouseItemId,
     ]);
 
-  const manualTotal =
-    Number(manualQuantity || 0) *
-    Number(manualPrice || 0);
-
   async function handleSubmit(
     formData: FormData
   ) {
@@ -95,13 +86,15 @@ export default function AddMaterialForm({
     setErrorMessage("");
 
     try {
-      await createMaterial(formData);
+      await createMaterial(
+        formData
+      );
 
       formRef.current?.reset();
 
-      setSelectedWarehouseItemId("");
-      setManualQuantity("");
-      setManualPrice("");
+      setSelectedWarehouseItemId(
+        ""
+      );
 
       router.refresh();
 
@@ -121,7 +114,7 @@ export default function AddMaterialForm({
     <form
       ref={formRef}
       action={handleSubmit}
-      className="space-y-5"
+      className="min-w-0 space-y-5"
     >
       <input
         type="hidden"
@@ -135,18 +128,32 @@ export default function AddMaterialForm({
         value={sourceType}
       />
 
+      {/* HEADER */}
+      <div>
+        <h3 className="text-base font-semibold text-gray-800">
+          Новий матеріал
+        </h3>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Обери матеріал зі складу або
+          додай його вручну
+        </p>
+      </div>
+
+      {/* ERROR */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
           {errorMessage}
         </div>
       )}
 
-      <div>
-        <p className="mb-2 text-sm font-medium">
+      {/* SOURCE */}
+      <div className="min-w-0">
+        <p className="mb-2 text-sm font-medium text-gray-700">
           Джерело матеріалу
         </p>
 
-        <div className="inline-flex rounded-lg border bg-white p-1">
+        <div className="grid w-full grid-cols-2 rounded-lg border bg-white p-1 sm:inline-grid sm:w-auto">
           <button
             type="button"
             onClick={() =>
@@ -158,12 +165,12 @@ export default function AddMaterialForm({
               safeWarehouseItems.length ===
               0
             }
-            className={`rounded-md px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${
+            className={`min-h-10 rounded-md px-3 py-2 text-sm font-medium transition sm:px-4 ${
               sourceType ===
               "warehouse"
                 ? "bg-green-600 text-white"
                 : "text-gray-600 hover:bg-gray-100"
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-40`}
           >
             Зі складу
           </button>
@@ -171,10 +178,13 @@ export default function AddMaterialForm({
           <button
             type="button"
             onClick={() =>
-              setSourceType("manual")
+              setSourceType(
+                "manual"
+              )
             }
-            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-              sourceType === "manual"
+            className={`min-h-10 rounded-md px-3 py-2 text-sm font-medium transition sm:px-4 ${
+              sourceType ===
+              "manual"
                 ? "bg-green-600 text-white"
                 : "text-gray-600 hover:bg-gray-100"
             }`}
@@ -186,17 +196,19 @@ export default function AddMaterialForm({
 
       {safeWarehouseItems.length ===
         0 && (
-        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
-          На складі поки що немає
-          доступних позицій. Матеріал можна
-          додати вручну.
+        <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-700 sm:p-4">
+          На складі поки немає
+          доступних позицій. Матеріал
+          можна додати вручну.
         </div>
       )}
 
-      {sourceType === "warehouse" ? (
+      {sourceType ===
+      "warehouse" ? (
         <>
-          <div>
-            <label className="mb-2 block text-sm font-medium">
+          {/* WAREHOUSE ITEM */}
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Матеріал зі складу
             </label>
 
@@ -210,7 +222,7 @@ export default function AddMaterialForm({
                   event.target.value
                 )
               }
-              className="w-full rounded-lg border bg-white p-3"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
               required
             >
               <option value="">
@@ -228,7 +240,9 @@ export default function AddMaterialForm({
                     <option
                       key={item.id}
                       value={item.id}
-                      disabled={outOfStock}
+                      disabled={
+                        outOfStock
+                      }
                     >
                       {item.name} —{" "}
                       {item.quantity}{" "}
@@ -241,56 +255,67 @@ export default function AddMaterialForm({
                 }
               )}
             </select>
+          </div>
 
-            {selectedWarehouseItem && (
-              <div className="mt-3 rounded-lg border border-green-100 bg-green-50 p-3 text-sm">
-                <p className="font-medium text-green-800">
-                  {
-                    selectedWarehouseItem.name
-                  }
-                </p>
+          {/* SELECTED ITEM INFO */}
+          {selectedWarehouseItem && (
+            <div className="min-w-0 rounded-xl border border-green-100 bg-green-50 p-3 sm:p-4">
+              <p className="break-words font-medium text-green-800">
+                {
+                  selectedWarehouseItem.name
+                }
+              </p>
 
-                <p className="mt-1 text-green-700">
-                  Доступно на складі:{" "}
-                  <strong>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs text-green-600">
+                    Доступно на складі
+                  </p>
+
+                  <p className="mt-1 break-words text-lg font-bold text-green-800">
                     {
                       selectedWarehouseItem.quantity
                     }{" "}
                     {
                       selectedWarehouseItem.unit
                     }
-                  </strong>
-                </p>
+                  </p>
+                </div>
 
                 {Number(
                   selectedWarehouseItem.purchase_price
                 ) > 0 && (
-                  <p className="mt-1 text-green-700">
-                    Облікова ціна:{" "}
-                    <strong>
+                  <div>
+                    <p className="text-xs text-green-600">
+                      Облікова ціна
+                    </p>
+
+                    <p className="mt-1 break-words font-semibold text-green-800">
                       {Number(
                         selectedWarehouseItem.purchase_price
                       ).toFixed(2)}{" "}
-                      за{" "}
+                      ₴ /{" "}
                       {
                         selectedWarehouseItem.unit
                       }
-                    </strong>
-                  </p>
+                    </p>
+                  </div>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">
+          {/* QUANTITY */}
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Кількість для списання
             </label>
 
-            <div className="flex items-center gap-3">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
               <input
                 name="quantity"
                 type="number"
+                inputMode="decimal"
                 min="0.01"
                 step="0.01"
                 max={
@@ -301,12 +326,12 @@ export default function AddMaterialForm({
                     : undefined
                 }
                 placeholder="0"
-                className="min-w-0 flex-1 rounded-lg border bg-white p-3"
+                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
                 required
               />
 
               {selectedWarehouseItem && (
-                <span className="shrink-0 rounded-lg bg-gray-100 px-4 py-3 text-sm font-medium text-gray-700">
+                <span className="flex min-h-11 items-center justify-center rounded-lg bg-gray-100 px-4 text-sm font-medium text-gray-700">
                   {
                     selectedWarehouseItem.unit
                   }
@@ -317,51 +342,48 @@ export default function AddMaterialForm({
         </>
       ) : (
         <>
-          <div>
-            <label className="mb-2 block text-sm font-medium">
+          {/* MANUAL NAME */}
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Назва матеріалу
             </label>
 
             <input
               name="name"
               placeholder="Наприклад: Туя Смарагд"
-              className="w-full rounded-lg border bg-white p-3"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
               required
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-sm font-medium">
+          {/* MANUAL QUANTITY */}
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="min-w-0">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Кількість
               </label>
 
               <input
                 name="quantity"
                 type="number"
+                inputMode="decimal"
                 min="0.01"
                 step="0.01"
-                value={manualQuantity}
-                onChange={(event) =>
-                  setManualQuantity(
-                    event.target.value
-                  )
-                }
                 placeholder="0"
-                className="w-full rounded-lg border bg-white p-3"
+                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
                 required
               />
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium">
+            <div className="min-w-0">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Одиниця
               </label>
 
               <select
                 name="unit"
                 defaultValue=""
-                className="w-full rounded-lg border bg-white p-3"
+                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
                 required
               >
                 <option
@@ -401,57 +423,11 @@ export default function AddMaterialForm({
               </select>
             </div>
           </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Ціна за одиницю
-            </label>
-
-            <input
-              name="price"
-              type="number"
-              min="0"
-              step="0.01"
-              value={manualPrice}
-              onChange={(event) =>
-                setManualPrice(
-                  event.target.value
-                )
-              }
-              placeholder="0.00"
-              className="w-full rounded-lg border bg-white p-3"
-            />
-
-            <p className="mt-2 text-xs text-gray-500">
-              Необов’язково. Якщо залишити
-              порожнім, вартість матеріалу
-              буде 0.
-            </p>
-          </div>
-
-          {manualQuantity &&
-            manualPrice &&
-            Number.isFinite(
-              manualTotal
-            ) && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-              <p className="text-sm text-green-700">
-                Орієнтовна вартість
-                матеріалу
-              </p>
-
-              <p className="mt-1 text-xl font-bold text-green-800">
-                {manualTotal.toFixed(
-                  2
-                )}{" "}
-                ₴
-              </p>
-            </div>
-          )}
         </>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      {/* SAVE */}
+      <div className="border-t pt-4">
         <button
           type="submit"
           disabled={
@@ -463,31 +439,22 @@ export default function AddMaterialForm({
                   selectedWarehouseItem.quantity
                 ) <= 0))
           }
-          className="rounded-lg bg-green-600 px-5 py-3 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."
             : sourceType ===
                 "warehouse"
               ? "Списати зі складу"
-              : "Додати вручну"}
+              : "Додати матеріал"}
         </button>
 
-        {sourceType ===
-          "warehouse" && (
-          <p className="text-xs text-gray-500">
-            Кількість автоматично
-            зменшиться на складі
-          </p>
-        )}
-
-        {sourceType ===
-          "manual" && (
-          <p className="text-xs text-gray-500">
-            Ручний матеріал не впливає
-            на залишки складу
-          </p>
-        )}
+        <p className="mt-2 text-xs text-gray-500">
+          {sourceType ===
+          "warehouse"
+            ? "Кількість автоматично зменшиться на складі."
+            : "Ручний матеріал не впливає на залишки складу."}
+        </p>
       </div>
     </form>
   );

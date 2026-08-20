@@ -1,18 +1,23 @@
 "use client";
 
 import Link from "next/link";
+
 import {
   useMemo,
   useState,
 } from "react";
+
 import type { WarehouseMovement } from "@/types/warehouseMovement";
 
 type Props = {
   movements?: WarehouseMovement[];
 };
 
-function formatDate(date: string) {
-  const parsedDate = new Date(date);
+function formatDate(
+  date: string
+) {
+  const parsedDate =
+    new Date(date);
 
   if (
     Number.isNaN(
@@ -38,12 +43,16 @@ export default function WarehouseMovements({
   movements = [],
 }: Props) {
   const safeMovements =
-    Array.isArray(movements)
+    Array.isArray(
+      movements
+    )
       ? movements
       : [];
 
-  const [search, setSearch] =
-    useState("");
+  const [
+    search,
+    setSearch,
+  ] = useState("");
 
   const [
     movementType,
@@ -55,37 +64,50 @@ export default function WarehouseMovements({
     setSelectedObjectId,
   ] = useState("Усі");
 
-  const objectOptions = useMemo(() => {
-    const objects = new Map<
-      number,
-      string
-    >();
+  const objectOptions =
+    useMemo(() => {
+      const objects =
+        new Map<
+          number,
+          string
+        >();
 
-    safeMovements.forEach(
-      (movement) => {
-        if (movement.object) {
-          objects.set(
-            movement.object.id,
-            movement.object.name
-          );
+      safeMovements.forEach(
+        (movement) => {
+          if (
+            movement.object
+          ) {
+            objects.set(
+              movement.object.id,
+              movement.object.name
+            );
+          }
         }
-      }
-    );
-
-    return Array.from(
-      objects.entries()
-    )
-      .map(([id, name]) => ({
-        id,
-        name,
-      }))
-      .sort((first, second) =>
-        first.name.localeCompare(
-          second.name,
-          "uk"
-        )
       );
-  }, [safeMovements]);
+
+      return Array.from(
+        objects.entries()
+      )
+        .map(
+          ([
+            id,
+            name,
+          ]) => ({
+            id,
+            name,
+          })
+        )
+        .sort(
+          (
+            first,
+            second
+          ) =>
+            first.name.localeCompare(
+              second.name,
+              "uk"
+            )
+        );
+    }, [safeMovements]);
 
   const filteredMovements =
     useMemo(() => {
@@ -96,14 +118,17 @@ export default function WarehouseMovements({
 
       return safeMovements.filter(
         (movement) => {
-          const searchableText = [
-            movement.item?.name,
-            movement.object?.name,
-            movement.note,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
+          const searchableText =
+            [
+              movement.item
+                ?.name,
+              movement.object
+                ?.name,
+              movement.note,
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
 
           const matchesSearch =
             !normalizedSearch ||
@@ -112,7 +137,8 @@ export default function WarehouseMovements({
             );
 
           const matchesType =
-            movementType === "Усі" ||
+            movementType ===
+              "Усі" ||
             movement.movement_type ===
               movementType;
 
@@ -123,8 +149,10 @@ export default function WarehouseMovements({
               "Без об’єкта" &&
               !movement.object) ||
             String(
-              movement.object?.id
-            ) === selectedObjectId;
+              movement.object
+                ?.id
+            ) ===
+              selectedObjectId;
 
           return (
             matchesSearch &&
@@ -141,9 +169,10 @@ export default function WarehouseMovements({
     ]);
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-white">
-      <div className="border-b p-5">
-        <h2 className="text-xl font-semibold">
+    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+      {/* HEADER */}
+      <div className="border-b p-4 sm:p-5">
+        <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
           Історія руху товарів
         </h2>
 
@@ -153,28 +182,36 @@ export default function WarehouseMovements({
         </p>
       </div>
 
-      {safeMovements.length > 0 && (
-        <div className="grid grid-cols-1 gap-3 border-b bg-gray-50 p-4 lg:grid-cols-[1fr_220px_260px]">
+      {/* FILTERS */}
+      {safeMovements.length >
+        0 && (
+        <div className="grid min-w-0 grid-cols-1 gap-3 border-b bg-gray-50 p-3 sm:p-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_220px_260px]">
           <input
             type="search"
             value={search}
-            onChange={(event) =>
+            onChange={(
+              event
+            ) =>
               setSearch(
                 event.target.value
               )
             }
             placeholder="Пошук за матеріалом, об’єктом або приміткою"
-            className="w-full rounded-lg border bg-white px-4 py-3 outline-none focus:border-green-600"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
           />
 
           <select
-            value={movementType}
-            onChange={(event) =>
+            value={
+              movementType
+            }
+            onChange={(
+              event
+            ) =>
               setMovementType(
                 event.target.value
               )
             }
-            className="w-full rounded-lg border bg-white px-4 py-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           >
             <option value="Усі">
               Усі операції
@@ -190,30 +227,39 @@ export default function WarehouseMovements({
           </select>
 
           <select
-            value={selectedObjectId}
-            onChange={(event) =>
+            value={
+              selectedObjectId
+            }
+            onChange={(
+              event
+            ) =>
               setSelectedObjectId(
                 event.target.value
               )
             }
-            className="w-full rounded-lg border bg-white px-4 py-3"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 md:col-span-2 lg:col-span-1"
           >
             <option value="Усі">
               Усі об’єкти
             </option>
 
             <option value="Без об’єкта">
-              Без прив’язки до
-              об’єкта
+              Без прив’язки до об’єкта
             </option>
 
             {objectOptions.map(
               (object) => (
                 <option
-                  key={object.id}
-                  value={object.id}
+                  key={
+                    object.id
+                  }
+                  value={
+                    object.id
+                  }
                 >
-                  {object.name}
+                  {
+                    object.name
+                  }
                 </option>
               )
             )}
@@ -221,32 +267,177 @@ export default function WarehouseMovements({
         </div>
       )}
 
-      {safeMovements.length === 0 ? (
-        <div className="p-8 text-center">
-          <p className="text-gray-500">
-            Операцій зі складом поки
-            що немає.
+      {/* EMPTY */}
+      {safeMovements.length ===
+      0 ? (
+        <div className="p-6 text-center sm:p-8">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+            ↕
+          </div>
+
+          <p className="mt-3 font-medium text-gray-700">
+            Операцій поки немає
+          </p>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Історія приходів та
+            списань з’явиться тут.
           </p>
         </div>
       ) : filteredMovements.length ===
         0 ? (
-        <div className="p-8 text-center">
-          <p className="text-gray-500">
-            Операцій за вибраними
-            фільтрами не знайдено.
+        <div className="p-6 text-center sm:p-8">
+          <p className="font-medium text-gray-700">
+            Операцій не знайдено
+          </p>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Спробуй змінити пошук або
+            фільтри.
           </p>
         </div>
       ) : (
         <>
-          <div className="border-b px-5 py-3">
+          {/* COUNT */}
+          <div className="border-b px-4 py-3 sm:px-5">
             <p className="text-sm text-gray-500">
               Показано операцій:{" "}
-              {filteredMovements.length}{" "}
-              із {safeMovements.length}
+              <span className="font-semibold text-gray-800">
+                {
+                  filteredMovements.length
+                }
+              </span>{" "}
+              із{" "}
+              {
+                safeMovements.length
+              }
             </p>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* MOBILE CARDS */}
+          <div className="space-y-3 p-3 md:hidden">
+            {filteredMovements.map(
+              (movement) => {
+                const isIncome =
+                  movement.movement_type ===
+                  "Прихід";
+
+                return (
+                  <article
+                    key={
+                      movement.id
+                    }
+                    className="min-w-0 rounded-xl border bg-white p-4"
+                  >
+                    {/* TOP */}
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${
+                          isIncome
+                            ? "bg-green-50 text-green-700"
+                            : "bg-orange-50 text-orange-700"
+                        }`}
+                      >
+                        {
+                          movement.movement_type
+                        }
+                      </span>
+
+                      <p className="text-xs text-gray-400">
+                        {formatDate(
+                          movement.created_at
+                        )}
+                      </p>
+                    </div>
+
+                    {/* MATERIAL */}
+                    <div className="mt-4">
+                      <p className="text-xs text-gray-500">
+                        Матеріал
+                      </p>
+
+                      <p className="mt-1 break-words font-semibold text-gray-900">
+                        {movement.item
+                          ?.name ||
+                          "Позицію видалено"}
+                      </p>
+                    </div>
+
+                    {/* QUANTITY */}
+                    <div
+                      className={`mt-3 rounded-lg p-3 ${
+                        isIncome
+                          ? "bg-green-50"
+                          : "bg-orange-50"
+                      }`}
+                    >
+                      <p className="text-xs text-gray-500">
+                        Кількість
+                      </p>
+
+                      <p
+                        className={`mt-1 text-xl font-bold ${
+                          isIncome
+                            ? "text-green-700"
+                            : "text-orange-700"
+                        }`}
+                      >
+                        {isIncome
+                          ? "+"
+                          : "−"}
+                        {Number(
+                          movement.quantity
+                        )}{" "}
+                        {movement.item
+                          ?.unit ||
+                          ""}
+                      </p>
+                    </div>
+
+                    {/* DETAILS */}
+                    <div className="mt-4 grid grid-cols-1 gap-4 border-t pt-4">
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">
+                          Об’єкт
+                        </p>
+
+                        {movement.object ? (
+                          <Link
+                            href={`/objects/${movement.object.id}`}
+                            className="mt-1 block break-words font-medium text-green-700 hover:underline"
+                          >
+                            {
+                              movement
+                                .object
+                                .name
+                            }
+                          </Link>
+                        ) : (
+                          <p className="mt-1 text-sm text-gray-400">
+                            Не прив’язано
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">
+                          Примітка
+                        </p>
+
+                        <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-700">
+                          {movement.note ||
+                            "Без примітки"}
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+                );
+              }
+            )}
+          </div>
+
+          {/* DESKTOP TABLE */}
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[900px]">
               <thead className="bg-gray-50 text-left">
                 <tr>
@@ -330,7 +521,8 @@ export default function WarehouseMovements({
                             movement.quantity
                           )}{" "}
                           {movement.item
-                            ?.unit || ""}
+                            ?.unit ||
+                            ""}
                         </td>
 
                         <td className="p-4">

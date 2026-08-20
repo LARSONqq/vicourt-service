@@ -4,8 +4,14 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+
+import {
+  useRouter,
+} from "next/navigation";
+
+import {
+  createClient,
+} from "@/lib/supabase/client";
 
 type UserRole =
   | "admin"
@@ -36,15 +42,23 @@ function getRoleLabel(
 }
 
 export function Header() {
-  const router = useRouter();
+  const router =
+    useRouter();
 
-  const [email, setEmail] =
-    useState("");
+  const [
+    email,
+    setEmail,
+  ] = useState("");
 
-  const [fullName, setFullName] =
-    useState("");
+  const [
+    fullName,
+    setFullName,
+  ] = useState("");
 
-  const [role, setRole] =
+  const [
+    role,
+    setRole,
+  ] =
     useState<UserRole | null>(
       null
     );
@@ -86,7 +100,10 @@ export function Header() {
             full_name,
             role
           `)
-          .eq("id", user.id)
+          .eq(
+            "id",
+            user.id
+          )
           .maybeSingle<UserProfile>();
 
         if (profile) {
@@ -131,26 +148,32 @@ export function Header() {
     "Користувач";
 
   return (
-    <header className="flex items-center justify-between border-b bg-white px-8 py-4">
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">
-          ViCourt Service
+    <header className="flex min-h-[64px] items-center justify-between gap-3 border-b bg-white px-3 py-3 sm:px-6 lg:px-8 lg:py-4">
+      <div className="min-w-0">
+        <h1 className="truncate text-lg font-bold text-gray-900 sm:text-xl">
+          <span className="sm:hidden">
+            ViCourt
+          </span>
+
+          <span className="hidden sm:inline">
+            ViCourt Service
+          </span>
         </h1>
 
-        <p className="text-xs text-gray-400">
+        <p className="mt-0.5 hidden text-xs text-gray-400 sm:block">
           Система управління
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="hidden text-right sm:block">
+      <div className="flex shrink-0 items-center gap-3">
+        <div className="hidden text-right md:block">
           {isLoadingUser ? (
             <p className="text-sm text-gray-400">
               Завантаження...
             </p>
           ) : (
             <>
-              <p className="text-sm font-semibold text-gray-800">
+              <p className="max-w-[220px] truncate text-sm font-semibold text-gray-800">
                 👤 {displayName}
               </p>
 
@@ -171,11 +194,12 @@ export function Header() {
                 </span>
               </div>
 
-              {fullName && email && (
-                <p className="mt-1 text-xs text-gray-400">
-                  {email}
-                </p>
-              )}
+              {fullName &&
+                email && (
+                  <p className="mt-1 max-w-[220px] truncate text-xs text-gray-400">
+                    {email}
+                  </p>
+                )}
             </>
           )}
         </div>
@@ -184,10 +208,10 @@ export function Header() {
           type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg border bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         >
           {isLoggingOut
-            ? "Вихід..."
+            ? "..."
             : "Вийти"}
         </button>
       </div>

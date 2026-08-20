@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+
 import {
   useEffect,
   useMemo,
@@ -9,15 +10,9 @@ import {
 
 import { deleteEmployee } from "@/app/actions/employeeActions";
 
-import {
-  getEquipmentClient,
-} from "@/services/equipmentClientService";
-
-import {
-  getObjectsClient,
-} from "@/services/objectClientService";
-
-import { getAllTasksClient,} from "@/services/taskClientService";
+import { getEquipmentClient } from "@/services/equipmentClientService";
+import { getObjectsClient } from "@/services/objectClientService";
+import { getAllTasksClient } from "@/services/taskClientService";
 
 import type { Employee } from "@/types/employee";
 import type { Equipment } from "@/types/equipment";
@@ -97,6 +92,11 @@ export default function EmployeeList({
   employees,
   canManage = false,
 }: Props) {
+  const safeEmployees =
+    Array.isArray(employees)
+      ? employees
+      : [];
+
   const [
     search,
     setSearch,
@@ -115,9 +115,9 @@ export default function EmployeeList({
   const [
     editingId,
     setEditingId,
-  ] = useState<number | null>(
-    null
-  );
+  ] = useState<
+    number | null
+  >(null);
 
   const [
     tasks,
@@ -227,7 +227,7 @@ export default function EmployeeList({
   const statuses =
     useMemo(() => {
       const values =
-        employees
+        safeEmployees
           .map(
             (employee) =>
               employee.status
@@ -240,12 +240,12 @@ export default function EmployeeList({
           new Set(values)
         ),
       ];
-    }, [employees]);
+    }, [safeEmployees]);
 
   const employmentTypes =
     useMemo(() => {
       const values =
-        employees
+        safeEmployees
           .map(
             (employee) =>
               employee.employment_type
@@ -258,7 +258,7 @@ export default function EmployeeList({
           new Set(values)
         ),
       ];
-    }, [employees]);
+    }, [safeEmployees]);
 
   const workloadByEmployee =
     useMemo(() => {
@@ -268,7 +268,7 @@ export default function EmployeeList({
           EmployeeWorkload
         >();
 
-      employees.forEach(
+      safeEmployees.forEach(
         (employee) => {
           result.set(
             employee.id,
@@ -360,7 +360,7 @@ export default function EmployeeList({
 
       return result;
     }, [
-      employees,
+      safeEmployees,
       tasks,
       objects,
       equipment,
@@ -373,7 +373,7 @@ export default function EmployeeList({
           .trim()
           .toLowerCase();
 
-      return employees.filter(
+      return safeEmployees.filter(
         (employee) => {
           const searchableText =
             [
@@ -394,7 +394,8 @@ export default function EmployeeList({
             );
 
           const matchesStatus =
-            status === "Усі" ||
+            status ===
+              "Усі" ||
             employee.status ===
               status;
 
@@ -412,44 +413,49 @@ export default function EmployeeList({
         }
       );
     }, [
-      employees,
+      safeEmployees,
       search,
       status,
       employmentType,
     ]);
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5">
+      {/* WORKLOAD ERROR */}
       {workloadError && (
-        <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
-          Працівники
-          завантажилися, але дані
-          про навантаження поки
-          недоступні.
+        <div className="rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm leading-5 text-orange-700 sm:p-4">
+          Працівники завантажилися,
+          але дані про навантаження
+          поки недоступні.
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 rounded-xl border bg-white p-4 lg:grid-cols-[1fr_210px_210px]">
+      {/* FILTERS */}
+      <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_210px_210px]">
         <input
           type="search"
           value={search}
-          onChange={(event) =>
+          onChange={(
+            event
+          ) =>
             setSearch(
               event.target.value
             )
           }
           placeholder="Пошук працівника"
-          className="w-full rounded-lg border px-4 py-3 outline-none focus:border-green-600"
+          className="min-h-11 w-full min-w-0 rounded-lg border px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
         />
 
         <select
           value={status}
-          onChange={(event) =>
+          onChange={(
+            event
+          ) =>
             setStatus(
               event.target.value
             )
           }
-          className="w-full rounded-lg border bg-white px-4 py-3"
+          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
         >
           {statuses.map(
             (item) => (
@@ -457,7 +463,8 @@ export default function EmployeeList({
                 key={item}
                 value={item}
               >
-                {item === "Усі"
+                {item ===
+                "Усі"
                   ? "Усі статуси"
                   : item}
               </option>
@@ -466,13 +473,17 @@ export default function EmployeeList({
         </select>
 
         <select
-          value={employmentType}
-          onChange={(event) =>
+          value={
+            employmentType
+          }
+          onChange={(
+            event
+          ) =>
             setEmploymentType(
               event.target.value
             )
           }
-          className="w-full rounded-lg border bg-white px-4 py-3"
+          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
         >
           {employmentTypes.map(
             (item) => (
@@ -480,7 +491,8 @@ export default function EmployeeList({
                 key={item}
                 value={item}
               >
-                {item === "Усі"
+                {item ===
+                "Усі"
                   ? "Усі типи роботи"
                   : item}
               </option>
@@ -489,12 +501,15 @@ export default function EmployeeList({
         </select>
       </div>
 
+      {/* COUNT */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500">
           Знайдено працівників:{" "}
-          {
-            filteredEmployees.length
-          }
+          <span className="font-semibold text-gray-800">
+            {
+              filteredEmployees.length
+            }
+          </span>
         </p>
 
         {!canManage && (
@@ -504,16 +519,25 @@ export default function EmployeeList({
         )}
       </div>
 
+      {/* EMPTY */}
       {filteredEmployees.length ===
       0 ? (
-        <div className="rounded-xl border bg-white p-8 text-center">
-          <p className="text-gray-500">
-            Працівників за цими
-            параметрами не знайдено.
+        <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+            👤
+          </div>
+
+          <p className="mt-3 font-medium text-gray-700">
+            Працівників не знайдено
+          </p>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Спробуй змінити пошук,
+            статус або тип роботи.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-3 sm:gap-5 xl:grid-cols-2 2xl:grid-cols-3">
           {filteredEmployees.map(
             (employee) => {
               const workload =
@@ -540,19 +564,31 @@ export default function EmployeeList({
                   key={
                     employee.id
                   }
-                  className={`rounded-xl border bg-white ${
+                  className={`min-w-0 overflow-hidden rounded-xl border bg-white ${
                     isEditing
                       ? "xl:col-span-2 2xl:col-span-3"
                       : ""
                   }`}
                 >
                   {isEditing ? (
-                    <div className="p-5">
-                      <div className="mb-5 flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">
-                          Редагування
-                          працівника
-                        </h3>
+                    /* EDIT MODE */
+                    <div className="min-w-0 p-3 sm:p-5">
+                      <div className="mb-4 flex min-w-0 items-center justify-between gap-3 sm:mb-5">
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold text-gray-900 sm:text-lg">
+                            Редагування
+                            працівника
+                          </h3>
+
+                          <p className="mt-1 truncate text-sm text-gray-500">
+                            {
+                              employee.last_name
+                            }{" "}
+                            {
+                              employee.first_name
+                            }
+                          </p>
+                        </div>
 
                         <button
                           type="button"
@@ -561,9 +597,16 @@ export default function EmployeeList({
                               null
                             )
                           }
-                          className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white text-xl text-gray-500 transition hover:bg-gray-50 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-sm"
+                          aria-label="Закрити редагування"
                         >
-                          Закрити
+                          <span className="sm:hidden">
+                            ×
+                          </span>
+
+                          <span className="hidden sm:inline">
+                            Закрити
+                          </span>
                         </button>
                       </div>
 
@@ -580,12 +623,14 @@ export default function EmployeeList({
                     </div>
                   ) : (
                     <>
-                      <div className="p-5">
-                        <div className="flex items-start justify-between gap-4">
+                      {/* CARD BODY */}
+                      <div className="min-w-0 p-4 sm:p-5">
+                        {/* PERSON */}
+                        <div className="flex min-w-0 items-start justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-3">
                             <Link
                               href={`/employees/${employee.id}`}
-                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 font-semibold text-green-700 transition hover:bg-green-200"
+                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-700 transition hover:bg-green-200"
                               title="Відкрити сторінку працівника"
                             >
                               {getInitials(
@@ -596,7 +641,7 @@ export default function EmployeeList({
                             <div className="min-w-0">
                               <Link
                                 href={`/employees/${employee.id}`}
-                                className="block truncate font-semibold transition hover:text-green-700 hover:underline"
+                                className="block break-words font-semibold text-gray-900 transition hover:text-green-700 hover:underline"
                               >
                                 {
                                   employee.last_name
@@ -606,7 +651,7 @@ export default function EmployeeList({
                                 }
                               </Link>
 
-                              <p className="truncate text-sm text-gray-500">
+                              <p className="mt-0.5 break-words text-sm text-gray-500">
                                 {employee.position ||
                                   "Посаду не вказано"}
                               </p>
@@ -614,7 +659,7 @@ export default function EmployeeList({
                           </div>
 
                           <span
-                            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getStatusClasses(
+                            className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium sm:px-3 sm:text-xs ${getStatusClasses(
                               employee.status
                             )}`}
                           >
@@ -624,16 +669,17 @@ export default function EmployeeList({
                           </span>
                         </div>
 
-                        <div className="mt-5 space-y-2 text-sm">
+                        {/* CONTACTS + WORK */}
+                        <div className="mt-5 space-y-3 border-t pt-4 text-sm">
                           {employee.phone && (
-                            <div className="flex justify-between gap-4">
+                            <div className="grid min-w-0 grid-cols-[90px_minmax(0,1fr)] gap-3">
                               <span className="text-gray-500">
                                 Телефон
                               </span>
 
                               <a
                                 href={`tel:${employee.phone}`}
-                                className="truncate font-medium text-green-700 hover:underline"
+                                className="min-w-0 break-all text-right font-medium text-green-700 hover:underline"
                               >
                                 {
                                   employee.phone
@@ -643,14 +689,14 @@ export default function EmployeeList({
                           )}
 
                           {employee.email && (
-                            <div className="flex justify-between gap-4">
+                            <div className="grid min-w-0 grid-cols-[90px_minmax(0,1fr)] gap-3">
                               <span className="text-gray-500">
                                 Email
                               </span>
 
                               <a
                                 href={`mailto:${employee.email}`}
-                                className="truncate font-medium text-green-700 hover:underline"
+                                className="min-w-0 break-all text-right font-medium text-green-700 hover:underline"
                               >
                                 {
                                   employee.email
@@ -659,12 +705,12 @@ export default function EmployeeList({
                             </div>
                           )}
 
-                          <div className="flex justify-between gap-4">
+                          <div className="grid min-w-0 grid-cols-[90px_minmax(0,1fr)] gap-3">
                             <span className="text-gray-500">
                               Тип роботи
                             </span>
 
-                            <span className="text-right font-medium">
+                            <span className="min-w-0 break-words text-right font-medium text-gray-800">
                               {
                                 employee.employment_type
                               }
@@ -672,12 +718,12 @@ export default function EmployeeList({
                           </div>
 
                           {hireDate && (
-                            <div className="flex justify-between gap-4">
+                            <div className="grid min-w-0 grid-cols-[90px_minmax(0,1fr)] gap-3">
                               <span className="text-gray-500">
                                 Працює з
                               </span>
 
-                              <span className="font-medium">
+                              <span className="text-right font-medium text-gray-800">
                                 {
                                   hireDate
                                 }
@@ -686,49 +732,59 @@ export default function EmployeeList({
                           )}
                         </div>
 
+                        {/* WORKLOAD */}
                         <div className="mt-5 border-t pt-4">
                           <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400">
                             Навантаження
                           </p>
 
                           {isLoadingWorkload ? (
-                            <p className="text-sm text-gray-400">
-                              Завантаження...
-                            </p>
+                            <div className="grid grid-cols-3 gap-2">
+                              {[0, 1, 2].map(
+                                (item) => (
+                                  <div
+                                    key={
+                                      item
+                                    }
+                                    className="h-[66px] animate-pulse rounded-lg bg-gray-100"
+                                  />
+                                )
+                              )}
+                            </div>
                           ) : (
                             <div className="grid grid-cols-3 gap-2">
-                              <div className="rounded-lg bg-blue-50 p-3 text-center">
+                              <div className="min-w-0 rounded-lg bg-blue-50 p-2 text-center sm:p-3">
                                 <p className="text-lg font-semibold text-blue-700">
                                   {
                                     workload.activeTasks
                                   }
                                 </p>
 
-                                <p className="text-xs text-blue-700">
+                                <p className="truncate text-[10px] text-blue-700 sm:text-xs">
                                   Завдань
                                 </p>
                               </div>
 
-                              <div className="rounded-lg bg-green-50 p-3 text-center">
+                              <div className="min-w-0 rounded-lg bg-green-50 p-2 text-center sm:p-3">
                                 <p className="text-lg font-semibold text-green-700">
                                   {
                                     workload.objects
                                   }
                                 </p>
 
-                                <p className="text-xs text-green-700">
+                                <p className="truncate text-[10px] text-green-700 sm:text-xs">
                                   Об’єктів
                                 </p>
                               </div>
 
-                              <div className="rounded-lg bg-orange-50 p-3 text-center">
+                              <div className="min-w-0 rounded-lg bg-orange-50 p-2 text-center sm:p-3">
                                 <p className="text-lg font-semibold text-orange-700">
                                   {
                                     workload.equipment
                                   }
                                 </p>
 
-                                <p className="text-xs text-orange-700">
+                                <p className="truncate text-[10px] text-orange-700 sm:text-xs">
                                   Техніки
                                 </p>
                               </div>
@@ -736,19 +792,33 @@ export default function EmployeeList({
                           )}
                         </div>
 
+                        {/* NOTES */}
                         {employee.notes && (
-                          <p className="mt-4 line-clamp-2 text-sm text-gray-500">
-                            {
-                              employee.notes
-                            }
-                          </p>
+                          <div className="mt-4 border-t pt-4">
+                            <p className="text-xs text-gray-500">
+                              Примітки
+                            </p>
+
+                            <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-words text-sm leading-5 text-gray-600">
+                              {
+                                employee.notes
+                              }
+                            </p>
+                          </div>
                         )}
                       </div>
 
-                      <div className="flex flex-wrap justify-end gap-2 border-t bg-gray-50 px-5 py-3">
+                      {/* ACTIONS */}
+                      <div
+                        className={`grid gap-2 border-t bg-gray-50 p-3 sm:flex sm:flex-wrap sm:justify-end sm:px-5 ${
+                          canManage
+                            ? "grid-cols-3"
+                            : "grid-cols-1"
+                        }`}
+                      >
                         <Link
                           href={`/employees/${employee.id}`}
-                          className="rounded-lg px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-50"
+                          className="flex min-h-10 items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-medium text-green-700 transition hover:bg-green-50"
                         >
                           Відкрити
                         </Link>
@@ -762,7 +832,7 @@ export default function EmployeeList({
                                   employee.id
                                 )
                               }
-                              className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+                              className="min-h-10 rounded-lg px-2 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50 sm:px-3"
                             >
                               Редагувати
                             </button>
@@ -786,10 +856,11 @@ export default function EmployeeList({
                                   event.preventDefault();
                                 }
                               }}
+                              className="w-full"
                             >
                               <button
                                 type="submit"
-                                className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                                className="min-h-10 w-full rounded-lg px-2 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 sm:px-3"
                               >
                                 Видалити
                               </button>
