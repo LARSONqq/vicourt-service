@@ -5,6 +5,7 @@ type Props = {
   photosCount: number;
   materialsCost: number;
   laborCost: number;
+  otherExpensesCost: number;
 };
 
 function formatMoney(
@@ -49,10 +50,12 @@ export default function ObjectSummary({
   photosCount,
   materialsCost,
   laborCost,
+  otherExpensesCost,
 }: Props) {
   const totalCost =
     materialsCost +
-    laborCost;
+    laborCost +
+    otherExpensesCost;
 
   return (
     <div className="min-w-0 space-y-4">
@@ -109,13 +112,13 @@ export default function ObjectSummary({
           </h2>
 
           <p className="mt-1 text-sm leading-5 text-gray-500">
-            Автоматичний розрахунок
-            матеріалів та виконаних
-            робіт
+            Автоматична собівартість
+            цього об’єкта
           </p>
         </div>
 
-        <div className="grid min-w-0 grid-cols-1 gap-3 p-3 sm:grid-cols-3 sm:p-5">
+        <div className="grid min-w-0 grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-5 xl:grid-cols-4">
+          {/* MATERIALS */}
           <div className="min-w-0 rounded-xl bg-gray-50 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
               Матеріали
@@ -128,28 +131,48 @@ export default function ObjectSummary({
             </p>
 
             <p className="mt-1 text-xs leading-4 text-gray-500">
-              За кількістю та
-              зафіксованою ціною
+              Кількість ×
+              зафіксована ціна
             </p>
           </div>
 
-          <div className="min-w-0 rounded-xl bg-green-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-green-600">
-              Виконані роботи
+          {/* LABOR */}
+          <div className="min-w-0 rounded-xl bg-blue-50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-blue-600">
+              Роботи
             </p>
 
-            <p className="mt-2 break-words text-xl font-bold text-green-700 sm:text-2xl">
+            <p className="mt-2 break-words text-xl font-bold text-blue-700 sm:text-2xl">
               {formatMoney(
                 laborCost
               )}
             </p>
 
-            <p className="mt-1 text-xs leading-4 text-green-700/70">
+            <p className="mt-1 text-xs leading-4 text-blue-700/70">
               Години × ставка
               працівника
             </p>
           </div>
 
+          {/* OTHER EXPENSES */}
+          <div className="min-w-0 rounded-xl bg-orange-50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-orange-600">
+              Інші витрати
+            </p>
+
+            <p className="mt-2 break-words text-xl font-bold text-orange-700 sm:text-2xl">
+              {formatMoney(
+                otherExpensesCost
+              )}
+            </p>
+
+            <p className="mt-1 text-xs leading-4 text-orange-700/70">
+              Паливо, доставка,
+              оренда та інше
+            </p>
+          </div>
+
+          {/* TOTAL */}
           <div className="min-w-0 rounded-xl border border-green-200 bg-green-600 p-4 text-white">
             <p className="text-xs font-medium uppercase tracking-wide text-green-100">
               Загальні витрати
@@ -162,7 +185,8 @@ export default function ObjectSummary({
             </p>
 
             <p className="mt-1 text-xs leading-4 text-green-100">
-              Матеріали + роботи
+              Повна собівартість
+              об’єкта
             </p>
           </div>
         </div>

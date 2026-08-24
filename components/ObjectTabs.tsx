@@ -11,6 +11,7 @@ type TabId =
   | "tasks"
   | "materials"
   | "journal"
+  | "expenses"
   | "photos";
 
 type Props = {
@@ -18,10 +19,11 @@ type Props = {
   tasks: ReactNode;
   materials: ReactNode;
   journal: ReactNode;
+  expenses?: ReactNode;
   photos: ReactNode;
 };
 
-const tabs: Array<{
+const baseTabs: Array<{
   id: TabId;
   label: string;
   icon: string;
@@ -47,6 +49,11 @@ const tabs: Array<{
     icon: "📝",
   },
   {
+    id: "expenses",
+    label: "Витрати",
+    icon: "💰",
+  },
+  {
     id: "photos",
     label: "Фото",
     icon: "📷",
@@ -58,6 +65,7 @@ export default function ObjectTabs({
   tasks,
   materials,
   journal,
+  expenses,
   photos,
 }: Props) {
   const [tab, setTab] =
@@ -66,6 +74,15 @@ export default function ObjectTabs({
   const scrollContainerRef =
     useRef<HTMLDivElement | null>(
       null
+    );
+
+  const tabs =
+    baseTabs.filter(
+      (item) =>
+        item.id !==
+          "expenses" ||
+        expenses !==
+          undefined
     );
 
   function handleTabChange(
@@ -144,6 +161,10 @@ export default function ObjectTabs({
         {tab ===
           "journal" &&
           journal}
+
+        {tab ===
+          "expenses" &&
+          expenses}
 
         {tab === "photos" &&
           photos}

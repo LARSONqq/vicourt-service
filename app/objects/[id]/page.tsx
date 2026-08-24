@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import ObjectTabs from "@/components/ObjectTabs";
+
 import DeleteObjectButton from "@/components/objects/DeleteObjectButton";
+import ObjectExpenses from "@/components/objects/ObjectExpenses";
 import ObjectInfo from "@/components/objects/ObjectInfo";
 import ObjectMaterials from "@/components/objects/ObjectMaterials";
 import ObjectPhotos from "@/components/objects/ObjectPhotos";
@@ -20,7 +22,13 @@ import {
   getWorkLogs,
 } from "@/services/objectService";
 
-import { getWarehouseItems } from "@/services/warehouseService";
+import {
+  getObjectExpenses,
+} from "@/services/objectExpenseService";
+
+import {
+  getWarehouseItems,
+} from "@/services/warehouseService";
 
 type Props = {
   params: Promise<{
@@ -52,7 +60,8 @@ function getStatusStyle(
 export default async function ObjectPage({
   params,
 }: Props) {
-  const { id } = await params;
+  const { id } =
+    await params;
 
   const objectId =
     Number(id);
@@ -74,6 +83,7 @@ export default async function ObjectPage({
     photos,
     employees,
     warehouseItems,
+    expenses,
   ] = await Promise.all([
     getObject(objectId),
     getObjectTasks(objectId),
@@ -82,6 +92,7 @@ export default async function ObjectPage({
     getObjectPhotos(objectId),
     getEmployees(),
     getWarehouseItems(),
+    getObjectExpenses(objectId),
   ]);
 
   if (!object) {
@@ -130,6 +141,13 @@ export default async function ObjectPage({
       ? warehouseItems
       : [];
 
+  const expenseList =
+    Array.isArray(
+      expenses
+    )
+      ? expenses
+      : [];
+
   const activeTasks =
     taskList.filter(
       (task) =>
@@ -142,12 +160,24 @@ export default async function ObjectPage({
       (
         sum,
         workLog
-      ) =>
-        sum +
-        Number(
-          workLog.hours ||
-            0
-        ),
+      ) => {
+        const hours =
+          Number(
+            workLog.hours ||
+              0
+          );
+
+        return (
+          sum +
+          (
+            Number.isFinite(
+              hours
+            )
+              ? hours
+              : 0
+          )
+        );
+      },
       0
     );
 
@@ -222,6 +252,32 @@ export default async function ObjectPage({
           sum +
           hours *
             hourlyRate
+        );
+      },
+      0
+    );
+
+  const otherExpensesCost =
+    expenseList.reduce(
+      (
+        sum,
+        expense
+      ) => {
+        const amount =
+          Number(
+            expense.amount ||
+              0
+          );
+
+        return (
+          sum +
+          (
+            Number.isFinite(
+              amount
+            )
+              ? amount
+              : 0
+          )
         );
       },
       0
@@ -302,6 +358,9 @@ export default async function ObjectPage({
         laborCost={
           laborCost
         }
+        otherExpensesCost={
+          otherExpensesCost
+        }
       />
 
       {/* CONTENT */}
@@ -352,6 +411,16 @@ export default async function ObjectPage({
             }
             employees={
               employeeList
+            }
+          />
+        }
+        expenses={
+          <ObjectExpenses
+            expenses={
+              expenseList
+            }
+            objectId={
+              object.id
             }
           />
         }
