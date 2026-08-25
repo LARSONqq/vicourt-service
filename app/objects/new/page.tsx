@@ -86,6 +86,10 @@ export default async function NewObjectPage() {
               На постійному обслуговуванні
             </option>
 
+            <option value="Під періодичним наглядом">
+              Під періодичним наглядом
+            </option>
+
             <option value="Пауза">
               Призупинено
             </option>

@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 import { canManageObjects } from "@/lib/auth/permissions";
 import { getCurrentUserProfile } from "@/services/profileService";
 
+import {
+  getWorkLogAttachmentMetadataValidationError,
+  WORK_LOG_ATTACHMENTS_BUCKET,
+  type WorkLogAttachmentMetadata,
+} from "@/constants/workLogAttachments";
+
 function getText(
   formData: FormData,
   field: string
@@ -13,6 +19,85 @@ function getText(
   return String(
     formData.get(field) ?? ""
   ).trim();
+}
+
+function getAttachmentMetadata(
+  formData: FormData,
+  objectId: number,
+  required = false
+): WorkLogAttachmentMetadata | null {
+  const attachmentPath =
+    getText(
+      formData,
+      "attachment_path"
+    );
+
+  const attachmentName =
+    getText(
+      formData,
+      "attachment_name"
+    );
+
+  const attachmentType =
+    getText(
+      formData,
+      "attachment_type"
+    );
+
+  const attachmentSizeValue =
+    getText(
+      formData,
+      "attachment_size"
+    );
+
+  const hasAttachmentData =
+    Boolean(
+      attachmentPath ||
+        attachmentName ||
+        attachmentType ||
+        attachmentSizeValue
+    );
+
+  if (
+    !hasAttachmentData &&
+    !required
+  ) {
+    return null;
+  }
+
+  if (
+    !attachmentPath ||
+    !attachmentName ||
+    !attachmentType ||
+    !attachmentSizeValue
+  ) {
+    throw new Error(
+      "Не вдалося визначити прикріплений файл."
+    );
+  }
+
+  const metadata = {
+    attachmentPath,
+    attachmentName,
+    attachmentType,
+    attachmentSize: Number(
+      attachmentSizeValue
+    ),
+  };
+
+  const validationError =
+    getWorkLogAttachmentMetadataValidationError(
+      metadata,
+      objectId
+    );
+
+  if (validationError) {
+    throw new Error(
+      validationError
+    );
+  }
+
+  return metadata;
 }
 
 async function requireWorkLogManagementAccess() {
@@ -254,6 +339,12 @@ export async function createWorkLog(
     );
   }
 
+  const attachment =
+    getAttachmentMetadata(
+      formData,
+      objectId
+    );
+
   const assignment =
     await getEmployeeAssignment(
       employeeValue,
@@ -283,6 +374,26 @@ export async function createWorkLog(
 
       hourly_rate:
         assignment.hourlyRate,
+
+      attachment_path:
+        attachment
+          ?.attachmentPath ||
+        null,
+
+      attachment_name:
+        attachment
+          ?.attachmentName ||
+        null,
+
+      attachment_type:
+        attachment
+          ?.attachmentType ||
+        null,
+
+      attachment_size:
+        attachment
+          ?.attachmentSize ||
+        null,
     });
 
   if (error) {
@@ -386,6 +497,35 @@ export async function updateWorkLog(
     );
   }
 
+  const attachmentAction =
+    getText(
+      formData,
+      "attachment_action"
+    ) || "keep";
+
+  if (
+    attachmentAction !==
+      "keep" &&
+    attachmentAction !==
+      "replace" &&
+    attachmentAction !==
+      "remove"
+  ) {
+    throw new Error(
+      "Неправильна дія з прикріпленим файлом."
+    );
+  }
+
+  const nextAttachment =
+    attachmentAction ===
+    "replace"
+      ? getAttachmentMetadata(
+          formData,
+          objectId,
+          true
+        )
+      : null;
+
   const {
     data: previousWorkLog,
     error: previousWorkLogError,
@@ -393,7 +533,11 @@ export async function updateWorkLog(
     .from("work_logs")
     .select(`
       employee_id,
-      hourly_rate
+      hourly_rate,
+      attachment_path,
+      attachment_name,
+      attachment_type,
+      attachment_size
     `)
     .eq(
       "id",
@@ -453,27 +597,77 @@ export async function updateWorkLog(
         )
       : assignment.hourlyRate;
 
+  const updateValues: {
+    work_date: string;
+    description: string;
+    employee_id: number | null;
+    workers: string | null;
+    hours: number;
+    hourly_rate: number;
+    attachment_path?: string | null;
+    attachment_name?: string | null;
+    attachment_type?: string | null;
+    attachment_size?: number | null;
+  } = {
+    work_date:
+      workDate,
+
+    description,
+
+    employee_id:
+      assignment.employeeId,
+
+    workers:
+      assignment.workers,
+
+    hours,
+
+    hourly_rate:
+      hourlyRate,
+  };
+
+  if (
+    attachmentAction ===
+    "replace" &&
+    nextAttachment
+  ) {
+    updateValues.attachment_path =
+      nextAttachment.attachmentPath;
+
+    updateValues.attachment_name =
+      nextAttachment.attachmentName;
+
+    updateValues.attachment_type =
+      nextAttachment.attachmentType;
+
+    updateValues.attachment_size =
+      nextAttachment.attachmentSize;
+  }
+
+  if (
+    attachmentAction ===
+    "remove"
+  ) {
+    updateValues.attachment_path =
+      null;
+
+    updateValues.attachment_name =
+      null;
+
+    updateValues.attachment_type =
+      null;
+
+    updateValues.attachment_size =
+      null;
+  }
+
   const {
     error,
   } = await supabase
     .from("work_logs")
-    .update({
-      work_date:
-        workDate,
-
-      description,
-
-      employee_id:
-        assignment.employeeId,
-
-      workers:
-        assignment.workers,
-
-      hours,
-
-      hourly_rate:
-        hourlyRate,
-    })
+    .update(
+      updateValues
+    )
     .eq(
       "id",
       workLogId
@@ -489,6 +683,41 @@ export async function updateWorkLog(
     );
   }
 
+  let attachmentWarning:
+    | string
+    | null = null;
+
+  const previousAttachmentPath =
+    previousWorkLog.attachment_path ||
+    null;
+
+  const shouldDeletePreviousAttachment =
+    attachmentAction !==
+      "keep" &&
+    previousAttachmentPath &&
+    previousAttachmentPath !==
+      nextAttachment
+        ?.attachmentPath;
+
+  if (
+    shouldDeletePreviousAttachment
+  ) {
+    const {
+      error: storageError,
+    } = await supabase.storage
+      .from(
+        WORK_LOG_ATTACHMENTS_BUCKET
+      )
+      .remove([
+        previousAttachmentPath,
+      ]);
+
+    if (storageError) {
+      attachmentWarning =
+        `Запис збережено, але старий файл не вдалося видалити зі Storage: ${storageError.message}`;
+    }
+  }
+
   refreshWorkLogPages(
     objectId,
     [
@@ -496,6 +725,11 @@ export async function updateWorkLog(
       assignment.employeeId,
     ]
   );
+
+  return {
+    warning:
+      attachmentWarning,
+  };
 }
 
 export async function deleteWorkLog(
@@ -528,9 +762,10 @@ export async function deleteWorkLog(
       workLogError,
   } = await supabase
     .from("work_logs")
-    .select(
-      "employee_id"
-    )
+    .select(`
+      employee_id,
+      attachment_path
+    `)
     .eq(
       "id",
       workLogId
@@ -551,6 +786,26 @@ export async function deleteWorkLog(
     throw new Error(
       "Запис роботи не знайдено."
     );
+  }
+
+  if (
+    workLog.attachment_path
+  ) {
+    const {
+      error: storageError,
+    } = await supabase.storage
+      .from(
+        WORK_LOG_ATTACHMENTS_BUCKET
+      )
+      .remove([
+        workLog.attachment_path,
+      ]);
+
+    if (storageError) {
+      throw new Error(
+        `Не вдалося видалити прикріплений файл: ${storageError.message}`
+      );
+    }
   }
 
   const {

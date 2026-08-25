@@ -49,6 +49,9 @@ function getStatusStyle(
     case "На постійному обслуговуванні":
       return "bg-purple-100 text-purple-700";
 
+    case "Під періодичним наглядом":
+      return "bg-rose-100 text-rose-700";
+
     case "Призупинено":
       return "bg-yellow-100 text-yellow-700";
 

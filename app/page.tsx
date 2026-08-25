@@ -28,6 +28,9 @@ function getObjectStatusStyle(
     case "На постійному обслуговуванні":
       return "bg-purple-100 text-purple-700";
 
+    case "Під періодичним наглядом":
+      return "bg-rose-100 text-rose-700";
+
     case "Призупинено":
       return "bg-yellow-100 text-yellow-700";
 
@@ -264,7 +267,9 @@ export default async function HomePage() {
       object.status ===
         "В роботі" ||
       object.status ===
-        "На постійному обслуговуванні"
+        "На постійному обслуговуванні" ||
+      object.status ===
+        "Під періодичним наглядом"
   ).length;
 
   const completedObjects =

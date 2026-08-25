@@ -39,6 +39,36 @@ function formatDate(
   return `${day}.${month}.${year}`;
 }
 
+function formatFileSize(
+  size: number | null
+) {
+  const safeSize =
+    Number(size);
+
+  if (
+    !Number.isFinite(
+      safeSize
+    ) ||
+    safeSize <= 0
+  ) {
+    return null;
+  }
+
+  const megabytes =
+    safeSize /
+    (1024 * 1024);
+
+  if (megabytes >= 1) {
+    return `${megabytes.toFixed(
+      1
+    )} МБ`;
+  }
+
+  return `${Math.ceil(
+    safeSize / 1024
+  )} КБ`;
+}
+
 export default function ObjectWorkLogs({
   workLogs,
   objectId,
@@ -152,6 +182,11 @@ export default function ObjectWorkLogs({
                     )
                   : undefined;
 
+              const attachmentSize =
+                formatFileSize(
+                  workLog.attachment_size
+                );
+
               return (
                 <Fragment
                   key={
@@ -187,6 +222,55 @@ export default function ObjectWorkLogs({
                         }
                       </p>
                     </div>
+
+                    {/* ATTACHMENT */}
+                    {workLog.attachment_path &&
+                      workLog.attachment_name && (
+                        <div className="mt-4 flex min-w-0 flex-col gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-w-0 items-start gap-3">
+                            <span
+                              aria-hidden="true"
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-xl shadow-sm"
+                            >
+                              📎
+                            </span>
+
+                            <div className="min-w-0">
+                              <p className="break-all text-sm font-medium text-gray-800">
+                                {
+                                  workLog.attachment_name
+                                }
+                              </p>
+
+                              <p className="mt-1 text-xs text-gray-500">
+                                Детальний перелік
+                                виконаних робіт
+                                {attachmentSize
+                                  ? ` · ${attachmentSize}`
+                                  : ""}
+                              </p>
+                            </div>
+                          </div>
+
+                          {workLog.attachment_url ? (
+                            <a
+                              href={
+                                workLog.attachment_url
+                              }
+                              target="_blank"
+                              rel="noreferrer"
+                              className="min-h-10 w-full shrink-0 rounded-lg border border-green-200 bg-white px-4 py-2 text-center text-sm font-medium text-green-700 transition hover:bg-green-50 sm:w-auto"
+                            >
+                              Відкрити
+                            </a>
+                          ) : (
+                            <span className="text-xs text-gray-400">
+                              Файл тимчасово
+                              недоступний
+                            </span>
+                          )}
+                        </div>
+                      )}
 
                     {/* EMPLOYEE */}
                     <div className="mt-4 border-t pt-4">

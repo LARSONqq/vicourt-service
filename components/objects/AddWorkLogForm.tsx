@@ -1,6 +1,24 @@
 "use client";
 
+import {
+  useRef,
+  useState,
+} from "react";
+
+import { useRouter } from "next/navigation";
+
 import { createWorkLog } from "@/app/actions/workLogActions";
+
+import {
+  WORK_LOG_ATTACHMENT_ACCEPT,
+  type WorkLogAttachmentMetadata,
+} from "@/constants/workLogAttachments";
+
+import {
+  appendWorkLogAttachmentMetadata,
+  removeWorkLogAttachment,
+  uploadWorkLogAttachment,
+} from "@/services/workLogAttachmentClientService";
 
 import type { Employee } from "@/types/employee";
 
@@ -30,6 +48,29 @@ export default function AddWorkLogForm({
   objectId,
   employees = [],
 }: Props) {
+  const router =
+    useRouter();
+
+  const formRef =
+    useRef<HTMLFormElement>(
+      null
+    );
+
+  const [
+    isSubmitting,
+    setIsSubmitting,
+  ] = useState(false);
+
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] = useState("");
+
+  const [
+    selectedFileName,
+    setSelectedFileName,
+  ] = useState("");
+
   const sortedEmployees = [
     ...employees,
   ].sort(
@@ -43,9 +84,90 @@ export default function AddWorkLogForm({
       )
   );
 
+  async function handleSubmit(
+    formData: FormData
+  ) {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    const attachment =
+      formData.get(
+        "attachment"
+      );
+
+    formData.delete(
+      "attachment"
+    );
+
+    let uploadedAttachment:
+      | WorkLogAttachmentMetadata
+      | null = null;
+
+    try {
+      if (
+        attachment instanceof
+          File &&
+        attachment.size > 0
+      ) {
+        uploadedAttachment =
+          await uploadWorkLogAttachment(
+            attachment,
+            objectId
+          );
+
+        appendWorkLogAttachmentMetadata(
+          formData,
+          uploadedAttachment
+        );
+      }
+
+      await createWorkLog(
+        formData
+      );
+
+      formRef.current?.reset();
+
+      setSelectedFileName(
+        ""
+      );
+
+      router.refresh();
+    } catch (error) {
+      if (
+        uploadedAttachment
+      ) {
+        try {
+          await removeWorkLogAttachment(
+            uploadedAttachment.attachmentPath
+          );
+        } catch (
+          cleanupError
+        ) {
+          console.error(
+            "Не вдалося очистити завантажений файл:",
+            cleanupError
+          );
+        }
+      }
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Не вдалося зберегти запис."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <form
-      action={createWorkLog}
+      ref={formRef}
+      action={handleSubmit}
       className="min-w-0 space-y-5"
     >
       <input
@@ -64,6 +186,13 @@ export default function AddWorkLogForm({
           Додай інформацію про виконану роботу
         </p>
       </div>
+
+      {/* ERROR */}
+      {errorMessage && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      )}
 
       {/* DATE + EMPLOYEE */}
       <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
@@ -157,13 +286,69 @@ export default function AddWorkLogForm({
         </div>
       </div>
 
+      {/* ATTACHMENT */}
+      <div className="min-w-0">
+        <label className="mb-2 block text-sm font-medium text-gray-700">
+          Прикріпити файл
+        </label>
+
+        <input
+          type="file"
+          name="attachment"
+          accept={
+            WORK_LOG_ATTACHMENT_ACCEPT
+          }
+          disabled={
+            isSubmitting
+          }
+          onChange={(
+            event
+          ) => {
+            const file =
+              event.target
+                .files?.[0];
+
+            setSelectedFileName(
+              file?.name || ""
+            );
+
+            setErrorMessage(
+              ""
+            );
+          }}
+          className="block min-h-11 w-full min-w-0 overflow-hidden rounded-lg border bg-white text-sm text-gray-600 file:mr-3 file:border-0 file:border-r file:bg-gray-50 file:px-4 file:py-3 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+        />
+
+        {selectedFileName && (
+          <p className="mt-2 break-all text-xs text-gray-500">
+            Обрано:{" "}
+            <span className="font-medium text-gray-700">
+              {
+                selectedFileName
+              }
+            </span>
+          </p>
+        )}
+
+        <p className="mt-2 text-xs leading-5 text-gray-400">
+          Необов’язково. PDF,
+          DOC, DOCX, XLS або XLSX
+          до 10 МБ.
+        </p>
+      </div>
+
       {/* SAVE */}
       <div className="border-t pt-4">
         <button
           type="submit"
-          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 sm:w-fit"
+          disabled={
+            isSubmitting
+          }
+          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
-          Зберегти запис
+          {isSubmitting
+            ? "Збереження..."
+            : "Зберегти запис"}
         </button>
       </div>
     </form>

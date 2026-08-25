@@ -15,5 +15,15 @@ export interface WorkLog {
 
   hourly_rate: number;
 
+  attachment_path: string | null;
+
+  attachment_name: string | null;
+
+  attachment_type: string | null;
+
+  attachment_size: number | null;
+
+  attachment_url?: string | null;
+
   created_at: string;
 }

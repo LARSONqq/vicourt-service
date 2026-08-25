@@ -13,6 +13,15 @@ type Props = {
   objects: ObjectItem[];
 };
 
+const standardStatuses = [
+  "Новий",
+  "В роботі",
+  "На постійному обслуговуванні",
+  "Під періодичним наглядом",
+  "Призупинено",
+  "Завершено",
+];
+
 function getStatusStyle(
   status: string | null
 ) {
@@ -25,6 +34,9 @@ function getStatusStyle(
 
     case "На постійному обслуговуванні":
       return "bg-purple-100 text-purple-700";
+
+    case "Під періодичним наглядом":
+      return "bg-rose-100 text-rose-700";
 
     case "Призупинено":
       return "bg-yellow-100 text-yellow-700";
@@ -69,7 +81,10 @@ export default function ObjectsList({
         "Усі",
         ...Array.from(
           new Set(
-            objectStatuses
+            [
+              ...standardStatuses,
+              ...objectStatuses,
+            ]
           )
         ),
       ];

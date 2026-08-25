@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 
+import {
+  WORK_LOG_ATTACHMENTS_BUCKET,
+} from "@/constants/workLogAttachments";
+
 import type { Material } from "@/types/material";
 import type { ObjectItem } from "@/types/object";
 import type { ObjectPhoto } from "@/types/objectPhoto";
@@ -161,11 +165,63 @@ export async function getWorkLogs(
     );
   }
 
-  return (
+  const workLogs = (
     Array.isArray(data)
       ? data
       : []
   ) as WorkLog[];
+
+  return await Promise.all(
+    workLogs.map(
+      async (workLog) => {
+        if (
+          !workLog.attachment_path
+        ) {
+          return {
+            ...workLog,
+            attachment_url:
+              null,
+          };
+        }
+
+        const {
+          data: signedUrlData,
+          error: signedUrlError,
+        } =
+          await supabase.storage
+            .from(
+              WORK_LOG_ATTACHMENTS_BUCKET
+            )
+            .createSignedUrl(
+              workLog.attachment_path,
+              60 * 60
+            );
+
+        if (
+          signedUrlError
+        ) {
+          throw new Error(
+            `Не вдалося створити посилання для файла журналу робіт: ${signedUrlError.message}`
+          );
+        }
+
+        if (
+          !signedUrlData
+            ?.signedUrl
+        ) {
+          throw new Error(
+            "Не вдалося створити посилання для файла журналу робіт."
+          );
+        }
+
+        return {
+          ...workLog,
+          attachment_url:
+            signedUrlData.signedUrl,
+        };
+      }
+    )
+  );
 }
 
 export async function getEmployeeWorkLogs(
