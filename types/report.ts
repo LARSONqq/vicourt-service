@@ -83,6 +83,17 @@ export type ReportExpenseHighlight = {
   amount: number;
 };
 
+export type ReportExpenseDetail = {
+  id: number;
+  expenseDate: string;
+  objectName: string;
+  category: string;
+  description: string;
+  amount: number;
+  note: string | null;
+  createdBy: string | null;
+};
+
 export type ReportPurchaseSummary = {
   plannedCount: number;
   plannedAmount: number;
@@ -100,6 +111,18 @@ export type ReportPurchaseExportRow = {
   supplier: string | null;
   createdAt: string;
   purchasedAt: string | null;
+  note: string | null;
+};
+
+export type ReportWarehouseSnapshotRow = {
+  material: string;
+  category: string | null;
+  stockQuantity: number;
+  unit: string;
+  minimumQuantity: number;
+  averagePrice: number;
+  stockValue: number;
+  supplier: string | null;
 };
 
 export type ReportWarehouseMovement = {
@@ -143,12 +166,16 @@ export type ReportsData = {
     ReportExpenseCategory[];
   expenseHighlights:
     ReportExpenseHighlight[];
+  expenseDetails:
+    ReportExpenseDetail[];
   purchases:
     ReportPurchaseSummary;
   purchaseExportRows:
     ReportPurchaseExportRow[];
   warehouseMovementExportRows:
     ReportWarehouseMovement[];
+  warehouseSnapshotRows:
+    ReportWarehouseSnapshotRow[];
   warehouse:
     ReportWarehouseSummary;
 };

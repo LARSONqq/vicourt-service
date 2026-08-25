@@ -1,3 +1,7 @@
+import {
+  sanitizeSpreadsheetText,
+} from "@/lib/exportSecurity";
+
 const columnLabels: Record<
   string,
   string
@@ -132,9 +136,17 @@ function formatValue(
 }
 
 function escapeCsvValue(
-  value: string
+  value: string,
+  sanitizeText = true
 ) {
-  return `"${value.replaceAll(
+  const safeValue =
+    sanitizeText
+      ? sanitizeSpreadsheetText(
+          value
+        )
+      : value;
+
+  return `"${safeValue.replaceAll(
     '"',
     '""'
   )}"`;
@@ -175,7 +187,8 @@ export function createCsv(
     .map((column) =>
       escapeCsvValue(
         columnLabels[column] ||
-          column
+          column,
+        false
       )
     )
     .join(";");
@@ -183,13 +196,16 @@ export function createCsv(
   const body = validRows.map(
     (row) =>
       columns
-        .map((column) =>
-          escapeCsvValue(
-            formatValue(
-              row[column]
-            )
-          )
-        )
+        .map((column) => {
+          const value =
+            row[column];
+
+          return escapeCsvValue(
+            formatValue(value),
+            typeof value !==
+              "number"
+          );
+        })
         .join(";")
   );
 

@@ -10,11 +10,19 @@ export type ReportExportGroup = {
   items: ReportExportItem[];
 };
 
+export type ReportExcelExport = {
+  title: string;
+  href: string;
+  note: string;
+};
+
 export type ReportExportButtonsProps = {
+  excelExport: ReportExcelExport;
   groups: ReportExportGroup[];
 };
 
 export default function ReportExportButtons({
+  excelExport,
   groups,
 }: ReportExportButtonsProps) {
   return (
@@ -25,10 +33,23 @@ export default function ReportExportButtons({
         </h2>
 
         <p className="mt-1 text-sm leading-5 text-gray-500">
-          Завантаження таблиць у
-          форматі CSV
+          Комплексний Excel-звіт і
+          окремі таблиці CSV
         </p>
       </div>
+
+      <a
+        href={excelExport.href}
+        className="mt-5 flex min-h-16 min-w-0 flex-col justify-center rounded-lg bg-green-700 px-4 py-3 text-left text-white transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+      >
+        <span className="text-sm font-semibold sm:text-base">
+          {excelExport.title}
+        </span>
+
+        <span className="mt-1 text-xs text-green-100 sm:mt-0 sm:text-sm">
+          {excelExport.note}
+        </span>
+      </a>
 
       <div className="mt-5 space-y-6">
         {groups.map(

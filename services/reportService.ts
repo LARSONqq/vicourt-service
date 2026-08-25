@@ -10,12 +10,14 @@ import type {
   ReportEmployeeOption,
   ReportEmployeeWork,
   ReportExpenseCategory,
+  ReportExpenseDetail,
   ReportExpenseHighlight,
   ReportMovementType,
   ReportObjectCost,
   ReportObjectOption,
   ReportPurchaseExportRow,
   ReportWarehouseMovement,
+  ReportWarehouseSnapshotRow,
   ReportsData,
   ReportsFilterInput,
   ReportsFilters,
@@ -291,10 +293,12 @@ type ReportEmployeeRow = {
 type ReportWarehouseItemRow = {
   id: number;
   name: string;
+  category: string | null;
   quantity: number;
   unit: string;
   min_quantity: number;
   purchase_price: number;
+  supplier: string | null;
 };
 
 type ReportWorkLogRow = {
@@ -322,6 +326,9 @@ type ReportExpenseRow = {
   category: string;
   description: string;
   amount: number;
+  note: string | null;
+  created_by: string | null;
+  created_by_name: string | null;
 };
 
 type ReportPurchaseRow = {
@@ -330,6 +337,7 @@ type ReportPurchaseRow = {
   quantity: number;
   purchase_price: number;
   supplier: string | null;
+  note: string | null;
   status: string;
   created_at: string;
   purchased_at: string | null;
@@ -740,10 +748,12 @@ export async function getReportsData(
           .select(`
             id,
             name,
+            category,
             quantity,
             unit,
             min_quantity,
-            purchase_price
+            purchase_price,
+            supplier
           `)
           .order("id", {
             ascending: true,
@@ -875,7 +885,10 @@ export async function getReportsData(
               expense_date,
               category,
               description,
-              amount
+              amount,
+              note,
+              created_by,
+              created_by_name
             `)
             .gte(
               "expense_date",
@@ -937,6 +950,7 @@ export async function getReportsData(
               quantity,
               purchase_price,
               supplier,
+              note,
               status,
               created_at,
               purchased_at
@@ -1567,6 +1581,45 @@ export async function getReportsData(
       )
       .slice(0, 5);
 
+  const expenseDetails:
+    ReportExpenseDetail[] =
+    expenses
+      .map((expense) => ({
+        id:
+          Number(expense.id),
+        expenseDate:
+          expense.expense_date,
+        objectName:
+          objectNames.get(
+            Number(
+              expense.object_id
+            )
+          ) ||
+          `Об’єкт #${expense.object_id}`,
+        category:
+          expense.category,
+        description:
+          expense.description,
+        amount:
+          toSafeNumber(
+            expense.amount
+          ),
+        note:
+          expense.note,
+        createdBy:
+          expense.created_by_name ||
+          (expense.created_by
+            ? "Користувач"
+            : null),
+      }))
+      .sort(
+        (first, second) =>
+          second.expenseDate.localeCompare(
+            first.expenseDate
+          ) ||
+          second.id - first.id
+      );
+
   const plannedAmount =
     plannedPurchases.reduce(
       (total, purchase) =>
@@ -1635,6 +1688,8 @@ export async function getReportsData(
             purchase.created_at,
           purchasedAt:
             purchase.purchased_at,
+          note:
+            purchase.note,
         };
       })
       .sort((first, second) =>
@@ -1724,28 +1779,60 @@ export async function getReportsData(
       }
     );
 
-  const currentStockValue =
-    warehouseItems.reduce(
-      (total, item) =>
-        total +
-        toSafeNumber(
-          item.quantity
-        ) *
+  const warehouseSnapshotRows:
+    ReportWarehouseSnapshotRow[] =
+    warehouseItems
+      .map((item) => {
+        const stockQuantity =
+          toSafeNumber(
+            item.quantity
+          );
+
+        const averagePrice =
           toSafeNumber(
             item.purchase_price
-          ),
+          );
+
+        return {
+          material:
+            item.name,
+          category:
+            item.category,
+          stockQuantity,
+          unit:
+            item.unit,
+          minimumQuantity:
+            toSafeNumber(
+              item.min_quantity
+            ),
+          averagePrice,
+          stockValue:
+            stockQuantity *
+            averagePrice,
+          supplier:
+            item.supplier,
+        };
+      })
+      .sort((first, second) =>
+        first.material.localeCompare(
+          second.material,
+          "uk"
+        )
+      );
+
+  const currentStockValue =
+    warehouseSnapshotRows.reduce(
+      (total, item) =>
+        total +
+        item.stockValue,
       0
     );
 
   const currentLowStockCount =
-    warehouseItems.filter(
+    warehouseSnapshotRows.filter(
       (item) =>
-        toSafeNumber(
-          item.quantity
-        ) <=
-        toSafeNumber(
-          item.min_quantity
-        )
+        item.stockQuantity <=
+        item.minimumQuantity
     ).length;
 
   return {
@@ -1769,6 +1856,7 @@ export async function getReportsData(
     employeeWork,
     expenseCategories,
     expenseHighlights,
+    expenseDetails,
     purchases: {
       plannedCount:
         plannedPurchases.length,
@@ -1786,13 +1874,14 @@ export async function getReportsData(
             first.createdAt
           )
         ),
+    warehouseSnapshotRows,
     warehouse: {
       incomeCount,
       writeOffCount,
       incomeValue,
       writeOffValue,
       currentItemsCount:
-        warehouseItems.length,
+        warehouseSnapshotRows.length,
       currentLowStockCount,
       currentStockValue,
       recentMovements:

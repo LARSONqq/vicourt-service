@@ -7,6 +7,9 @@ import ReportsFilters from "@/components/reports/ReportsFilters";
 import {
   requireSectionAccess,
 } from "@/lib/auth/requireAccess";
+import {
+  createReportExportSearchParams,
+} from "@/lib/reportExportParams";
 
 import {
   getReportsData,
@@ -59,45 +62,24 @@ function createPeriodExportHref(
   filters: ReportsFilterState
 ) {
   const params =
-    new URLSearchParams({
-      type,
-      from: filters.dateFrom,
-      to: filters.dateTo,
-    });
-
-  if (filters.objectId) {
-    params.set(
-      "object",
-      String(filters.objectId)
+    createReportExportSearchParams(
+      filters
     );
-  }
 
-  if (filters.employeeId) {
-    params.set(
-      "employee",
-      String(
-        filters.employeeId
-      )
-    );
-  }
-
-  if (
-    filters.expenseCategory
-  ) {
-    params.set(
-      "expense_category",
-      filters.expenseCategory
-    );
-  }
-
-  if (filters.movementType) {
-    params.set(
-      "movement_type",
-      filters.movementType
-    );
-  }
+  params.set("type", type);
 
   return `/reports/export?${params.toString()}`;
+}
+
+function createExcelExportHref(
+  filters: ReportsFilterState
+) {
+  const params =
+    createReportExportSearchParams(
+      filters
+    );
+
+  return `/reports/export/excel?${params.toString()}`;
 }
 
 export const dynamic =
@@ -286,6 +268,16 @@ export default async function ReportsPage({
       />
 
       <ReportExportButtons
+        excelExport={{
+          title:
+            "Завантажити Excel",
+          href:
+            createExcelExportHref(
+              data.filters
+            ),
+          note:
+            "Один файл із 7 вкладками",
+        }}
         groups={exportGroups}
       />
     </div>

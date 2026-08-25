@@ -8,6 +8,9 @@ import {
 import {
   createCsv,
 } from "@/lib/csvExport";
+import {
+  getReportFilterInput,
+} from "@/lib/reportExportParams";
 
 import {
   getEmployees,
@@ -183,32 +186,11 @@ async function getPeriodCsv(
       .searchParams;
 
   const filters =
-    normalizeReportsFilters({
-      from:
-        searchParams.get(
-          "from"
-        ) || undefined,
-      to:
-        searchParams.get(
-          "to"
-        ) || undefined,
-      object:
-        searchParams.get(
-          "object"
-        ) || undefined,
-      employee:
-        searchParams.get(
-          "employee"
-        ) || undefined,
-      expenseCategory:
-        searchParams.get(
-          "expense_category"
-        ) || undefined,
-      movementType:
-        searchParams.get(
-          "movement_type"
-        ) || undefined,
-    });
+    normalizeReportsFilters(
+      getReportFilterInput(
+        searchParams
+      )
+    );
 
   const data =
     await getReportsData(
@@ -285,6 +267,8 @@ async function getPeriodCsv(
                       purchase.purchasedAt
                     )
                   : "",
+              note:
+                purchase.note,
             })
           ),
       };

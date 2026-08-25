@@ -1,0 +1,1010 @@
+import "server-only";
+
+import ExcelJS, {
+  type CellValue,
+  type Workbook,
+  type Worksheet,
+} from "exceljs";
+
+import {
+  sanitizeSpreadsheetText,
+} from "@/lib/exportSecurity";
+
+import type {
+  ReportsData,
+} from "@/types/report";
+
+const moneyFormat =
+  '#,##0.00 "₴"';
+const decimalFormat =
+  "#,##0.00";
+const integerFormat = "0";
+const dateFormat =
+  "dd.mm.yyyy";
+const dateTimeFormat =
+  "dd.mm.yyyy hh:mm";
+
+const kyivDateTimeFormatter =
+  new Intl.DateTimeFormat(
+    "en-US",
+    {
+      timeZone:
+        "Europe/Kyiv",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    }
+  );
+
+type ReportColumn<T> = {
+  header: string;
+  width: number;
+  value: (
+    row: T
+  ) => CellValue;
+  numberFormat?: string;
+};
+
+type TableWorksheetOptions<T> = {
+  name: string;
+  columns: ReportColumn<T>[];
+  rows: T[];
+  note?: string;
+};
+
+function safeText(
+  value: unknown
+) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "";
+  }
+
+  return sanitizeSpreadsheetText(
+    String(value)
+  );
+}
+
+function safeNumber(
+  value: number
+) {
+  return Number.isFinite(value)
+    ? value
+    : 0;
+}
+
+function toDateOnly(
+  value: string
+): CellValue {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+      value
+    );
+
+  if (!match) {
+    return safeText(value);
+  }
+
+  return new Date(
+    Date.UTC(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3])
+    )
+  );
+}
+
+function toKyivDateTime(
+  value: string | null
+): CellValue {
+  if (!value) {
+    return "";
+  }
+
+  const sourceDate =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      sourceDate.getTime()
+    )
+  ) {
+    return safeText(value);
+  }
+
+  const parts =
+    Object.fromEntries(
+      kyivDateTimeFormatter
+        .formatToParts(
+          sourceDate
+        )
+        .filter(
+          (part) =>
+            part.type !==
+            "literal"
+        )
+        .map((part) => [
+          part.type,
+          part.value,
+        ])
+    );
+
+  return new Date(
+    Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second)
+    )
+  );
+}
+
+function formatPeriodDate(
+  value: string
+) {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+      value
+    );
+
+  return match
+    ? `${match[3]}.${match[2]}.${match[1]}`
+    : safeText(value);
+}
+
+function styleHeader(
+  worksheet: Worksheet,
+  rowNumber: number,
+  columnCount: number
+) {
+  const row =
+    worksheet.getRow(
+      rowNumber
+    );
+
+  row.height = 30;
+
+  for (
+    let column = 1;
+    column <= columnCount;
+    column += 1
+  ) {
+    const cell =
+      row.getCell(column);
+
+    cell.font = {
+      bold: true,
+      color: {
+        argb: "FFFFFFFF",
+      },
+    };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: {
+        argb: "FF15803D",
+      },
+    };
+    cell.alignment = {
+      vertical: "middle",
+      wrapText: true,
+    };
+    cell.border = {
+      bottom: {
+        style: "thin",
+        color: {
+          argb: "FF166534",
+        },
+      },
+    };
+  }
+}
+
+function addTableWorksheet<T>(
+  workbook: Workbook,
+  options: TableWorksheetOptions<T>
+) {
+  const worksheet =
+    workbook.addWorksheet(
+      options.name,
+      {
+        properties: {
+          defaultRowHeight: 20,
+        },
+        pageSetup: {
+          orientation:
+            "landscape",
+          fitToPage: true,
+          fitToWidth: 1,
+          fitToHeight: 0,
+        },
+      }
+    );
+
+  const headerRowNumber =
+    options.note ? 3 : 1;
+
+  if (options.note) {
+    worksheet.mergeCells(
+      1,
+      1,
+      1,
+      options.columns.length
+    );
+
+    const noteCell =
+      worksheet.getCell(1, 1);
+
+    noteCell.value =
+      safeText(options.note);
+    noteCell.font = {
+      bold: true,
+      color: {
+        argb: "FF166534",
+      },
+    };
+    noteCell.alignment = {
+      vertical: "middle",
+    };
+    worksheet.getRow(1).height =
+      25;
+  }
+
+  const headerRow =
+    worksheet.getRow(
+      headerRowNumber
+    );
+
+  headerRow.values =
+    options.columns.map(
+      (column) =>
+        safeText(
+          column.header
+        )
+    );
+
+  styleHeader(
+    worksheet,
+    headerRowNumber,
+    options.columns.length
+  );
+
+  options.columns.forEach(
+    (column, index) => {
+      worksheet.getColumn(
+        index + 1
+      ).width = column.width;
+    }
+  );
+
+  options.rows.forEach(
+    (item, rowIndex) => {
+      const rowNumber =
+        headerRowNumber +
+        rowIndex +
+        1;
+      const row =
+        worksheet.getRow(
+          rowNumber
+        );
+
+      row.values =
+        options.columns.map(
+          (column) =>
+            column.value(
+              item
+            )
+        );
+      row.alignment = {
+        vertical: "top",
+        wrapText: true,
+      };
+
+      options.columns.forEach(
+        (column, index) => {
+          if (
+            column.numberFormat
+          ) {
+            row.getCell(
+              index + 1
+            ).numFmt =
+              column.numberFormat;
+          }
+        }
+      );
+    }
+  );
+
+  worksheet.views = [
+    {
+      state: "frozen",
+      ySplit:
+        headerRowNumber,
+    },
+  ];
+  worksheet.autoFilter = {
+    from: {
+      row: headerRowNumber,
+      column: 1,
+    },
+    to: {
+      row: headerRowNumber,
+      column:
+        options.columns.length,
+    },
+  };
+
+  return worksheet;
+}
+
+function addSummaryWorksheet(
+  workbook: Workbook,
+  data: ReportsData
+) {
+  const worksheet =
+    workbook.addWorksheet(
+      "Підсумок",
+      {
+        properties: {
+          defaultRowHeight: 22,
+        },
+      }
+    );
+
+  worksheet.columns = [
+    { width: 38 },
+    { width: 24 },
+  ];
+  worksheet.mergeCells(
+    "A1:B1"
+  );
+  worksheet.getCell("A1").value =
+    "ViCourt Service";
+  worksheet.getCell("A1").font = {
+    bold: true,
+    size: 18,
+    color: {
+      argb: "FFFFFFFF",
+    },
+  };
+  worksheet.getCell("A1").fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: {
+      argb: "FF15803D",
+    },
+  };
+  worksheet.getCell("A1").alignment = {
+    vertical: "middle",
+  };
+  worksheet.getRow(1).height = 34;
+
+  worksheet.mergeCells(
+    "A2:B2"
+  );
+  worksheet.getCell("A2").value =
+    `Звіт за період: ${formatPeriodDate(
+      data.filters.dateFrom
+    )} – ${formatPeriodDate(
+      data.filters.dateTo
+    )}`;
+  worksheet.getCell("A2").font = {
+    color: {
+      argb: "FF4B5563",
+    },
+  };
+
+  const summaryRows = [
+    {
+      label:
+        "Витрати на матеріали",
+      value:
+        data.kpis.materialsCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Витрати на роботи",
+      value:
+        data.kpis.laborCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label: "Інші витрати",
+      value:
+        data.kpis.otherExpensesCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Загальні витрати об’єктів",
+      value:
+        data.kpis.totalObjectCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Відпрацьовані години",
+      value:
+        data.kpis.totalHours,
+      numberFormat:
+        decimalFormat,
+    },
+    {
+      label:
+        "Фактично закуплено на склад",
+      value:
+        data.kpis.purchasedCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Заплановано закупівель",
+      value:
+        data.purchases.plannedCount,
+      numberFormat:
+        integerFormat,
+    },
+    {
+      label:
+        "Планова сума закупівель",
+      value:
+        data.purchases.plannedAmount,
+      numberFormat: moneyFormat,
+    },
+  ];
+
+  const headerRowNumber = 4;
+  const headerRow =
+    worksheet.getRow(
+      headerRowNumber
+    );
+
+  headerRow.values = [
+    "Основні показники",
+    "Значення",
+  ];
+  styleHeader(
+    worksheet,
+    headerRowNumber,
+    2
+  );
+
+  summaryRows.forEach(
+    (item, index) => {
+      const row =
+        worksheet.getRow(
+          headerRowNumber +
+            index +
+            1
+        );
+
+      row.values = [
+        safeText(item.label),
+        safeNumber(item.value),
+      ];
+      row.getCell(2).numFmt =
+        item.numberFormat;
+    }
+  );
+
+  worksheet.views = [
+    {
+      state: "frozen",
+      ySplit: headerRowNumber,
+    },
+  ];
+}
+
+export async function createReportsWorkbook(
+  data: ReportsData
+) {
+  const workbook =
+    new ExcelJS.Workbook();
+
+  workbook.creator =
+    "ViCourt Service";
+  workbook.company =
+    "ViCourt Service";
+
+  addSummaryWorksheet(
+    workbook,
+    data
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name: "Об’єкти",
+      rows: data.objectCosts,
+      columns: [
+        {
+          header: "Об’єкт",
+          width: 32,
+          value: (row) =>
+            safeText(
+              row.objectName
+            ),
+        },
+        {
+          header: "Матеріали",
+          width: 18,
+          value: (row) =>
+            safeNumber(
+              row.materialsCost
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Роботи",
+          width: 18,
+          value: (row) =>
+            safeNumber(
+              row.laborCost
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Інші витрати",
+          width: 18,
+          value: (row) =>
+            safeNumber(
+              row.otherExpensesCost
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Загальні витрати",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.totalCost
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Відпрацьовані години",
+          width: 22,
+          value: (row) =>
+            safeNumber(
+              row.hours
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+      ],
+    }
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name:
+        "Робота працівників",
+      rows: data.employeeWork,
+      columns: [
+        {
+          header: "Працівник",
+          width: 30,
+          value: (row) =>
+            safeText(
+              row.employeeName
+            ),
+        },
+        {
+          header:
+            "Записів журналу",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.recordsCount
+            ),
+          numberFormat:
+            integerFormat,
+        },
+        {
+          header:
+            "Відпрацьовано годин",
+          width: 22,
+          value: (row) =>
+            safeNumber(
+              row.hours
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
+            "Вартість робіт",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.laborCost
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Кількість об’єктів",
+          width: 22,
+          value: (row) =>
+            safeNumber(
+              row.objectsCount
+            ),
+          numberFormat:
+            integerFormat,
+        },
+      ],
+    }
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name: "Інші витрати",
+      rows: data.expenseDetails,
+      columns: [
+        {
+          header: "Дата",
+          width: 14,
+          value: (row) =>
+            toDateOnly(
+              row.expenseDate
+            ),
+          numberFormat:
+            dateFormat,
+        },
+        {
+          header: "Об’єкт",
+          width: 30,
+          value: (row) =>
+            safeText(
+              row.objectName
+            ),
+        },
+        {
+          header: "Категорія",
+          width: 22,
+          value: (row) =>
+            safeText(
+              row.category
+            ),
+        },
+        {
+          header: "Опис",
+          width: 38,
+          value: (row) =>
+            safeText(
+              row.description
+            ),
+        },
+        {
+          header: "Сума",
+          width: 18,
+          value: (row) =>
+            safeNumber(
+              row.amount
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Примітка",
+          width: 34,
+          value: (row) =>
+            safeText(row.note),
+        },
+        {
+          header: "Хто додав",
+          width: 24,
+          value: (row) =>
+            safeText(
+              row.createdBy
+            ),
+        },
+      ],
+    }
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name: "Закупівлі",
+      rows:
+        data.purchaseExportRows,
+      columns: [
+        {
+          header: "Матеріал",
+          width: 30,
+          value: (row) =>
+            safeText(
+              row.material
+            ),
+        },
+        {
+          header: "Статус",
+          width: 18,
+          value: (row) =>
+            safeText(
+              row.status
+            ),
+        },
+        {
+          header: "Кількість",
+          width: 16,
+          value: (row) =>
+            safeNumber(
+              row.quantity
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
+            "Ціна за одиницю",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.unitPrice
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Загальна сума",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.totalAmount
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Постачальник",
+          width: 28,
+          value: (row) =>
+            safeText(
+              row.supplier
+            ),
+        },
+        {
+          header:
+            "Дата створення",
+          width: 20,
+          value: (row) =>
+            toKyivDateTime(
+              row.createdAt
+            ),
+          numberFormat:
+            dateTimeFormat,
+        },
+        {
+          header:
+            "Дата оприбуткування",
+          width: 24,
+          value: (row) =>
+            toKyivDateTime(
+              row.purchasedAt
+            ),
+          numberFormat:
+            dateTimeFormat,
+        },
+        {
+          header: "Примітка",
+          width: 34,
+          value: (row) =>
+            safeText(row.note),
+        },
+      ],
+    }
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name: "Рухи складу",
+      rows:
+        data.warehouseMovementExportRows,
+      columns: [
+        {
+          header:
+            "Дата і час",
+          width: 20,
+          value: (row) =>
+            toKyivDateTime(
+              row.createdAt
+            ),
+          numberFormat:
+            dateTimeFormat,
+        },
+        {
+          header: "Матеріал",
+          width: 30,
+          value: (row) =>
+            safeText(
+              row.itemName
+            ),
+        },
+        {
+          header: "Об’єкт",
+          width: 28,
+          value: (row) =>
+            safeText(
+              row.objectName
+            ),
+        },
+        {
+          header: "Тип руху",
+          width: 16,
+          value: (row) =>
+            safeText(
+              row.movementType
+            ),
+        },
+        {
+          header: "Кількість",
+          width: 16,
+          value: (row) =>
+            safeNumber(
+              row.quantity
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
+            "Одиниця виміру",
+          width: 18,
+          value: (row) =>
+            safeText(row.unit),
+        },
+        {
+          header:
+            "Ціна за одиницю",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.unitPrice
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Загальна вартість",
+          width: 22,
+          value: (row) =>
+            safeNumber(
+              row.totalValue
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Виконав",
+          width: 24,
+          value: (row) =>
+            safeText(
+              row.performedBy
+            ),
+        },
+        {
+          header: "Примітка",
+          width: 34,
+          value: (row) =>
+            safeText(row.note),
+        },
+      ],
+    }
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name: "Склад",
+      note:
+        "Поточний стан складу",
+      rows:
+        data.warehouseSnapshotRows,
+      columns: [
+        {
+          header: "Матеріал",
+          width: 30,
+          value: (row) =>
+            safeText(
+              row.material
+            ),
+        },
+        {
+          header: "Категорія",
+          width: 22,
+          value: (row) =>
+            safeText(
+              row.category
+            ),
+        },
+        {
+          header: "Залишок",
+          width: 16,
+          value: (row) =>
+            safeNumber(
+              row.stockQuantity
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
+            "Одиниця виміру",
+          width: 18,
+          value: (row) =>
+            safeText(row.unit),
+        },
+        {
+          header:
+            "Мінімальний залишок",
+          width: 22,
+          value: (row) =>
+            safeNumber(
+              row.minimumQuantity
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
+            "Середня ціна",
+          width: 18,
+          value: (row) =>
+            safeNumber(
+              row.averagePrice
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Вартість залишку",
+          width: 22,
+          value: (row) =>
+            safeNumber(
+              row.stockValue
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Постачальник",
+          width: 28,
+          value: (row) =>
+            safeText(
+              row.supplier
+            ),
+        },
+      ],
+    }
+  );
+
+  const buffer =
+    await workbook.xlsx.writeBuffer();
+
+  return Buffer.from(buffer);
+}
