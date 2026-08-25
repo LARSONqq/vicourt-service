@@ -25,6 +25,9 @@ function getObjectStatusStyle(
     case "В роботі":
       return "bg-green-100 text-green-700";
 
+    case "На постійному обслуговуванні":
+      return "bg-purple-100 text-purple-700";
+
     case "Призупинено":
       return "bg-yellow-100 text-yellow-700";
 
@@ -256,11 +259,13 @@ export default async function HomePage() {
     objectList.length;
 
   const activeObjects =
-    objectList.filter(
-      (object) =>
-        object.status ===
-        "В роботі"
-    ).length;
+  objectList.filter(
+    (object) =>
+      object.status ===
+        "В роботі" ||
+      object.status ===
+        "На постійному обслуговуванні"
+  ).length;
 
   const completedObjects =
     objectList.filter(

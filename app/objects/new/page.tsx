@@ -82,8 +82,12 @@ export default async function NewObjectPage() {
               В роботі
             </option>
 
+            <option value="На постійному обслуговуванні">
+              На постійному обслуговуванні
+            </option>
+
             <option value="Пауза">
-              Пауза
+              Призупинено
             </option>
 
             <option value="Завершений">
