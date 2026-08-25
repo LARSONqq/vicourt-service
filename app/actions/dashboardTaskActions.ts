@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/services/profileService";
+import { recordActivity } from "@/services/activityLogService";
 
 function validateTaskIds(
   taskId: number,
@@ -93,6 +94,49 @@ function refreshDashboardTaskPages(
   );
 }
 
+async function getTaskSnapshot(
+  taskId: number,
+  objectId: number
+) {
+  const supabase =
+    await createClient();
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("object_tasks")
+    .select(`
+      id,
+      title,
+      status,
+      due_date
+    `)
+    .eq(
+      "id",
+      taskId
+    )
+    .eq(
+      "object_id",
+      objectId
+    )
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити завдання: ${error.message}`
+    );
+  }
+
+  if (!data) {
+    throw new Error(
+      "Завдання не знайдено."
+    );
+  }
+
+  return data;
+}
+
 export async function completeDashboardTask(
   taskId: number,
   objectId: number
@@ -106,6 +150,12 @@ export async function completeDashboardTask(
 
   const supabase =
     await createClient();
+
+  const task =
+    await getTaskSnapshot(
+      taskId,
+      objectId
+    );
 
   const {
     error,
@@ -131,6 +181,26 @@ export async function completeDashboardTask(
       `Не вдалося виконати завдання: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "task.completed",
+    entityType:
+      "task",
+    entityId:
+      task.id,
+    entityName:
+      task.title,
+    objectId,
+    description:
+      `Виконав завдання «${task.title}».`,
+    metadata: {
+      previous_status:
+        task.status,
+      new_status:
+        "Виконано",
+    },
+  });
 
   refreshDashboardTaskPages(
     objectId
@@ -167,6 +237,12 @@ export async function rescheduleDashboardTask(
   const supabase =
     await createClient();
 
+  const task =
+    await getTaskSnapshot(
+      taskId,
+      objectId
+    );
+
   const {
     error,
   } = await supabase
@@ -191,6 +267,26 @@ export async function rescheduleDashboardTask(
       `Не вдалося перенести завдання: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "task.rescheduled",
+    entityType:
+      "task",
+    entityId:
+      task.id,
+    entityName:
+      task.title,
+    objectId,
+    description:
+      `Переніс дату завдання «${task.title}»: ${task.due_date || "без дати"} → ${normalizedDueDate}.`,
+    metadata: {
+      previous_due_date:
+        task.due_date,
+      new_due_date:
+        normalizedDueDate,
+    },
+  });
 
   refreshDashboardTaskPages(
     objectId

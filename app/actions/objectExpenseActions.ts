@@ -17,6 +17,10 @@ import {
 } from "@/services/profileService";
 
 import {
+  recordActivity,
+} from "@/services/activityLogService";
+
+import {
   objectExpenseCategories,
 } from "@/constants/objectExpenses";
 
@@ -135,6 +139,54 @@ function refreshExpensePages(
   revalidatePath("/");
 }
 
+async function getExpenseSnapshot(
+  expenseId: number,
+  objectId: number
+) {
+  const supabase =
+    await createClient();
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      "object_expenses"
+    )
+    .select(`
+      id,
+      expense_date,
+      category,
+      description,
+      amount
+    `)
+    .eq(
+      "id",
+      expenseId
+    )
+    .eq(
+      "object_id",
+      objectId
+    )
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "[ActivityLog] Не вдалося отримати snapshot витрати.",
+      {
+        expenseId,
+        objectId,
+        message:
+          error.message,
+      }
+    );
+
+    return null;
+  }
+
+  return data;
+}
+
 export async function createObjectExpense(
   formData: FormData
 ) {
@@ -202,6 +254,7 @@ export async function createObjectExpense(
   }
 
   const {
+    data: createdExpense,
     error,
   } = await supabase
     .from(
@@ -222,13 +275,35 @@ export async function createObjectExpense(
 
       note:
         note || null,
-    });
+    })
+    .select("id")
+    .single();
 
   if (error) {
     throw new Error(
       `Не вдалося додати витрату: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "object_expense.created",
+    entityType:
+      "object_expense",
+    entityId:
+      createdExpense.id,
+    entityName:
+      description,
+    objectId,
+    description:
+      `Додав витрату «${description}» на суму ${amount} грн.`,
+    metadata: {
+      expense_date:
+        expenseDate,
+      category,
+      amount,
+    },
+  });
 
   refreshExpensePages(
     objectId
@@ -350,6 +425,26 @@ export async function updateObjectExpense(
     );
   }
 
+  await recordActivity({
+    action:
+      "object_expense.updated",
+    entityType:
+      "object_expense",
+    entityId:
+      expenseId,
+    entityName:
+      description,
+    objectId,
+    description:
+      `Змінив витрату «${description}» на суму ${amount} грн.`,
+    metadata: {
+      expense_date:
+        expenseDate,
+      category,
+      amount,
+    },
+  });
+
   refreshExpensePages(
     objectId
   );
@@ -374,6 +469,12 @@ export async function deleteObjectExpense(
     "Не вдалося визначити об’єкт."
   );
 
+  const expenseSnapshot =
+    await getExpenseSnapshot(
+      expenseId,
+      objectId
+    );
+
   const {
     error,
   } = await supabase
@@ -395,6 +496,40 @@ export async function deleteObjectExpense(
       `Не вдалося видалити витрату: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "object_expense.deleted",
+    entityType:
+      "object_expense",
+    entityId:
+      expenseId,
+    entityName:
+      expenseSnapshot
+        ?.description ||
+      `Витрата #${expenseId}`,
+    objectId,
+    description:
+      expenseSnapshot
+        ? `Видалив витрату «${expenseSnapshot.description}» на суму ${Number(expenseSnapshot.amount)} грн.`
+        : `Видалив витрату #${expenseId}.`,
+    metadata: {
+      expense_date:
+        expenseSnapshot
+          ?.expense_date ||
+        null,
+      category:
+        expenseSnapshot
+          ?.category ||
+        null,
+      amount:
+        expenseSnapshot
+          ? Number(
+              expenseSnapshot.amount
+            )
+          : null,
+    },
+  });
 
   refreshExpensePages(
     objectId

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { canManageObjects } from "@/lib/auth/permissions";
 import { getCurrentUserProfile } from "@/services/profileService";
+import { recordActivity } from "@/services/activityLogService";
 
 import {
   getWorkLogAttachmentMetadataValidationError,
@@ -98,6 +99,21 @@ function getAttachmentMetadata(
   }
 
   return metadata;
+}
+
+function getWorkLogEntityName(
+  workDate: string,
+  description: string
+) {
+  const shortDescription =
+    description.length > 80
+      ? `${description.slice(
+          0,
+          77
+        )}...`
+      : description;
+
+  return `${workDate} — ${shortDescription}`;
 }
 
 async function requireWorkLogManagementAccess() {
@@ -352,6 +368,7 @@ export async function createWorkLog(
     );
 
   const {
+    data: createdWorkLog,
     error,
   } = await supabase
     .from("work_logs")
@@ -394,13 +411,57 @@ export async function createWorkLog(
         attachment
           ?.attachmentSize ||
         null,
-    });
+    })
+    .select(`
+      id,
+      work_date,
+      description,
+      hours,
+      workers,
+      attachment_name
+    `)
+    .single();
 
   if (error) {
     throw new Error(
       `Не вдалося додати запис роботи: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "work_log.created",
+    entityType:
+      "work_log",
+    entityId:
+      createdWorkLog.id,
+    entityName:
+      getWorkLogEntityName(
+        createdWorkLog.work_date,
+        createdWorkLog.description
+      ),
+    objectId,
+    description:
+      attachment
+        ? `Створив запис журналу робіт за ${createdWorkLog.work_date} та прикріпив файл «${createdWorkLog.attachment_name}».`
+        : `Створив запис журналу робіт за ${createdWorkLog.work_date}.`,
+    metadata: {
+      work_date:
+        createdWorkLog.work_date,
+      hours:
+        Number(
+          createdWorkLog.hours
+        ),
+      workers:
+        createdWorkLog.workers,
+      attachment_action:
+        attachment
+          ? "added"
+          : null,
+      attachment_name:
+        createdWorkLog.attachment_name,
+    },
+  });
 
   refreshWorkLogPages(
     objectId,
@@ -532,8 +593,13 @@ export async function updateWorkLog(
   } = await supabase
     .from("work_logs")
     .select(`
+      id,
       employee_id,
       hourly_rate,
+      work_date,
+      description,
+      workers,
+      hours,
       attachment_path,
       attachment_name,
       attachment_type,
@@ -718,6 +784,74 @@ export async function updateWorkLog(
     }
   }
 
+  const attachmentChange =
+    attachmentAction ===
+      "replace"
+      ? (
+          previousAttachmentPath
+            ? "replaced"
+            : "added"
+        )
+      : attachmentAction ===
+          "remove" &&
+        previousAttachmentPath
+        ? "removed"
+        : null;
+
+  const attachmentDescription =
+    attachmentChange ===
+    "replaced"
+      ? ` Замінив файл «${previousWorkLog.attachment_name || "без назви"}» на «${nextAttachment?.attachmentName || "без назви"}».`
+      : attachmentChange ===
+        "added"
+        ? ` Прикріпив файл «${nextAttachment?.attachmentName || "без назви"}».`
+        : attachmentChange ===
+          "removed"
+          ? ` Видалив прикріплений файл «${previousWorkLog.attachment_name || "без назви"}».`
+          : "";
+
+  await recordActivity({
+    action:
+      "work_log.updated",
+    entityType:
+      "work_log",
+    entityId:
+      workLogId,
+    entityName:
+      getWorkLogEntityName(
+        workDate,
+        description
+      ),
+    objectId,
+    description:
+      `Відредагував запис журналу робіт за ${workDate}.${attachmentDescription}`,
+    metadata: {
+      previous_work_date:
+        previousWorkLog.work_date,
+      new_work_date:
+        workDate,
+      previous_hours:
+        Number(
+          previousWorkLog.hours
+        ),
+      new_hours:
+        hours,
+      attachment_action:
+        attachmentChange,
+      previous_attachment_name:
+        previousWorkLog.attachment_name,
+      new_attachment_name:
+        nextAttachment
+          ?.attachmentName ||
+        (
+          attachmentAction ===
+          "keep"
+            ? previousWorkLog.attachment_name
+            : null
+        ),
+    },
+  });
+
   refreshWorkLogPages(
     objectId,
     [
@@ -763,8 +897,14 @@ export async function deleteWorkLog(
   } = await supabase
     .from("work_logs")
     .select(`
+      id,
       employee_id,
-      attachment_path
+      work_date,
+      description,
+      workers,
+      hours,
+      attachment_path,
+      attachment_name
     `)
     .eq(
       "id",
@@ -827,6 +967,39 @@ export async function deleteWorkLog(
       `Не вдалося видалити запис роботи: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "work_log.deleted",
+    entityType:
+      "work_log",
+    entityId:
+      workLog.id,
+    entityName:
+      getWorkLogEntityName(
+        workLog.work_date,
+        workLog.description
+      ),
+    objectId,
+    description:
+      `Видалив запис журналу робіт за ${workLog.work_date}.`,
+    metadata: {
+      work_date:
+        workLog.work_date,
+      hours:
+        Number(
+          workLog.hours
+        ),
+      workers:
+        workLog.workers,
+      attachment_removed:
+        Boolean(
+          workLog.attachment_path
+        ),
+      attachment_name:
+        workLog.attachment_name,
+    },
+  });
 
   refreshWorkLogPages(
     objectId,

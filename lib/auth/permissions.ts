@@ -10,6 +10,7 @@ export type AppSection =
   | "equipment"
   | "employees"
   | "reports"
+  | "activity"
   | "settings"
   | "users";
 
@@ -27,6 +28,7 @@ const permissions: Record<
     "equipment",
     "employees",
     "reports",
+    "activity",
     "settings",
     "users",
   ],
@@ -41,6 +43,7 @@ const permissions: Record<
     "equipment",
     "employees",
     "reports",
+    "activity",
   ],
 
   worker: [
@@ -155,6 +158,15 @@ export function canManageEmployees(
 }
 
 export function canViewReports(
+  role: UserRole
+) {
+  return (
+    role === "admin" ||
+    role === "object_manager"
+  );
+}
+
+export function canViewActivityLog(
   role: UserRole
 ) {
   return (

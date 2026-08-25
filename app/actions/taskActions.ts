@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/services/profileService";
+import { recordActivity } from "@/services/activityLogService";
 
 import type { TaskPriority } from "@/types/objectTask";
 
@@ -232,6 +233,50 @@ async function getAssignedEmployee(
   };
 }
 
+async function getTaskSnapshot(
+  taskId: number,
+  objectId: number
+) {
+  const supabase =
+    await createClient();
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("object_tasks")
+    .select(`
+      id,
+      title,
+      status,
+      due_date,
+      priority
+    `)
+    .eq(
+      "id",
+      taskId
+    )
+    .eq(
+      "object_id",
+      objectId
+    )
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити завдання: ${error.message}`
+    );
+  }
+
+  if (!data) {
+    throw new Error(
+      "Завдання не знайдено."
+    );
+  }
+
+  return data;
+}
+
 export async function createObjectTask(
   formData: FormData
 ) {
@@ -325,6 +370,7 @@ export async function createObjectTask(
     );
 
   const {
+    data: createdTask,
     error,
   } = await supabase
     .from(
@@ -353,13 +399,43 @@ export async function createObjectTask(
       priority,
 
       status,
-    });
+    })
+    .select(`
+      id,
+      title,
+      status,
+      due_date,
+      priority
+    `)
+    .single();
 
   if (error) {
     throw new Error(
       `Не вдалося створити завдання: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "task.created",
+    entityType:
+      "task",
+    entityId:
+      createdTask.id,
+    entityName:
+      createdTask.title,
+    objectId,
+    description:
+      `Створив завдання «${createdTask.title}».`,
+    metadata: {
+      status:
+        createdTask.status,
+      priority:
+        createdTask.priority,
+      due_date:
+        createdTask.due_date,
+    },
+  });
 
   refreshTaskPages(
     objectId
@@ -453,6 +529,12 @@ export async function updateObjectTask(
     priority
   );
 
+  const previousTask =
+    await getTaskSnapshot(
+      taskId,
+      objectId
+    );
+
   const assignment =
     await getAssignedEmployee(
       employeeValue,
@@ -501,6 +583,38 @@ export async function updateObjectTask(
     );
   }
 
+  const completed =
+    previousTask.status !==
+      "Виконано" &&
+    status === "Виконано";
+
+  await recordActivity({
+    action: completed
+      ? "task.completed"
+      : "task.updated",
+    entityType:
+      "task",
+    entityId:
+      taskId,
+    entityName:
+      title,
+    objectId,
+    description: completed
+      ? `Виконав завдання «${title}».`
+      : `Відредагував завдання «${title}».`,
+    metadata: {
+      previous_status:
+        previousTask.status,
+      new_status:
+        status,
+      previous_due_date:
+        previousTask.due_date,
+      new_due_date:
+        dueDate || null,
+      priority,
+    },
+  });
+
   refreshTaskPages(
     objectId
   );
@@ -525,6 +639,12 @@ export async function updateTaskStatus(
   const supabase =
     await createClient();
 
+  const previousTask =
+    await getTaskSnapshot(
+      taskId,
+      objectId
+    );
+
   const {
     error,
   } = await supabase
@@ -548,6 +668,33 @@ export async function updateTaskStatus(
       `Не вдалося змінити статус: ${error.message}`
     );
   }
+
+  const completed =
+    previousTask.status !==
+      "Виконано" &&
+    status === "Виконано";
+
+  await recordActivity({
+    action: completed
+      ? "task.completed"
+      : "task.status_changed",
+    entityType:
+      "task",
+    entityId:
+      taskId,
+    entityName:
+      previousTask.title,
+    objectId,
+    description: completed
+      ? `Виконав завдання «${previousTask.title}».`
+      : `Змінив статус завдання «${previousTask.title}»: ${previousTask.status} → ${status}.`,
+    metadata: {
+      previous_status:
+        previousTask.status,
+      new_status:
+        status,
+    },
+  });
 
   refreshTaskPages(
     objectId
@@ -587,6 +734,12 @@ export async function updateTaskDueDate(
   const supabase =
     await createClient();
 
+  const previousTask =
+    await getTaskSnapshot(
+      taskId,
+      objectId
+    );
+
   const {
     error,
   } = await supabase
@@ -611,6 +764,26 @@ export async function updateTaskDueDate(
       `Не вдалося змінити дату завдання: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "task.rescheduled",
+    entityType:
+      "task",
+    entityId:
+      taskId,
+    entityName:
+      previousTask.title,
+    objectId,
+    description:
+      `Переніс дату завдання «${previousTask.title}»: ${previousTask.due_date || "без дати"} → ${savedDueDate || "без дати"}.`,
+    metadata: {
+      previous_due_date:
+        previousTask.due_date,
+      new_due_date:
+        savedDueDate,
+    },
+  });
 
   refreshTaskPages(
     objectId
@@ -637,6 +810,12 @@ export async function deleteObjectTask(
   const supabase =
     await createClient();
 
+  const task =
+    await getTaskSnapshot(
+      taskId,
+      objectId
+    );
+
   const {
     error,
   } = await supabase
@@ -658,6 +837,28 @@ export async function deleteObjectTask(
       `Не вдалося видалити завдання: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "task.deleted",
+    entityType:
+      "task",
+    entityId:
+      task.id,
+    entityName:
+      task.title,
+    objectId,
+    description:
+      `Видалив завдання «${task.title}».`,
+    metadata: {
+      status:
+        task.status,
+      due_date:
+        task.due_date,
+      priority:
+        task.priority,
+    },
+  });
 
   refreshTaskPages(
     objectId

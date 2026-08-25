@@ -12,6 +12,24 @@ import {
   getCurrentUserProfile,
 } from "@/services/profileService";
 
+import {
+  recordActivity,
+} from "@/services/activityLogService";
+
+type PurchaseSnapshot = {
+  id: number;
+  item_id: number;
+  quantity: number;
+  purchase_price: number;
+  status: string;
+};
+
+type WarehouseItemSnapshot = {
+  id: number;
+  name: string;
+  unit: string;
+};
+
 async function requirePurchaseManagement() {
   const profile =
     await getCurrentUserProfile();
@@ -67,6 +85,121 @@ function refreshPurchasePages() {
   revalidatePath(
     "/reports"
   );
+}
+
+async function getWarehouseItemSnapshot(
+  itemId: number
+): Promise<WarehouseItemSnapshot | null> {
+  const supabase =
+    await createClient();
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("warehouse_items")
+    .select("id, name, unit")
+    .eq("id", itemId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "[ActivityLog] Не вдалося отримати snapshot матеріалу закупівлі.",
+      {
+        itemId,
+        message:
+          error.message,
+      }
+    );
+
+    return null;
+  }
+
+  return data;
+}
+
+async function getPurchaseSnapshot(
+  purchaseId: number
+): Promise<PurchaseSnapshot | null> {
+  const supabase =
+    await createClient();
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      "warehouse_purchases"
+    )
+    .select(`
+      id,
+      item_id,
+      quantity,
+      purchase_price,
+      status
+    `)
+    .eq("id", purchaseId)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "[ActivityLog] Не вдалося отримати snapshot закупівлі.",
+      {
+        purchaseId,
+        message:
+          error.message,
+      }
+    );
+
+    return null;
+  }
+
+  return data;
+}
+
+async function getPlannedPurchaseSnapshot(
+  itemId: number
+) {
+  const supabase =
+    await createClient();
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      "warehouse_purchases"
+    )
+    .select(`
+      id,
+      quantity,
+      purchase_price
+    `)
+    .eq("item_id", itemId)
+    .eq(
+      "status",
+      "Заплановано"
+    )
+    .order("created_at", {
+      ascending: false,
+    })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "[ActivityLog] Не вдалося визначити створену закупівлю.",
+      {
+        itemId,
+        message:
+          error.message,
+      }
+    );
+
+    return null;
+  }
+
+  return data;
 }
 
 export async function createWarehousePurchase(
@@ -137,6 +270,11 @@ export async function createWarehousePurchase(
     );
   }
 
+  const itemSnapshot =
+    await getWarehouseItemSnapshot(
+      itemId
+    );
+
   const { error } =
     await supabase.rpc(
       "create_or_add_warehouse_purchase",
@@ -163,6 +301,46 @@ export async function createWarehousePurchase(
       `Не вдалося створити закупівлю: ${error.message}`
     );
   }
+
+  const purchaseSnapshot =
+    await getPlannedPurchaseSnapshot(
+      itemId
+    );
+
+  const itemName =
+    itemSnapshot?.name ||
+    `Матеріал #${itemId}`;
+
+  await recordActivity({
+    action:
+      "purchase.planned",
+    entityType:
+      "purchase",
+    entityId:
+      purchaseSnapshot?.id ||
+      null,
+    entityName:
+      itemName,
+    description:
+      `Додав до плану закупівель «${itemName}»: ${quantity} ${itemSnapshot?.unit || "од."} за ціною ${purchasePrice} грн.`,
+    metadata: {
+      item_id:
+        itemId,
+      added_quantity:
+        quantity,
+      planned_quantity:
+        purchaseSnapshot
+          ? Number(
+              purchaseSnapshot.quantity
+            )
+          : null,
+      purchase_price:
+        purchasePrice,
+      unit:
+        itemSnapshot?.unit ||
+        null,
+    },
+  });
 
   refreshPurchasePages();
 }
@@ -235,6 +413,18 @@ export async function updateWarehousePurchase(
     );
   }
 
+  const previousPurchase =
+    await getPurchaseSnapshot(
+      purchaseId
+    );
+
+  const itemSnapshot =
+    previousPurchase
+      ? await getWarehouseItemSnapshot(
+          previousPurchase.item_id
+        )
+      : null;
+
   const {
     data,
     error,
@@ -277,6 +467,44 @@ export async function updateWarehousePurchase(
     );
   }
 
+  const itemName =
+    itemSnapshot?.name ||
+    `Закупівля #${purchaseId}`;
+
+  await recordActivity({
+    action:
+      "purchase.updated",
+    entityType:
+      "purchase",
+    entityId:
+      purchaseId,
+    entityName:
+      itemName,
+    description:
+      `Змінив заплановану закупівлю «${itemName}»: ${quantity} ${itemSnapshot?.unit || "од."} за ціною ${purchasePrice} грн.`,
+    metadata: {
+      old_quantity:
+        previousPurchase
+          ? Number(
+              previousPurchase.quantity
+            )
+          : null,
+      new_quantity:
+        quantity,
+      old_purchase_price:
+        previousPurchase
+          ? Number(
+              previousPurchase.purchase_price
+            )
+          : null,
+      new_purchase_price:
+        purchasePrice,
+      unit:
+        itemSnapshot?.unit ||
+        null,
+    },
+  });
+
   refreshPurchasePages();
 }
 
@@ -293,6 +521,18 @@ export async function completeWarehousePurchase(
     "Не вдалося визначити закупівлю."
   );
 
+  const purchaseSnapshot =
+    await getPurchaseSnapshot(
+      purchaseId
+    );
+
+  const itemSnapshot =
+    purchaseSnapshot
+      ? await getWarehouseItemSnapshot(
+          purchaseSnapshot.item_id
+        )
+      : null;
+
   const { error } =
     await supabase.rpc(
       "complete_warehouse_purchase",
@@ -307,6 +547,42 @@ export async function completeWarehousePurchase(
       `Не вдалося оприбуткувати закупівлю: ${error.message}`
     );
   }
+
+  const itemName =
+    itemSnapshot?.name ||
+    `Закупівля #${purchaseId}`;
+
+  await recordActivity({
+    action:
+      "purchase.completed",
+    entityType:
+      "purchase",
+    entityId:
+      purchaseId,
+    entityName:
+      itemName,
+    description:
+      purchaseSnapshot
+        ? `Оприбуткував закупівлю «${itemName}»: ${Number(purchaseSnapshot.quantity)} ${itemSnapshot?.unit || "од."} за ціною ${Number(purchaseSnapshot.purchase_price)} грн.`
+        : `Оприбуткував закупівлю #${purchaseId}.`,
+    metadata: {
+      quantity:
+        purchaseSnapshot
+          ? Number(
+              purchaseSnapshot.quantity
+            )
+          : null,
+      purchase_price:
+        purchaseSnapshot
+          ? Number(
+              purchaseSnapshot.purchase_price
+            )
+          : null,
+      unit:
+        itemSnapshot?.unit ||
+        null,
+    },
+  });
 
   refreshPurchasePages();
 }
@@ -323,6 +599,18 @@ export async function deleteWarehousePurchase(
     purchaseId,
     "Не вдалося визначити закупівлю."
   );
+
+  const purchaseSnapshot =
+    await getPurchaseSnapshot(
+      purchaseId
+    );
+
+  const itemSnapshot =
+    purchaseSnapshot
+      ? await getWarehouseItemSnapshot(
+          purchaseSnapshot.item_id
+        )
+      : null;
 
   const {
     data,
@@ -354,6 +642,40 @@ export async function deleteWarehousePurchase(
       "Закупівлю не знайдено або її вже оприбутковано."
     );
   }
+
+  const itemName =
+    itemSnapshot?.name ||
+    `Закупівля #${purchaseId}`;
+
+  await recordActivity({
+    action:
+      "purchase.deleted",
+    entityType:
+      "purchase",
+    entityId:
+      purchaseId,
+    entityName:
+      itemName,
+    description:
+      `Видалив заплановану закупівлю «${itemName}».`,
+    metadata: {
+      quantity:
+        purchaseSnapshot
+          ? Number(
+              purchaseSnapshot.quantity
+            )
+          : null,
+      purchase_price:
+        purchaseSnapshot
+          ? Number(
+              purchaseSnapshot.purchase_price
+            )
+          : null,
+      unit:
+        itemSnapshot?.unit ||
+        null,
+    },
+  });
 
   refreshPurchasePages();
 }

@@ -63,6 +63,11 @@ const menuItems: MenuItem[] = [
     section: "reports",
   },
   {
+    name: "Журнал дій",
+    href: "/activity",
+    section: "activity",
+  },
+  {
     name: "Налаштування",
     href: "/settings",
     section: "settings",

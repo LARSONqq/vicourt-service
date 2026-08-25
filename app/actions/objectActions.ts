@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { canManageObjects } from "@/lib/auth/permissions";
 import { getCurrentUserProfile } from "@/services/profileService";
+import { recordActivity } from "@/services/activityLogService";
 
 function getText(
   formData: FormData,
@@ -191,6 +192,7 @@ export async function createObject(
     null;
 
   const {
+    data: createdObject,
     error,
   } = await supabase
     .from("objects")
@@ -213,13 +215,40 @@ export async function createObject(
 
       manager:
         managerName,
-    });
+    })
+    .select(`
+      id,
+      name,
+      status
+    `)
+    .single();
 
   if (error) {
     throw new Error(
       `Не вдалося створити об’єкт: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "object.created",
+    entityType:
+      "object",
+    entityId:
+      createdObject.id,
+    entityName:
+      createdObject.name,
+    objectId:
+      createdObject.id,
+    objectName:
+      createdObject.name,
+    description:
+      `Створив об’єкт «${createdObject.name}».`,
+    metadata: {
+      status:
+        createdObject.status,
+    },
+  });
 
   refreshObjectPages();
 }
@@ -305,6 +334,34 @@ export async function updateObject(
     );
   }
 
+  const {
+    data: previousObject,
+    error: previousObjectError,
+  } = await supabase
+    .from("objects")
+    .select(`
+      id,
+      name,
+      status
+    `)
+    .eq(
+      "id",
+      objectId
+    )
+    .maybeSingle();
+
+  if (previousObjectError) {
+    throw new Error(
+      `Не вдалося завантажити об’єкт: ${previousObjectError.message}`
+    );
+  }
+
+  if (!previousObject) {
+    throw new Error(
+      "Об’єкт не знайдено."
+    );
+  }
+
   const responsibleEmployee =
     await getResponsibleEmployee(
       responsibleEmployeeValue
@@ -350,6 +407,40 @@ export async function updateObject(
     );
   }
 
+  const statusChanged =
+    previousObject.status !==
+    status;
+
+  await recordActivity({
+    action: statusChanged
+      ? "object.status_changed"
+      : "object.updated",
+    entityType:
+      "object",
+    entityId:
+      objectId,
+    entityName:
+      name,
+    objectId,
+    objectName:
+      name,
+    description: statusChanged
+      ? `Змінив статус об’єкта «${name}»: ${previousObject.status} → ${status}.`
+      : `Оновив об’єкт «${name}».`,
+    metadata: statusChanged
+      ? {
+          previous_status:
+            previousObject.status,
+          new_status:
+            status,
+        }
+      : {
+          status,
+          previous_name:
+            previousObject.name,
+        },
+  });
+
   refreshObjectPages(
     objectId
   );
@@ -375,6 +466,34 @@ export async function deleteObject(
   }
 
   const {
+    data: object,
+    error: objectError,
+  } = await supabase
+    .from("objects")
+    .select(`
+      id,
+      name,
+      status
+    `)
+    .eq(
+      "id",
+      objectId
+    )
+    .maybeSingle();
+
+  if (objectError) {
+    throw new Error(
+      `Не вдалося завантажити об’єкт: ${objectError.message}`
+    );
+  }
+
+  if (!object) {
+    throw new Error(
+      "Об’єкт не знайдено."
+    );
+  }
+
+  const {
     error,
   } = await supabase
     .from("objects")
@@ -389,6 +508,27 @@ export async function deleteObject(
       `Не вдалося видалити об’єкт: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action:
+      "object.deleted",
+    entityType:
+      "object",
+    entityId:
+      object.id,
+    entityName:
+      object.name,
+    objectId:
+      object.id,
+    objectName:
+      object.name,
+    description:
+      `Видалив об’єкт «${object.name}».`,
+    metadata: {
+      status:
+        object.status,
+    },
+  });
 
   refreshObjectPages();
 }
