@@ -58,6 +58,27 @@ function formatPercent(
   );
 }
 
+function formatOptionalMoney(
+  value: number | null
+) {
+  return value === null
+    ? "Не вказано"
+    : formatMoney(value);
+}
+
+function formatMargin(
+  value: number | null,
+  clientPrice: number | null
+) {
+  return value === null
+    ? clientPrice === 0
+      ? "Не розраховується"
+      : "Не вказано"
+    : formatPercent(
+        value / 100
+      );
+}
+
 function formatDate(
   value: string
 ) {
@@ -266,8 +287,18 @@ export default function ReportsDashboard({
           </h2>
 
           <p className="mt-1 text-sm leading-5 text-gray-500">
-            Сортування від найбільшої
-            загальної собівартості.
+            Витрати та години — за
+            вибраний період. План,
+            фактична собівартість і
+            результат — за всю історію
+            об’єкта.
+          </p>
+
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            Поточний прибуток — це
+            управлінський розрахунок
+            від поточної собівартості,
+            а не касовий прибуток.
           </p>
         </div>
 
@@ -349,7 +380,8 @@ export default function ReportsDashboard({
 
                     <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-green-600 p-3 text-white">
                       <span className="text-xs uppercase tracking-wide text-green-100">
-                        Разом
+                        Витрати за
+                        період
                       </span>
                       <strong className="break-words text-right">
                         {formatMoney(
@@ -357,32 +389,137 @@ export default function ReportsDashboard({
                         )}
                       </strong>
                     </div>
+
+                    <div className="mt-4 border-t pt-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Фінанси об’єкта
+                        за весь час
+                      </p>
+
+                      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-4 text-sm">
+                        <div>
+                          <dt className="text-xs text-gray-500">
+                            Плановий бюджет
+                          </dt>
+                          <dd className="mt-1 break-words font-semibold text-blue-700">
+                            {formatOptionalMoney(
+                              object.costBudget
+                            )}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-xs text-gray-500">
+                            Вартість для
+                            клієнта
+                          </dt>
+                          <dd className="mt-1 break-words font-semibold text-blue-700">
+                            {formatOptionalMoney(
+                              object.clientPrice
+                            )}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-xs text-gray-500">
+                            Фактичні витрати
+                          </dt>
+                          <dd className="mt-1 break-words font-semibold text-gray-900">
+                            {formatMoney(
+                              object.lifetimeActualCost
+                            )}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-xs text-gray-500">
+                            {object.budgetOverrun !==
+                            null
+                              ? "Перевитрата"
+                              : "Залишок бюджету"}
+                          </dt>
+                          <dd
+                            className={`mt-1 break-words font-semibold ${
+                              object.budgetOverrun !==
+                              null
+                                ? "text-red-700"
+                                : "text-gray-900"
+                            }`}
+                          >
+                            {object.costBudget ===
+                            null
+                              ? "Не вказано"
+                              : formatMoney(
+                                  object.budgetOverrun ??
+                                    object.budgetRemaining ??
+                                    0
+                                )}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-xs text-gray-500">
+                            Поточний прибуток
+                          </dt>
+                          <dd
+                            className={`mt-1 break-words font-semibold ${
+                              object.financialResult ===
+                              null
+                                ? "text-gray-900"
+                                : object.financialResult >=
+                                    0
+                                  ? "text-green-700"
+                                  : "text-red-700"
+                            }`}
+                          >
+                            {formatOptionalMoney(
+                              object.financialResult
+                            )}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-xs text-gray-500">
+                            Маржинальність
+                          </dt>
+                          <dd className="mt-1 font-semibold text-gray-900">
+                            {formatMargin(
+                              object.marginPercent,
+                              object.clientPrice
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
                   </article>
                 )
               )}
             </div>
 
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[900px] text-sm">
+              <table className="w-full min-w-[1280px] text-sm">
                 <thead className="bg-gray-50 text-left text-gray-500">
                   <tr>
                     <th className="p-4 font-medium">
                       Об’єкт
                     </th>
                     <th className="p-4 font-medium">
-                      Матеріали
+                      За вибраний період
                     </th>
                     <th className="p-4 font-medium">
-                      Роботи
+                      Витрати за період
                     </th>
                     <th className="p-4 font-medium">
-                      Інші витрати
+                      План
                     </th>
                     <th className="p-4 font-medium">
-                      Загальні витрати
+                      Фактичні витрати
                     </th>
                     <th className="p-4 font-medium">
-                      Години
+                      Бюджет
+                    </th>
+                    <th className="p-4 font-medium">
+                      Результат
                     </th>
                   </tr>
                 </thead>
@@ -409,30 +546,136 @@ export default function ReportsDashboard({
                             }
                           </Link>
                         </td>
-                        <td className="p-4 text-amber-700">
-                          {formatMoney(
-                            object.materialsCost
-                          )}
-                        </td>
-                        <td className="p-4 text-blue-700">
-                          {formatMoney(
-                            object.laborCost
-                          )}
-                        </td>
-                        <td className="p-4 text-orange-700">
-                          {formatMoney(
-                            object.otherExpensesCost
-                          )}
+                        <td className="p-4">
+                          <dl className="space-y-1.5 text-xs">
+                            <div className="flex justify-between gap-3">
+                              <dt className="text-gray-500">
+                                Матеріали
+                              </dt>
+                              <dd className="font-medium text-amber-700">
+                                {formatMoney(
+                                  object.materialsCost
+                                )}
+                              </dd>
+                            </div>
+                            <div className="flex justify-between gap-3">
+                              <dt className="text-gray-500">
+                                Роботи
+                              </dt>
+                              <dd className="font-medium text-blue-700">
+                                {formatMoney(
+                                  object.laborCost
+                                )}
+                              </dd>
+                            </div>
+                            <div className="flex justify-between gap-3">
+                              <dt className="text-gray-500">
+                                Інші витрати
+                              </dt>
+                              <dd className="font-medium text-orange-700">
+                                {formatMoney(
+                                  object.otherExpensesCost
+                                )}
+                              </dd>
+                            </div>
+                            <div className="flex justify-between gap-3">
+                              <dt className="text-gray-500">
+                                Години
+                              </dt>
+                              <dd className="font-medium text-gray-700">
+                                {formatNumber(
+                                  object.hours
+                                )}
+                              </dd>
+                            </div>
+                          </dl>
                         </td>
                         <td className="p-4 font-semibold text-green-700">
                           {formatMoney(
                             object.totalCost
                           )}
                         </td>
-                        <td className="p-4 font-medium text-gray-700">
-                          {formatNumber(
-                            object.hours
+                        <td className="p-4">
+                          <p className="text-xs text-gray-500">
+                            Плановий бюджет
+                          </p>
+                          <p className="font-medium text-blue-700">
+                            {formatOptionalMoney(
+                              object.costBudget
+                            )}
+                          </p>
+                          <p className="mt-2 text-xs text-gray-500">
+                            Для клієнта
+                          </p>
+                          <p className="mt-0.5 font-medium text-blue-700">
+                            {formatOptionalMoney(
+                              object.clientPrice
+                            )}
+                          </p>
+                        </td>
+                        <td className="p-4 font-semibold text-gray-900">
+                          {formatMoney(
+                            object.lifetimeActualCost
                           )}
+                          <p className="mt-1 text-xs font-normal text-gray-500">
+                            За весь час
+                          </p>
+                        </td>
+                        <td className="p-4">
+                          <p
+                            className={`font-semibold ${
+                              object.budgetOverrun !==
+                              null
+                                ? "text-red-700"
+                                : "text-gray-900"
+                            }`}
+                          >
+                            {object.costBudget ===
+                            null
+                              ? "Не вказано"
+                              : formatMoney(
+                                  object.budgetOverrun ??
+                                    object.budgetRemaining ??
+                                    0
+                                )}
+                          </p>
+                          {object.costBudget !==
+                            null && (
+                            <p className="mt-1 text-xs text-gray-500">
+                              {object.budgetOverrun !==
+                              null
+                                ? "Перевитрата"
+                                : "Залишок"}
+                            </p>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <p
+                            className={`font-semibold ${
+                              object.financialResult ===
+                              null
+                                ? "text-gray-900"
+                                : object.financialResult >=
+                                    0
+                                  ? "text-green-700"
+                                  : "text-red-700"
+                            }`}
+                          >
+                            {formatOptionalMoney(
+                              object.financialResult
+                            )}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            Поточний прибуток
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            Маржа:
+                            {" "}
+                            {formatMargin(
+                              object.marginPercent,
+                              object.clientPrice
+                            )}
+                          </p>
                         </td>
                       </tr>
                     )

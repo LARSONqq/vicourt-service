@@ -55,6 +55,13 @@ export type ReportObjectCost = {
   otherExpensesCost: number;
   totalCost: number;
   hours: number;
+  costBudget: number | null;
+  clientPrice: number | null;
+  lifetimeActualCost: number;
+  budgetRemaining: number | null;
+  budgetOverrun: number | null;
+  financialResult: number | null;
+  marginPercent: number | null;
 };
 
 export type ReportEmployeeWork = {

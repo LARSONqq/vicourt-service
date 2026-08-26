@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import {
   objectExpenseCategories,
 } from "@/constants/objectExpenses";
+import {
+  calculateObjectFinancials,
+} from "@/lib/objectFinancials";
 
 import type { WorkLog } from "@/types/workLog";
 
@@ -282,6 +285,8 @@ type ReportQueryPage<T> = {
 type ReportObjectRow = {
   id: number;
   name: string;
+  cost_budget: number | null;
+  client_price: number | null;
 };
 
 type ReportEmployeeRow = {
@@ -354,6 +359,32 @@ type ReportWarehouseMovementRow = {
   performed_by_name: string | null;
   unit_price: number;
   created_at: string;
+};
+
+type ReportLifetimeWorkLogRow = {
+  id: number;
+  object_id: number;
+  hours: number;
+  hourly_rate: number;
+};
+
+type ReportLifetimeMaterialRow = {
+  id: number;
+  object_id: number;
+  quantity: number;
+  price: number;
+};
+
+type ReportLifetimeExpenseRow = {
+  id: number;
+  object_id: number;
+  amount: number;
+};
+
+type LifetimeObjectCost = {
+  materialsCost: number;
+  laborCost: number;
+  otherExpensesCost: number;
 };
 
 type InternalObjectCost =
@@ -697,7 +728,12 @@ export async function getReportsData(
       ) =>
         await supabase
           .from("objects")
-          .select("id, name")
+          .select(`
+            id,
+            name,
+            cost_budget,
+            client_price
+          `)
           .order("id", {
             ascending: true,
           })
@@ -1052,6 +1088,103 @@ export async function getReportsData(
       }
     );
 
+  const loadLifetimeWorkLogs = (
+    objectIds: number[]
+  ) =>
+    fetchAllReportRows<
+      ReportLifetimeWorkLogRow
+    >(
+      "Не вдалося завантажити повну історію робіт для фінансів об’єктів",
+      async (
+        from,
+        to
+      ) =>
+        await supabase
+          .from("work_logs")
+          .select(`
+            id,
+            object_id,
+            hours,
+            hourly_rate
+          `)
+          .in(
+            "object_id",
+            objectIds
+          )
+          .order("id", {
+            ascending: true,
+          })
+          .range(from, to)
+          .overrideTypes<
+            ReportLifetimeWorkLogRow[]
+          >()
+    );
+
+  const loadLifetimeMaterials = (
+    objectIds: number[]
+  ) =>
+    fetchAllReportRows<
+      ReportLifetimeMaterialRow
+    >(
+      "Не вдалося завантажити повну історію матеріалів для фінансів об’єктів",
+      async (
+        from,
+        to
+      ) =>
+        await supabase
+          .from("materials")
+          .select(`
+            id,
+            object_id,
+            quantity,
+            price
+          `)
+          .in(
+            "object_id",
+            objectIds
+          )
+          .order("id", {
+            ascending: true,
+          })
+          .range(from, to)
+          .overrideTypes<
+            ReportLifetimeMaterialRow[]
+          >()
+    );
+
+  const loadLifetimeExpenses = (
+    objectIds: number[]
+  ) =>
+    fetchAllReportRows<
+      ReportLifetimeExpenseRow
+    >(
+      "Не вдалося завантажити повну історію інших витрат для фінансів об’єктів",
+      async (
+        from,
+        to
+      ) =>
+        await supabase
+          .from(
+            "object_expenses"
+          )
+          .select(`
+            id,
+            object_id,
+            amount
+          `)
+          .in(
+            "object_id",
+            objectIds
+          )
+          .order("id", {
+            ascending: true,
+          })
+          .range(from, to)
+          .overrideTypes<
+            ReportLifetimeExpenseRow[]
+          >()
+    );
+
   const emptyRows =
     <T,>() =>
       Promise.resolve(
@@ -1114,6 +1247,21 @@ export async function getReportsData(
         (object) => [
           Number(object.id),
           object.name,
+        ]
+      )
+    );
+
+  const objectFinancialParameters =
+    new Map(
+      objects.map(
+        (object) => [
+          Number(object.id),
+          {
+            costBudget:
+              object.cost_budget,
+            clientPrice:
+              object.client_price,
+          },
         ]
       )
     );
@@ -1215,6 +1363,19 @@ export async function getReportsData(
       otherExpensesCost: 0,
       totalCost: 0,
       hours: 0,
+      costBudget:
+        objectFinancialParameters.get(
+          objectId
+        )?.costBudget ?? null,
+      clientPrice:
+        objectFinancialParameters.get(
+          objectId
+        )?.clientPrice ?? null,
+      lifetimeActualCost: 0,
+      budgetRemaining: null,
+      budgetOverrun: null,
+      financialResult: null,
+      marginPercent: null,
       hasData: false,
     };
 
@@ -1398,33 +1559,176 @@ export async function getReportsData(
     }
   );
 
-  const objectCosts:
-    ReportObjectCost[] =
+  const periodObjectCosts =
     Array.from(
       objectCostMap.values()
-    )
-      .filter(
-        (objectCost) =>
-          objectCost.hasData
-      )
-      .map((objectCost) => ({
-        objectId:
-          objectCost.objectId,
-        objectName:
-          objectCost.objectName,
-        materialsCost:
-          objectCost.materialsCost,
-        laborCost:
-          objectCost.laborCost,
-        otherExpensesCost:
-          objectCost.otherExpensesCost,
-        totalCost:
-          objectCost.materialsCost +
-          objectCost.laborCost +
-          objectCost.otherExpensesCost,
-        hours:
-          objectCost.hours,
-      }))
+    ).filter(
+      (objectCost) =>
+        objectCost.hasData
+    );
+  const reportObjectIds =
+    periodObjectCosts.map(
+      (objectCost) =>
+        objectCost.objectId
+    );
+  const [
+    lifetimeWorkLogs,
+    lifetimeMaterials,
+    lifetimeExpenses,
+  ] =
+    reportObjectIds.length > 0
+      ? await Promise.all([
+          loadLifetimeWorkLogs(
+            reportObjectIds
+          ),
+          loadLifetimeMaterials(
+            reportObjectIds
+          ),
+          loadLifetimeExpenses(
+            reportObjectIds
+          ),
+        ])
+      : [[], [], []];
+  const lifetimeCostMap =
+    new Map<
+      number,
+      LifetimeObjectCost
+    >();
+  const getLifetimeCost = (
+    objectId: number
+  ) => {
+    const existing =
+      lifetimeCostMap.get(
+        objectId
+      );
+
+    if (existing) {
+      return existing;
+    }
+
+    const created:
+      LifetimeObjectCost = {
+      materialsCost: 0,
+      laborCost: 0,
+      otherExpensesCost: 0,
+    };
+
+    lifetimeCostMap.set(
+      objectId,
+      created
+    );
+
+    return created;
+  };
+
+  lifetimeMaterials.forEach(
+    (material) => {
+      const cost =
+        getLifetimeCost(
+          Number(
+            material.object_id
+          )
+        );
+
+      cost.materialsCost +=
+        toSafeNumber(
+          material.quantity
+        ) *
+        toSafeNumber(
+          material.price
+        );
+    }
+  );
+
+  lifetimeWorkLogs.forEach(
+    (workLog) => {
+      const cost =
+        getLifetimeCost(
+          Number(
+            workLog.object_id
+          )
+        );
+
+      cost.laborCost +=
+        toSafeNumber(
+          workLog.hours
+        ) *
+        toSafeNumber(
+          workLog.hourly_rate
+        );
+    }
+  );
+
+  lifetimeExpenses.forEach(
+    (expense) => {
+      const cost =
+        getLifetimeCost(
+          Number(
+            expense.object_id
+          )
+        );
+
+      cost.otherExpensesCost +=
+        toSafeNumber(
+          expense.amount
+        );
+    }
+  );
+
+  const objectCosts:
+    ReportObjectCost[] =
+    periodObjectCosts
+      .map((objectCost) => {
+        const lifetimeCost =
+          lifetimeCostMap.get(
+            objectCost.objectId
+          ) || {
+            materialsCost: 0,
+            laborCost: 0,
+            otherExpensesCost: 0,
+          };
+        const financials =
+          calculateObjectFinancials({
+            ...lifetimeCost,
+            costBudget:
+              objectCost.costBudget,
+            clientPrice:
+              objectCost.clientPrice,
+          });
+
+        return {
+          objectId:
+            objectCost.objectId,
+          objectName:
+            objectCost.objectName,
+          materialsCost:
+            objectCost.materialsCost,
+          laborCost:
+            objectCost.laborCost,
+          otherExpensesCost:
+            objectCost.otherExpensesCost,
+          totalCost:
+            objectCost.materialsCost +
+            objectCost.laborCost +
+            objectCost.otherExpensesCost,
+          hours:
+            objectCost.hours,
+          costBudget:
+            financials.costBudget,
+          clientPrice:
+            financials.clientPrice,
+          lifetimeActualCost:
+            financials.actualCost,
+          budgetRemaining:
+            financials.budgetRemaining,
+          budgetOverrun:
+            financials.budgetOverrun,
+          financialResult:
+            financials.financialResult,
+          marginPercent:
+            financials.marginPercent,
+        };
+      })
       .sort(
         (first, second) =>
           second.totalCost -

@@ -397,6 +397,12 @@ export async function createObject(
     address: string;
     status: string;
     manager: string;
+    cost_budget?:
+      | number
+      | null;
+    client_price?:
+      | number
+      | null;
   }
 ) {
   const supabase =

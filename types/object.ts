@@ -9,5 +9,8 @@ export interface ObjectItem {
   manager: string | null;
   responsible_employee_id: number | null;
 
+  cost_budget: number | null;
+  client_price: number | null;
+
   created_at: string;
 }

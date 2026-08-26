@@ -33,6 +33,53 @@ export default async function NewObjectPage() {
           />
         </div>
 
+        <fieldset className="rounded-xl border bg-gray-50 p-4">
+          <legend className="px-1 font-semibold text-gray-900">
+            Фінанси
+          </legend>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Необов’язкові планові
+            значення для об’єкта.
+          </p>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Плановий бюджет
+                витрат, грн
+              </label>
+
+              <input
+                type="number"
+                name="cost_budget"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                className="w-full rounded-lg border bg-white p-3"
+                placeholder="100000"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Вартість для
+                клієнта, грн
+              </label>
+
+              <input
+                type="number"
+                name="client_price"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                className="w-full rounded-lg border bg-white p-3"
+                placeholder="135000"
+              />
+            </div>
+          </div>
+        </fieldset>
+
         <div>
           <label className="mb-2 block font-medium">
             Замовник

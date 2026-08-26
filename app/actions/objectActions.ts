@@ -7,6 +7,10 @@ import { canManageObjects } from "@/lib/auth/permissions";
 import { getCurrentUserProfile } from "@/services/profileService";
 import { recordActivity } from "@/services/activityLogService";
 
+import type {
+  ActivityMetadata,
+} from "@/types/activityLog";
+
 function getText(
   formData: FormData,
   field: string
@@ -14,6 +18,71 @@ function getText(
   return String(
     formData.get(field) ?? ""
   ).trim();
+}
+
+function getOptionalMoney(
+  formData: FormData,
+  field: string,
+  label: string
+) {
+  const rawValue = getText(
+    formData,
+    field
+  );
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const value =
+    Number(rawValue);
+
+  if (
+    !Number.isFinite(value) ||
+    value < 0
+  ) {
+    throw new Error(
+      `${label} має бути невід’ємним числом.`
+    );
+  }
+
+  return value;
+}
+
+function normalizeOptionalMoney(
+  value: unknown
+) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  const normalized =
+    Number(value);
+
+  return Number.isFinite(
+    normalized
+  )
+    ? normalized
+    : null;
+}
+
+function formatActivityMoney(
+  value: number | null
+) {
+  if (value === null) {
+    return "не вказано";
+  }
+
+  return `${new Intl.NumberFormat(
+    "uk-UA",
+    {
+      maximumFractionDigits: 2,
+    }
+  ).format(value)} грн`;
 }
 
 async function requireObjectManagementAccess() {
@@ -162,6 +231,20 @@ export async function createObject(
       "responsible_employee_id"
     );
 
+  const costBudget =
+    getOptionalMoney(
+      formData,
+      "cost_budget",
+      "Плановий бюджет витрат"
+    );
+
+  const clientPrice =
+    getOptionalMoney(
+      formData,
+      "client_price",
+      "Вартість для клієнта"
+    );
+
   // Тимчасова підтримка старого текстового поля
   const oldManagerValue =
     getText(
@@ -215,6 +298,12 @@ export async function createObject(
 
       manager:
         managerName,
+
+      cost_budget:
+        costBudget,
+
+      client_price:
+        clientPrice,
     })
     .select(`
       id,
@@ -247,6 +336,10 @@ export async function createObject(
     metadata: {
       status:
         createdObject.status,
+      cost_budget:
+        costBudget,
+      client_price:
+        clientPrice,
     },
   });
 
@@ -304,6 +397,20 @@ export async function updateObject(
       "responsible_employee_id"
     );
 
+  const costBudget =
+    getOptionalMoney(
+      formData,
+      "cost_budget",
+      "Плановий бюджет витрат"
+    );
+
+  const clientPrice =
+    getOptionalMoney(
+      formData,
+      "client_price",
+      "Вартість для клієнта"
+    );
+
   // Тимчасова підтримка старого текстового поля
   const oldManagerValue =
     getText(
@@ -342,7 +449,9 @@ export async function updateObject(
     .select(`
       id,
       name,
-      status
+      status,
+      cost_budget,
+      client_price
     `)
     .eq(
       "id",
@@ -395,6 +504,12 @@ export async function updateObject(
 
       manager:
         managerName,
+
+      cost_budget:
+        costBudget,
+
+      client_price:
+        clientPrice,
     })
     .eq(
       "id",
@@ -411,6 +526,88 @@ export async function updateObject(
     previousObject.status !==
     status;
 
+  const previousCostBudget =
+    normalizeOptionalMoney(
+      previousObject.cost_budget
+    );
+  const previousClientPrice =
+    normalizeOptionalMoney(
+      previousObject.client_price
+    );
+  const costBudgetChanged =
+    previousCostBudget !==
+    costBudget;
+  const clientPriceChanged =
+    previousClientPrice !==
+    clientPrice;
+  const financialChanges:
+    string[] = [];
+
+  if (costBudgetChanged) {
+    financialChanges.push(
+      `плановий бюджет: ${formatActivityMoney(
+        previousCostBudget
+      )} → ${formatActivityMoney(
+        costBudget
+      )}`
+    );
+  }
+
+  if (clientPriceChanged) {
+    financialChanges.push(
+      `вартість для клієнта: ${formatActivityMoney(
+        previousClientPrice
+      )} → ${formatActivityMoney(
+        clientPrice
+      )}`
+    );
+  }
+
+  const activityDescription =
+    statusChanged
+      ? `Змінив статус об’єкта «${name}»: ${previousObject.status} → ${status}${
+          financialChanges.length >
+          0
+            ? `; ${financialChanges.join(
+                "; "
+              )}`
+            : ""
+        }.`
+      : financialChanges.length >
+          0
+        ? `Оновив об’єкт «${name}»: ${financialChanges.join(
+            "; "
+          )}.`
+        : `Оновив об’єкт «${name}».`;
+  const activityMetadata:
+    ActivityMetadata =
+    statusChanged
+      ? {
+          previous_status:
+            previousObject.status,
+          new_status:
+            status,
+        }
+      : {
+          status,
+          previous_name:
+            previousObject.name,
+        };
+
+  if (costBudgetChanged) {
+    activityMetadata.previous_cost_budget =
+      previousCostBudget;
+    activityMetadata.new_cost_budget =
+      costBudget;
+  }
+
+  if (clientPriceChanged) {
+    activityMetadata.previous_client_price =
+      previousClientPrice;
+    activityMetadata.new_client_price =
+      clientPrice;
+  }
+
   await recordActivity({
     action: statusChanged
       ? "object.status_changed"
@@ -424,21 +621,10 @@ export async function updateObject(
     objectId,
     objectName:
       name,
-    description: statusChanged
-      ? `Змінив статус об’єкта «${name}»: ${previousObject.status} → ${status}.`
-      : `Оновив об’єкт «${name}».`,
-    metadata: statusChanged
-      ? {
-          previous_status:
-            previousObject.status,
-          new_status:
-            status,
-        }
-      : {
-          status,
-          previous_name:
-            previousObject.name,
-        },
+    description:
+      activityDescription,
+    metadata:
+      activityMetadata,
   });
 
   refreshObjectPages(

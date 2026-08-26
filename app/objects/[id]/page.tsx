@@ -367,6 +367,12 @@ export default async function ObjectPage({
         otherExpensesCost={
           otherExpensesCost
         }
+        costBudget={
+          object.cost_budget
+        }
+        clientPrice={
+          object.client_price
+        }
       />
 
       {/* CONTENT */}

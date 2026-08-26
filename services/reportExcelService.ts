@@ -79,6 +79,14 @@ function safeNumber(
     : 0;
 }
 
+function optionalNumber(
+  value: number | null
+): CellValue {
+  return value === null
+    ? null
+    : safeNumber(value);
+}
+
 function toDateOnly(
   value: string
 ): CellValue {
@@ -535,7 +543,8 @@ export async function createReportsWorkbook(
             ),
         },
         {
-          header: "Матеріали",
+          header:
+            "Матеріали за період",
           width: 18,
           value: (row) =>
             safeNumber(
@@ -545,7 +554,8 @@ export async function createReportsWorkbook(
             moneyFormat,
         },
         {
-          header: "Роботи",
+          header:
+            "Роботи за період",
           width: 18,
           value: (row) =>
             safeNumber(
@@ -556,7 +566,7 @@ export async function createReportsWorkbook(
         },
         {
           header:
-            "Інші витрати",
+            "Інші витрати за період",
           width: 18,
           value: (row) =>
             safeNumber(
@@ -567,7 +577,7 @@ export async function createReportsWorkbook(
         },
         {
           header:
-            "Загальні витрати",
+            "Витрати за період",
           width: 20,
           value: (row) =>
             safeNumber(
@@ -578,7 +588,86 @@ export async function createReportsWorkbook(
         },
         {
           header:
-            "Відпрацьовані години",
+            "Фактичні витрати за весь час",
+          width: 25,
+          value: (row) =>
+            safeNumber(
+              row.lifetimeActualCost
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Плановий бюджет",
+          width: 20,
+          value: (row) =>
+            optionalNumber(
+              row.costBudget
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Залишок бюджету",
+          width: 20,
+          value: (row) =>
+            optionalNumber(
+              row.budgetRemaining
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Перевитрата",
+          width: 18,
+          value: (row) =>
+            optionalNumber(
+              row.budgetOverrun
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Вартість для клієнта",
+          width: 22,
+          value: (row) =>
+            optionalNumber(
+              row.clientPrice
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Поточний прибуток",
+          width: 20,
+          value: (row) =>
+            optionalNumber(
+              row.financialResult
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Маржинальність",
+          width: 18,
+          value: (row) =>
+            row.marginPercent ===
+            null
+              ? null
+              : safeNumber(
+                  row.marginPercent /
+                    100
+                ),
+          numberFormat: "0.0%",
+        },
+        {
+          header:
+            "Відпрацьовані години за період",
           width: 22,
           value: (row) =>
             safeNumber(

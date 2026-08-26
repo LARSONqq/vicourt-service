@@ -206,7 +206,37 @@ async function getPeriodCsv(
             filters.dateFrom,
             filters.dateTo
           ),
-        rows: data.objectCosts,
+        rows:
+          data.objectCosts.map(
+            (object) => ({
+              objectName:
+                object.objectName,
+              materialsCost:
+                object.materialsCost,
+              laborCost:
+                object.laborCost,
+              otherExpensesCost:
+                object.otherExpensesCost,
+              periodActualCost:
+                object.totalCost,
+              hours:
+                object.hours,
+              costBudget:
+                object.costBudget,
+              clientPrice:
+                object.clientPrice,
+              actualCost:
+                object.lifetimeActualCost,
+              budgetRemaining:
+                object.budgetRemaining,
+              budgetOverrun:
+                object.budgetOverrun,
+              financialResult:
+                object.financialResult,
+              marginPercent:
+                object.marginPercent,
+            })
+          ),
       };
 
     case "employee-work":
@@ -345,6 +375,10 @@ async function getSnapshotCsv(
               object.manager,
             responsibleEmployeeId:
               object.responsible_employee_id,
+            costBudget:
+              object.cost_budget,
+            clientPrice:
+              object.client_price,
             createdAt:
               formatDateTime(
                 object.created_at

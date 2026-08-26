@@ -1,3 +1,7 @@
+import {
+  calculateObjectFinancials,
+} from "@/lib/objectFinancials";
+
 type Props = {
   activeTasks: number;
   materialsCount: number;
@@ -6,6 +10,8 @@ type Props = {
   materialsCost: number;
   laborCost: number;
   otherExpensesCost: number;
+  costBudget: number | null;
+  clientPrice: number | null;
 };
 
 function formatMoney(
@@ -43,6 +49,18 @@ function formatHours(
   ).format(safeValue);
 }
 
+function formatPercent(
+  value: number
+) {
+  return `${new Intl.NumberFormat(
+    "uk-UA",
+    {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }
+  ).format(value)}%`;
+}
+
 export default function ObjectSummary({
   activeTasks,
   materialsCount,
@@ -51,11 +69,40 @@ export default function ObjectSummary({
   materialsCost,
   laborCost,
   otherExpensesCost,
+  costBudget,
+  clientPrice,
 }: Props) {
-  const totalCost =
-    materialsCost +
-    laborCost +
-    otherExpensesCost;
+  const financials =
+    calculateObjectFinancials({
+      materialsCost,
+      laborCost,
+      otherExpensesCost,
+      costBudget,
+      clientPrice,
+    });
+  const budgetUsagePercent =
+    financials.costBudget !==
+      null &&
+    financials.costBudget > 0
+      ? (financials.actualCost /
+          financials.costBudget) *
+        100
+      : null;
+  const progressWidth =
+    budgetUsagePercent === null
+      ? 0
+      : Math.min(
+          Math.max(
+            budgetUsagePercent,
+            0
+          ),
+          100
+        );
+  const resultIsPositive =
+    financials.financialResult !==
+      null &&
+    financials.financialResult >=
+      0;
 
   return (
     <div className="min-w-0 space-y-4">
@@ -112,8 +159,9 @@ export default function ObjectSummary({
           </h2>
 
           <p className="mt-1 text-sm leading-5 text-gray-500">
-            Автоматична собівартість
-            цього об’єкта
+            План, фактична
+            собівартість і поточний
+            фінансовий результат
           </p>
         </div>
 
@@ -180,7 +228,7 @@ export default function ObjectSummary({
 
             <p className="mt-2 break-words text-xl font-bold sm:text-2xl">
               {formatMoney(
-                totalCost
+                financials.actualCost
               )}
             </p>
 
@@ -188,6 +236,205 @@ export default function ObjectSummary({
               Повна собівартість
               об’єкта
             </p>
+          </div>
+        </div>
+
+        <div className="border-t bg-gray-50/60 p-3 sm:p-5">
+          <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-3">
+            <article className="min-w-0 rounded-xl border border-blue-100 bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                План
+              </p>
+
+              <dl className="mt-4 space-y-4">
+                <div>
+                  <dt className="text-sm text-gray-500">
+                    Плановий бюджет
+                  </dt>
+                  <dd className="mt-1 break-words text-lg font-semibold text-blue-700">
+                    {financials.costBudget ===
+                    null
+                      ? "Не вказано"
+                      : formatMoney(
+                          financials.costBudget
+                        )}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-sm text-gray-500">
+                    Вартість для
+                    клієнта
+                  </dt>
+                  <dd className="mt-1 break-words text-lg font-semibold text-blue-700">
+                    {financials.clientPrice ===
+                    null
+                      ? "Не вказано"
+                      : formatMoney(
+                          financials.clientPrice
+                        )}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+
+            <article className="min-w-0 rounded-xl border bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Факт
+              </p>
+
+              <dl className="mt-4 space-y-4">
+                <div>
+                  <dt className="text-sm text-gray-500">
+                    Фактичні витрати
+                  </dt>
+                  <dd className="mt-1 break-words text-lg font-semibold text-gray-900">
+                    {formatMoney(
+                      financials.actualCost
+                    )}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-sm text-gray-500">
+                    {financials.budgetOverrun !==
+                    null
+                      ? "Перевитрата бюджету"
+                      : "Залишок бюджету"}
+                  </dt>
+                  <dd
+                    className={`mt-1 break-words text-lg font-semibold ${
+                      financials.budgetOverrun !==
+                      null
+                        ? "text-red-700"
+                        : "text-gray-900"
+                    }`}
+                  >
+                    {financials.costBudget ===
+                    null
+                      ? "Не вказано"
+                      : formatMoney(
+                          financials.budgetOverrun ??
+                            financials.budgetRemaining ??
+                            0
+                        )}
+                  </dd>
+                </div>
+              </dl>
+
+              {budgetUsagePercent !==
+                null && (
+                <div className="mt-5">
+                  <div className="flex items-start justify-between gap-3 text-xs text-gray-500">
+                    <span className="break-words">
+                      {formatMoney(
+                        financials.actualCost
+                      )}
+                      {" / "}
+                      {formatMoney(
+                        financials.costBudget ??
+                          0
+                      )}
+                    </span>
+                    <span className="shrink-0 font-medium text-gray-700">
+                      {formatPercent(
+                        budgetUsagePercent
+                      )}
+                    </span>
+                  </div>
+
+                  <div
+                    className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200"
+                    role="progressbar"
+                    aria-label="Використання планового бюджету"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={
+                      Math.round(
+                        progressWidth
+                      )
+                    }
+                  >
+                    <div
+                      className={`h-full rounded-full ${
+                        financials.budgetOverrun !==
+                        null
+                          ? "bg-red-600"
+                          : "bg-green-600"
+                      }`}
+                      style={{
+                        width: `${progressWidth}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </article>
+
+            <article className="min-w-0 rounded-xl border bg-white p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Результат
+              </p>
+
+              <dl className="mt-4 space-y-4">
+                <div>
+                  <dt className="text-sm text-gray-500">
+                    Поточний прибуток
+                  </dt>
+                  <dd
+                    className={`mt-1 break-words text-lg font-semibold ${
+                      financials.financialResult ===
+                      null
+                        ? "text-gray-900"
+                        : resultIsPositive
+                          ? "text-green-700"
+                          : "text-red-700"
+                    }`}
+                  >
+                    {financials.financialResult ===
+                    null
+                      ? "Не вказано"
+                      : formatMoney(
+                          financials.financialResult
+                        )}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt className="text-sm text-gray-500">
+                    Маржинальність
+                  </dt>
+                  <dd
+                    className={`mt-1 break-words text-lg font-semibold ${
+                      financials.marginPercent ===
+                      null
+                        ? "text-gray-900"
+                        : resultIsPositive
+                          ? "text-green-700"
+                          : "text-red-700"
+                    }`}
+                  >
+                    {financials.marginPercent ===
+                    null
+                      ? financials.clientPrice ===
+                        0
+                        ? "Не розраховується"
+                        : "Не вказано"
+                      : formatPercent(
+                          financials.marginPercent
+                        )}
+                  </dd>
+                </div>
+              </dl>
+
+              <p className="mt-5 text-xs leading-5 text-gray-500">
+                Поточний прибуток
+                розрахований від
+                поточної собівартості.
+                Це не бухгалтерський і
+                не касовий прибуток.
+              </p>
+            </article>
           </div>
         </div>
       </section>

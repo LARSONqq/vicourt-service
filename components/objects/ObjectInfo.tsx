@@ -259,6 +259,60 @@ export default function ObjectInfo({
             />
           </div>
 
+          <fieldset className="rounded-xl border bg-gray-50 p-4">
+            <legend className="px-1 font-semibold text-gray-900">
+              Фінанси
+            </legend>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Очисти поле, щоб
+              повернути значення у
+              стан «Не вказано».
+            </p>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="min-w-0">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Плановий бюджет
+                  витрат, грн
+                </label>
+
+                <input
+                  type="number"
+                  name="cost_budget"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  defaultValue={
+                    object.cost_budget ??
+                    ""
+                  }
+                  className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Вартість для
+                  клієнта, грн
+                </label>
+
+                <input
+                  type="number"
+                  name="client_price"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  defaultValue={
+                    object.client_price ??
+                    ""
+                  }
+                  className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                />
+              </div>
+            </div>
+          </fieldset>
+
           <div className="grid grid-cols-1 gap-2 border-t pt-5 sm:flex sm:flex-wrap sm:gap-3">
             <button
               type="submit"

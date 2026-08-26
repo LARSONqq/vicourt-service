@@ -65,6 +65,22 @@ const columnLabels: Record<
     "Інші витрати",
   totalCost:
     "Загальні витрати",
+  periodActualCost:
+    "Витрати за вибраний період",
+  actualCost:
+    "Фактичні витрати за весь час",
+  costBudget:
+    "Плановий бюджет",
+  clientPrice:
+    "Вартість для клієнта",
+  budgetRemaining:
+    "Залишок бюджету",
+  budgetOverrun:
+    "Перевитрата",
+  financialResult:
+    "Поточний прибуток",
+  marginPercent:
+    "Маржинальність, %",
   hours: "Години",
   employeeId:
     "ID працівника",
