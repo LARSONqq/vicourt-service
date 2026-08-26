@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import DevicePushSettings from "@/components/notifications/DevicePushSettings";
+
 import {
   requireSectionAccess,
 } from "@/lib/auth/requireAccess";
@@ -216,6 +218,14 @@ export default async function NotificationsPage({
           потребує вашої уваги.
         </p>
       </div>
+
+      <DevicePushSettings
+        vapidPublicKey={
+          process.env
+            .NEXT_PUBLIC_VAPID_PUBLIC_KEY ??
+          ""
+        }
+      />
 
       <section className="grid min-w-0 grid-cols-3 gap-2 sm:gap-4">
         <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
