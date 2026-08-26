@@ -33,6 +33,7 @@ export async function getAllTasksClient(): Promise<
       assigned_employee_id,
       priority,
       status,
+      task_source,
       created_at,
       object:objects (
         id,

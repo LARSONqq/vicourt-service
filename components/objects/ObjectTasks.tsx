@@ -6,6 +6,11 @@ import {
 } from "react";
 
 import { deleteObjectTask } from "@/app/actions/taskActions";
+import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
+import {
+  SUPERVISION_TASK_MANAGED_MESSAGE,
+  SUPERVISION_TASK_SOURCE,
+} from "@/constants/taskSource";
 
 import type { Employee } from "@/types/employee";
 import type { ObjectTask } from "@/types/objectTask";
@@ -132,10 +137,15 @@ export default function ObjectTasks({
       ) : (
         <div className="space-y-3 sm:space-y-4">
           {tasks.map(
-            (task) => (
-              <Fragment
-                key={task.id}
-              >
+            (task) => {
+              const isSupervisionTask =
+                task.task_source ===
+                SUPERVISION_TASK_SOURCE;
+
+              return (
+                <Fragment
+                  key={task.id}
+                >
                 <article className="min-w-0 rounded-xl border p-4 sm:p-5">
                   {/* TOP */}
                   <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -145,6 +155,12 @@ export default function ObjectTasks({
                           task.title
                         }
                       </h3>
+
+                      {isSupervisionTask && (
+                        <div className="mt-2">
+                          <SupervisionTaskBadge />
+                        </div>
+                      )}
 
                       {task.description && (
                         <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-gray-600">
@@ -195,6 +211,13 @@ export default function ObjectTasks({
                   </div>
 
                   {/* ACTIONS */}
+                  {isSupervisionTask ? (
+                    <p className="mt-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                      {
+                        SUPERVISION_TASK_MANAGED_MESSAGE
+                      }
+                    </p>
+                  ) : (
                   <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:flex sm:justify-end">
                     <button
                       type="button"
@@ -249,11 +272,13 @@ export default function ObjectTasks({
                       </button>
                     </form>
                   </div>
+                  )}
                 </article>
 
                 {/* EDIT FORM */}
-                {editingId ===
-                  task.id && (
+                {!isSupervisionTask &&
+                  editingId ===
+                    task.id && (
                   <div className="min-w-0 rounded-xl border border-blue-100 bg-blue-50/40 p-3 sm:p-4">
                     <EditTaskForm
                       task={
@@ -273,8 +298,9 @@ export default function ObjectTasks({
                     />
                   </div>
                 )}
-              </Fragment>
-            )
+                </Fragment>
+              );
+            }
           )}
         </div>
       )}

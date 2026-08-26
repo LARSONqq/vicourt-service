@@ -12,12 +12,21 @@ import {
 import { createPortal } from "react-dom";
 
 import { rescheduleDashboardTask } from "@/app/actions/dashboardTaskActions";
+import { SUPERVISION_TASK_SOURCE } from "@/constants/taskSource";
+import {
+  addDaysToDateValue,
+  getKyivDateValue,
+} from "@/lib/kyivDate";
+
+import type { TaskSource } from "@/types/objectTask";
 
 type Props = {
   taskId: number;
   objectId: number;
   currentDate: string | null;
   compact?: boolean;
+  taskSource?: TaskSource;
+  canManageSupervision?: boolean;
   onRescheduled?: (
     newDate: string
   ) => void;
@@ -28,37 +37,12 @@ type PopupPosition = {
   left: number;
 };
 
-function formatInputDate(
-  date: Date
-) {
-  const year =
-    date.getFullYear();
-
-  const month =
-    String(
-      date.getMonth() + 1
-    ).padStart(2, "0");
-
-  const day =
-    String(
-      date.getDate()
-    ).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
 function getDateAfterDays(
   days: number
 ) {
-  const date =
-    new Date();
-
-  date.setDate(
-    date.getDate() + days
-  );
-
-  return formatInputDate(
-    date
+  return addDaysToDateValue(
+    getKyivDateValue(),
+    days
   );
 }
 
@@ -89,6 +73,8 @@ export default function RescheduleTaskButton({
   objectId,
   currentDate,
   compact = false,
+  taskSource = "manual",
+  canManageSupervision = false,
   onRescheduled,
 }: Props) {
   const router =
@@ -133,6 +119,11 @@ export default function RescheduleTaskButton({
     successMessage,
     setSuccessMessage,
   ] = useState("");
+
+  const isProtectedSupervision =
+    taskSource ===
+      SUPERVISION_TASK_SOURCE &&
+    !canManageSupervision;
 
   const [
     customDate,
@@ -364,7 +355,10 @@ export default function RescheduleTaskButton({
   async function saveNewDate(
     newDate: string
   ) {
-    if (isSaving) {
+    if (
+      isSaving ||
+      isProtectedSupervision
+    ) {
       return;
     }
 
@@ -416,7 +410,10 @@ export default function RescheduleTaskButton({
     event.preventDefault();
     event.stopPropagation();
 
-    if (isSaving) {
+    if (
+      isSaving ||
+      isProtectedSupervision
+    ) {
       return;
     }
 
@@ -612,7 +609,13 @@ export default function RescheduleTaskButton({
           ref={buttonRef}
           type="button"
           disabled={
-            isSaving
+            isSaving ||
+            isProtectedSupervision
+          }
+          title={
+            isProtectedSupervision
+              ? "Дата автоматичного огляду доступна для керування адміністратору або менеджеру об’єктів."
+              : undefined
           }
           onClick={
             handleToggle

@@ -6,12 +6,14 @@ import { useEffect, useState } from "react";
 
 import { completeDashboardTask } from "@/app/actions/dashboardTaskActions";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
+import { SUPERVISION_TASK_SOURCE } from "@/constants/taskSource";
 
 import type { TaskWithObject } from "@/types/taskWithObject";
 
 type Props = {
   tasks: TaskWithObject[];
   today: string;
+  canManageSupervision: boolean;
 };
 
 function getPriorityStyle(priority: string) {
@@ -36,6 +38,7 @@ function getPriorityStyle(priority: string) {
 export default function TodayTasksSection({
   tasks,
   today,
+  canManageSupervision,
 }: Props) {
   const router = useRouter();
 
@@ -55,6 +58,18 @@ export default function TodayTasksSection({
   async function handleCompleteTask(
     task: TaskWithObject
   ) {
+    if (
+      task.task_source ===
+        SUPERVISION_TASK_SOURCE &&
+      !canManageSupervision
+    ) {
+      setErrorMessage(
+        "Періодичний огляд можуть виконати адміністратор або менеджер об’єктів."
+      );
+
+      return;
+    }
+
     if (updatingTaskId !== null) {
       return;
     }
@@ -179,6 +194,11 @@ export default function TodayTasksSection({
             const isUpdating =
               updatingTaskId === task.id;
 
+            const isProtectedSupervision =
+              task.task_source ===
+                SUPERVISION_TASK_SOURCE &&
+              !canManageSupervision;
+
             return (
               <article
                 key={task.id}
@@ -233,6 +253,12 @@ export default function TodayTasksSection({
                         taskId={task.id}
                         objectId={task.object_id}
                         currentDate={task.due_date}
+                        taskSource={
+                          task.task_source
+                        }
+                        canManageSupervision={
+                          canManageSupervision
+                        }
                         compact
                         onRescheduled={(newDate) =>
                           handleRescheduled(
@@ -244,7 +270,16 @@ export default function TodayTasksSection({
 
                       <button
                         type="button"
-                        disabled={updatingTaskId !== null}
+                        disabled={
+                          updatingTaskId !==
+                            null ||
+                          isProtectedSupervision
+                        }
+                        title={
+                          isProtectedSupervision
+                            ? "Періодичний огляд можуть виконати адміністратор або менеджер об’єктів."
+                            : undefined
+                        }
                         onClick={() =>
                           handleCompleteTask(task)
                         }

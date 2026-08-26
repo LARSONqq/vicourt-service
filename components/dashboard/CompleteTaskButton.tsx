@@ -6,17 +6,24 @@ import {
   type MouseEvent,
 } from "react";
 import { completeDashboardTask } from "@/app/actions/dashboardTaskActions";
+import { SUPERVISION_TASK_SOURCE } from "@/constants/taskSource";
+
+import type { TaskSource } from "@/types/objectTask";
 
 type Props = {
   taskId: number;
   objectId: number;
   compact?: boolean;
+  taskSource?: TaskSource;
+  canManageSupervision?: boolean;
 };
 
 export default function CompleteTaskButton({
   taskId,
   objectId,
   compact = false,
+  taskSource = "manual",
+  canManageSupervision = false,
 }: Props) {
   const router = useRouter();
 
@@ -29,13 +36,22 @@ export default function CompleteTaskButton({
   const [errorMessage, setErrorMessage] =
     useState("");
 
+  const isProtectedSupervision =
+    taskSource ===
+      SUPERVISION_TASK_SOURCE &&
+    !canManageSupervision;
+
   async function handleComplete(
     event: MouseEvent<HTMLButtonElement>
   ) {
     event.preventDefault();
     event.stopPropagation();
 
-    if (isSaving || isCompleted) {
+    if (
+      isSaving ||
+      isCompleted ||
+      isProtectedSupervision
+    ) {
       return;
     }
 
@@ -73,7 +89,15 @@ export default function CompleteTaskButton({
     <div>
       <button
         type="button"
-        disabled={isSaving}
+        disabled={
+          isSaving ||
+          isProtectedSupervision
+        }
+        title={
+          isProtectedSupervision
+            ? "Періодичний огляд можуть виконати адміністратор або менеджер об’єктів."
+            : undefined
+        }
         onClick={handleComplete}
         className={`rounded-lg border border-green-200 bg-green-50 font-medium text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60 ${
           compact

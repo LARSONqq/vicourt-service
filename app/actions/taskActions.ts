@@ -2,9 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+  MANUAL_TASK_SOURCE,
+  SUPERVISION_TASK_MANAGED_MESSAGE,
+  SUPERVISION_TASK_SOURCE,
+} from "@/constants/taskSource";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/services/profileService";
 import { recordActivity } from "@/services/activityLogService";
+import {
+  completeSupervisionCycle,
+  requireSupervisionTaskManagement,
+  rescheduleSupervisionTask,
+} from "@/services/supervisionTaskService";
 
 import type { TaskPriority } from "@/types/objectTask";
 
@@ -250,7 +260,8 @@ async function getTaskSnapshot(
       title,
       status,
       due_date,
-      priority
+      priority,
+      task_source
     `)
     .eq(
       "id",
@@ -399,6 +410,8 @@ export async function createObjectTask(
       priority,
 
       status,
+      task_source:
+        MANUAL_TASK_SOURCE,
     })
     .select(`
       id,
@@ -535,6 +548,15 @@ export async function updateObjectTask(
       objectId
     );
 
+  if (
+    previousTask.task_source ===
+    SUPERVISION_TASK_SOURCE
+  ) {
+    throw new Error(
+      SUPERVISION_TASK_MANAGED_MESSAGE
+    );
+  }
+
   const assignment =
     await getAssignedEmployee(
       employeeValue,
@@ -645,6 +667,39 @@ export async function updateTaskStatus(
       objectId
     );
 
+  if (
+    previousTask.task_source ===
+    SUPERVISION_TASK_SOURCE
+  ) {
+    if (status === "Виконано") {
+      await completeSupervisionCycle({
+        objectId,
+        taskId,
+      });
+
+      refreshTaskPages(
+        objectId
+      );
+
+      return {
+        id: taskId,
+        status:
+          "Виконано",
+      };
+    }
+
+    if (
+      previousTask.status ===
+      "Виконано"
+    ) {
+      throw new Error(
+        "Завершений періодичний огляд не можна повернути в роботу."
+      );
+    }
+
+    await requireSupervisionTaskManagement();
+  }
+
   const {
     error,
   } = await supabase
@@ -740,6 +795,31 @@ export async function updateTaskDueDate(
       objectId
     );
 
+  if (
+    previousTask.task_source ===
+    SUPERVISION_TASK_SOURCE
+  ) {
+    if (!savedDueDate) {
+      throw new Error(
+        "Автоматичний огляд повинен мати дату. Змініть налаштування через об’єкт."
+      );
+    }
+
+    const result =
+      await rescheduleSupervisionTask({
+        taskId,
+        objectId,
+        dueDate:
+          savedDueDate,
+      });
+
+    refreshTaskPages(
+      objectId
+    );
+
+    return result;
+  }
+
   const {
     error,
   } = await supabase
@@ -815,6 +895,15 @@ export async function deleteObjectTask(
       taskId,
       objectId
     );
+
+  if (
+    task.task_source ===
+    SUPERVISION_TASK_SOURCE
+  ) {
+    throw new Error(
+      SUPERVISION_TASK_MANAGED_MESSAGE
+    );
+  }
 
   const {
     error,

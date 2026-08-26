@@ -4,6 +4,10 @@ export type TaskPriority =
   | "Високий"
   | "Терміновий";
 
+export type TaskSource =
+  | "manual"
+  | "supervision";
+
 export interface ObjectTask {
   id: number;
   object_id: number;
@@ -14,5 +18,6 @@ export interface ObjectTask {
   assigned_employee_id: number | null;
   priority: TaskPriority;
   status: string;
+  task_source: TaskSource;
   created_at: string;
 }

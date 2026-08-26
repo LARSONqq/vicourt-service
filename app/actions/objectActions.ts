@@ -5,16 +5,15 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { canManageObjects } from "@/lib/auth/permissions";
 import {
-  addDaysToDateValue,
   formatDateValue,
-  getKyivDateValue,
   isValidDateValue,
 } from "@/lib/kyivDate";
-import {
-  PERIODIC_SUPERVISION_STATUS,
-} from "@/lib/objectSupervision";
 import { getCurrentUserProfile } from "@/services/profileService";
 import { recordActivity } from "@/services/activityLogService";
+import {
+  completeSupervisionCycle,
+  syncSupervisionTaskSafely,
+} from "@/services/supervisionTaskService";
 
 import type {
   ActivityMetadata,
@@ -411,6 +410,10 @@ export async function createObject(
     );
   }
 
+  await syncSupervisionTaskSafely(
+    createdObject.id
+  );
+
   await recordActivity({
     action:
       "object.created",
@@ -668,6 +671,10 @@ export async function updateObject(
     );
   }
 
+  await syncSupervisionTaskSafely(
+    objectId
+  );
+
   const statusChanged =
     previousObject.status !==
     status;
@@ -827,148 +834,16 @@ export async function updateObject(
 export async function completeObjectSupervision(
   objectId: number
 ) {
-  await requireObjectManagementAccess();
-
-  if (
-    !Number.isInteger(
-      objectId
-    ) ||
-    objectId <= 0
-  ) {
-    throw new Error(
-      "Не вдалося визначити об’єкт."
-    );
-  }
-
-  const supabase =
-    await createClient();
-
-  const {
-    data: object,
-    error: objectError,
-  } = await supabase
-    .from("objects")
-    .select(`
-      id,
-      name,
-      status,
-      supervision_interval_days,
-      last_supervision_date,
-      next_supervision_date
-    `)
-    .eq(
-      "id",
-      objectId
-    )
-    .maybeSingle();
-
-  if (objectError) {
-    throw new Error(
-      `Не вдалося завантажити об’єкт: ${objectError.message}`
-    );
-  }
-
-  if (!object) {
-    throw new Error(
-      "Об’єкт не знайдено."
-    );
-  }
-
-  if (
-    object.status !==
-    PERIODIC_SUPERVISION_STATUS
-  ) {
-    throw new Error(
-      "Періодичний огляд доступний лише для об’єктів під періодичним наглядом."
-    );
-  }
-
-  const intervalDays =
-    Number(
-      object.supervision_interval_days
-    );
-
-  if (
-    !Number.isInteger(
-      intervalDays
-    ) ||
-    intervalDays <= 0
-  ) {
-    throw new Error(
-      "Спочатку вкажіть періодичність нагляду."
-    );
-  }
-
-  const today =
-    getKyivDateValue();
-  const nextDate =
-    addDaysToDateValue(
-      today,
-      intervalDays
-    );
-
-  const {
-    error: updateError,
-  } = await supabase
-    .from("objects")
-    .update({
-      last_supervision_date:
-        today,
-      next_supervision_date:
-        nextDate,
-    })
-    .eq(
-      "id",
-      objectId
-    );
-
-  if (updateError) {
-    throw new Error(
-      `Не вдалося зберегти огляд: ${updateError.message}`
-    );
-  }
-
-  await recordActivity({
-    action:
-      "object.supervision_completed",
-    entityType:
-      "object",
-    entityId:
-      object.id,
-    entityName:
-      object.name,
-    objectId:
-      object.id,
-    objectName:
-      object.name,
-    description:
-      `Виконав періодичний огляд об’єкта «${object.name}». Наступний огляд: ${formatActivityDate(
-        nextDate
-      )}.`,
-    metadata: {
-      previous_last_supervision_date:
-        object.last_supervision_date,
-      new_last_supervision_date:
-        today,
-      previous_next_supervision_date:
-        object.next_supervision_date,
-      new_next_supervision_date:
-        nextDate,
-      interval_days:
-        intervalDays,
-    },
-  });
+  const result =
+    await completeSupervisionCycle({
+      objectId,
+    });
 
   refreshObjectPages(
     objectId
   );
 
-  return {
-    lastSupervisionDate:
-      today,
-    nextSupervisionDate:
-      nextDate,
-  };
+  return result;
 }
 
 export async function deleteObject(

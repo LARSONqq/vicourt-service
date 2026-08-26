@@ -3,18 +3,29 @@ import TasksList from "@/components/tasks/TasksList";
 
 import { getEmployees } from "@/services/employeeService";
 import { getObjects } from "@/services/objectService";
+import { getCurrentUserProfile } from "@/services/profileService";
 import { getAllTasks } from "@/services/taskService";
+import { canManageObjects } from "@/lib/auth/permissions";
 
 export default async function TasksPage() {
   const [
     tasks,
     objects,
     employees,
+    profile,
   ] = await Promise.all([
     getAllTasks(),
     getObjects(),
     getEmployees(),
+    getCurrentUserProfile(),
   ]);
+
+  const canManageSupervision =
+    profile
+      ? canManageObjects(
+          profile.role
+        )
+      : false;
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -43,6 +54,9 @@ export default async function TasksPage() {
         <TasksList
           tasks={tasks}
           employees={employees}
+          canManageSupervision={
+            canManageSupervision
+          }
         />
       </div>
     </div>

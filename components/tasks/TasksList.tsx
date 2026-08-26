@@ -17,6 +17,11 @@ import {
 } from "@/app/actions/taskActions";
 
 import EditTaskForm from "@/components/objects/EditTaskForm";
+import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
+import {
+  SUPERVISION_TASK_MANAGED_MESSAGE,
+  SUPERVISION_TASK_SOURCE,
+} from "@/constants/taskSource";
 
 import type { Employee } from "@/types/employee";
 import type { TaskWithObject } from "@/types/taskWithObject";
@@ -24,6 +29,7 @@ import type { TaskWithObject } from "@/types/taskWithObject";
 type Props = {
   tasks: TaskWithObject[];
   employees?: Employee[];
+  canManageSupervision: boolean;
 };
 
 type TaskStatus =
@@ -348,6 +354,7 @@ function sortListTasks(
 export default function TasksList({
   tasks,
   employees = [],
+  canManageSupervision,
 }: Props) {
   const router =
     useRouter();
@@ -706,6 +713,30 @@ export default function TasksList({
       return;
     }
 
+    if (
+      task.task_source ===
+      SUPERVISION_TASK_SOURCE
+    ) {
+      if (!canManageSupervision) {
+        setErrorMessage(
+          "Періодичний огляд можуть виконати адміністратор або менеджер об’єктів."
+        );
+
+        return;
+      }
+
+      if (
+        task.status ===
+        "Виконано"
+      ) {
+        setErrorMessage(
+          "Завершений періодичний огляд не можна повернути в роботу."
+        );
+
+        return;
+      }
+    }
+
     const previousStatus =
       task.status;
 
@@ -736,6 +767,15 @@ export default function TasksList({
         task.object_id,
         newStatus
       );
+
+      if (
+        task.task_source ===
+          SUPERVISION_TASK_SOURCE &&
+        newStatus ===
+          "Виконано"
+      ) {
+        router.refresh();
+      }
 
       setEditingTask(
         (
@@ -781,6 +821,17 @@ export default function TasksList({
   async function handleDeleteTask(
     task: TaskWithObject
   ) {
+    if (
+      task.task_source ===
+      SUPERVISION_TASK_SOURCE
+    ) {
+      setErrorMessage(
+        SUPERVISION_TASK_MANAGED_MESSAGE
+      );
+
+      return;
+    }
+
     const confirmed =
       window.confirm(
         `Видалити завдання «${task.title}»?\n\nЦю дію неможливо скасувати.`
@@ -845,7 +896,12 @@ export default function TasksList({
   ) {
     if (
       updatingId !== null ||
-      deletingId !== null
+      deletingId !== null ||
+      (task.task_source ===
+        SUPERVISION_TASK_SOURCE &&
+        (!canManageSupervision ||
+          task.status ===
+            "Виконано"))
     ) {
       event.preventDefault();
 
@@ -1044,6 +1100,15 @@ export default function TasksList({
       task.status ===
       "Виконано";
 
+    const isSupervisionTask =
+      task.task_source ===
+      SUPERVISION_TASK_SOURCE;
+
+    const canChangeSupervisionTask =
+      !isSupervisionTask ||
+      (canManageSupervision &&
+        !completed);
+
     const isUpdating =
       updatingId ===
       task.id;
@@ -1085,7 +1150,8 @@ export default function TasksList({
             tabIndex={0}
             draggable={
               !isUpdating &&
-              !isDeleting
+              !isDeleting &&
+              canChangeSupervisionTask
             }
             title="Перетягни завдання"
             onDragStart={(
@@ -1106,15 +1172,23 @@ export default function TasksList({
 
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <h3
-                className={`min-w-0 break-words font-semibold ${
-                  completed
-                    ? "text-gray-500 line-through"
-                    : "text-gray-900"
-                }`}
-              >
-                {task.title}
-              </h3>
+              <div className="min-w-0">
+                <h3
+                  className={`min-w-0 break-words font-semibold ${
+                    completed
+                      ? "text-gray-500 line-through"
+                      : "text-gray-900"
+                  }`}
+                >
+                  {task.title}
+                </h3>
+
+                {isSupervisionTask && (
+                  <div className="mt-2">
+                    <SupervisionTaskBadge compact />
+                  </div>
+                )}
+              </div>
 
               <span
                 className={`w-fit shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${
@@ -1276,7 +1350,8 @@ export default function TasksList({
             }
             disabled={
               isUpdating ||
-              isDeleting
+              isDeleting ||
+              !canChangeSupervisionTask
             }
             onChange={(
               event
@@ -1302,6 +1377,13 @@ export default function TasksList({
           </select>
         </div>
 
+        {isSupervisionTask ? (
+          <p className="mt-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            {
+              SUPERVISION_TASK_MANAGED_MESSAGE
+            }
+          </p>
+        ) : (
         <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-3">
           <button
             type="button"
@@ -1337,6 +1419,7 @@ export default function TasksList({
               : "Видалити"}
           </button>
         </div>
+        )}
       </article>
     );
   }
@@ -1728,6 +1811,15 @@ export default function TasksList({
                 task.status ===
                 "Виконано";
 
+              const isSupervisionTask =
+                task.task_source ===
+                SUPERVISION_TASK_SOURCE;
+
+              const canChangeSupervisionTask =
+                !isSupervisionTask ||
+                (canManageSupervision &&
+                  !completed);
+
               const priority =
                 task.priority ||
                 "Середній";
@@ -1780,6 +1872,12 @@ export default function TasksList({
                           }
                         </h3>
                       </div>
+
+                      {isSupervisionTask && (
+                        <div className="mt-2">
+                          <SupervisionTaskBadge />
+                        </div>
+                      )}
 
                       {task.object ? (
                         <Link
@@ -1944,7 +2042,8 @@ export default function TasksList({
                         }
                         disabled={
                           isUpdating ||
-                          isDeleting
+                          isDeleting ||
+                          !canChangeSupervisionTask
                         }
                         onChange={(
                           event
@@ -1972,6 +2071,13 @@ export default function TasksList({
                   </div>
 
                   {/* ACTIONS */}
+                  {isSupervisionTask ? (
+                    <p className="mt-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                      {
+                        SUPERVISION_TASK_MANAGED_MESSAGE
+                      }
+                    </p>
+                  ) : (
                   <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:flex sm:justify-end">
                     <button
                       type="button"
@@ -2007,6 +2113,7 @@ export default function TasksList({
                         : "Видалити"}
                     </button>
                   </div>
+                  )}
                 </article>
               );
             }
@@ -2015,7 +2122,9 @@ export default function TasksList({
       )}
 
       {/* EDIT MODAL */}
-      {editingTask && (
+      {editingTask &&
+        editingTask.task_source !==
+          SUPERVISION_TASK_SOURCE && (
         <div
           className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 sm:items-start sm:overflow-y-auto sm:p-4 md:p-8"
           onMouseDown={(

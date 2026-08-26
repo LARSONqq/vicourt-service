@@ -2,9 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+  SUPERVISION_TASK_SOURCE,
+} from "@/constants/taskSource";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/services/profileService";
 import { recordActivity } from "@/services/activityLogService";
+import {
+  completeSupervisionCycle,
+  rescheduleSupervisionTask,
+} from "@/services/supervisionTaskService";
 
 function validateTaskIds(
   taskId: number,
@@ -110,7 +117,8 @@ async function getTaskSnapshot(
       id,
       title,
       status,
-      due_date
+      due_date,
+      task_source
     `)
     .eq(
       "id",
@@ -156,6 +164,26 @@ export async function completeDashboardTask(
       taskId,
       objectId
     );
+
+  if (
+    task.task_source ===
+    SUPERVISION_TASK_SOURCE
+  ) {
+    await completeSupervisionCycle({
+      objectId,
+      taskId,
+    });
+
+    refreshDashboardTaskPages(
+      objectId
+    );
+
+    return {
+      id: taskId,
+      status:
+        "Виконано",
+    };
+  }
 
   const {
     error,
@@ -242,6 +270,25 @@ export async function rescheduleDashboardTask(
       taskId,
       objectId
     );
+
+  if (
+    task.task_source ===
+    SUPERVISION_TASK_SOURCE
+  ) {
+    const result =
+      await rescheduleSupervisionTask({
+        taskId,
+        objectId,
+        dueDate:
+          normalizedDueDate,
+      });
+
+    refreshDashboardTaskPages(
+      objectId
+    );
+
+    return result;
+  }
 
   const {
     error,

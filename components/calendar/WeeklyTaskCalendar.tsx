@@ -20,6 +20,11 @@ import {
 
 import EditTaskForm from "@/components/objects/EditTaskForm";
 import AddGlobalTaskForm from "@/components/tasks/AddGlobalTaskForm";
+import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
+import {
+  SUPERVISION_TASK_MANAGED_MESSAGE,
+  SUPERVISION_TASK_SOURCE,
+} from "@/constants/taskSource";
 
 import type { Employee } from "@/types/employee";
 import type { ObjectItem } from "@/types/object";
@@ -29,6 +34,7 @@ type Props = {
   tasks: TaskWithObject[];
   employees: Employee[];
   objects: ObjectItem[];
+  canManageSupervision: boolean;
 };
 
 type TaskCardProps = {
@@ -37,6 +43,7 @@ type TaskCardProps = {
   isUpdating: boolean;
   isMoving: boolean;
   canDrag: boolean;
+  canUseQuickAction: boolean;
   onOpen: () => void;
   onDragStart: (
     event: DragEvent<HTMLElement>
@@ -321,6 +328,7 @@ function TaskCard({
   isUpdating,
   isMoving,
   canDrag,
+  canUseQuickAction,
   onOpen,
   onDragStart,
   onDragEnd,
@@ -333,6 +341,10 @@ function TaskCard({
   const isCompleted =
     task.status ===
     "Виконано";
+
+  const isSupervisionTask =
+    task.task_source ===
+    SUPERVISION_TASK_SOURCE;
 
   return (
     <article
@@ -406,6 +418,10 @@ function TaskCard({
 
       {/* BADGES */}
       <div className="mt-2 flex flex-wrap gap-1.5">
+        {isSupervisionTask && (
+          <SupervisionTaskBadge compact />
+        )}
+
         <span
           className={`rounded-full px-2 py-1 text-[10px] font-medium ${
             isCompleted
@@ -486,7 +502,8 @@ function TaskCard({
         draggable={false}
         disabled={
           isUpdating ||
-          isMoving
+          isMoving ||
+          !canUseQuickAction
         }
         onPointerDown={(
           event
@@ -526,8 +543,9 @@ function TaskCard({
       </button>
 
       <p className="mt-3 border-t pt-2 text-[11px] text-gray-400">
-        Натисни картку, щоб
-        редагувати
+        {isSupervisionTask
+          ? "Натисни картку, щоб відкрити деталі"
+          : "Натисни картку, щоб редагувати"}
       </p>
     </article>
   );
@@ -537,6 +555,7 @@ export default function WeeklyTaskCalendar({
   tasks,
   employees,
   objects,
+  canManageSupervision,
 }: Props) {
   const router =
     useRouter();
@@ -939,10 +958,18 @@ export default function WeeklyTaskCalendar({
     event: DragEvent<HTMLElement>,
     task: TaskWithObject
   ) {
+    const isProtectedSupervision =
+      task.task_source ===
+        SUPERVISION_TASK_SOURCE &&
+      (!canManageSupervision ||
+        task.status ===
+          "Виконано");
+
     if (
       !canDrag ||
       movingTaskId !==
-        null
+        null ||
+      isProtectedSupervision
     ) {
       event.preventDefault();
 
@@ -1096,6 +1123,38 @@ export default function WeeklyTaskCalendar({
       return;
     }
 
+    if (
+      task.task_source ===
+      SUPERVISION_TASK_SOURCE
+    ) {
+      if (!canManageSupervision) {
+        setQuickActionError(
+          "Дата періодичного огляду доступна для керування адміністратору або менеджеру об’єктів."
+        );
+
+        return;
+      }
+
+      if (
+        task.status ===
+        "Виконано"
+      ) {
+        setQuickActionError(
+          "Завершений періодичний огляд не можна переносити."
+        );
+
+        return;
+      }
+
+      if (!dueDate) {
+        setQuickActionError(
+          "Автоматичний огляд повинен мати дату. Керуйте нею через об’єкт."
+        );
+
+        return;
+      }
+    }
+
     const normalizedDueDate =
       dueDate || null;
 
@@ -1199,6 +1258,30 @@ export default function WeeklyTaskCalendar({
       return;
     }
 
+    if (
+      task.task_source ===
+      SUPERVISION_TASK_SOURCE
+    ) {
+      if (!canManageSupervision) {
+        setQuickActionError(
+          "Періодичний огляд можуть виконати адміністратор або менеджер об’єктів."
+        );
+
+        return;
+      }
+
+      if (
+        task.status ===
+        "Виконано"
+      ) {
+        setQuickActionError(
+          "Завершений періодичний огляд не можна повернути в роботу."
+        );
+
+        return;
+      }
+    }
+
     const previousStatus =
       task.status;
 
@@ -1237,6 +1320,15 @@ export default function WeeklyTaskCalendar({
         task.object_id,
         nextStatus
       );
+
+      if (
+        task.task_source ===
+          SUPERVISION_TASK_SOURCE &&
+        nextStatus ===
+          "Виконано"
+      ) {
+        router.refresh();
+      }
     } catch (error) {
       setLocalTasks(
         (currentTasks) =>
@@ -1268,6 +1360,17 @@ export default function WeeklyTaskCalendar({
   async function handleDeleteTask(
     task: TaskWithObject
   ) {
+    if (
+      task.task_source ===
+      SUPERVISION_TASK_SOURCE
+    ) {
+      setDeleteErrorMessage(
+        SUPERVISION_TASK_MANAGED_MESSAGE
+      );
+
+      return;
+    }
+
     const confirmed =
       window.confirm(
         `Видалити завдання «${task.title}»?\n\nЦю дію неможливо скасувати.`
@@ -1785,7 +1888,19 @@ export default function WeeklyTaskCalendar({
                               task.id
                           }
                           canDrag={
-                            canDrag
+                            canDrag &&
+                            (task.task_source !==
+                              SUPERVISION_TASK_SOURCE ||
+                              (canManageSupervision &&
+                                task.status !==
+                                  "Виконано"))
+                          }
+                          canUseQuickAction={
+                            task.task_source !==
+                              SUPERVISION_TASK_SOURCE ||
+                            (canManageSupervision &&
+                              task.status !==
+                                "Виконано")
                           }
                           onOpen={() =>
                             handleTaskClick(
@@ -1921,7 +2036,19 @@ export default function WeeklyTaskCalendar({
                       task.id
                   }
                   canDrag={
-                    canDrag
+                    canDrag &&
+                    (task.task_source !==
+                      SUPERVISION_TASK_SOURCE ||
+                      (canManageSupervision &&
+                        task.status !==
+                          "Виконано"))
+                  }
+                  canUseQuickAction={
+                    task.task_source !==
+                      SUPERVISION_TASK_SOURCE ||
+                    (canManageSupervision &&
+                      task.status !==
+                        "Виконано")
                   }
                   onOpen={() =>
                     handleTaskClick(
@@ -2057,8 +2184,10 @@ export default function WeeklyTaskCalendar({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold">
-                    Редагування
-                    завдання
+                    {selectedTask.task_source ===
+                    SUPERVISION_TASK_SOURCE
+                      ? "Автоматичний огляд"
+                      : "Редагування завдання"}
                   </h2>
 
                   <p className="mt-1 line-clamp-2 break-words text-sm text-gray-500">
@@ -2094,24 +2223,27 @@ export default function WeeklyTaskCalendar({
                 </button>
               </div>
 
-              <button
-                type="button"
-                disabled={
-                  deletingTaskId ===
+              {selectedTask.task_source !==
+                SUPERVISION_TASK_SOURCE && (
+                <button
+                  type="button"
+                  disabled={
+                    deletingTaskId ===
+                    selectedTask.id
+                  }
+                  onClick={() =>
+                    handleDeleteTask(
+                      selectedTask
+                    )
+                  }
+                  className="mt-3 min-h-10 w-full rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                >
+                  {deletingTaskId ===
                   selectedTask.id
-                }
-                onClick={() =>
-                  handleDeleteTask(
-                    selectedTask
-                  )
-                }
-                className="mt-3 min-h-10 w-full rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-              >
-                {deletingTaskId ===
-                selectedTask.id
-                  ? "Видалення..."
-                  : "Видалити завдання"}
-              </button>
+                    ? "Видалення..."
+                    : "Видалити завдання"}
+                </button>
+              )}
             </div>
 
             {/* CONTENT */}
@@ -2124,20 +2256,42 @@ export default function WeeklyTaskCalendar({
                 </div>
               )}
 
-              <EditTaskForm
-                task={
-                  selectedTask
-                }
-                objectId={
-                  selectedTask.object_id
-                }
-                employees={
-                  employees
-                }
-                onCancel={
-                  closeEditForm
-                }
-              />
+              {selectedTask.task_source ===
+              SUPERVISION_TASK_SOURCE ? (
+                <div className="space-y-4 rounded-xl border border-rose-100 bg-rose-50/60 p-4">
+                  <SupervisionTaskBadge />
+
+                  <p className="text-sm leading-6 text-rose-800">
+                    {
+                      SUPERVISION_TASK_MANAGED_MESSAGE
+                    }
+                  </p>
+
+                  {selectedTask.object && (
+                    <Link
+                      href={`/objects/${selectedTask.object.id}`}
+                      className="inline-flex min-h-10 items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                    >
+                      Відкрити об’єкт
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <EditTaskForm
+                  task={
+                    selectedTask
+                  }
+                  objectId={
+                    selectedTask.object_id
+                  }
+                  employees={
+                    employees
+                  }
+                  onCancel={
+                    closeEditForm
+                  }
+                />
+              )}
             </div>
           </div>
         </div>

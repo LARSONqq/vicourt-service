@@ -10,6 +10,8 @@ import {
 } from "@/services/purchaseService";
 import { getAllTasks } from "@/services/taskService";
 import { getWarehouseItems } from "@/services/warehouseService";
+import { getCurrentUserProfile } from "@/services/profileService";
+import { canManageObjects } from "@/lib/auth/permissions";
 import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
@@ -210,12 +212,21 @@ export default async function HomePage() {
     tasks,
     warehouseItems,
     plannedPurchaseTotals,
+    profile,
   ] = await Promise.all([
     getObjects(),
     getAllTasks(),
     getWarehouseItems(),
     getPlannedPurchaseTotals(),
+    getCurrentUserProfile(),
   ]);
+
+  const canManageSupervision =
+    profile
+      ? canManageObjects(
+          profile.role
+        )
+      : false;
 
   const objectList =
     Array.isArray(
@@ -988,6 +999,12 @@ export default async function HomePage() {
                           currentDate={
                             task.due_date
                           }
+                          taskSource={
+                            task.task_source
+                          }
+                          canManageSupervision={
+                            canManageSupervision
+                          }
                           compact
                         />
 
@@ -997,6 +1014,12 @@ export default async function HomePage() {
                           }
                           objectId={
                             task.object_id
+                          }
+                          taskSource={
+                            task.task_source
+                          }
+                          canManageSupervision={
+                            canManageSupervision
                           }
                           compact
                         />
@@ -1050,6 +1073,9 @@ export default async function HomePage() {
         <TodayTasksSection
           tasks={todayTasks}
           today={today}
+          canManageSupervision={
+            canManageSupervision
+          }
         />
       )}
 
@@ -1485,6 +1511,12 @@ export default async function HomePage() {
                             currentDate={
                               task.due_date
                             }
+                            taskSource={
+                              task.task_source
+                            }
+                            canManageSupervision={
+                              canManageSupervision
+                            }
                             compact
                           />
 
@@ -1494,6 +1526,12 @@ export default async function HomePage() {
                             }
                             objectId={
                               task.object_id
+                            }
+                            taskSource={
+                              task.task_source
+                            }
+                            canManageSupervision={
+                              canManageSupervision
                             }
                             compact
                           />
