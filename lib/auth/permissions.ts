@@ -2,6 +2,7 @@ import type { UserRole } from "@/types/userProfile";
 
 export type AppSection =
   | "home"
+  | "notifications"
   | "objects"
   | "tasks"
   | "calendar"
@@ -20,6 +21,7 @@ const permissions: Record<
 > = {
   admin: [
     "home",
+    "notifications",
     "objects",
     "tasks",
     "calendar",
@@ -35,6 +37,7 @@ const permissions: Record<
 
   object_manager: [
     "home",
+    "notifications",
     "objects",
     "tasks",
     "calendar",
@@ -48,6 +51,7 @@ const permissions: Record<
 
   worker: [
     "home",
+    "notifications",
     "objects",
     "tasks",
     "calendar",

@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 
 import type { WarehousePurchase } from "@/types/warehousePurchase";
+import type { WarehousePurchaseStatus } from "@/types/warehousePurchase";
+
+export type PurchaseQueryFilters = {
+  status?: WarehousePurchaseStatus;
+};
 
 type PlannedPurchaseRow = {
   item_id: number;
@@ -12,16 +17,15 @@ export type PlannedPurchaseTotals = Record<
   number
 >;
 
-export async function getWarehousePurchases(): Promise<
+export async function getWarehousePurchases(
+  filters: PurchaseQueryFilters = {}
+): Promise<
   WarehousePurchase[]
 > {
   const supabase =
     await createClient();
 
-  const {
-    data,
-    error,
-  } = await supabase
+  let query = supabase
     .from("warehouse_purchases")
     .select(`
       id,
@@ -40,7 +44,19 @@ export async function getWarehousePurchases(): Promise<
         quantity,
         min_quantity
       )
-    `)
+    `);
+
+  if (filters.status) {
+    query = query.eq(
+      "status",
+      filters.status
+    );
+  }
+
+  const {
+    data,
+    error,
+  } = await query
     .order("created_at", {
       ascending: false,
     })

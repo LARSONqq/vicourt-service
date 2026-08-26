@@ -1,5 +1,12 @@
+import {
+  unstable_rethrow,
+} from "next/navigation";
+
 import { getAppSettings } from "@/services/settingsService";
 import { getCurrentUserProfile } from "@/services/profileService";
+import {
+  getNotificationCenter,
+} from "@/services/notificationService";
 
 import {
   canAccessSection,
@@ -26,6 +33,11 @@ const menuItems: MenuItem[] = [
     name: "Об'єкти",
     href: "/objects",
     section: "objects",
+  },
+  {
+    name: "Сповіщення",
+    href: "/notifications",
+    section: "notifications",
   },
   {
     name: "Завдання",
@@ -83,9 +95,22 @@ export async function Sidebar() {
   const [
     settings,
     currentProfile,
+    notificationCenter,
   ] = await Promise.all([
     getAppSettings(),
     getCurrentUserProfile(),
+    getNotificationCenter().catch(
+      (error: unknown) => {
+        unstable_rethrow(error);
+
+        console.error(
+          "[Notifications] Не вдалося завантажити badge у навігації.",
+          error
+        );
+
+        return null;
+      }
+    ),
   ]);
 
   const visibleMenuItems =
@@ -117,9 +142,31 @@ export async function Sidebar() {
             <a
               key={item.href}
               href={item.href}
-              className="block rounded-lg px-4 py-3 font-medium text-gray-700 transition hover:bg-green-50 hover:text-green-700"
+              className="flex min-w-0 items-center justify-between gap-3 rounded-lg px-4 py-3 font-medium text-gray-700 transition hover:bg-green-50 hover:text-green-700"
             >
-              {item.name}
+              <span className="min-w-0 break-words">
+                {item.name}
+              </span>
+
+              {item.section ===
+                "notifications" &&
+                Number(
+                  notificationCenter
+                    ?.summary.total ||
+                    0
+                ) > 0 && (
+                  <span className="inline-flex min-w-6 shrink-0 items-center justify-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                    {Number(
+                      notificationCenter
+                        ?.summary.total ||
+                        0
+                    ) > 99
+                      ? "99+"
+                      : notificationCenter
+                          ?.summary
+                          .total}
+                  </span>
+                )}
             </a>
           )
         )}

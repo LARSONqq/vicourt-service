@@ -25,6 +25,11 @@ export type EmployeeWorkLog =
     } | null;
   };
 
+export type ObjectQueryFilters = {
+  status?: string;
+  nextSupervisionDateTo?: string;
+};
+
 function createReadableError(
   error: SupabaseError,
   context: string
@@ -46,18 +51,44 @@ function createReadableError(
   );
 }
 
-export async function getObjects(): Promise<
+export async function getObjects(
+  filters: ObjectQueryFilters = {}
+): Promise<
   ObjectItem[]
 > {
   const supabase =
     await createClient();
 
+  let query = supabase
+    .from("objects")
+    .select("*");
+
+  if (filters.status) {
+    query = query.eq(
+      "status",
+      filters.status
+    );
+  }
+
+  if (
+    filters.nextSupervisionDateTo
+  ) {
+    query = query
+      .not(
+        "next_supervision_date",
+        "is",
+        null
+      )
+      .lte(
+        "next_supervision_date",
+        filters.nextSupervisionDateTo
+      );
+  }
+
   const {
     data,
     error,
-  } = await supabase
-    .from("objects")
-    .select("*")
+  } = await query
     .order("created_at", {
       ascending: false,
     });

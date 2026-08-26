@@ -1,3 +1,7 @@
+import {
+  cache,
+} from "react";
+
 import { createClient } from "@/lib/supabase/server";
 
 import type {
@@ -15,7 +19,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     "1970-01-01T00:00:00.000Z",
 };
 
-export async function getAppSettings(): Promise<AppSettings> {
+async function loadAppSettings(): Promise<AppSettings> {
   try {
     const supabase =
       await createClient();
@@ -41,3 +45,6 @@ export async function getAppSettings(): Promise<AppSettings> {
     return DEFAULT_SETTINGS;
   }
 }
+
+export const getAppSettings =
+  cache(loadAppSettings);

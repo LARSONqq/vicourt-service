@@ -3,6 +3,9 @@ import Link from "next/link";
 import CompleteTaskButton from "@/components/dashboard/CompleteTaskButton";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
 import TodayTasksSection from "@/components/dashboard/TodayTasksSection";
+import {
+  SUPERVISION_TASK_SOURCE,
+} from "@/constants/taskSource";
 
 import { getObjects } from "@/services/objectService";
 import {
@@ -11,15 +14,13 @@ import {
 import { getAllTasks } from "@/services/taskService";
 import { getWarehouseItems } from "@/services/warehouseService";
 import { getCurrentUserProfile } from "@/services/profileService";
+import {
+  getNotificationCenter,
+} from "@/services/notificationService";
 import { canManageObjects } from "@/lib/auth/permissions";
 import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
-import {
-  getObjectSupervisionState,
-  PERIODIC_SUPERVISION_STATUS,
-} from "@/lib/objectSupervision";
-
 import type {
   TaskWithObject,
 } from "@/types/taskWithObject";
@@ -171,28 +172,11 @@ function formatCreatedDate(
   return `${day}.${month}.${year}`;
 }
 
-function isTaskOverdue(
-  task: TaskWithObject,
-  today: string
-) {
-  return Boolean(
-    task.due_date &&
-      task.due_date < today &&
-      task.status !==
-        "Виконано"
-  );
-}
-
 function getAttentionTaskScore(
   task: TaskWithObject,
-  today: string
+  isOverdue: boolean
 ) {
-  if (
-    isTaskOverdue(
-      task,
-      today
-    )
-  ) {
+  if (isOverdue) {
     return 1;
   }
 
@@ -213,12 +197,14 @@ export default async function HomePage() {
     warehouseItems,
     plannedPurchaseTotals,
     profile,
+    notificationCenter,
   ] = await Promise.all([
     getObjects(),
     getAllTasks(),
     getWarehouseItems(),
     getPlannedPurchaseTotals(),
     getCurrentUserProfile(),
+    getNotificationCenter(),
   ]);
 
   const canManageSupervision =
@@ -252,6 +238,88 @@ export default async function HomePage() {
   const today =
     getKyivDateValue();
 
+  const overdueTaskIds =
+    new Set(
+      notificationCenter.items
+        .filter(
+          (item) =>
+            item.type ===
+            "overdue_task"
+        )
+        .flatMap((item) =>
+          item.taskId
+            ? [item.taskId]
+            : []
+        )
+    );
+
+  const supervisionNotifications =
+    notificationCenter.items.filter(
+      (item) =>
+        item.category ===
+        "supervision"
+    );
+
+  const supervisionNotificationByObjectId =
+    new Map(
+      supervisionNotifications.flatMap(
+        (item) =>
+          item.objectId
+            ? [
+                [
+                  item.objectId,
+                  item,
+                ] as const,
+              ]
+            : []
+      )
+    );
+
+  const overdueSupervisionObjectIds =
+    new Set(
+      supervisionNotifications
+        .filter(
+          (item) =>
+            item.type ===
+            "supervision_overdue"
+        )
+        .flatMap((item) =>
+          item.objectId
+            ? [item.objectId]
+            : []
+        )
+    );
+
+  const lowStockItemIds =
+    new Set(
+      notificationCenter.items
+        .filter(
+          (item) =>
+            item.type ===
+            "low_stock"
+        )
+        .flatMap((item) =>
+          item.warehouseItemId
+            ? [
+                item.warehouseItemId,
+              ]
+            : []
+        )
+    );
+
+  function isTaskMarkedOverdue(
+    task: TaskWithObject
+  ) {
+    return task.task_source ===
+      SUPERVISION_TASK_SOURCE
+      ? overdueSupervisionObjectIds.has(
+          task.object_id
+        )
+      : overdueTaskIds.has(
+          task.id
+        );
+  }
+
   const totalObjects =
     objectList.length;
 
@@ -273,48 +341,42 @@ export default async function HomePage() {
         "Завершено"
     ).length;
 
-  const supervisionObjects =
-    objectList.filter(
-      (object) =>
-        object.status ===
-        PERIODIC_SUPERVISION_STATUS
-    );
-
   const supervisionDueToday =
-    supervisionObjects.filter(
-      (object) =>
-        getObjectSupervisionState(
-          object.next_supervision_date,
-          today
-        ).kind === "today"
+    supervisionNotifications.filter(
+      (item) =>
+        item.type ===
+        "supervision_today"
     );
 
   const supervisionOverdue =
-    supervisionObjects.filter(
-      (object) =>
-        getObjectSupervisionState(
-          object.next_supervision_date,
-          today
-        ).kind === "overdue"
+    supervisionNotifications.filter(
+      (item) =>
+        item.type ===
+        "supervision_overdue"
+    );
+
+  const objectById =
+    new Map(
+      objectList.map((object) => [
+        object.id,
+        object,
+      ])
     );
 
   const supervisionAttentionObjects =
-    [
-      ...supervisionOverdue,
-      ...supervisionDueToday,
-    ].sort(
-      (first, second) =>
-        (
-          first.next_supervision_date ||
-          ""
-        ).localeCompare(
-          second.next_supervision_date ||
-            ""
-        ) ||
-        first.name.localeCompare(
-          second.name,
-          "uk"
-        )
+    supervisionNotifications.flatMap(
+      (item) => {
+        const object =
+          item.objectId
+            ? objectById.get(
+                item.objectId
+              )
+            : null;
+
+        return object
+          ? [object]
+          : [];
+      }
     );
 
   const supervisionAttentionCount =
@@ -330,9 +392,8 @@ export default async function HomePage() {
   const overdueTasks =
     activeTasks.filter(
       (task) =>
-        isTaskOverdue(
-          task,
-          today
+        overdueTaskIds.has(
+          task.id
         )
     );
 
@@ -394,9 +455,8 @@ export default async function HomePage() {
     activeTasks
       .filter(
         (task) =>
-          isTaskOverdue(
-            task,
-            today
+          overdueTaskIds.has(
+            task.id
           ) ||
           task.priority ===
             "Терміновий"
@@ -409,13 +469,17 @@ export default async function HomePage() {
           const firstScore =
             getAttentionTaskScore(
               firstTask,
-              today
+              overdueTaskIds.has(
+                firstTask.id
+              )
             );
 
           const secondScore =
             getAttentionTaskScore(
               secondTask,
-              today
+              overdueTaskIds.has(
+                secondTask.id
+              )
             );
 
           if (
@@ -484,11 +548,8 @@ export default async function HomePage() {
     warehouseItemList
       .filter(
         (item) =>
-          Number(
-            item.quantity
-          ) <=
-          Number(
-            item.min_quantity
+          lowStockItemIds.has(
+            item.id
           )
       )
       .sort(
@@ -596,7 +657,9 @@ export default async function HomePage() {
           planned;
 
         return (
-          quantity <= minimum &&
+          lowStockItemIds.has(
+            item.id
+          ) &&
           expected < minimum
         );
       }
@@ -621,12 +684,31 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <Link
-          href="/objects/new"
-          className="w-full rounded-lg bg-green-600 px-5 py-3 text-center font-medium text-white hover:bg-green-700 sm:w-fit"
-        >
-          + Новий об’єкт
-        </Link>
+        <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-fit">
+          <Link
+            href="/notifications"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border bg-white px-4 py-3 text-center font-medium text-gray-700 transition hover:bg-gray-50"
+          >
+            Усі сповіщення
+
+            {notificationCenter
+              .summary.total > 0 && (
+                <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                  {
+                    notificationCenter
+                      .summary.total
+                  }
+                </span>
+              )}
+          </Link>
+
+          <Link
+            href="/objects/new"
+            className="min-h-12 rounded-lg bg-green-600 px-5 py-3 text-center font-medium text-white hover:bg-green-700"
+          >
+            + Новий об’єкт
+          </Link>
+        </div>
       </div>
 
       {/* MAIN STATS */}
@@ -781,11 +863,13 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 gap-3 p-4 sm:gap-4 sm:p-5 lg:grid-cols-2">
             {supervisionAttentionObjects.map(
               (object) => {
-                const supervisionState =
-                  getObjectSupervisionState(
-                    object.next_supervision_date,
-                    today
+                const notification =
+                  supervisionNotificationByObjectId.get(
+                    object.id
                   );
+                const isOverdue =
+                  notification?.type ===
+                  "supervision_overdue";
 
                 return (
                   <article
@@ -806,16 +890,13 @@ export default async function HomePage() {
 
                       <span
                         className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                          supervisionState.kind ===
-                          "overdue"
+                          isOverdue
                             ? "bg-red-100 text-red-700"
                             : "bg-orange-100 text-orange-700"
                         }`}
                       >
-                        {supervisionState.kind ===
-                        "overdue"
-                          ? `Прострочено на ${supervisionState.overdueDays} дн.`
-                          : "Огляд сьогодні"}
+                        {notification?.detail ||
+                          "Огляд сьогодні"}
                       </span>
                     </div>
 
@@ -885,9 +966,8 @@ export default async function HomePage() {
             {attentionTasks.map(
               (task) => {
                 const overdue =
-                  isTaskOverdue(
-                    task,
-                    today
+                  overdueTaskIds.has(
+                    task.id
                   );
 
                 const priority =
@@ -1413,9 +1493,8 @@ export default async function HomePage() {
               {nearestTasks.map(
                 (task) => {
                   const overdue =
-                    isTaskOverdue(
-                      task,
-                      today
+                    isTaskMarkedOverdue(
+                      task
                     );
 
                   const priority =

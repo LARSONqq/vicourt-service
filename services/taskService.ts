@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 
 import type { TaskWithObject } from "@/types/taskWithObject";
+import type { TaskSource } from "@/types/objectTask";
+
+export type TaskQueryFilters = {
+  dueDateBefore?: string;
+  excludeStatus?: string;
+  taskSource?: TaskSource;
+};
 
 const priorityOrder: Record<
   string,
@@ -12,16 +19,15 @@ const priorityOrder: Record<
   Низький: 4,
 };
 
-export async function getAllTasks(): Promise<
+export async function getAllTasks(
+  filters: TaskQueryFilters = {}
+): Promise<
   TaskWithObject[]
 > {
   const supabase =
     await createClient();
 
-  const {
-    data,
-    error,
-  } = await supabase
+  let query = supabase
     .from("object_tasks")
     .select(`
       id,
@@ -43,8 +49,33 @@ export async function getAllTasks(): Promise<
         id,
         is_completed
       )
-    `)
-    .overrideTypes<
+    `);
+
+  if (filters.dueDateBefore) {
+    query = query.lt(
+      "due_date",
+      filters.dueDateBefore
+    );
+  }
+
+  if (filters.excludeStatus) {
+    query = query.neq(
+      "status",
+      filters.excludeStatus
+    );
+  }
+
+  if (filters.taskSource) {
+    query = query.eq(
+      "task_source",
+      filters.taskSource
+    );
+  }
+
+  const {
+    data,
+    error,
+  } = await query.overrideTypes<
       TaskWithObject[]
     >();
 

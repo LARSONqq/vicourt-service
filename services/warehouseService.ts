@@ -1,9 +1,13 @@
+import {
+  cache,
+} from "react";
+
 import { createClient } from "@/lib/supabase/server";
 
 import type { WarehouseItem } from "@/types/warehouseItem";
 import type { WarehouseMovement } from "@/types/warehouseMovement";
 
-export async function getWarehouseItems(): Promise<
+async function loadWarehouseItems(): Promise<
   WarehouseItem[]
 > {
   const supabase =
@@ -31,6 +35,9 @@ export async function getWarehouseItems(): Promise<
       : []
   ) as WarehouseItem[];
 }
+
+export const getWarehouseItems =
+  cache(loadWarehouseItems);
 
 export async function getWarehouseMovements(): Promise<
   WarehouseMovement[]
