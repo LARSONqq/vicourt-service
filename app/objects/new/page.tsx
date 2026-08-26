@@ -1,4 +1,5 @@
 import { createObject } from "@/app/actions/objectActions";
+import NewObjectStatusFields from "@/components/objects/NewObjectStatusFields";
 import { getEmployees } from "@/services/employeeService";
 
 export default async function NewObjectPage() {
@@ -115,37 +116,7 @@ export default async function NewObjectPage() {
           />
         </div>
 
-        <div>
-          <label className="mb-2 block font-medium">
-            Статус
-          </label>
-
-          <select
-            name="status"
-            className="w-full rounded-lg border bg-white p-3"
-            defaultValue="В роботі"
-          >
-            <option value="В роботі">
-              В роботі
-            </option>
-
-            <option value="На постійному обслуговуванні">
-              На постійному обслуговуванні
-            </option>
-
-            <option value="Під періодичним наглядом">
-              Під періодичним наглядом
-            </option>
-
-            <option value="Пауза">
-              Призупинено
-            </option>
-
-            <option value="Завершений">
-              Завершений
-            </option>
-          </select>
-        </div>
+        <NewObjectStatusFields />
 
         <div>
           <label className="mb-2 block font-medium">

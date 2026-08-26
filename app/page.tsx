@@ -10,6 +10,13 @@ import {
 } from "@/services/purchaseService";
 import { getAllTasks } from "@/services/taskService";
 import { getWarehouseItems } from "@/services/warehouseService";
+import {
+  getKyivDateValue,
+} from "@/lib/kyivDate";
+import {
+  getObjectSupervisionState,
+  PERIODIC_SUPERVISION_STATUS,
+} from "@/lib/objectSupervision";
 
 import type {
   TaskWithObject,
@@ -162,30 +169,6 @@ function formatCreatedDate(
   return `${day}.${month}.${year}`;
 }
 
-function getTodayValue() {
-  const today =
-    new Date();
-
-  const year =
-    today.getFullYear();
-
-  const month = String(
-    today.getMonth() + 1
-  ).padStart(
-    2,
-    "0"
-  );
-
-  const day = String(
-    today.getDate()
-  ).padStart(
-    2,
-    "0"
-  );
-
-  return `${year}-${month}-${day}`;
-}
-
 function isTaskOverdue(
   task: TaskWithObject,
   today: string
@@ -256,7 +239,7 @@ export default async function HomePage() {
       : [];
 
   const today =
-    getTodayValue();
+    getKyivDateValue();
 
   const totalObjects =
     objectList.length;
@@ -278,6 +261,53 @@ export default async function HomePage() {
         object.status ===
         "Завершено"
     ).length;
+
+  const supervisionObjects =
+    objectList.filter(
+      (object) =>
+        object.status ===
+        PERIODIC_SUPERVISION_STATUS
+    );
+
+  const supervisionDueToday =
+    supervisionObjects.filter(
+      (object) =>
+        getObjectSupervisionState(
+          object.next_supervision_date,
+          today
+        ).kind === "today"
+    );
+
+  const supervisionOverdue =
+    supervisionObjects.filter(
+      (object) =>
+        getObjectSupervisionState(
+          object.next_supervision_date,
+          today
+        ).kind === "overdue"
+    );
+
+  const supervisionAttentionObjects =
+    [
+      ...supervisionOverdue,
+      ...supervisionDueToday,
+    ].sort(
+      (first, second) =>
+        (
+          first.next_supervision_date ||
+          ""
+        ).localeCompare(
+          second.next_supervision_date ||
+            ""
+        ) ||
+        first.name.localeCompare(
+          second.name,
+          "uk"
+        )
+    );
+
+  const supervisionAttentionCount =
+    supervisionAttentionObjects.length;
 
   const activeTasks =
     taskList.filter(
@@ -589,7 +619,7 @@ export default async function HomePage() {
       </div>
 
       {/* MAIN STATS */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
         <div className="rounded-xl border bg-white p-4 sm:p-5">
           <p className="text-xs text-gray-500 sm:text-sm">
             Усього об’єктів
@@ -597,6 +627,34 @@ export default async function HomePage() {
 
           <p className="mt-2 text-2xl font-bold sm:text-3xl">
             {totalObjects}
+          </p>
+        </div>
+
+        <div
+          className={`rounded-xl border bg-white p-4 sm:p-5 ${
+            supervisionAttentionCount >
+            0
+              ? "border-rose-200"
+              : ""
+          }`}
+        >
+          <p className="text-xs text-gray-500 sm:text-sm">
+            Потребують нагляду
+          </p>
+
+          <p
+            className={`mt-2 text-2xl font-bold sm:text-3xl ${
+              supervisionAttentionCount >
+              0
+                ? "text-rose-600"
+                : "text-gray-700"
+            }`}
+          >
+            {supervisionAttentionCount}
+          </p>
+
+          <p className="mt-1 text-xs text-gray-500">
+            Сьогодні: {supervisionDueToday.length} · Прострочено: {supervisionOverdue.length}
           </p>
         </div>
 
@@ -685,6 +743,109 @@ export default async function HomePage() {
           </p>
         </Link>
       </div>
+
+      {supervisionAttentionObjects.length >
+        0 && (
+        <section className="overflow-hidden rounded-xl border border-rose-200 bg-white">
+          <div className="flex flex-col gap-4 border-b border-rose-100 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div>
+              <h2 className="text-lg font-semibold text-rose-900 sm:text-xl">
+                Потребують нагляду
+              </h2>
+
+              <p className="mt-1 text-sm text-rose-700">
+                Огляди на сьогодні та
+                прострочені огляди
+              </p>
+            </div>
+
+            <Link
+              href="/objects"
+              className="w-full rounded-lg border border-rose-300 bg-white px-4 py-2.5 text-center text-sm font-medium text-rose-700 hover:bg-rose-100 sm:w-fit"
+            >
+              Переглянути об’єкти
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 p-4 sm:gap-4 sm:p-5 lg:grid-cols-2">
+            {supervisionAttentionObjects.map(
+              (object) => {
+                const supervisionState =
+                  getObjectSupervisionState(
+                    object.next_supervision_date,
+                    today
+                  );
+
+                return (
+                  <article
+                    key={object.id}
+                    className="min-w-0 rounded-xl border bg-white p-4"
+                  >
+                    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <h3 className="break-words font-semibold text-gray-900">
+                          {object.name}
+                        </h3>
+
+                        <p className="mt-1 break-words text-sm text-gray-500">
+                          {object.address ||
+                            "Адресу не вказано"}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                          supervisionState.kind ===
+                          "overdue"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-orange-100 text-orange-700"
+                        }`}
+                      >
+                        {supervisionState.kind ===
+                        "overdue"
+                          ? `Прострочено на ${supervisionState.overdueDays} дн.`
+                          : "Огляд сьогодні"}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 border-t pt-3 text-sm sm:grid-cols-2">
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-400">
+                          Наступний огляд
+                        </p>
+
+                        <p className="mt-1 font-medium text-gray-800">
+                          {formatDate(
+                            object.next_supervision_date
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-400">
+                          Відповідальний
+                        </p>
+
+                        <p className="mt-1 break-words font-medium text-gray-800">
+                          {object.manager ||
+                            "Не призначено"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/objects/${object.id}`}
+                      className="mt-4 inline-flex text-sm font-medium text-green-700 hover:underline"
+                    >
+                      Відкрити об’єкт →
+                    </Link>
+                  </article>
+                );
+              }
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ATTENTION */}
       {hasAttentionTasks ? (

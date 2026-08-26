@@ -4,6 +4,12 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { updateObject } from "@/app/actions/objectActions";
+import {
+  formatDateValue,
+} from "@/lib/kyivDate";
+import {
+  PERIODIC_SUPERVISION_STATUS,
+} from "@/lib/objectSupervision";
 
 import type { Employee } from "@/types/employee";
 import type { ObjectItem } from "@/types/object";
@@ -39,6 +45,9 @@ export default function ObjectInfo({
 
   const currentStatus =
     object.status || "В роботі";
+
+  const [editingStatus, setEditingStatus] =
+    useState(currentStatus);
 
   const statuses = useMemo(() => {
     if (
@@ -221,8 +230,11 @@ export default function ObjectInfo({
 
               <select
                 name="status"
-                defaultValue={
-                  currentStatus
+                value={editingStatus}
+                onChange={(event) =>
+                  setEditingStatus(
+                    event.target.value
+                  )
                 }
                 className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
               >
@@ -258,6 +270,76 @@ export default function ObjectInfo({
               className="min-h-11 w-full min-w-0 rounded-lg border px-3 py-3 outline-none transition focus:border-green-600"
             />
           </div>
+
+          {editingStatus ===
+            PERIODIC_SUPERVISION_STATUS && (
+            <fieldset className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+              <legend className="px-1 font-semibold text-gray-900">
+                Періодичний нагляд
+              </legend>
+
+              <p className="mt-1 text-sm text-gray-600">
+                Налаштуйте інтервал і
+                дату наступного огляду.
+              </p>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Періодичність, днів
+                  </label>
+
+                  <input
+                    type="number"
+                    name="supervision_interval_days"
+                    min="1"
+                    step="1"
+                    inputMode="numeric"
+                    list={`object-${object.id}-supervision-intervals`}
+                    defaultValue={
+                      object.supervision_interval_days ??
+                      ""
+                    }
+                    className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                    placeholder="Наприклад, 14"
+                  />
+
+                  <datalist
+                    id={`object-${object.id}-supervision-intervals`}
+                  >
+                    <option value="7" />
+                    <option value="14" />
+                    <option value="30" />
+                  </datalist>
+                </div>
+
+                <div className="min-w-0">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Дата наступного
+                    огляду
+                  </label>
+
+                  <input
+                    type="date"
+                    name="next_supervision_date"
+                    defaultValue={
+                      object.next_supervision_date ||
+                      ""
+                    }
+                    className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                  />
+                </div>
+              </div>
+
+              <p className="mt-3 text-xs text-gray-500">
+                Останній огляд: {formatDateValue(
+                  object.last_supervision_date
+                ) || "ще не виконувався"}
+                . Дата оновлюється через
+                дію «Огляд виконано».
+              </p>
+            </fieldset>
+          )}
 
           <fieldset className="rounded-xl border bg-gray-50 p-4">
             <legend className="px-1 font-semibold text-gray-900">
@@ -336,6 +418,10 @@ export default function ObjectInfo({
                 setErrorMessage(
                   ""
                 );
+
+                setEditingStatus(
+                  currentStatus
+                );
               }}
               disabled={
                 isSubmitting
@@ -372,6 +458,10 @@ export default function ObjectInfo({
 
             setErrorMessage(
               ""
+            );
+
+            setEditingStatus(
+              currentStatus
             );
           }}
           className="shrink-0 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:px-4"

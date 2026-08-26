@@ -3,6 +3,9 @@ import Link from "next/link";
 import ObjectsList from "@/components/objects/ObjectsList";
 
 import { getObjects } from "@/services/objectService";
+import {
+  getKyivDateValue,
+} from "@/lib/kyivDate";
 
 export default async function ObjectsPage() {
   const objects =
@@ -32,6 +35,9 @@ export default async function ObjectsPage() {
 
       <ObjectsList
         objects={objects}
+        today={
+          getKyivDateValue()
+        }
       />
     </div>
   );

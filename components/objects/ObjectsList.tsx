@@ -7,10 +7,18 @@ import {
   useState,
 } from "react";
 
+import {
+  formatDateValue,
+} from "@/lib/kyivDate";
+import {
+  getObjectSupervisionState,
+  PERIODIC_SUPERVISION_STATUS,
+} from "@/lib/objectSupervision";
 import { ObjectItem } from "@/types/object";
 
 type Props = {
   objects: ObjectItem[];
+  today: string;
 };
 
 const standardStatuses = [
@@ -49,8 +57,54 @@ function getStatusStyle(
   }
 }
 
+function ObjectSupervisionNote({
+  object,
+  today,
+}: {
+  object: ObjectItem;
+  today: string;
+}) {
+  if (
+    object.status !==
+    PERIODIC_SUPERVISION_STATUS
+  ) {
+    return null;
+  }
+
+  const state =
+    getObjectSupervisionState(
+      object.next_supervision_date,
+      today
+    );
+
+  if (state.kind === "overdue") {
+    return (
+      <p className="break-words text-sm font-medium text-red-600">
+        Огляд прострочено на {state.overdueDays} дн.
+      </p>
+    );
+  }
+
+  if (state.kind === "today") {
+    return (
+      <p className="break-words text-sm font-medium text-orange-600">
+        Огляд сьогодні
+      </p>
+    );
+  }
+
+  return (
+    <p className="break-words text-sm text-rose-700">
+      Наступний огляд: {formatDateValue(
+        object.next_supervision_date
+      ) || "не заплановано"}
+    </p>
+  );
+}
+
 export default function ObjectsList({
   objects,
+  today,
 }: Props) {
   const [
     search,
@@ -260,6 +314,11 @@ export default function ObjectsList({
                         {object.address ||
                           "Не вказано"}
                       </p>
+
+                      <ObjectSupervisionNote
+                        object={object}
+                        today={today}
+                      />
                     </div>
                   </div>
 

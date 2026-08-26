@@ -9,6 +9,7 @@ import ObjectInfo from "@/components/objects/ObjectInfo";
 import ObjectMaterials from "@/components/objects/ObjectMaterials";
 import ObjectPhotos from "@/components/objects/ObjectPhotos";
 import ObjectSummary from "@/components/objects/ObjectSummary";
+import ObjectSupervisionCard from "@/components/objects/ObjectSupervisionCard";
 import ObjectTasks from "@/components/objects/ObjectTasks";
 import ObjectWorkLogs from "@/components/objects/ObjectWorkLogs";
 
@@ -29,6 +30,18 @@ import {
 import {
   getWarehouseItems,
 } from "@/services/warehouseService";
+import {
+  getCurrentUserProfile,
+} from "@/services/profileService";
+import {
+  canManageObjects,
+} from "@/lib/auth/permissions";
+import {
+  getKyivDateValue,
+} from "@/lib/kyivDate";
+import {
+  PERIODIC_SUPERVISION_STATUS,
+} from "@/lib/objectSupervision";
 
 type Props = {
   params: Promise<{
@@ -90,6 +103,7 @@ export default async function ObjectPage({
     employees,
     warehouseItems,
     expenses,
+    profile,
   ] = await Promise.all([
     getObject(objectId),
     getObjectTasks(objectId),
@@ -99,6 +113,7 @@ export default async function ObjectPage({
     getEmployees(),
     getWarehouseItems(),
     getObjectExpenses(objectId),
+    getCurrentUserProfile(),
   ]);
 
   if (!object) {
@@ -289,6 +304,13 @@ export default async function ObjectPage({
       0
     );
 
+  const canManageSupervision =
+    profile
+      ? canManageObjects(
+          profile.role
+        )
+      : false;
+
   return (
     <div className="min-w-0 space-y-5 sm:space-y-8">
       {/* BACK */}
@@ -343,6 +365,28 @@ export default async function ObjectPage({
           />
         </div>
       </div>
+
+      {object.status ===
+        PERIODIC_SUPERVISION_STATUS && (
+        <ObjectSupervisionCard
+          objectId={object.id}
+          intervalDays={
+            object.supervision_interval_days
+          }
+          lastDate={
+            object.last_supervision_date
+          }
+          nextDate={
+            object.next_supervision_date
+          }
+          today={
+            getKyivDateValue()
+          }
+          canManage={
+            canManageSupervision
+          }
+        />
+      )}
 
       {/* SUMMARY */}
       <ObjectSummary

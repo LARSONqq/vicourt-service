@@ -4,6 +4,15 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { canManageObjects } from "@/lib/auth/permissions";
+import {
+  addDaysToDateValue,
+  formatDateValue,
+  getKyivDateValue,
+  isValidDateValue,
+} from "@/lib/kyivDate";
+import {
+  PERIODIC_SUPERVISION_STATUS,
+} from "@/lib/objectSupervision";
 import { getCurrentUserProfile } from "@/services/profileService";
 import { recordActivity } from "@/services/activityLogService";
 
@@ -49,6 +58,58 @@ function getOptionalMoney(
   return value;
 }
 
+function getOptionalPositiveInteger(
+  formData: FormData,
+  field: string,
+  label: string
+) {
+  const rawValue = getText(
+    formData,
+    field
+  );
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const value =
+    Number(rawValue);
+
+  if (
+    !Number.isInteger(value) ||
+    value <= 0
+  ) {
+    throw new Error(
+      `${label} має бути цілим числом, більшим за нуль.`
+    );
+  }
+
+  return value;
+}
+
+function getOptionalDate(
+  formData: FormData,
+  field: string,
+  label: string
+) {
+  const value = getText(
+    formData,
+    field
+  );
+
+  if (!value) {
+    return null;
+  }
+
+  if (!isValidDateValue(value)) {
+    throw new Error(
+      `${label} має містити коректну дату.`
+    );
+  }
+
+  return value;
+}
+
 function normalizeOptionalMoney(
   value: unknown
 ) {
@@ -83,6 +144,15 @@ function formatActivityMoney(
       maximumFractionDigits: 2,
     }
   ).format(value)} грн`;
+}
+
+function formatActivityDate(
+  value: string | null
+) {
+  return value
+    ? formatDateValue(value) ||
+        value
+    : "не заплановано";
 }
 
 async function requireObjectManagementAccess() {
@@ -245,6 +315,20 @@ export async function createObject(
       "Вартість для клієнта"
     );
 
+  const supervisionIntervalDays =
+    getOptionalPositiveInteger(
+      formData,
+      "supervision_interval_days",
+      "Періодичність нагляду"
+    );
+
+  const nextSupervisionDate =
+    getOptionalDate(
+      formData,
+      "next_supervision_date",
+      "Дата наступного огляду"
+    );
+
   // Тимчасова підтримка старого текстового поля
   const oldManagerValue =
     getText(
@@ -304,6 +388,15 @@ export async function createObject(
 
       client_price:
         clientPrice,
+
+      supervision_interval_days:
+        supervisionIntervalDays,
+
+      last_supervision_date:
+        null,
+
+      next_supervision_date:
+        nextSupervisionDate,
     })
     .select(`
       id,
@@ -340,6 +433,10 @@ export async function createObject(
         costBudget,
       client_price:
         clientPrice,
+      supervision_interval_days:
+        supervisionIntervalDays,
+      next_supervision_date:
+        nextSupervisionDate,
     },
   });
 
@@ -411,6 +508,28 @@ export async function updateObject(
       "Вартість для клієнта"
     );
 
+  const supervisionIntervalDays =
+    getOptionalPositiveInteger(
+      formData,
+      "supervision_interval_days",
+      "Періодичність нагляду"
+    );
+  const supervisionIntervalProvided =
+    formData.has(
+      "supervision_interval_days"
+    );
+
+  const nextSupervisionDate =
+    getOptionalDate(
+      formData,
+      "next_supervision_date",
+      "Дата наступного огляду"
+    );
+  const nextSupervisionDateProvided =
+    formData.has(
+      "next_supervision_date"
+    );
+
   // Тимчасова підтримка старого текстового поля
   const oldManagerValue =
     getText(
@@ -451,7 +570,9 @@ export async function updateObject(
       name,
       status,
       cost_budget,
-      client_price
+      client_price,
+      supervision_interval_days,
+      next_supervision_date
     `)
     .eq(
       "id",
@@ -470,6 +591,25 @@ export async function updateObject(
       "Об’єкт не знайдено."
     );
   }
+
+  const previousSupervisionIntervalDays =
+    previousObject.supervision_interval_days ===
+      null
+      ? null
+      : Number(
+          previousObject.supervision_interval_days
+        );
+  const previousNextSupervisionDate =
+    previousObject.next_supervision_date ||
+    null;
+  const supervisionIntervalDaysForUpdate =
+    supervisionIntervalProvided
+      ? supervisionIntervalDays
+      : previousSupervisionIntervalDays;
+  const nextSupervisionDateForUpdate =
+    nextSupervisionDateProvided
+      ? nextSupervisionDate
+      : previousNextSupervisionDate;
 
   const responsibleEmployee =
     await getResponsibleEmployee(
@@ -510,6 +650,12 @@ export async function updateObject(
 
       client_price:
         clientPrice,
+
+      supervision_interval_days:
+        supervisionIntervalDaysForUpdate,
+
+      next_supervision_date:
+        nextSupervisionDateForUpdate,
     })
     .eq(
       "id",
@@ -540,11 +686,17 @@ export async function updateObject(
   const clientPriceChanged =
     previousClientPrice !==
     clientPrice;
-  const financialChanges:
+  const supervisionIntervalChanged =
+    previousSupervisionIntervalDays !==
+    supervisionIntervalDaysForUpdate;
+  const nextSupervisionDateChanged =
+    previousNextSupervisionDate !==
+    nextSupervisionDateForUpdate;
+  const objectChanges:
     string[] = [];
 
   if (costBudgetChanged) {
-    financialChanges.push(
+    objectChanges.push(
       `плановий бюджет: ${formatActivityMoney(
         previousCostBudget
       )} → ${formatActivityMoney(
@@ -554,7 +706,7 @@ export async function updateObject(
   }
 
   if (clientPriceChanged) {
-    financialChanges.push(
+    objectChanges.push(
       `вартість для клієнта: ${formatActivityMoney(
         previousClientPrice
       )} → ${formatActivityMoney(
@@ -563,19 +715,45 @@ export async function updateObject(
     );
   }
 
+  if (supervisionIntervalChanged) {
+    objectChanges.push(
+      `періодичність нагляду: ${
+        previousSupervisionIntervalDays ===
+        null
+          ? "не вказано"
+          : `${previousSupervisionIntervalDays} дн.`
+      } → ${
+        supervisionIntervalDaysForUpdate ===
+        null
+          ? "не вказано"
+          : `${supervisionIntervalDaysForUpdate} дн.`
+      }`
+    );
+  }
+
+  if (nextSupervisionDateChanged) {
+    objectChanges.push(
+      `наступний огляд: ${formatActivityDate(
+        previousNextSupervisionDate
+      )} → ${formatActivityDate(
+        nextSupervisionDateForUpdate
+      )}`
+    );
+  }
+
   const activityDescription =
     statusChanged
       ? `Змінив статус об’єкта «${name}»: ${previousObject.status} → ${status}${
-          financialChanges.length >
+          objectChanges.length >
           0
-            ? `; ${financialChanges.join(
+            ? `; ${objectChanges.join(
                 "; "
               )}`
             : ""
         }.`
-      : financialChanges.length >
+      : objectChanges.length >
           0
-        ? `Оновив об’єкт «${name}»: ${financialChanges.join(
+        ? `Оновив об’єкт «${name}»: ${objectChanges.join(
             "; "
           )}.`
         : `Оновив об’єкт «${name}».`;
@@ -608,6 +786,20 @@ export async function updateObject(
       clientPrice;
   }
 
+  if (supervisionIntervalChanged) {
+    activityMetadata.previous_supervision_interval_days =
+      previousSupervisionIntervalDays;
+    activityMetadata.new_supervision_interval_days =
+      supervisionIntervalDaysForUpdate;
+  }
+
+  if (nextSupervisionDateChanged) {
+    activityMetadata.previous_next_supervision_date =
+      previousNextSupervisionDate;
+    activityMetadata.new_next_supervision_date =
+      nextSupervisionDateForUpdate;
+  }
+
   await recordActivity({
     action: statusChanged
       ? "object.status_changed"
@@ -630,6 +822,153 @@ export async function updateObject(
   refreshObjectPages(
     objectId
   );
+}
+
+export async function completeObjectSupervision(
+  objectId: number
+) {
+  await requireObjectManagementAccess();
+
+  if (
+    !Number.isInteger(
+      objectId
+    ) ||
+    objectId <= 0
+  ) {
+    throw new Error(
+      "Не вдалося визначити об’єкт."
+    );
+  }
+
+  const supabase =
+    await createClient();
+
+  const {
+    data: object,
+    error: objectError,
+  } = await supabase
+    .from("objects")
+    .select(`
+      id,
+      name,
+      status,
+      supervision_interval_days,
+      last_supervision_date,
+      next_supervision_date
+    `)
+    .eq(
+      "id",
+      objectId
+    )
+    .maybeSingle();
+
+  if (objectError) {
+    throw new Error(
+      `Не вдалося завантажити об’єкт: ${objectError.message}`
+    );
+  }
+
+  if (!object) {
+    throw new Error(
+      "Об’єкт не знайдено."
+    );
+  }
+
+  if (
+    object.status !==
+    PERIODIC_SUPERVISION_STATUS
+  ) {
+    throw new Error(
+      "Періодичний огляд доступний лише для об’єктів під періодичним наглядом."
+    );
+  }
+
+  const intervalDays =
+    Number(
+      object.supervision_interval_days
+    );
+
+  if (
+    !Number.isInteger(
+      intervalDays
+    ) ||
+    intervalDays <= 0
+  ) {
+    throw new Error(
+      "Спочатку вкажіть періодичність нагляду."
+    );
+  }
+
+  const today =
+    getKyivDateValue();
+  const nextDate =
+    addDaysToDateValue(
+      today,
+      intervalDays
+    );
+
+  const {
+    error: updateError,
+  } = await supabase
+    .from("objects")
+    .update({
+      last_supervision_date:
+        today,
+      next_supervision_date:
+        nextDate,
+    })
+    .eq(
+      "id",
+      objectId
+    );
+
+  if (updateError) {
+    throw new Error(
+      `Не вдалося зберегти огляд: ${updateError.message}`
+    );
+  }
+
+  await recordActivity({
+    action:
+      "object.supervision_completed",
+    entityType:
+      "object",
+    entityId:
+      object.id,
+    entityName:
+      object.name,
+    objectId:
+      object.id,
+    objectName:
+      object.name,
+    description:
+      `Виконав періодичний огляд об’єкта «${object.name}». Наступний огляд: ${formatActivityDate(
+        nextDate
+      )}.`,
+    metadata: {
+      previous_last_supervision_date:
+        object.last_supervision_date,
+      new_last_supervision_date:
+        today,
+      previous_next_supervision_date:
+        object.next_supervision_date,
+      new_next_supervision_date:
+        nextDate,
+      interval_days:
+        intervalDays,
+    },
+  });
+
+  refreshObjectPages(
+    objectId
+  );
+
+  return {
+    lastSupervisionDate:
+      today,
+    nextSupervisionDate:
+      nextDate,
+  };
 }
 
 export async function deleteObject(

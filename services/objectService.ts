@@ -403,6 +403,15 @@ export async function createObject(
     client_price?:
       | number
       | null;
+    supervision_interval_days?:
+      | number
+      | null;
+    last_supervision_date?:
+      | string
+      | null;
+    next_supervision_date?:
+      | string
+      | null;
   }
 ) {
   const supabase =
