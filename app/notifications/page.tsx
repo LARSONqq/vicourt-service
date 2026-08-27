@@ -63,6 +63,10 @@ const filters: Array<{
     value: "purchases",
     label: "Закупівлі",
   },
+  {
+    value: "equipment",
+    label: "Техніка",
+  },
 ];
 
 function getFirstParam(
@@ -153,6 +157,10 @@ function getNotificationIcon(
 
     case "planned_purchase":
       return "+";
+
+    case "equipment_maintenance_today":
+    case "equipment_maintenance_overdue":
+      return "⚙";
   }
 }
 
@@ -248,6 +256,11 @@ export default async function NotificationsPage({
             pushPreferences
           }
           showLowStock={
+            !isWorker(
+              profile.role
+            )
+          }
+          showEquipmentMaintenance={
             !isWorker(
               profile.role
             )

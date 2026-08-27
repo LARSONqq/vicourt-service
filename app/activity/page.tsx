@@ -90,6 +90,9 @@ function getEntityStyle(
     case "purchase":
       return "bg-cyan-50 text-cyan-700";
 
+    case "equipment":
+      return "bg-slate-100 text-slate-700";
+
     default:
       return "bg-gray-100 text-gray-700";
   }

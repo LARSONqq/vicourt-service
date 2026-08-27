@@ -37,6 +37,12 @@ const columnLabels: Record<
   location: "Локація",
   purchaseDate:
     "Дата придбання",
+  maintenanceIntervalDays:
+    "Періодичність ТО, днів",
+  lastMaintenanceDate:
+    "Останнє планове ТО",
+  nextMaintenanceDate:
+    "Наступне ТО",
   nextServiceDate:
     "Наступне обслуговування",
   notes: "Примітки",

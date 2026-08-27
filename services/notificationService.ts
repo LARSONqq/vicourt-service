@@ -16,6 +16,10 @@ import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
 import {
+  getDayWord,
+  getEquipmentMaintenanceState,
+} from "@/lib/equipmentMaintenance";
+import {
   getObjectSupervisionState,
   PERIODIC_SUPERVISION_STATUS,
 } from "@/lib/objectSupervision";
@@ -25,6 +29,9 @@ import {
 import {
   getCurrentUserProfile,
 } from "@/services/profileService";
+import {
+  getEquipment,
+} from "@/services/equipmentService";
 import {
   getWarehousePurchases,
 } from "@/services/purchaseService";
@@ -59,6 +66,9 @@ import type {
 import type {
   WarehousePurchase,
 } from "@/types/warehousePurchase";
+import type {
+  Equipment,
+} from "@/types/equipment";
 
 const COMPLETED_TASK_STATUS =
   "Виконано";
@@ -72,6 +82,7 @@ export type NotificationSourceData = {
   objects: ObjectItem[];
   warehouseItems: WarehouseItem[];
   purchases: WarehousePurchase[];
+  equipment: Equipment[];
 };
 
 const AUTOMATIC_PUSH_TYPES =
@@ -80,6 +91,8 @@ const AUTOMATIC_PUSH_TYPES =
     "supervision_today",
     "supervision_overdue",
     "low_stock",
+    "equipment_maintenance_today",
+    "equipment_maintenance_overdue",
   ]);
 
 export function isAutomaticPushNotification(
@@ -117,38 +130,17 @@ export function getAutomaticPushStateToken(
       // Залишок не входить у token: зміни в межах одного low-stock episode
       // не повинні створювати повторні push-повідомлення.
       return "low-stock";
+
+    case "equipment_maintenance_today":
+      return item.date
+        ? `today:${item.date}`
+        : null;
+
+    case "equipment_maintenance_overdue":
+      return item.date
+        ? `overdue:${item.date}`
+        : null;
   }
-}
-
-function getDayWord(
-  value: number
-) {
-  const absoluteValue =
-    Math.abs(value);
-  const lastTwoDigits =
-    absoluteValue % 100;
-  const lastDigit =
-    absoluteValue % 10;
-
-  if (
-    lastTwoDigits >= 11 &&
-    lastTwoDigits <= 14
-  ) {
-    return "днів";
-  }
-
-  if (lastDigit === 1) {
-    return "день";
-  }
-
-  if (
-    lastDigit >= 2 &&
-    lastDigit <= 4
-  ) {
-    return "дні";
-  }
-
-  return "днів";
 }
 
 function formatMoney(
@@ -256,6 +248,7 @@ export function buildNotificationItems({
   objects,
   warehouseItems,
   purchases,
+  equipment,
 }: NotificationSourceData): NotificationItem[] {
   const items: NotificationItem[] = [];
 
@@ -400,6 +393,62 @@ export function buildNotificationItems({
     });
   }
 
+  for (const item of equipment) {
+    const state =
+      getEquipmentMaintenanceState(
+        item.maintenance_interval_days,
+        item.next_service_date,
+        today
+      );
+
+    if (
+      state.kind !== "today" &&
+      state.kind !== "overdue"
+    ) {
+      continue;
+    }
+
+    const isOverdue =
+      state.kind === "overdue";
+
+    items.push({
+      key: `equipment-maintenance:${item.id}`,
+      type: isOverdue
+        ? "equipment_maintenance_overdue"
+        : "equipment_maintenance_today",
+      category: "equipment",
+      severity: isOverdue
+        ? "critical"
+        : "warning",
+      timing: isOverdue
+        ? "overdue"
+        : "today",
+      title: isOverdue
+        ? "ТО техніки прострочено"
+        : "ТО техніки сьогодні",
+      message: isOverdue
+        ? `Планове ТО техніки «${item.name}» прострочено на ${state.overdueDays} ${getDayWord(
+            state.overdueDays
+          )}.`
+        : `Техніка «${item.name}» потребує планового ТО сьогодні.`,
+      detail: isOverdue
+        ? `Прострочено на ${state.overdueDays} ${getDayWord(
+            state.overdueDays
+          )}`
+        : "ТО сьогодні",
+      contextLabel:
+        item.inventory_number ||
+        item.category,
+      href: "/equipment",
+      date:
+        item.next_service_date,
+      overdueDays: isOverdue
+        ? state.overdueDays
+        : null,
+      equipmentId: item.id,
+    });
+  }
+
   for (const purchase of purchases) {
     if (
       purchase.status !==
@@ -509,6 +558,11 @@ export const getNotificationCenter =
           profile.role,
           "purchases"
         );
+      const canViewEquipment =
+        canAccessSection(
+          profile.role,
+          "equipment"
+        );
 
       const [
         tasks,
@@ -516,6 +570,7 @@ export const getNotificationCenter =
         warehouseItems,
         purchases,
         settings,
+        equipment,
       ] = await Promise.all([
         canViewTasks
           ? getAllTasks({
@@ -555,6 +610,11 @@ export const getNotificationCenter =
         canViewPurchases
           ? getAppSettings()
           : Promise.resolve(null),
+        canViewEquipment
+          ? getEquipment()
+          : Promise.resolve<
+              Equipment[]
+            >([]),
       ]);
 
       const items =
@@ -567,6 +627,7 @@ export const getNotificationCenter =
           objects,
           warehouseItems,
           purchases,
+          equipment,
         });
 
       return {

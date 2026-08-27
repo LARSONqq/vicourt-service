@@ -447,7 +447,13 @@ async function getSnapshotCsv(
               formatDate(
                 item.purchase_date
               ),
-            nextServiceDate:
+            maintenanceIntervalDays:
+              item.maintenance_interval_days,
+            lastMaintenanceDate:
+              formatDate(
+                item.last_maintenance_date
+              ),
+            nextMaintenanceDate:
               formatDate(
                 item.next_service_date
               ),

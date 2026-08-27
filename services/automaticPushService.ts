@@ -62,6 +62,9 @@ import type {
 import type {
   WarehouseItem,
 } from "@/types/warehouseItem";
+import type {
+  Equipment,
+} from "@/types/equipment";
 
 const COMPLETED_TASK_STATUS =
   "Виконано";
@@ -366,6 +369,18 @@ function canReceiveNotification(
       return canAccessSection(
         profile.role,
         "objects"
+      );
+    }
+
+    if (
+      notification.type ===
+        "equipment_maintenance_today" ||
+      notification.type ===
+        "equipment_maintenance_overdue"
+    ) {
+      return canAccessSection(
+        profile.role,
+        "equipment"
       );
     }
 
@@ -708,6 +723,7 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
       tasks,
       objects,
       warehouseItems,
+      equipment,
     ] = await Promise.all([
       loadAllPages<PushSubscriptionRecord>(
         "Не вдалося завантажити push subscriptions",
@@ -782,6 +798,7 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
                 overdue_tasks_enabled,
                 supervision_enabled,
                 low_stock_enabled,
+                equipment_maintenance_enabled,
                 quiet_hours_enabled,
                 quiet_start,
                 quiet_end,
@@ -903,6 +920,39 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
           };
         }
       ),
+      loadAllPages<Equipment>(
+        "Не вдалося завантажити техніку з актуальним плановим ТО",
+        async (from, to) => {
+          const { data, error } =
+            await supabase
+              .from("equipment")
+              .select("*")
+              .not(
+                "maintenance_interval_days",
+                "is",
+                null
+              )
+              .not(
+                "next_service_date",
+                "is",
+                null
+              )
+              .lte(
+                "next_service_date",
+                today
+              )
+              .order("id")
+              .range(from, to)
+              .overrideTypes<
+                Equipment[]
+              >();
+
+          return {
+            data,
+            error,
+          };
+        }
+      ),
     ]);
 
     const subscriptionsByUser =
@@ -980,6 +1030,7 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
         objects,
         warehouseItems,
         purchases: [],
+        equipment,
       }).filter(
         isAutomaticPushNotification
       );

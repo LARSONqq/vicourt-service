@@ -30,6 +30,10 @@ export const activityEntityTypes: Array<{
     value: "purchase",
     label: "Закупівлі",
   },
+  {
+    value: "equipment",
+    label: "Техніка",
+  },
 ];
 
 export function getActivityEntityTypeLabel(

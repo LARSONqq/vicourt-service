@@ -4,7 +4,8 @@ export type ActivityEntityType =
   | "material"
   | "work_log"
   | "object_expense"
-  | "purchase";
+  | "purchase"
+  | "equipment";
 
 export type ActivityMetadataValue =
   | string

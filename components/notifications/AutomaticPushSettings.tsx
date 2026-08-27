@@ -19,6 +19,7 @@ import type {
 type Props = {
   initialPreferences: PushNotificationPreferences;
   showLowStock: boolean;
+  showEquipmentMaintenance: boolean;
 };
 
 type PreferenceToggleProps = {
@@ -65,6 +66,7 @@ function PreferenceToggle({
 export default function AutomaticPushSettings({
   initialPreferences,
   showLowStock,
+  showEquipmentMaintenance,
 }: Props) {
   const [preferences, setPreferences] =
     useState(
@@ -209,6 +211,22 @@ export default function AutomaticPushSettings({
             onChange={(checked) =>
               updatePreference(
                 "low_stock_enabled",
+                checked
+              )
+            }
+          />
+        )}
+
+        {showEquipmentMaintenance && (
+          <PreferenceToggle
+            checked={
+              preferences.equipment_maintenance_enabled
+            }
+            label="ТО техніки"
+            description="Повідомляти про планове ТО на сьогодні та прострочене обслуговування."
+            onChange={(checked) =>
+              updatePreference(
+                "equipment_maintenance_enabled",
                 checked
               )
             }

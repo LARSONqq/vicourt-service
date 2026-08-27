@@ -7,6 +7,13 @@ import {
 } from "react";
 
 import { deleteEquipment } from "@/app/actions/equipmentActions";
+import {
+  getEquipmentMaintenanceLabel,
+  getEquipmentMaintenanceState,
+} from "@/lib/equipmentMaintenance";
+import {
+  formatDateValue,
+} from "@/lib/kyivDate";
 
 import type { Employee } from "@/types/employee";
 import type { Equipment } from "@/types/equipment";
@@ -17,23 +24,8 @@ type Props = {
   equipment: Equipment[];
   employees: Employee[];
   canManage?: boolean;
+  today: string;
 };
-
-function formatDate(
-  date: string | null
-) {
-  if (!date) {
-    return "Не вказано";
-  }
-
-  return new Intl.DateTimeFormat(
-    "uk-UA"
-  ).format(
-    new Date(
-      `${date}T00:00:00`
-    )
-  );
-}
 
 function getStatusClasses(
   status: string
@@ -59,49 +51,33 @@ function getStatusClasses(
   }
 }
 
-function isServiceOverdue(
-  date: string | null
-) {
-  if (!date) {
-    return false;
-  }
-
-  const serviceDate =
-    new Date(
-      `${date}T00:00:00`
-    );
-
-  const today =
-    new Date();
-
-  today.setHours(
-    0,
-    0,
-    0,
-    0
-  );
-
-  return serviceDate < today;
-}
-
 export default function EquipmentList({
   equipment,
   employees,
   canManage = false,
+  today,
 }: Props) {
   const safeEquipment =
-    Array.isArray(
-      equipment
-    )
-      ? equipment
-      : [];
+    useMemo(
+      () =>
+        Array.isArray(
+          equipment
+        )
+          ? equipment
+          : [],
+      [equipment]
+    );
 
   const safeEmployees =
-    Array.isArray(
-      employees
-    )
-      ? employees
-      : [];
+    useMemo(
+      () =>
+        Array.isArray(
+          employees
+        )
+          ? employees
+          : [],
+      [employees]
+    );
 
   const [
     search,
@@ -117,6 +93,11 @@ export default function EquipmentList({
     status,
     setStatus,
   ] = useState("Усі");
+
+  const [
+    maintenanceFilter,
+    setMaintenanceFilter,
+  ] = useState("all");
 
   const [
     editingId,
@@ -205,10 +186,37 @@ export default function EquipmentList({
             item.status ===
               status;
 
+          const maintenanceState =
+            getEquipmentMaintenanceState(
+              item.maintenance_interval_days,
+              item.next_service_date,
+              today
+            );
+          const matchesMaintenance =
+            maintenanceFilter ===
+              "all" ||
+            (maintenanceFilter ===
+              "attention" &&
+              (maintenanceState.kind ===
+                "today" ||
+                maintenanceState.kind ===
+                  "overdue")) ||
+            (maintenanceFilter ===
+              "scheduled" &&
+              maintenanceState.kind ===
+                "scheduled") ||
+            (maintenanceFilter ===
+              "unconfigured" &&
+              (maintenanceState.kind ===
+                "unconfigured" ||
+                maintenanceState.kind ===
+                  "unscheduled"));
+
           return (
             matchesSearch &&
             matchesCategory &&
-            matchesStatus
+            matchesStatus &&
+            matchesMaintenance
           );
         }
       );
@@ -217,6 +225,8 @@ export default function EquipmentList({
       search,
       category,
       status,
+      maintenanceFilter,
+      today,
     ]);
 
   function toggleEdit(
@@ -242,7 +252,7 @@ export default function EquipmentList({
   return (
     <div className="min-w-0 space-y-5">
       {/* FILTERS */}
-      <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_220px_220px]">
+      <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_190px_190px_210px]">
         <input
           type="search"
           value={search}
@@ -308,6 +318,29 @@ export default function EquipmentList({
             )
           )}
         </select>
+
+        <select
+          value={maintenanceFilter}
+          onChange={(event) =>
+            setMaintenanceFilter(
+              event.target.value
+            )
+          }
+          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+        >
+          <option value="all">
+            Уся техніка
+          </option>
+          <option value="attention">
+            Потребує ТО
+          </option>
+          <option value="scheduled">
+            ТО заплановано
+          </option>
+          <option value="unconfigured">
+            ТО не налаштовано
+          </option>
+        </select>
       </div>
 
       {/* COUNT */}
@@ -351,10 +384,15 @@ export default function EquipmentList({
           <div className="space-y-3 md:hidden">
             {filteredEquipment.map(
               (item) => {
-                const serviceOverdue =
-                  isServiceOverdue(
-                    item.next_service_date
+                const maintenanceState =
+                  getEquipmentMaintenanceState(
+                    item.maintenance_interval_days,
+                    item.next_service_date,
+                    today
                   );
+                const serviceOverdue =
+                  maintenanceState.kind ===
+                  "overdue";
 
                 const isEditing =
                   canManage &&
@@ -436,7 +474,7 @@ export default function EquipmentList({
 
                       <div className="col-span-2 min-w-0">
                         <p className="text-xs text-gray-500">
-                          Наступний сервіс
+                          Планове ТО
                         </p>
 
                         <p
@@ -446,15 +484,17 @@ export default function EquipmentList({
                               : "text-gray-800"
                           }`}
                         >
-                          {formatDate(
-                            item.next_service_date
+                          {getEquipmentMaintenanceLabel(
+                            maintenanceState
                           )}
                         </p>
 
-                        {serviceOverdue && (
-                          <p className="mt-1 text-xs font-medium text-red-600">
-                            ⚠ Сервіс
-                            прострочено
+                        {item.maintenance_interval_days &&
+                          item.next_service_date && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            {formatDateValue(
+                              item.next_service_date
+                            )}
                           </p>
                         )}
                       </div>
@@ -583,7 +623,7 @@ export default function EquipmentList({
                   </th>
 
                   <th className="p-4">
-                    Наступний сервіс
+                    Планове ТО
                   </th>
 
                   {canManage && (
@@ -597,10 +637,15 @@ export default function EquipmentList({
               <tbody>
                 {filteredEquipment.map(
                   (item) => {
-                    const serviceOverdue =
-                      isServiceOverdue(
-                        item.next_service_date
+                    const maintenanceState =
+                      getEquipmentMaintenanceState(
+                        item.maintenance_interval_days,
+                        item.next_service_date,
+                        today
                       );
+                    const serviceOverdue =
+                      maintenanceState.kind ===
+                      "overdue";
 
                     const isEditing =
                       canManage &&
@@ -670,15 +715,17 @@ export default function EquipmentList({
                                   : "text-gray-600"
                               }
                             >
-                              {formatDate(
-                                item.next_service_date
+                              {getEquipmentMaintenanceLabel(
+                                maintenanceState
                               )}
                             </span>
 
-                            {serviceOverdue && (
-                              <p className="mt-1 text-xs font-medium text-red-600">
-                                Сервіс
-                                прострочено
+                            {item.maintenance_interval_days &&
+                              item.next_service_date && (
+                              <p className="mt-1 text-xs text-gray-500">
+                                {formatDateValue(
+                                  item.next_service_date
+                                )}
                               </p>
                             )}
                           </td>

@@ -1,9 +1,16 @@
 import EquipmentActions from "@/components/equipment/EquipmentActions";
 import EquipmentList from "@/components/equipment/EquipmentList";
+import EquipmentMaintenancePanel from "@/components/equipment/EquipmentMaintenancePanel";
 import EquipmentServiceHistory from "@/components/equipment/EquipmentServiceHistory";
 
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
 import { canManageEquipment } from "@/lib/auth/permissions";
+import {
+  getEquipmentMaintenanceState,
+} from "@/lib/equipmentMaintenance";
+import {
+  getKyivDateValue,
+} from "@/lib/kyivDate";
 
 import { getEmployees } from "@/services/employeeService";
 
@@ -13,14 +20,6 @@ import {
 } from "@/services/equipmentService";
 
 import { getAppSettings } from "@/services/settingsService";
-
-function getDateAtStartOfDay(
-  date: string
-) {
-  return new Date(
-    `${date}T00:00:00`
-  );
-}
 
 export default async function EquipmentPage() {
   const currentProfile =
@@ -64,40 +63,22 @@ export default async function EquipmentPage() {
     ).length;
 
   const today =
-    new Date();
-
-  today.setHours(
-    0,
-    0,
-    0,
-    0
-  );
-
-  const serviceLimit =
-    new Date(today);
-
-  serviceLimit.setDate(
-    serviceLimit.getDate() +
-      30
-  );
-
-  const serviceSoonCount =
+    getKyivDateValue();
+  const maintenanceAttentionCount =
     equipment.filter(
       (item) => {
-        if (
-          !item.next_service_date
-        ) {
-          return false;
-        }
-
-        const serviceDate =
-          getDateAtStartOfDay(
-            item.next_service_date
+        const state =
+          getEquipmentMaintenanceState(
+            item.maintenance_interval_days,
+            item.next_service_date,
+            today
           );
 
         return (
-          serviceDate <=
-          serviceLimit
+          state.kind ===
+            "today" ||
+          state.kind ===
+            "overdue"
         );
       }
     ).length;
@@ -207,23 +188,23 @@ export default async function EquipmentPage() {
 
         <div
           className={`min-w-0 rounded-xl border bg-white p-3 sm:p-5 ${
-            serviceSoonCount > 0
+            maintenanceAttentionCount > 0
               ? "border-red-200"
               : ""
           }`}
         >
           <p className="text-xs leading-4 text-gray-500 sm:text-sm">
-            Сервіс протягом 30 днів
+            Техніка потребує ТО
           </p>
 
           <p
             className={`mt-2 text-2xl font-bold sm:text-3xl ${
-              serviceSoonCount > 0
+              maintenanceAttentionCount > 0
                 ? "text-red-600"
                 : "text-gray-900"
             }`}
           >
-            {serviceSoonCount}
+            {maintenanceAttentionCount}
           </p>
         </div>
       </div>
@@ -240,8 +221,19 @@ export default async function EquipmentPage() {
           canManage={
             canManage
           }
+          today={today}
         />
       </div>
+
+      {/* PLANNED MAINTENANCE */}
+      <EquipmentMaintenancePanel
+        equipment={equipment}
+        currency={
+          settings.currency
+        }
+        canManage={canManage}
+        today={today}
+      />
 
       {/* SERVICE HISTORY */}
       <div className="min-w-0">

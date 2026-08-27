@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import {
+  isValidDateValue,
+} from "@/lib/kyivDate";
 
 import {
   canManageEquipment,
@@ -11,6 +14,9 @@ import {
 import {
   getCurrentUserProfile,
 } from "@/services/profileService";
+import {
+  recordActivity,
+} from "@/services/activityLogService";
 
 import {
   equipmentCategories,
@@ -47,6 +53,46 @@ function getText(
   return String(
     formData.get(field) ?? ""
   ).trim();
+}
+
+function getMaintenanceInterval(
+  formData: FormData
+) {
+  const value =
+    getText(
+      formData,
+      "maintenance_interval_days"
+    );
+
+  if (!value) {
+    return null;
+  }
+
+  const interval =
+    Number(value);
+
+  if (
+    !Number.isInteger(interval) ||
+    interval <= 0
+  ) {
+    throw new Error(
+      "Періодичність ТО має бути цілим числом, більшим за нуль."
+    );
+  }
+
+  return interval;
+}
+
+function validateOptionalDate(
+  value: string,
+  message: string
+) {
+  if (
+    value &&
+    !isValidDateValue(value)
+  ) {
+    throw new Error(message);
+  }
 }
 
 function validateEquipment(
@@ -226,6 +272,11 @@ export async function createEquipment(
       "next_service_date"
     );
 
+  const maintenanceIntervalDays =
+    getMaintenanceInterval(
+      formData
+    );
+
   const notes =
     getText(
       formData,
@@ -236,6 +287,11 @@ export async function createEquipment(
     name,
     category,
     status
+  );
+
+  validateOptionalDate(
+    nextServiceDate,
+    "Вкажи коректну дату наступного ТО."
   );
 
   const responsibleEmployee =
@@ -268,6 +324,9 @@ export async function createEquipment(
         purchase_date:
           purchaseDate || null,
 
+        maintenance_interval_days:
+          maintenanceIntervalDays,
+
         next_service_date:
           nextServiceDate ||
           null,
@@ -286,6 +345,9 @@ export async function createEquipment(
   revalidatePath("/");
   revalidatePath(
     "/equipment"
+  );
+  revalidatePath(
+    "/notifications"
   );
   revalidatePath(
     "/employees"
@@ -361,6 +423,11 @@ export async function updateEquipment(
       "next_service_date"
     );
 
+  const maintenanceIntervalDays =
+    getMaintenanceInterval(
+      formData
+    );
+
   const notes =
     getText(
       formData,
@@ -384,6 +451,11 @@ export async function updateEquipment(
     status
   );
 
+  validateOptionalDate(
+    nextServiceDate,
+    "Вкажи коректну дату наступного ТО."
+  );
+
   if (!inventoryNumber) {
     throw new Error(
       "Інвентарний номер не може бути порожнім."
@@ -394,6 +466,30 @@ export async function updateEquipment(
     await getResponsibleEmployee(
       responsibleEmployeeValue
     );
+
+  const {
+    data: previousEquipment,
+    error: previousEquipmentError,
+  } = await supabase
+    .from("equipment")
+    .select(`
+      maintenance_interval_days,
+      next_service_date
+    `)
+    .eq("id", equipmentId)
+    .maybeSingle();
+
+  if (
+    previousEquipmentError ||
+    !previousEquipment
+  ) {
+    throw new Error(
+      `Не вдалося завантажити поточні налаштування техніки: ${
+        previousEquipmentError?.message ||
+        "запис не знайдено"
+      }`
+    );
+  }
 
   const { error } =
     await supabase
@@ -419,6 +515,9 @@ export async function updateEquipment(
         purchase_date:
           purchaseDate || null,
 
+        maintenance_interval_days:
+          maintenanceIntervalDays,
+
         next_service_date:
           nextServiceDate ||
           null,
@@ -438,9 +537,50 @@ export async function updateEquipment(
     );
   }
 
+  const previousInterval =
+    previousEquipment.maintenance_interval_days ===
+      null
+      ? null
+      : Number(
+          previousEquipment.maintenance_interval_days
+        );
+  const scheduleChanged =
+    previousInterval !==
+      maintenanceIntervalDays ||
+    previousEquipment.next_service_date !==
+      (nextServiceDate || null);
+
+  if (scheduleChanged) {
+    await recordActivity({
+      action:
+        "equipment.maintenance_schedule_updated",
+      entityType:
+        "equipment",
+      entityId:
+        equipmentId,
+      entityName:
+        name,
+      description: `Оновлено налаштування планового ТО техніки «${name}».`,
+      metadata: {
+        previous_maintenance_interval_days:
+          previousInterval,
+        new_maintenance_interval_days:
+          maintenanceIntervalDays,
+        previous_next_service_date:
+          previousEquipment.next_service_date,
+        new_next_service_date:
+          nextServiceDate ||
+          null,
+      },
+    });
+  }
+
   revalidatePath("/");
   revalidatePath(
     "/equipment"
+  );
+  revalidatePath(
+    "/notifications"
   );
   revalidatePath(
     "/employees"
@@ -490,6 +630,9 @@ export async function deleteEquipment(
   revalidatePath("/");
   revalidatePath(
     "/equipment"
+  );
+  revalidatePath(
+    "/notifications"
   );
   revalidatePath(
     "/employees"

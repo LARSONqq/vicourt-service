@@ -255,8 +255,8 @@ export function EditEquipmentForm({
         </div>
       </div>
 
-      {/* DATES */}
-      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+      {/* PURCHASE DATE */}
+      <div className="min-w-0 sm:max-w-sm">
         <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-gray-700">
             Дата придбання
@@ -272,23 +272,66 @@ export function EditEquipmentForm({
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           />
         </div>
-
-        <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
-            Наступне обслуговування
-          </label>
-
-          <input
-            type="date"
-            name="next_service_date"
-            defaultValue={
-              equipment.next_service_date ||
-              ""
-            }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-          />
-        </div>
       </div>
+
+      {/* PLANNED MAINTENANCE */}
+      <fieldset className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+        <legend className="px-1 text-sm font-semibold text-gray-900">
+          Планове ТО
+        </legend>
+
+        <p className="mb-4 text-xs leading-5 text-gray-500">
+          Дату останнього ТО оновлює окрема дія «ТО виконано».
+        </p>
+
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Періодичність ТО, днів
+            </label>
+
+            <input
+              type="number"
+              name="maintenance_interval_days"
+              inputMode="numeric"
+              min="1"
+              step="1"
+              list={`edit-maintenance-intervals-${equipment.id}`}
+              defaultValue={
+                equipment.maintenance_interval_days ??
+                ""
+              }
+              placeholder="Наприклад: 90"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            />
+
+            <datalist
+              id={`edit-maintenance-intervals-${equipment.id}`}
+            >
+              <option value="30" />
+              <option value="90" />
+              <option value="180" />
+              <option value="365" />
+            </datalist>
+          </div>
+
+          <div className="min-w-0">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Наступне ТО
+            </label>
+
+            <input
+              type="date"
+              name="next_service_date"
+              defaultValue={
+                equipment.next_service_date ||
+                ""
+              }
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            />
+          </div>
+        </div>
+      </fieldset>
 
       {/* NOTES */}
       <div className="min-w-0">

@@ -109,6 +109,11 @@ export async function savePushNotificationPreferences(
         input,
         "low_stock_enabled"
       );
+    const equipmentMaintenanceEnabled =
+      getBooleanValue(
+        input,
+        "equipment_maintenance_enabled"
+      );
     const quietHoursEnabled =
       getBooleanValue(
         input,
@@ -165,6 +170,8 @@ export async function savePushNotificationPreferences(
             supervisionEnabled,
           low_stock_enabled:
             lowStockEnabled,
+          equipment_maintenance_enabled:
+            equipmentMaintenanceEnabled,
           quiet_hours_enabled:
             quietHoursEnabled,
           quiet_start:
@@ -182,6 +189,7 @@ export async function savePushNotificationPreferences(
         overdue_tasks_enabled,
         supervision_enabled,
         low_stock_enabled,
+        equipment_maintenance_enabled,
         quiet_hours_enabled,
         quiet_start,
         quiet_end,
