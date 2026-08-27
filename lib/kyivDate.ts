@@ -13,6 +13,18 @@ const kyivDateFormatter =
     }
   );
 
+const kyivTimeFormatter =
+  new Intl.DateTimeFormat(
+    "en-GB",
+    {
+      timeZone:
+        KYIV_TIME_ZONE,
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }
+  );
+
 function getDateParts(
   date: Date
 ) {
@@ -38,6 +50,14 @@ export function getKyivDateValue(
     getDateParts(date);
 
   return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+export function getKyivTimeValue(
+  date = new Date()
+) {
+  return kyivTimeFormatter.format(
+    date
+  );
 }
 
 export function isValidDateValue(

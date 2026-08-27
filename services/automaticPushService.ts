@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth/permissions";
 import {
   getKyivDateValue,
+  getKyivTimeValue,
 } from "@/lib/kyivDate";
 import {
   PERIODIC_SUPERVISION_STATUS,
@@ -32,6 +33,11 @@ import {
   PushDeliveryError,
   sendPushNotification,
 } from "@/services/pushService";
+import {
+  isAutomaticPushCategoryEnabled,
+  isWithinQuietHours,
+  resolvePushNotificationPreferences,
+} from "@/services/pushNotificationPreferenceService";
 
 import type {
   AutomaticPushNotificationType,
@@ -43,6 +49,9 @@ import type {
 import type {
   PushSubscriptionRecord,
 } from "@/types/pushSubscription";
+import type {
+  PushNotificationPreferenceRow,
+} from "@/types/pushNotificationPreference";
 import type {
   TaskWithObject,
 } from "@/types/taskWithObject";
@@ -80,6 +89,7 @@ type RecipientCandidate = {
   userId: string;
   notification: AutomaticPushItem;
   stateToken: string;
+  deliveryEligible: boolean;
 };
 
 type ClaimInput = {
@@ -87,6 +97,7 @@ type ClaimInput = {
   notification_key: string;
   notification_type: AutomaticPushNotificationType;
   state_token: string;
+  delivery_eligible: boolean;
 };
 
 type PushClaim = {
@@ -140,6 +151,9 @@ export type AutomaticPushRunStats = {
   deliveriesSucceeded: number;
   deliveriesFailed: number;
   deadSubscriptionsRemoved: number;
+  skippedByPreference: number;
+  skippedByQuietHours: number;
+  usersWithoutSubscriptions: number;
   skippedConcurrentRun: boolean;
 };
 
@@ -152,6 +166,9 @@ function createEmptyStats(): AutomaticPushRunStats {
     deliveriesSucceeded: 0,
     deliveriesFailed: 0,
     deadSubscriptionsRemoved: 0,
+    skippedByPreference: 0,
+    skippedByQuietHours: 0,
+    usersWithoutSubscriptions: 0,
     skippedConcurrentRun: false,
   };
 }
@@ -681,10 +698,13 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
   try {
     const today =
       getKyivDateValue();
+    const kyivTime =
+      getKyivTimeValue();
 
     const [
       subscriptions,
       rawProfiles,
+      preferenceRows,
       tasks,
       objects,
       warehouseItems,
@@ -741,6 +761,37 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
               .range(from, to)
               .overrideTypes<
                 PushRecipientProfile[]
+              >();
+
+          return {
+            data,
+            error,
+          };
+        }
+      ),
+      loadAllPages<PushNotificationPreferenceRow>(
+        "Не вдалося завантажити push preferences",
+        async (from, to) => {
+          const { data, error } =
+            await supabase
+              .from(
+                "push_notification_preferences"
+              )
+              .select(`
+                user_id,
+                overdue_tasks_enabled,
+                supervision_enabled,
+                low_stock_enabled,
+                quiet_hours_enabled,
+                quiet_start,
+                quiet_end,
+                created_at,
+                updated_at
+              `)
+              .order("user_id")
+              .range(from, to)
+              .overrideTypes<
+                PushNotificationPreferenceRow[]
               >();
 
           return {
@@ -879,9 +930,6 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
             true &&
           isUserRole(
             profile.role
-          ) &&
-          subscriptionsByUser.has(
-            profile.id
           )
       );
 
@@ -902,6 +950,28 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
           object,
         ])
       );
+    const preferencesByUser =
+      new Map(
+        preferenceRows.map(
+          (row) => [
+            row.user_id,
+            row,
+          ]
+        )
+      );
+    const resolvedPreferencesByUser =
+      new Map(
+        profiles.map(
+          (profile) => [
+            profile.id,
+            resolvePushNotificationPreferences(
+              preferencesByUser.get(
+                profile.id
+              )
+            ),
+          ]
+        )
+      );
     const notificationItems =
       buildNotificationItems({
         today,
@@ -918,6 +988,8 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
         string,
         RecipientCandidate
       >();
+    const usersWithoutSubscriptions =
+      new Set<string>();
 
     for (const notification of notificationItems) {
       const stateToken =
@@ -947,6 +1019,47 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
             notification.key,
             stateToken
           );
+        const preferences =
+          resolvedPreferencesByUser.get(
+            profile.id
+          );
+
+        if (!preferences) {
+          continue;
+        }
+        const categoryEnabled =
+          isAutomaticPushCategoryEnabled(
+            preferences,
+            notification.type
+          );
+        const quietHoursActive =
+          isWithinQuietHours(
+            preferences,
+            kyivTime
+          );
+        const hasSubscriptions =
+          subscriptionsByUser.has(
+            profile.id
+          );
+
+        // Notification occurrence лишається observed незалежно від delivery:
+        // preferences, quiet hours і subscriptions не керують resolution state.
+
+        if (!categoryEnabled) {
+          stats.skippedByPreference +=
+            1;
+        } else if (
+          quietHoursActive
+        ) {
+          stats.skippedByQuietHours +=
+            1;
+        }
+
+        if (!hasSubscriptions) {
+          usersWithoutSubscriptions.add(
+            profile.id
+          );
+        }
 
         candidatesByIdentity.set(
           identity,
@@ -955,6 +1068,10 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
               profile.id,
             notification,
             stateToken,
+            deliveryEligible:
+              categoryEnabled &&
+              !quietHoursActive &&
+              hasSubscriptions,
           }
         );
       }
@@ -966,6 +1083,8 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
       );
     stats.candidates =
       candidates.length;
+    stats.usersWithoutSubscriptions =
+      usersWithoutSubscriptions.size;
 
     const claims: PushClaim[] = [];
 
@@ -986,6 +1105,8 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
                 .type,
             state_token:
               candidate.stateToken,
+            delivery_eligible:
+              candidate.deliveryEligible,
           })
         );
       const {

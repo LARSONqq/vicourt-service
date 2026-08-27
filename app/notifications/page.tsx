@@ -1,7 +1,11 @@
 import Link from "next/link";
 
 import DevicePushSettings from "@/components/notifications/DevicePushSettings";
+import AutomaticPushSettings from "@/components/notifications/AutomaticPushSettings";
 
+import {
+  isWorker,
+} from "@/lib/auth/permissions";
 import {
   requireSectionAccess,
 } from "@/lib/auth/requireAccess";
@@ -12,6 +16,9 @@ import {
 import {
   getNotificationCenter,
 } from "@/services/notificationService";
+import {
+  getPushNotificationPreferences,
+} from "@/services/pushNotificationPreferenceService";
 
 import type {
   NotificationCategory,
@@ -183,9 +190,10 @@ export const dynamic =
 export default async function NotificationsPage({
   searchParams,
 }: Props) {
-  await requireSectionAccess(
-    "notifications"
-  );
+  const profile =
+    await requireSectionAccess(
+      "notifications"
+    );
 
   const params =
     await searchParams;
@@ -195,8 +203,15 @@ export default async function NotificationsPage({
         params.type
       )
     );
-  const notificationCenter =
-    await getNotificationCenter();
+  const [
+    notificationCenter,
+    pushPreferences,
+  ] = await Promise.all([
+    getNotificationCenter(),
+    getPushNotificationPreferences(
+      profile.id
+    ),
+  ]);
   const visibleItems =
     activeFilter === "all"
       ? notificationCenter.items
@@ -219,13 +234,26 @@ export default async function NotificationsPage({
         </p>
       </div>
 
-      <DevicePushSettings
-        vapidPublicKey={
-          process.env
-            .NEXT_PUBLIC_VAPID_PUBLIC_KEY ??
-          ""
-        }
-      />
+      <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
+        <DevicePushSettings
+          vapidPublicKey={
+            process.env
+              .NEXT_PUBLIC_VAPID_PUBLIC_KEY ??
+            ""
+          }
+        />
+
+        <AutomaticPushSettings
+          initialPreferences={
+            pushPreferences
+          }
+          showLowStock={
+            !isWorker(
+              profile.role
+            )
+          }
+        />
+      </div>
 
       <section className="grid min-w-0 grid-cols-3 gap-2 sm:gap-4">
         <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
