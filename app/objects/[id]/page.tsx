@@ -7,6 +7,7 @@ import DeleteObjectButton from "@/components/objects/DeleteObjectButton";
 import ObjectExpenses from "@/components/objects/ObjectExpenses";
 import ObjectInfo from "@/components/objects/ObjectInfo";
 import ObjectMaterials from "@/components/objects/ObjectMaterials";
+import ObjectPayments from "@/components/objects/ObjectPayments";
 import ObjectPhotos from "@/components/objects/ObjectPhotos";
 import ObjectSummary from "@/components/objects/ObjectSummary";
 import ObjectSupervisionCard from "@/components/objects/ObjectSupervisionCard";
@@ -26,6 +27,9 @@ import {
 import {
   getObjectExpenses,
 } from "@/services/objectExpenseService";
+import {
+  getObjectPayments,
+} from "@/services/objectPaymentService";
 
 import {
   getWarehouseItems,
@@ -42,6 +46,9 @@ import {
 import {
   PERIODIC_SUPERVISION_STATUS,
 } from "@/lib/objectSupervision";
+import {
+  calculateObjectPaymentSummary,
+} from "@/lib/objectPayments";
 
 type Props = {
   params: Promise<{
@@ -94,6 +101,15 @@ export default async function ObjectPage({
     notFound();
   }
 
+  const profile =
+    await getCurrentUserProfile();
+  const canViewPayments =
+    profile
+      ? canManageObjects(
+          profile.role
+        )
+      : false;
+
   const [
     object,
     tasks,
@@ -103,7 +119,7 @@ export default async function ObjectPage({
     employees,
     warehouseItems,
     expenses,
-    profile,
+    payments,
   ] = await Promise.all([
     getObject(objectId),
     getObjectTasks(objectId),
@@ -113,7 +129,11 @@ export default async function ObjectPage({
     getEmployees(),
     getWarehouseItems(),
     getObjectExpenses(objectId),
-    getCurrentUserProfile(),
+    canViewPayments
+      ? getObjectPayments(
+          objectId
+        )
+      : Promise.resolve([]),
   ]);
 
   if (!object) {
@@ -167,6 +187,12 @@ export default async function ObjectPage({
       expenses
     )
       ? expenses
+      : [];
+  const paymentList =
+    Array.isArray(
+      payments
+    )
+      ? payments
       : [];
 
   const activeTasks =
@@ -310,6 +336,18 @@ export default async function ObjectPage({
           profile.role
         )
       : false;
+  const paymentSummary =
+    canViewPayments
+      ? calculateObjectPaymentSummary(
+          object.client_price,
+          paymentList.map(
+            (payment) =>
+              Number(
+                payment.amount
+              )
+          )
+        )
+      : undefined;
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-8">
@@ -417,7 +455,20 @@ export default async function ObjectPage({
         clientPrice={
           object.client_price
         }
+        paymentSummary={
+          paymentSummary
+        }
       />
+
+      {canViewPayments && (
+        <ObjectPayments
+          objectId={object.id}
+          payments={paymentList}
+          today={
+            getKyivDateValue()
+          }
+        />
+      )}
 
       {/* CONTENT */}
       <ObjectTabs

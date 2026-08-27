@@ -27,6 +27,11 @@ export const activityEntityTypes: Array<{
     label: "Витрати",
   },
   {
+    value: "object_payment",
+    label:
+      "Платежі клієнтів",
+  },
+  {
     value: "purchase",
     label: "Закупівлі",
   },

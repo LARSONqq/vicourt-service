@@ -1,6 +1,9 @@
 import type {
   ObjectExpenseCategory,
 } from "@/constants/objectExpenses";
+import type {
+  ObjectPaymentStatus,
+} from "@/types/objectPayment";
 
 export type ReportMovementType =
   | "Прихід"
@@ -45,6 +48,9 @@ export type ReportKpis = {
   totalObjectCost: number;
   totalHours: number;
   purchasedCost: number;
+  paymentsReceived: number;
+  outstandingReceivables: number;
+  objectsWithoutClientPrice: number;
 };
 
 export type ReportObjectCost = {
@@ -62,6 +68,21 @@ export type ReportObjectCost = {
   budgetOverrun: number | null;
   financialResult: number | null;
   marginPercent: number | null;
+  lifetimePaid: number;
+  remainingToPay: number | null;
+  overpayment: number | null;
+  paymentStatus:
+    ObjectPaymentStatus;
+};
+
+export type ReportPaymentDetail = {
+  id: number;
+  objectId: number;
+  objectName: string;
+  paymentDate: string;
+  amount: number;
+  paymentMethod: string | null;
+  note: string | null;
 };
 
 export type ReportEmployeeWork = {
@@ -180,6 +201,8 @@ export type ReportsData = {
     ReportExpenseHighlight[];
   expenseDetails:
     ReportExpenseDetail[];
+  paymentDetails:
+    ReportPaymentDetail[];
   purchases:
     ReportPurchaseSummary;
   purchaseExportRows:

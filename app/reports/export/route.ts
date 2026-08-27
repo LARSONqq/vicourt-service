@@ -44,6 +44,7 @@ type ExportType =
   | "object-costs"
   | "employee-work"
   | "expense-categories"
+  | "client-payments"
   | "purchases"
   | "warehouse-movements"
   | "objects"
@@ -62,6 +63,7 @@ const exportTypes =
     "object-costs",
     "employee-work",
     "expense-categories",
+    "client-payments",
     "purchases",
     "warehouse-movements",
     "objects",
@@ -242,6 +244,12 @@ async function getPeriodCsv(
                 object.financialResult,
               marginPercent:
                 object.marginPercent,
+              lifetimePaid:
+                object.lifetimePaid,
+              remainingToPay:
+                object.remainingToPay,
+              overpayment:
+                object.overpayment,
             })
           ),
       };
@@ -267,6 +275,33 @@ async function getPeriodCsv(
           ),
         rows:
           data.expenseCategories,
+      };
+
+    case "client-payments":
+      return {
+        filename:
+          createPeriodFilename(
+            "client-payments",
+            filters.dateFrom,
+            filters.dateTo
+          ),
+        rows:
+          data.paymentDetails.map(
+            (payment) => ({
+              paymentDate:
+                formatDate(
+                  payment.paymentDate
+                ),
+              objectName:
+                payment.objectName,
+              amount:
+                payment.amount,
+              paymentMethod:
+                payment.paymentMethod,
+              note:
+                payment.note,
+            })
+          ),
       };
 
     case "purchases":
@@ -634,6 +669,7 @@ export async function GET(
       "object-costs",
       "employee-work",
       "expense-categories",
+      "client-payments",
       "purchases",
       "warehouse-movements",
     ].includes(type)

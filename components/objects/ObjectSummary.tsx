@@ -1,6 +1,13 @@
 import {
   calculateObjectFinancials,
 } from "@/lib/objectFinancials";
+import {
+  objectPaymentStatusLabels,
+} from "@/constants/objectPayments";
+
+import type {
+  ObjectPaymentSummary,
+} from "@/types/objectPayment";
 
 type Props = {
   activeTasks: number;
@@ -12,6 +19,8 @@ type Props = {
   otherExpensesCost: number;
   costBudget: number | null;
   clientPrice: number | null;
+  paymentSummary?:
+    ObjectPaymentSummary;
 };
 
 function formatMoney(
@@ -71,6 +80,7 @@ export default function ObjectSummary({
   otherExpensesCost,
   costBudget,
   clientPrice,
+  paymentSummary,
 }: Props) {
   const financials =
     calculateObjectFinancials({
@@ -103,6 +113,21 @@ export default function ObjectSummary({
       null &&
     financials.financialResult >=
       0;
+  const paymentProgressWidth =
+    paymentSummary
+      ?.progressPercent ===
+      null ||
+    paymentSummary
+      ?.progressPercent ===
+      undefined
+      ? 0
+      : Math.min(
+          Math.max(
+            paymentSummary.progressPercent,
+            0
+          ),
+          100
+        );
 
   return (
     <div className="min-w-0 space-y-4">
@@ -240,7 +265,13 @@ export default function ObjectSummary({
         </div>
 
         <div className="border-t bg-gray-50/60 p-3 sm:p-5">
-          <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-3">
+          <div
+            className={`grid min-w-0 grid-cols-1 gap-3 ${
+              paymentSummary
+                ? "lg:grid-cols-2 xl:grid-cols-4"
+                : "lg:grid-cols-3"
+            }`}
+          >
             <article className="min-w-0 rounded-xl border border-blue-100 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
                 План
@@ -435,6 +466,113 @@ export default function ObjectSummary({
                 не касовий прибуток.
               </p>
             </article>
+
+            {paymentSummary && (
+              <article className="min-w-0 rounded-xl border border-emerald-100 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                  Розрахунки з
+                  клієнтом
+                </p>
+
+                <dl className="mt-4 space-y-3">
+                  <div>
+                    <dt className="text-sm text-gray-500">
+                      Отримано
+                    </dt>
+                    <dd className="mt-1 break-words text-lg font-semibold text-emerald-700">
+                      {formatMoney(
+                        paymentSummary.totalPaid
+                      )}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="text-sm text-gray-500">
+                      {paymentSummary.overpayment !==
+                        null &&
+                      paymentSummary.overpayment >
+                        0
+                        ? "Переплата"
+                        : "Залишилось"}
+                    </dt>
+                    <dd
+                      className={`mt-1 break-words text-lg font-semibold ${
+                        paymentSummary.overpayment !==
+                          null &&
+                        paymentSummary.overpayment >
+                          0
+                          ? "text-violet-700"
+                          : "text-gray-900"
+                      }`}
+                    >
+                      {paymentSummary.clientPrice ===
+                      null
+                        ? "Вартість для клієнта не задана"
+                        : formatMoney(
+                            paymentSummary.overpayment !==
+                              null &&
+                            paymentSummary.overpayment >
+                              0
+                              ? paymentSummary.overpayment
+                              : paymentSummary.remainingToPay ??
+                                  0
+                          )}
+                    </dd>
+                  </div>
+                </dl>
+
+                <p className="mt-4 text-sm font-medium text-gray-700">
+                  {
+                    objectPaymentStatusLabels[
+                      paymentSummary.status
+                    ]
+                  }
+                </p>
+
+                {paymentSummary.progressPercent !==
+                  null && (
+                  <div className="mt-4">
+                    <div className="flex items-start justify-between gap-3 text-xs text-gray-500">
+                      <span className="break-words">
+                        {formatMoney(
+                          paymentSummary.totalPaid
+                        )}
+                        {" / "}
+                        {formatMoney(
+                          paymentSummary.clientPrice ??
+                            0
+                        )}
+                      </span>
+                      <span className="shrink-0 font-medium text-gray-700">
+                        {formatPercent(
+                          paymentSummary.progressPercent
+                        )}
+                      </span>
+                    </div>
+
+                    <div
+                      className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200"
+                      role="progressbar"
+                      aria-label="Отримані платежі від вартості для клієнта"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={
+                        Math.round(
+                          paymentProgressWidth
+                        )
+                      }
+                    >
+                      <div
+                        className="h-full rounded-full bg-emerald-600"
+                        style={{
+                          width: `${paymentProgressWidth}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </article>
+            )}
           </div>
         </div>
       </section>

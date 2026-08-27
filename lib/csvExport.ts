@@ -97,6 +97,11 @@ const columnLabels: Record<
     "Перевитрата",
   financialResult:
     "Поточний прибуток",
+  lifetimePaid:
+    "Отримано від клієнта",
+  remainingToPay:
+    "Залишилось до оплати",
+  overpayment: "Переплата",
   marginPercent:
     "Маржинальність, %",
   hours: "Години",
@@ -108,6 +113,10 @@ const columnLabels: Record<
   objectsCount:
     "Кількість об’єктів",
   amount: "Сума",
+  paymentDate:
+    "Дата платежу",
+  paymentMethod:
+    "Спосіб оплати",
   share: "Частка",
   sharePercent: "Частка, %",
   unitPrice:

@@ -7,6 +7,9 @@ import {
   calculateObjectFinancials,
 } from "@/lib/objectFinancials";
 import {
+  calculateObjectPaymentSummary,
+} from "@/lib/objectPayments";
+import {
   buildWarehousePurchaseInsights,
   getWarehousePurchaseInsight,
   getWarehouseStockPlan,
@@ -23,6 +26,7 @@ import type {
   ReportMovementType,
   ReportObjectCost,
   ReportObjectOption,
+  ReportPaymentDetail,
   ReportPurchaseExportRow,
   ReportWarehouseMovement,
   ReportWarehouseSnapshotRow,
@@ -342,6 +346,16 @@ type ReportExpenseRow = {
   created_by_name: string | null;
 };
 
+type ReportPaymentRow = {
+  id: number;
+  object_id: number;
+  payment_date: string;
+  amount: number;
+  payment_method: string | null;
+  note: string | null;
+  created_at: string;
+};
+
 type ReportPurchaseRow = {
   id: number;
   item_id: number;
@@ -384,6 +398,12 @@ type ReportLifetimeMaterialRow = {
 };
 
 type ReportLifetimeExpenseRow = {
+  id: number;
+  object_id: number;
+  amount: number;
+};
+
+type ReportLifetimePaymentRow = {
   id: number;
   object_id: number;
   amount: number;
@@ -971,6 +991,94 @@ export async function getReportsData(
       }
     );
 
+  const loadPayments = () =>
+    fetchAllReportRows<
+      ReportPaymentRow
+    >(
+      "Не вдалося завантажити платежі клієнтів для звіту",
+      async (
+        from,
+        to
+      ) => {
+        let query =
+          supabase
+            .from(
+              "object_payments"
+            )
+            .select(`
+              id,
+              object_id,
+              payment_date,
+              amount,
+              payment_method,
+              note,
+              created_at
+            `)
+            .gte(
+              "payment_date",
+              filters.dateFrom
+            )
+            .lte(
+              "payment_date",
+              filters.dateTo
+            );
+
+        if (filters.objectId) {
+          query = query.eq(
+            "object_id",
+            filters.objectId
+          );
+        }
+
+        return await query
+          .order("id", {
+            ascending: true,
+          })
+          .range(from, to)
+          .overrideTypes<
+            ReportPaymentRow[]
+          >();
+      }
+    );
+
+  const loadLifetimePayments = () =>
+    fetchAllReportRows<
+      ReportLifetimePaymentRow
+    >(
+      "Не вдалося завантажити повну історію платежів клієнтів",
+      async (
+        from,
+        to
+      ) => {
+        let query =
+          supabase
+            .from(
+              "object_payments"
+            )
+            .select(`
+              id,
+              object_id,
+              amount
+            `);
+
+        if (filters.objectId) {
+          query = query.eq(
+            "object_id",
+            filters.objectId
+          );
+        }
+
+        return await query
+          .order("id", {
+            ascending: true,
+          })
+          .range(from, to)
+          .overrideTypes<
+            ReportLifetimePaymentRow[]
+          >();
+      }
+    );
+
   const loadPurchases = (
     status:
       | "Заплановано"
@@ -1240,6 +1348,8 @@ export async function getReportsData(
     workLogs,
     materials,
     expenses,
+    payments,
+    lifetimePayments,
     plannedPurchases,
     purchasedPurchases,
     movements,
@@ -1263,6 +1373,12 @@ export async function getReportsData(
           ReportExpenseRow
         >()
       : loadExpenses(),
+    invalidPeriod
+      ? emptyRows<
+          ReportPaymentRow
+        >()
+      : loadPayments(),
+    loadLifetimePayments(),
     invalidPeriod
       ? emptyRows<
           ReportPurchaseRow
@@ -1309,6 +1425,99 @@ export async function getReportsData(
         ]
       )
     );
+
+  const lifetimePaymentTotals =
+    new Map<number, number>();
+
+  lifetimePayments.forEach(
+    (payment) => {
+      const objectId =
+        Number(
+          payment.object_id
+        );
+
+      if (
+        !Number.isInteger(
+          objectId
+        ) || objectId <= 0
+      ) {
+        return;
+      }
+
+      lifetimePaymentTotals.set(
+        objectId,
+        (lifetimePaymentTotals.get(
+          objectId
+        ) || 0) +
+          toSafeNumber(
+            payment.amount
+          )
+      );
+    }
+  );
+
+  const objectPaymentSummaries =
+    new Map<
+      number,
+      ReturnType<
+        typeof calculateObjectPaymentSummary
+      >
+    >();
+
+  objects.forEach(
+    (object) => {
+      const objectId =
+        Number(object.id);
+
+      objectPaymentSummaries.set(
+        objectId,
+        calculateObjectPaymentSummary(
+          object.client_price,
+          [
+            lifetimePaymentTotals.get(
+              objectId
+            ) || 0,
+          ]
+        )
+      );
+    }
+  );
+  const financeObjectsForKpi =
+    filters.objectId
+      ? objects.filter(
+          (object) =>
+            Number(
+              object.id
+            ) ===
+            filters.objectId
+        )
+      : objects;
+  const outstandingReceivables =
+    financeObjectsForKpi.reduce(
+      (total, object) => {
+        if (
+          object.client_price ===
+          null
+        ) {
+          return total;
+        }
+
+        return (
+          total +
+          (objectPaymentSummaries.get(
+            Number(object.id)
+          )?.remainingToPay ||
+            0)
+        );
+      },
+      0
+    );
+  const objectsWithoutClientPrice =
+    financeObjectsForKpi.filter(
+      (object) =>
+        object.client_price ===
+        null
+    ).length;
 
   const employeeNames =
     new Map(
@@ -1420,6 +1629,11 @@ export async function getReportsData(
       budgetOverrun: null,
       financialResult: null,
       marginPercent: null,
+      lifetimePaid: 0,
+      remainingToPay: null,
+      overpayment: null,
+      paymentStatus:
+        "price_missing",
       hasData: false,
     };
 
@@ -1739,6 +1953,14 @@ export async function getReportsData(
             clientPrice:
               objectCost.clientPrice,
           });
+        const paymentSummary =
+          objectPaymentSummaries.get(
+            objectCost.objectId
+          ) ||
+          calculateObjectPaymentSummary(
+            objectCost.clientPrice,
+            []
+          );
 
         return {
           objectId:
@@ -1771,6 +1993,14 @@ export async function getReportsData(
             financials.financialResult,
           marginPercent:
             financials.marginPercent,
+          lifetimePaid:
+            paymentSummary.totalPaid,
+          remainingToPay:
+            paymentSummary.remainingToPay,
+          overpayment:
+            paymentSummary.overpayment,
+          paymentStatus:
+            paymentSummary.status,
         };
       })
       .sort(
@@ -1967,6 +2197,54 @@ export async function getReportsData(
           ) ||
           second.id - first.id
       );
+
+  const paymentDetails:
+    ReportPaymentDetail[] =
+    payments
+      .slice()
+      .sort(
+        (first, second) =>
+          second.payment_date.localeCompare(
+            first.payment_date
+          ) ||
+          second.created_at.localeCompare(
+            first.created_at
+          ) ||
+          Number(second.id) -
+            Number(first.id)
+      )
+      .map((payment) => ({
+        id: Number(
+          payment.id
+        ),
+        objectId: Number(
+          payment.object_id
+        ),
+        objectName:
+          objectNames.get(
+            Number(
+              payment.object_id
+            )
+          ) ||
+          `Об’єкт #${payment.object_id}`,
+        paymentDate:
+          payment.payment_date,
+        amount:
+          toSafeNumber(
+            payment.amount
+          ),
+        paymentMethod:
+          payment.payment_method,
+        note: payment.note,
+      }));
+  const paymentsReceived =
+    calculateObjectPaymentSummary(
+      null,
+      paymentDetails.map(
+        (payment) =>
+          payment.amount
+      )
+    ).totalPaid;
 
   const plannedAmount =
     plannedPurchases.reduce(
@@ -2224,12 +2502,16 @@ export async function getReportsData(
       totalHours,
       purchasedCost:
         purchasedAmount,
+      paymentsReceived,
+      outstandingReceivables,
+      objectsWithoutClientPrice,
     },
     objectCosts,
     employeeWork,
     expenseCategories,
     expenseHighlights,
     expenseDetails,
+    paymentDetails,
     purchases: {
       plannedCount:
         plannedPurchases.length,

@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+import {
+  objectPaymentStatusLabels,
+} from "@/constants/objectPayments";
+
 import type {
   ReportsData,
 } from "@/types/report";
@@ -222,6 +226,36 @@ export default function ReportsDashboard({
       style:
         "bg-cyan-50 text-cyan-700",
     },
+    {
+      label:
+        "Отримано від клієнтів",
+      value:
+        formatMoney(
+          data.kpis
+            .paymentsReceived
+        ),
+      note:
+        "За вибраний період",
+      style:
+        "bg-emerald-50 text-emerald-700",
+    },
+    {
+      label:
+        "До отримання по об’єктах",
+      value:
+        formatMoney(
+          data.kpis
+            .outstandingReceivables
+        ),
+      note:
+        data.kpis
+          .objectsWithoutClientPrice >
+        0
+          ? `Поточний стан · без ціни: ${data.kpis.objectsWithoutClientPrice}`
+          : "Поточний стан за встановленими цінами",
+      style:
+        "bg-teal-50 text-teal-700",
+    },
   ];
 
   return (
@@ -290,7 +324,8 @@ export default function ReportsDashboard({
             Витрати та години — за
             вибраний період. План,
             фактична собівартість і
-            результат — за всю історію
+            результат, а також оплата
+            клієнта — за всю історію
             об’єкта.
           </p>
 
@@ -491,13 +526,66 @@ export default function ReportsDashboard({
                         </div>
                       </dl>
                     </div>
+
+                    <div className="mt-4 border-t pt-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                        Розрахунки з
+                        клієнтом
+                      </p>
+
+                      <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-4 text-sm">
+                        <div>
+                          <dt className="text-xs text-gray-500">
+                            Отримано
+                          </dt>
+                          <dd className="mt-1 break-words font-semibold text-emerald-700">
+                            {formatMoney(
+                              object.lifetimePaid
+                            )}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt className="text-xs text-gray-500">
+                            {object.overpayment !==
+                              null &&
+                            object.overpayment >
+                              0
+                              ? "Переплата"
+                              : "Залишилось"}
+                          </dt>
+                          <dd className="mt-1 break-words font-semibold text-gray-900">
+                            {object.clientPrice ===
+                            null
+                              ? "Не вказано"
+                              : formatMoney(
+                                  object.overpayment !==
+                                    null &&
+                                  object.overpayment >
+                                    0
+                                    ? object.overpayment
+                                    : object.remainingToPay ??
+                                        0
+                                )}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      <p className="mt-3 text-xs font-medium text-gray-600">
+                        {
+                          objectPaymentStatusLabels[
+                            object.paymentStatus
+                          ]
+                        }
+                      </p>
+                    </div>
                   </article>
                 )
               )}
             </div>
 
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[1280px] text-sm">
+              <table className="w-full min-w-[1480px] text-sm">
                 <thead className="bg-gray-50 text-left text-gray-500">
                   <tr>
                     <th className="p-4 font-medium">
@@ -517,6 +605,9 @@ export default function ReportsDashboard({
                     </th>
                     <th className="p-4 font-medium">
                       Бюджет
+                    </th>
+                    <th className="p-4 font-medium">
+                      Оплата клієнта
                     </th>
                     <th className="p-4 font-medium">
                       Результат
@@ -648,6 +739,40 @@ export default function ReportsDashboard({
                                 : "Залишок"}
                             </p>
                           )}
+                        </td>
+                        <td className="p-4">
+                          <p className="font-semibold text-emerald-700">
+                            {formatMoney(
+                              object.lifetimePaid
+                            )}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            Отримано за весь
+                            час
+                          </p>
+                          <p className="mt-2 font-medium text-gray-900">
+                            {object.clientPrice ===
+                            null
+                              ? "Ціна не задана"
+                              : object.overpayment !==
+                                    null &&
+                                  object.overpayment >
+                                    0
+                                ? `Переплата: ${formatMoney(
+                                    object.overpayment
+                                  )}`
+                                : `Залишилось: ${formatMoney(
+                                    object.remainingToPay ??
+                                      0
+                                  )}`}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500">
+                            {
+                              objectPaymentStatusLabels[
+                                object.paymentStatus
+                              ]
+                            }
+                          </p>
                         </td>
                         <td className="p-4">
                           <p
@@ -974,6 +1099,142 @@ export default function ReportsDashboard({
             </div>
           )}
         </div>
+      </section>
+
+      <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+        <div className="border-b p-4 sm:p-5">
+          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+            Платежі клієнтів
+          </h2>
+
+          <p className="mt-1 text-sm leading-5 text-gray-500">
+            Фактично отримані платежі
+            за вибраний період. Це не
+            змінює собівартість або
+            поточний прибуток об’єкта.
+          </p>
+        </div>
+
+        {data.paymentDetails.length ===
+        0 ? (
+          <div className="p-3 sm:p-5">
+            <EmptyState>
+              За вибраними фільтрами платежів клієнтів немає.
+            </EmptyState>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3 p-3 md:hidden">
+              {data.paymentDetails.map(
+                (payment) => (
+                  <article
+                    key={payment.id}
+                    className="min-w-0 rounded-xl border p-4"
+                  >
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <Link
+                          href={
+                            "/objects/" +
+                            payment.objectId
+                          }
+                          className="block break-words font-semibold text-gray-900 transition hover:text-green-700 hover:underline"
+                        >
+                          {payment.objectName}
+                        </Link>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {formatDate(
+                            payment.paymentDate
+                          )}
+                          {payment.paymentMethod
+                            ? ` · ${payment.paymentMethod}`
+                            : ""}
+                        </p>
+                      </div>
+
+                      <strong className="shrink-0 break-words text-right text-emerald-700">
+                        {formatMoney(
+                          payment.amount
+                        )}
+                      </strong>
+                    </div>
+
+                    {payment.note && (
+                      <p className="mt-3 whitespace-pre-wrap break-words border-t pt-3 text-sm text-gray-600">
+                        {payment.note}
+                      </p>
+                    )}
+                  </article>
+                )
+              )}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[820px] text-sm">
+                <thead className="bg-gray-50 text-left text-gray-500">
+                  <tr>
+                    <th className="p-4 font-medium">
+                      Дата
+                    </th>
+                    <th className="p-4 font-medium">
+                      Об’єкт
+                    </th>
+                    <th className="p-4 font-medium">
+                      Сума
+                    </th>
+                    <th className="p-4 font-medium">
+                      Спосіб оплати
+                    </th>
+                    <th className="p-4 font-medium">
+                      Примітка
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {data.paymentDetails.map(
+                    (payment) => (
+                      <tr
+                        key={payment.id}
+                        className="border-t align-top"
+                      >
+                        <td className="p-4 text-gray-700">
+                          {formatDate(
+                            payment.paymentDate
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <Link
+                            href={
+                              "/objects/" +
+                              payment.objectId
+                            }
+                            className="font-semibold text-gray-900 transition hover:text-green-700 hover:underline"
+                          >
+                            {payment.objectName}
+                          </Link>
+                        </td>
+                        <td className="p-4 font-semibold text-emerald-700">
+                          {formatMoney(
+                            payment.amount
+                          )}
+                        </td>
+                        <td className="p-4 text-gray-700">
+                          {payment.paymentMethod ||
+                            "Не вказано"}
+                        </td>
+                        <td className="max-w-sm whitespace-pre-wrap break-words p-4 text-gray-600">
+                          {payment.note ||
+                            "—"}
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </section>
 
       <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">

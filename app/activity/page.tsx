@@ -87,6 +87,9 @@ function getEntityStyle(
     case "object_expense":
       return "bg-orange-50 text-orange-700";
 
+    case "object_payment":
+      return "bg-emerald-50 text-emerald-700";
+
     case "purchase":
       return "bg-cyan-50 text-cyan-700";
 

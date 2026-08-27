@@ -468,6 +468,28 @@ function addSummaryWorksheet(
         data.purchases.plannedAmount,
       numberFormat: moneyFormat,
     },
+    {
+      label:
+        "Отримано від клієнтів за період",
+      value:
+        data.kpis.paymentsReceived,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "До отримання по об’єктах",
+      value:
+        data.kpis.outstandingReceivables,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Об’єктів без встановленої ціни",
+      value:
+        data.kpis.objectsWithoutClientPrice,
+      numberFormat:
+        integerFormat,
+    },
   ];
 
   const headerRowNumber = 4;
@@ -642,6 +664,38 @@ export async function createReportsWorkbook(
         },
         {
           header:
+            "Отримано від клієнта",
+          width: 22,
+          value: (row) =>
+            safeNumber(
+              row.lifetimePaid
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Залишилось до оплати",
+          width: 22,
+          value: (row) =>
+            optionalNumber(
+              row.remainingToPay
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Переплата",
+          width: 18,
+          value: (row) =>
+            optionalNumber(
+              row.overpayment
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
             "Поточний прибуток",
           width: 20,
           value: (row) =>
@@ -806,6 +860,60 @@ export async function createReportsWorkbook(
             safeText(
               row.createdBy
             ),
+        },
+      ],
+    }
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name:
+        "Платежі клієнтів",
+      rows: data.paymentDetails,
+      columns: [
+        {
+          header: "Дата",
+          width: 14,
+          value: (row) =>
+            toDateOnly(
+              row.paymentDate
+            ),
+          numberFormat:
+            dateFormat,
+        },
+        {
+          header: "Об’єкт",
+          width: 32,
+          value: (row) =>
+            safeText(
+              row.objectName
+            ),
+        },
+        {
+          header: "Сума",
+          width: 18,
+          value: (row) =>
+            safeNumber(
+              row.amount
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Спосіб оплати",
+          width: 24,
+          value: (row) =>
+            safeText(
+              row.paymentMethod
+            ),
+        },
+        {
+          header: "Примітка",
+          width: 38,
+          value: (row) =>
+            safeText(row.note),
         },
       ],
     }
