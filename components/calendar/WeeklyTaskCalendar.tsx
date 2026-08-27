@@ -25,6 +25,9 @@ import {
   SUPERVISION_TASK_MANAGED_MESSAGE,
   SUPERVISION_TASK_SOURCE,
 } from "@/constants/taskSource";
+import {
+  useMediaQuery,
+} from "@/lib/useMediaQuery";
 
 import type { Employee } from "@/types/employee";
 import type { ObjectItem } from "@/types/object";
@@ -569,6 +572,11 @@ export default function WeeklyTaskCalendar({
     );
 
   const [
+    previousTasks,
+    setPreviousTasks,
+  ] = useState(tasks);
+
+  const [
     selectedDate,
     setSelectedDate,
   ] = useState(
@@ -655,10 +663,10 @@ export default function WeeklyTaskCalendar({
     setQuickActionError,
   ] = useState("");
 
-  const [
-    canDrag,
-    setCanDrag,
-  ] = useState(false);
+  const canDrag =
+    useMediaQuery(
+      "(min-width: 768px)"
+    );
 
   const draggedTaskIdRef =
     useRef<
@@ -668,40 +676,12 @@ export default function WeeklyTaskCalendar({
   const ignoreTaskClickRef =
     useRef(false);
 
-  useEffect(() => {
+  if (tasks !== previousTasks) {
+    setPreviousTasks(tasks);
     setLocalTasks(
       tasks
     );
-  }, [tasks]);
-
-  // Drag-and-drop тільки
-  // на більших екранах.
-  useEffect(() => {
-    const media =
-      window.matchMedia(
-        "(min-width: 768px)"
-      );
-
-    function updateDragMode() {
-      setCanDrag(
-        media.matches
-      );
-    }
-
-    updateDragMode();
-
-    media.addEventListener(
-      "change",
-      updateDragMode
-    );
-
-    return () => {
-      media.removeEventListener(
-        "change",
-        updateDragMode
-      );
-    };
-  }, []);
+  }
 
   // Блокуємо сторінку позаду
   // відкритого popup.

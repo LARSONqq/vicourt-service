@@ -28,13 +28,24 @@ export default function AppShell({
     setIsMobileMenuOpen,
   ] = useState(false);
 
+  const [
+    previousPathname,
+    setPreviousPathname,
+  ] = useState(pathname);
+
   const isAuthPage =
     pathname === "/login" ||
     pathname === "/register";
 
-  useEffect(() => {
+  if (
+    pathname !==
+    previousPathname
+  ) {
+    setPreviousPathname(
+      pathname
+    );
     setIsMobileMenuOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (

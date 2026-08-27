@@ -22,6 +22,9 @@ import {
   SUPERVISION_TASK_MANAGED_MESSAGE,
   SUPERVISION_TASK_SOURCE,
 } from "@/constants/taskSource";
+import {
+  useMediaQuery,
+} from "@/lib/useMediaQuery";
 
 import type { Employee } from "@/types/employee";
 import type { TaskWithObject } from "@/types/taskWithObject";
@@ -368,12 +371,28 @@ export default function TasksList({
     );
 
   const [
-    viewMode,
+    previousTasks,
+    setPreviousTasks,
+  ] = useState(tasks);
+
+  const isMobile =
+    useMediaQuery(
+      "(max-width: 767px)"
+    );
+
+  const [
+    selectedViewMode,
     setViewMode,
   ] =
-    useState<ViewMode>(
-      "board"
+    useState<ViewMode | null>(
+      null
     );
+
+  const viewMode =
+    selectedViewMode ??
+    (isMobile
+      ? "list"
+      : "board");
 
   const [
     search,
@@ -442,24 +461,12 @@ export default function TasksList({
       null
     );
 
-  useEffect(() => {
+  if (tasks !== previousTasks) {
+    setPreviousTasks(tasks);
     setLocalTasks(
       tasks
     );
-  }, [tasks]);
-
-  // На телефоні список зручніший,
-  // ніж kanban-дошка.
-  useEffect(() => {
-    const isMobile =
-      window.matchMedia(
-        "(max-width: 767px)"
-      ).matches;
-
-    if (isMobile) {
-      setViewMode("list");
-    }
-  }, []);
+  }
 
   // Блокуємо прокрутку сторінки,
   // коли відкрите редагування.

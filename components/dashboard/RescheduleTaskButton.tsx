@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -17,6 +18,9 @@ import {
   addDaysToDateValue,
   getKyivDateValue,
 } from "@/lib/kyivDate";
+import {
+  useMediaQuery,
+} from "@/lib/useMediaQuery";
 
 import type { TaskSource } from "@/types/objectTask";
 
@@ -90,15 +94,10 @@ export default function RescheduleTaskButton({
       null
     );
 
-  const [
-    isMounted,
-    setIsMounted,
-  ] = useState(false);
-
-  const [
-    isMobile,
-    setIsMobile,
-  ] = useState(false);
+  const isMobile =
+    useMediaQuery(
+      "(max-width: 639px)"
+    );
 
   const [
     isOpen,
@@ -142,35 +141,6 @@ export default function RescheduleTaskButton({
   });
 
   useEffect(() => {
-    setIsMounted(true);
-
-    const mediaQuery =
-      window.matchMedia(
-        "(max-width: 639px)"
-      );
-
-    function updateMobileState() {
-      setIsMobile(
-        mediaQuery.matches
-      );
-    }
-
-    updateMobileState();
-
-    mediaQuery.addEventListener(
-      "change",
-      updateMobileState
-    );
-
-    return () => {
-      mediaQuery.removeEventListener(
-        "change",
-        updateMobileState
-      );
-    };
-  }, []);
-
-  useEffect(() => {
     if (!isOpen) {
       document.body.style.overflow =
         "";
@@ -192,77 +162,81 @@ export default function RescheduleTaskButton({
     isMobile,
   ]);
 
-  function updatePopupPosition() {
-    if (isMobile) {
-      return;
-    }
+  const updatePopupPosition =
+    useCallback(
+      () => {
+        if (isMobile) {
+          return;
+        }
 
-    const button =
-      buttonRef.current;
+        const button =
+          buttonRef.current;
 
-    if (!button) {
-      return;
-    }
+        if (!button) {
+          return;
+        }
 
-    const rect =
-      button.getBoundingClientRect();
+        const rect =
+          button.getBoundingClientRect();
 
-    const popupWidth =
-      288;
+        const popupWidth =
+          288;
 
-    const viewportPadding =
-      16;
+        const viewportPadding =
+          16;
 
-    let left =
-      rect.right -
-      popupWidth;
+        let left =
+          rect.right -
+          popupWidth;
 
-    if (
-      left <
-      viewportPadding
-    ) {
-      left =
-        viewportPadding;
-    }
+        if (
+          left <
+          viewportPadding
+        ) {
+          left =
+            viewportPadding;
+        }
 
-    if (
-      left +
-        popupWidth >
-      window.innerWidth -
-        viewportPadding
-    ) {
-      left =
-        window.innerWidth -
-        popupWidth -
-        viewportPadding;
-    }
+        if (
+          left +
+            popupWidth >
+          window.innerWidth -
+            viewportPadding
+        ) {
+          left =
+            window.innerWidth -
+            popupWidth -
+            viewportPadding;
+        }
 
-    let top =
-      rect.bottom + 8;
+        let top =
+          rect.bottom + 8;
 
-    const estimatedPopupHeight =
-      390;
+        const estimatedPopupHeight =
+          390;
 
-    if (
-      top +
-        estimatedPopupHeight >
-      window.innerHeight -
-        viewportPadding
-    ) {
-      top =
-        Math.max(
-          viewportPadding,
-          rect.top -
-            estimatedPopupHeight -
-            8
-        );
-    }
+        if (
+          top +
+            estimatedPopupHeight >
+          window.innerHeight -
+            viewportPadding
+        ) {
+          top =
+            Math.max(
+              viewportPadding,
+              rect.top -
+                estimatedPopupHeight -
+                8
+            );
+        }
 
-    setPopupPosition({
-      top,
-      left,
-    });
-  }
+        setPopupPosition({
+          top,
+          left,
+        });
+      },
+      [isMobile]
+    );
 
   useEffect(() => {
     if (
@@ -308,6 +282,7 @@ export default function RescheduleTaskButton({
   }, [
     isOpen,
     isMobile,
+    updatePopupPosition,
   ]);
 
   useEffect(() => {
@@ -570,8 +545,9 @@ export default function RescheduleTaskButton({
   );
 
   const popup =
-    isMounted &&
-    isOpen
+    isOpen &&
+    typeof document !==
+      "undefined"
       ? createPortal(
           isMobile ? (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">

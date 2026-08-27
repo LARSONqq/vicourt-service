@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { completeDashboardTask } from "@/app/actions/dashboardTaskActions";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
@@ -45,15 +45,19 @@ export default function TodayTasksSection({
   const [localTasks, setLocalTasks] =
     useState<TaskWithObject[]>(tasks);
 
+  const [previousTasks, setPreviousTasks] =
+    useState(tasks);
+
   const [updatingTaskId, setUpdatingTaskId] =
     useState<number | null>(null);
 
   const [errorMessage, setErrorMessage] =
     useState("");
 
-  useEffect(() => {
+  if (tasks !== previousTasks) {
+    setPreviousTasks(tasks);
     setLocalTasks(tasks);
-  }, [tasks]);
+  }
 
   async function handleCompleteTask(
     task: TaskWithObject

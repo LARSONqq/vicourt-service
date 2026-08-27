@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import {
   FormEvent,
-  useEffect,
+  use,
   useState,
 } from "react";
 
@@ -16,9 +16,34 @@ import {
   createClient,
 } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+type SearchParams = {
+  blocked?: string | string[];
+  error?: string | string[];
+};
+
+type Props = {
+  searchParams: Promise<SearchParams>;
+};
+
+function getFirstParam(
+  value:
+    | string
+    | string[]
+    | undefined
+) {
+  return Array.isArray(value)
+    ? value[0] || ""
+    : value || "";
+}
+
+export default function LoginPage({
+  searchParams,
+}: Props) {
   const router =
     useRouter();
+
+  const params =
+    use(searchParams);
 
   const supabase =
     createClient();
@@ -41,39 +66,24 @@ export default function LoginPage() {
   const [
     errorMessage,
     setErrorMessage,
-  ] = useState("");
+  ] = useState(() =>
+    getFirstParam(
+      params.error
+    ) === "confirmation"
+      ? "Не вдалося підтвердити email. Посилання могло застаріти або вже бути використане."
+      : ""
+  );
 
   const [
     blockedMessage,
     setBlockedMessage,
-  ] = useState("");
-
-  useEffect(() => {
-    const params =
-      new URLSearchParams(
-        window.location.search
-      );
-
-    if (
-      params.get("blocked") ===
-      "1"
-    ) {
-      setBlockedMessage(
-        "Ваш акаунт заблоковано. Зверніться до адміністратора ViCourt."
-      );
-
-      return;
-    }
-
-    if (
-      params.get("error") ===
-      "confirmation"
-    ) {
-      setErrorMessage(
-        "Не вдалося підтвердити email. Посилання могло застаріти або вже бути використане."
-      );
-    }
-  }, []);
+  ] = useState(() =>
+    getFirstParam(
+      params.blocked
+    ) === "1"
+      ? "Ваш акаунт заблоковано. Зверніться до адміністратора ViCourt."
+      : ""
+  );
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
