@@ -39,6 +39,7 @@ import {
 } from "@/services/warehouseService";
 
 import type {
+  AutomaticPushNotificationType,
   NotificationCenterData,
   NotificationItem,
   NotificationSummary,
@@ -64,7 +65,7 @@ const COMPLETED_TASK_STATUS =
 const PLANNED_PURCHASE_STATUS =
   "Заплановано";
 
-type NotificationSourceData = {
+export type NotificationSourceData = {
   today: string;
   currency: AppCurrency;
   tasks: TaskWithObject[];
@@ -72,6 +73,52 @@ type NotificationSourceData = {
   warehouseItems: WarehouseItem[];
   purchases: WarehousePurchase[];
 };
+
+const AUTOMATIC_PUSH_TYPES =
+  new Set<AutomaticPushNotificationType>([
+    "overdue_task",
+    "supervision_today",
+    "supervision_overdue",
+    "low_stock",
+  ]);
+
+export function isAutomaticPushNotification(
+  item: NotificationItem
+): item is NotificationItem & {
+  type: AutomaticPushNotificationType;
+} {
+  return AUTOMATIC_PUSH_TYPES.has(
+    item.type as AutomaticPushNotificationType
+  );
+}
+
+export function getAutomaticPushStateToken(
+  item: NotificationItem & {
+    type: AutomaticPushNotificationType;
+  }
+) {
+  switch (item.type) {
+    case "overdue_task":
+      return item.date
+        ? `overdue:${item.date}`
+        : null;
+
+    case "supervision_today":
+      return item.date
+        ? `today:${item.date}`
+        : null;
+
+    case "supervision_overdue":
+      return item.date
+        ? `overdue:${item.date}`
+        : null;
+
+    case "low_stock":
+      // Залишок не входить у token: зміни в межах одного low-stock episode
+      // не повинні створювати повторні push-повідомлення.
+      return "low-stock";
+  }
+}
 
 function getDayWord(
   value: number
@@ -279,8 +326,9 @@ export function buildNotificationItems({
       state.kind === "overdue";
 
     items.push({
-      // Дата циклу є частиною stable key для майбутнього push deduplication.
-      key: `supervision:${object.id}:${object.next_supervision_date}`,
+      // Stable key описує сам об’єкт. Дата циклу та today/overdue
+      // зберігаються окремо у state token automatic push delivery.
+      key: `supervision:${object.id}`,
       type: isOverdue
         ? "supervision_overdue"
         : "supervision_today",

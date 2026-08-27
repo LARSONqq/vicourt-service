@@ -63,6 +63,10 @@ function getVapidConfiguration(): VapidConfiguration {
   };
 }
 
+export function assertPushConfiguration() {
+  getVapidConfiguration();
+}
+
 function normalizeInternalUrl(value: string) {
   if (
     !value.startsWith("/") ||

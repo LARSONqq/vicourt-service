@@ -11,6 +11,12 @@ export type NotificationType =
   | "low_stock"
   | "planned_purchase";
 
+export type AutomaticPushNotificationType =
+  | "overdue_task"
+  | "supervision_today"
+  | "supervision_overdue"
+  | "low_stock";
+
 export type NotificationSeverity =
   | "critical"
   | "warning"
