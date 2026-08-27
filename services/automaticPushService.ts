@@ -63,6 +63,9 @@ import type {
   WarehouseItem,
 } from "@/types/warehouseItem";
 import type {
+  WarehousePurchase,
+} from "@/types/warehousePurchase";
+import type {
   Equipment,
 } from "@/types/equipment";
 
@@ -723,6 +726,7 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
       tasks,
       objects,
       warehouseItems,
+      purchases,
       equipment,
     ] = await Promise.all([
       loadAllPages<PushSubscriptionRecord>(
@@ -920,6 +924,48 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
           };
         }
       ),
+      loadAllPages<WarehousePurchase>(
+        "Не вдалося завантажити активні заплановані закупівлі",
+        async (from, to) => {
+          const { data, error } =
+            await supabase
+              .from(
+                "warehouse_purchases"
+              )
+              .select(`
+                id,
+                item_id,
+                quantity,
+                purchase_price,
+                supplier,
+                note,
+                status,
+                created_at,
+                purchased_at,
+                item:warehouse_items (
+                  id,
+                  name,
+                  unit,
+                  quantity,
+                  min_quantity
+                )
+              `)
+              .eq(
+                "status",
+                "Заплановано"
+              )
+              .order("id")
+              .range(from, to)
+              .overrideTypes<
+                WarehousePurchase[]
+              >();
+
+          return {
+            data,
+            error,
+          };
+        }
+      ),
       loadAllPages<Equipment>(
         "Не вдалося завантажити техніку з актуальним плановим ТО",
         async (from, to) => {
@@ -1029,7 +1075,7 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
         tasks,
         objects,
         warehouseItems,
-        purchases: [],
+        purchases,
         equipment,
       }).filter(
         isAutomaticPushNotification

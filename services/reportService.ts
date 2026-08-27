@@ -6,6 +6,11 @@ import {
 import {
   calculateObjectFinancials,
 } from "@/lib/objectFinancials";
+import {
+  buildWarehousePurchaseInsights,
+  getWarehousePurchaseInsight,
+  getWarehouseStockPlan,
+} from "@/lib/warehousePlanning";
 
 import type { WorkLog } from "@/types/workLog";
 
@@ -302,6 +307,7 @@ type ReportWarehouseItemRow = {
   quantity: number;
   unit: string;
   min_quantity: number;
+  target_quantity: number | null;
   purchase_price: number;
   supplier: string | null;
 };
@@ -343,7 +349,9 @@ type ReportPurchaseRow = {
   purchase_price: number;
   supplier: string | null;
   note: string | null;
-  status: string;
+  status:
+    | "Заплановано"
+    | "Закуплено";
   created_at: string;
   purchased_at: string | null;
 };
@@ -788,6 +796,7 @@ export async function getReportsData(
             quantity,
             unit,
             min_quantity,
+            target_quantity,
             purchase_price,
             supplier
           `)
@@ -1088,6 +1097,39 @@ export async function getReportsData(
       }
     );
 
+  const loadWarehousePlanningPurchases = () =>
+    fetchAllReportRows<
+      ReportPurchaseRow
+    >(
+      "Не вдалося завантажити актуальні дані закупівель для залишків складу",
+      async (
+        from,
+        to
+      ) =>
+        await supabase
+          .from(
+            "warehouse_purchases"
+          )
+          .select(`
+            id,
+            item_id,
+            quantity,
+            purchase_price,
+            supplier,
+            note,
+            status,
+            created_at,
+            purchased_at
+          `)
+          .order("id", {
+            ascending: true,
+          })
+          .range(from, to)
+          .overrideTypes<
+            ReportPurchaseRow[]
+          >()
+    );
+
   const loadLifetimeWorkLogs = (
     objectIds: number[]
   ) =>
@@ -1201,6 +1243,7 @@ export async function getReportsData(
     plannedPurchases,
     purchasedPurchases,
     movements,
+    warehousePlanningPurchases,
   ] = await Promise.all([
     loadObjects(),
     loadEmployees(),
@@ -1239,6 +1282,7 @@ export async function getReportsData(
           ReportWarehouseMovementRow
         >()
       : loadMovements(),
+    loadWarehousePlanningPurchases(),
   ]);
 
   const objectNames =
@@ -2083,6 +2127,11 @@ export async function getReportsData(
       }
     );
 
+  const warehousePurchaseInsights =
+    buildWarehousePurchaseInsights(
+      warehousePlanningPurchases
+    );
+
   const warehouseSnapshotRows:
     ReportWarehouseSnapshotRow[] =
     warehouseItems
@@ -2095,6 +2144,16 @@ export async function getReportsData(
         const averagePrice =
           toSafeNumber(
             item.purchase_price
+          );
+        const purchaseInsight =
+          getWarehousePurchaseInsight(
+            warehousePurchaseInsights,
+            Number(item.id)
+          );
+        const stockPlan =
+          getWarehouseStockPlan(
+            item,
+            purchaseInsight.plannedQuantity
           );
 
         return {
@@ -2109,7 +2168,17 @@ export async function getReportsData(
             toSafeNumber(
               item.min_quantity
             ),
+          targetQuantity:
+            stockPlan.targetQuantity,
+          targetShortage:
+            stockPlan.rawShortage,
+          plannedIncoming:
+            stockPlan.plannedIncoming,
+          remainingRecommended:
+            stockPlan.remainingRecommended,
           averagePrice,
+          lastPurchasePrice:
+            purchaseInsight.lastPurchasePrice,
           stockValue:
             stockQuantity *
             averagePrice,

@@ -3,10 +3,16 @@ import WarehouseList from "@/components/warehouse/WarehouseList";
 import WarehouseMovements from "@/components/warehouse/WarehouseMovements";
 
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
-import { canManageWarehouse } from "@/lib/auth/permissions";
+import {
+  canManagePurchases,
+  canManageWarehouse,
+} from "@/lib/auth/permissions";
 
 import { getObjects } from "@/services/objectService";
 import { getAppSettings } from "@/services/settingsService";
+import {
+  getWarehousePurchaseInsights,
+} from "@/services/purchaseService";
 
 import {
   getWarehouseItems,
@@ -14,6 +20,15 @@ import {
 } from "@/services/warehouseService";
 
 import type { AppCurrency } from "@/types/appSettings";
+import type {
+  WarehousePurchaseInsights,
+} from "@/types/warehousePurchase";
+
+type Props = {
+  searchParams: Promise<{
+    item?: string;
+  }>;
+};
 
 function formatMoney(
   value: number,
@@ -62,7 +77,9 @@ function formatMoney(
   return `${sign}${formattedWholePart},${decimalPart} ${symbol}`;
 }
 
-export default async function WarehousePage() {
+export default async function WarehousePage({
+  searchParams,
+}: Props) {
   const currentProfile =
     await requireSectionAccess(
       "warehouse"
@@ -72,17 +89,39 @@ export default async function WarehousePage() {
     canManageWarehouse(
       currentProfile.role
     );
+  const canCreatePurchases =
+    canManagePurchases(
+      currentProfile.role
+    );
+  const resolvedSearchParams =
+    await searchParams;
+  const requestedItemId =
+    Number(
+      resolvedSearchParams.item
+    );
+  const focusedItemId =
+    Number.isInteger(
+      requestedItemId
+    ) && requestedItemId > 0
+      ? requestedItemId
+      : undefined;
 
   const [
     items,
     movements,
     objects,
     settings,
+    purchaseInsights,
   ] = await Promise.all([
     getWarehouseItems(),
     getWarehouseMovements(),
     getObjects(),
     getAppSettings(),
+    canCreatePurchases
+      ? getWarehousePurchaseInsights()
+      : Promise.resolve<
+          WarehousePurchaseInsights
+        >({}),
   ]);
 
   const itemList =
@@ -265,6 +304,18 @@ export default async function WarehousePage() {
           }
           canManage={
             canManage
+          }
+          canCreatePurchases={
+            canCreatePurchases
+          }
+          canViewPurchaseHistory={
+            canCreatePurchases
+          }
+          purchaseInsights={
+            purchaseInsights
+          }
+          focusedItemId={
+            focusedItemId
           }
         />
       </div>

@@ -6,6 +6,9 @@ import { requireSectionAccess } from "@/lib/auth/requireAccess";
 import { getAppSettings } from "@/services/settingsService";
 import { getWarehousePurchases } from "@/services/purchaseService";
 import { getWarehouseItems } from "@/services/warehouseService";
+import {
+  buildWarehousePurchaseInsights,
+} from "@/lib/warehousePlanning";
 
 import type { AppCurrency } from "@/types/appSettings";
 
@@ -94,6 +97,10 @@ export default async function PurchasesPage({
     Array.isArray(purchases)
       ? purchases
       : [];
+  const purchaseInsights =
+    buildWarehousePurchaseInsights(
+      purchaseList
+    );
 
   const validInitialItemId =
     initialItemId &&
@@ -270,6 +277,9 @@ export default async function PurchasesPage({
             }
             initialItemId={
               validInitialItemId
+            }
+            purchaseInsights={
+              purchaseInsights
             }
           />
         </div>

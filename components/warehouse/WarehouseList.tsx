@@ -5,15 +5,25 @@ import {
   useMemo,
   useState,
 } from "react";
+import Link from "next/link";
 
 import { deleteWarehouseItem } from "@/app/actions/warehouseActions";
 
 import type { AppCurrency } from "@/types/appSettings";
 import type { ObjectItem } from "@/types/object";
 import type { WarehouseItem } from "@/types/warehouseItem";
+import type {
+  WarehousePurchaseInsights,
+} from "@/types/warehousePurchase";
+import {
+  formatWarehouseQuantity,
+  getWarehousePurchaseInsight,
+  getWarehouseStockPlan,
+} from "@/lib/warehousePlanning";
 
 import AddWarehouseMovementForm from "./AddWarehouseMovementForm";
 import EditWarehouseItemForm from "./EditWarehouseItemForm";
+import WarehouseItemPlanningPanel from "./WarehouseItemPlanningPanel";
 
 type MovementType =
   | "Прихід"
@@ -29,6 +39,10 @@ type Props = {
   objects?: ObjectItem[];
   currency: AppCurrency;
   canManage?: boolean;
+  canCreatePurchases?: boolean;
+  canViewPurchaseHistory?: boolean;
+  purchaseInsights?: WarehousePurchaseInsights;
+  focusedItemId?: number;
 };
 
 function formatMoney(
@@ -83,16 +97,28 @@ export default function WarehouseList({
   objects = [],
   currency,
   canManage = false,
+  canCreatePurchases = false,
+  canViewPurchaseHistory = false,
+  purchaseInsights = {},
+  focusedItemId,
 }: Props) {
   const safeItems =
-    Array.isArray(items)
-      ? items
-      : [];
+    useMemo(
+      () =>
+        Array.isArray(items)
+          ? items
+          : [],
+      [items]
+    );
 
   const safeObjects =
-    Array.isArray(objects)
-      ? objects
-      : [];
+    useMemo(
+      () =>
+        Array.isArray(objects)
+          ? objects
+          : [],
+      [objects]
+    );
 
   const [
     search,
@@ -123,6 +149,15 @@ export default function WarehouseList({
     useState<MovementEditor | null>(
       null
     );
+
+  const [
+    detailsId,
+    setDetailsId,
+  ] = useState<
+    number | null
+  >(
+    focusedItemId || null
+  );
 
   const categories =
     useMemo(() => {
@@ -266,10 +301,19 @@ export default function WarehouseList({
     );
   }
 
+  function toggleDetails(
+    itemId: number
+  ) {
+    setDetailsId(
+      (current) =>
+        current === itemId
+          ? null
+          : itemId
+    );
+  }
+
   const columnCount =
-    canManage
-      ? 8
-      : 7;
+    8;
 
   return (
     <div className="min-w-0 space-y-5">
@@ -406,6 +450,18 @@ export default function WarehouseList({
                   quantity <=
                   minQuantity;
 
+                const insight =
+                  getWarehousePurchaseInsight(
+                    purchaseInsights,
+                    item.id
+                  );
+
+                const plan =
+                  getWarehouseStockPlan(
+                    item,
+                    insight.plannedQuantity
+                  );
+
                 const isMovementOpen =
                   canManage &&
                   movementEditor
@@ -417,15 +473,23 @@ export default function WarehouseList({
                   editingId ===
                     item.id;
 
+                const isDetailsOpen =
+                  detailsId ===
+                  item.id;
+
                 return (
                   <article
                     key={
                       item.id
                     }
-                    className={`min-w-0 rounded-xl border bg-white p-4 ${
+                    id={`warehouse-item-${item.id}`}
+                    className={`scroll-mt-24 min-w-0 rounded-xl border bg-white p-4 ${
                       isLowStock
                         ? "border-red-200"
-                        : ""
+                        : focusedItemId ===
+                            item.id
+                          ? "border-green-300"
+                          : ""
                     }`}
                   >
                     {/* HEADER */}
@@ -471,7 +535,9 @@ export default function WarehouseList({
                             : "text-green-700"
                         }`}
                       >
-                        {quantity}{" "}
+                        {formatWarehouseQuantity(
+                          quantity
+                        )}{" "}
                         {
                           item.unit
                         }
@@ -487,11 +553,57 @@ export default function WarehouseList({
 
                         <p className="mt-1 break-words text-sm font-medium text-gray-800">
                           {
-                            minQuantity
+                            formatWarehouseQuantity(
+                              minQuantity
+                            )
                           }{" "}
                           {
                             item.unit
                           }
+                        </p>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">
+                          Ціль
+                        </p>
+
+                        <p className="mt-1 break-words text-sm font-medium text-gray-800">
+                          {plan.targetQuantity ===
+                          null
+                            ? "Не задано"
+                            : `${formatWarehouseQuantity(
+                                plan.targetQuantity
+                              )} ${item.unit}`}
+                        </p>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">
+                          Вже заплановано
+                        </p>
+
+                        <p className="mt-1 break-words text-sm font-medium text-blue-700">
+                          {formatWarehouseQuantity(
+                            plan.plannedIncoming
+                          )}{" "}
+                          {item.unit}
+                        </p>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">
+                          {plan.recommendationBasis ===
+                          "minimum"
+                            ? "До мінімуму"
+                            : "Ще рекомендовано"}
+                        </p>
+
+                        <p className="mt-1 break-words text-sm font-semibold text-orange-700">
+                          {formatWarehouseQuantity(
+                            plan.suggestedPurchaseQuantity
+                          )}{" "}
+                          {item.unit}
                         </p>
                       </div>
 
@@ -523,7 +635,7 @@ export default function WarehouseList({
 
                       <div className="min-w-0">
                         <p className="text-xs text-gray-500">
-                          Постачальник
+                          Основний постачальник
                         </p>
 
                         <p className="mt-1 break-words text-sm font-medium text-gray-800">
@@ -531,6 +643,33 @@ export default function WarehouseList({
                             "Не вказано"}
                         </p>
                       </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-2 border-t pt-4 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          toggleDetails(
+                            item.id
+                          )
+                        }
+                        className="min-h-10 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                      >
+                        {isDetailsOpen
+                          ? "Сховати деталі"
+                          : "Запас і ціни"}
+                      </button>
+
+                      {canCreatePurchases &&
+                        plan.suggestedPurchaseQuantity >
+                          0 && (
+                        <Link
+                          href={`/purchases?item=${item.id}#new-purchase`}
+                          className="inline-flex min-h-10 items-center justify-center rounded-lg bg-green-600 px-3 py-2 text-center text-sm font-medium text-white transition hover:bg-green-700"
+                        >
+                          Створити закупівлю
+                        </Link>
+                      )}
                     </div>
 
                     {/* ACTIONS */}
@@ -692,6 +831,26 @@ export default function WarehouseList({
                         />
                       </div>
                     )}
+
+                    {isDetailsOpen && (
+                      <div className="mt-4 min-w-0 border-t pt-4">
+                        <WarehouseItemPlanningPanel
+                          item={item}
+                          insight={
+                            insight
+                          }
+                          currency={
+                            currency
+                          }
+                          canCreatePurchase={
+                            canCreatePurchases
+                          }
+                          canViewPurchaseHistory={
+                            canViewPurchaseHistory
+                          }
+                        />
+                      </div>
+                    )}
                   </article>
                 );
               }
@@ -737,11 +896,9 @@ export default function WarehouseList({
                     Постачальник
                   </th>
 
-                  {canManage && (
-                    <th className="p-4 text-right">
-                      Дії
-                    </th>
-                  )}
+                  <th className="p-4 text-right">
+                    Дії
+                  </th>
                 </tr>
               </thead>
 
@@ -767,6 +924,18 @@ export default function WarehouseList({
                       quantity <=
                       minQuantity;
 
+                    const insight =
+                      getWarehousePurchaseInsight(
+                        purchaseInsights,
+                        item.id
+                      );
+
+                    const plan =
+                      getWarehouseStockPlan(
+                        item,
+                        insight.plannedQuantity
+                      );
+
                     const isMovementOpen =
                       canManage &&
                       movementEditor
@@ -776,7 +945,11 @@ export default function WarehouseList({
                     const isEditing =
                       canManage &&
                       editingId ===
-                        item.id;
+                          item.id;
+
+                    const isDetailsOpen =
+                      detailsId ===
+                      item.id;
 
                     return (
                       <Fragment
@@ -784,7 +957,15 @@ export default function WarehouseList({
                           item.id
                         }
                       >
-                        <tr className="border-t">
+                        <tr
+                          id={`warehouse-item-${item.id}`}
+                          className={`scroll-mt-24 border-t ${
+                            focusedItemId ===
+                            item.id
+                              ? "bg-green-50/50"
+                              : ""
+                          }`}
+                        >
                           <td className="p-4">
                             <div className="flex items-center gap-3">
                               <span className="font-medium">
@@ -815,7 +996,9 @@ export default function WarehouseList({
                             }`}
                           >
                             {
-                              quantity
+                              formatWarehouseQuantity(
+                                quantity
+                              )
                             }{" "}
                             {
                               item.unit
@@ -824,11 +1007,22 @@ export default function WarehouseList({
 
                           <td className="p-4 text-gray-600">
                             {
-                              minQuantity
+                              formatWarehouseQuantity(
+                                minQuantity
+                              )
                             }{" "}
                             {
                               item.unit
                             }
+
+                            <p className="mt-1 text-xs text-gray-500">
+                              Ціль: {plan.targetQuantity ===
+                              null
+                                ? "не задано"
+                                : `${formatWarehouseQuantity(
+                                    plan.targetQuantity
+                                  )} ${item.unit}`}
+                            </p>
                           </td>
 
                           <td className="p-4">
@@ -851,9 +1045,35 @@ export default function WarehouseList({
                               "Не вказано"}
                           </td>
 
-                          {canManage && (
-                            <td className="p-4">
-                              <div className="flex flex-wrap justify-end gap-2">
+                          <td className="p-4">
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  toggleDetails(
+                                    item.id
+                                  )
+                                }
+                                className="rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                              >
+                                {isDetailsOpen
+                                  ? "Сховати"
+                                  : "Запас і ціни"}
+                              </button>
+
+                              {canCreatePurchases &&
+                                plan.suggestedPurchaseQuantity >
+                                  0 && (
+                                <Link
+                                  href={`/purchases?item=${item.id}#new-purchase`}
+                                  className="rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100"
+                                >
+                                  Закупівля
+                                </Link>
+                              )}
+
+                              {canManage && (
+                                <>
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -923,9 +1143,24 @@ export default function WarehouseList({
                                     Видалити
                                   </button>
                                 </form>
-                              </div>
-                            </td>
-                          )}
+                                </>
+                              )}
+                            </div>
+
+                            <p className="mt-2 text-right text-xs text-gray-500">
+                              Заплановано: {formatWarehouseQuantity(
+                                plan.plannedIncoming
+                              )} {item.unit}
+                              <br />
+                              {plan.recommendationBasis ===
+                              "minimum"
+                                ? "До мінімуму"
+                                : "Ще рекомендовано"}
+                              : {formatWarehouseQuantity(
+                                plan.suggestedPurchaseQuantity
+                              )} {item.unit}
+                            </p>
+                          </td>
                         </tr>
 
                         {isMovementOpen &&
@@ -1017,6 +1252,35 @@ export default function WarehouseList({
                                   setEditingId(
                                     null
                                   )
+                                }
+                              />
+                            </td>
+                          </tr>
+                        )}
+
+                        {isDetailsOpen && (
+                          <tr className="border-t">
+                            <td
+                              colSpan={
+                                columnCount
+                              }
+                              className="p-4"
+                            >
+                              <WarehouseItemPlanningPanel
+                                item={
+                                  item
+                                }
+                                insight={
+                                  insight
+                                }
+                                currency={
+                                  currency
+                                }
+                                canCreatePurchase={
+                                  canCreatePurchases
+                                }
+                                canViewPurchaseHistory={
+                                  canViewPurchaseHistory
                                 }
                               />
                             </td>

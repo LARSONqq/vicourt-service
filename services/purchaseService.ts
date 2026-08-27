@@ -1,7 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import {
+  buildWarehousePurchaseInsights,
+} from "@/lib/warehousePlanning";
 
-import type { WarehousePurchase } from "@/types/warehousePurchase";
-import type { WarehousePurchaseStatus } from "@/types/warehousePurchase";
+import type {
+  WarehousePurchase,
+  WarehousePurchaseHistoryEntry,
+  WarehousePurchaseInsights,
+  WarehousePurchaseStatus,
+} from "@/types/warehousePurchase";
 
 export type PurchaseQueryFilters = {
   status?: WarehousePurchaseStatus;
@@ -17,6 +24,9 @@ export type PlannedPurchaseTotals = Record<
   number
 >;
 
+const PURCHASE_PAGE_SIZE =
+  500;
+
 export async function getWarehousePurchases(
   filters: PurchaseQueryFilters = {}
 ): Promise<
@@ -24,90 +34,202 @@ export async function getWarehousePurchases(
 > {
   const supabase =
     await createClient();
+  const purchases:
+    WarehousePurchase[] = [];
 
-  let query = supabase
-    .from("warehouse_purchases")
-    .select(`
-      id,
-      item_id,
-      quantity,
-      purchase_price,
-      supplier,
-      note,
-      status,
-      created_at,
-      purchased_at,
-      item:warehouse_items (
+  for (
+    let from = 0;
+    ;
+    from += PURCHASE_PAGE_SIZE
+  ) {
+    let query = supabase
+      .from("warehouse_purchases")
+      .select(`
         id,
-        name,
-        unit,
+        item_id,
         quantity,
-        min_quantity
+        purchase_price,
+        supplier,
+        note,
+        status,
+        created_at,
+        purchased_at,
+        item:warehouse_items (
+          id,
+          name,
+          unit,
+          quantity,
+          min_quantity
+        )
+      `);
+
+    if (filters.status) {
+      query = query.eq(
+        "status",
+        filters.status
+      );
+    }
+
+    const {
+      data,
+      error,
+    } = await query
+      .order("created_at", {
+        ascending: false,
+      })
+      .range(
+        from,
+        from +
+          PURCHASE_PAGE_SIZE -
+          1
       )
-    `);
+      .overrideTypes<
+        WarehousePurchase[]
+      >();
 
-  if (filters.status) {
-    query = query.eq(
-      "status",
-      filters.status
+    if (error) {
+      throw new Error(
+        `Не вдалося завантажити закупівлі: ${error.message}`
+      );
+    }
+
+    const page =
+      Array.isArray(data)
+        ? data
+        : [];
+
+    purchases.push(
+      ...page
     );
+
+    if (
+      page.length <
+      PURCHASE_PAGE_SIZE
+    ) {
+      break;
+    }
   }
 
-  const {
-    data,
-    error,
-  } = await query
-    .order("created_at", {
-      ascending: false,
-    })
-    .overrideTypes<
-      WarehousePurchase[]
-    >();
-
-  if (error) {
-    throw new Error(
-      `Не вдалося завантажити закупівлі: ${error.message}`
-    );
-  }
-
-  return Array.isArray(data)
-    ? data
-    : [];
+  return purchases;
 }
 
-export async function getPlannedPurchaseTotals(): Promise<
-  PlannedPurchaseTotals
+export async function getWarehousePurchaseInsights(): Promise<WarehousePurchaseInsights> {
+  const purchases =
+    await getWarehousePurchases();
+
+  return buildWarehousePurchaseInsights(
+    purchases
+  );
+}
+
+export async function getWarehouseItemPurchaseHistory(
+  itemId: number,
+  limit = 20
+): Promise<
+  WarehousePurchaseHistoryEntry[]
 > {
   const supabase =
     await createClient();
-
+  const safeLimit =
+    Math.min(
+      Math.max(
+        Math.trunc(limit),
+        1
+      ),
+      20
+    );
   const {
     data,
     error,
   } = await supabase
     .from("warehouse_purchases")
     .select(`
-      item_id,
-      quantity
+      id,
+      quantity,
+      purchase_price,
+      supplier,
+      purchased_at
     `)
+    .eq("item_id", itemId)
     .eq(
       "status",
-      "Заплановано"
+      "Закуплено"
     )
+    .not(
+      "purchased_at",
+      "is",
+      null
+    )
+    .order("purchased_at", {
+      ascending: false,
+    })
+    .order("id", {
+      ascending: false,
+    })
+    .limit(safeLimit)
     .overrideTypes<
-      PlannedPurchaseRow[]
+      Array<{
+        id: number;
+        quantity: number;
+        purchase_price: number;
+        supplier: string | null;
+        purchased_at: string;
+      }>
     >();
 
   if (error) {
     throw new Error(
-      `Не вдалося завантажити заплановані закупівлі: ${error.message}`
+      `Не вдалося завантажити історію закупівель: ${error.message}`
     );
   }
 
-  const rows =
+  return (
     Array.isArray(data)
       ? data
-      : [];
+      : []
+  ).map((purchase) => {
+    const quantity =
+      Number(
+        purchase.quantity
+      );
+    const purchasePrice =
+      Number(
+        purchase.purchase_price
+      );
+
+    return {
+      id:
+        Number(purchase.id),
+      quantity,
+      purchasePrice,
+      totalAmount:
+        quantity *
+        purchasePrice,
+      supplier:
+        purchase.supplier,
+      purchasedAt:
+        purchase.purchased_at,
+    };
+  });
+}
+
+export async function getPlannedPurchaseTotals(): Promise<
+  PlannedPurchaseTotals
+> {
+  const purchases =
+    await getWarehousePurchases({
+      status: "Заплановано",
+    });
+  const rows:
+    PlannedPurchaseRow[] =
+    purchases.map(
+      (purchase) => ({
+        item_id:
+          purchase.item_id,
+        quantity:
+          purchase.quantity,
+      })
+    );
 
   return rows.reduce<
     PlannedPurchaseTotals

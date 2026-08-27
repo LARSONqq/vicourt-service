@@ -9,18 +9,28 @@ import {
 import { useRouter } from "next/navigation";
 
 import { createWarehousePurchase } from "@/app/actions/purchaseActions";
+import {
+  formatWarehouseQuantity,
+  getWarehousePurchaseInsight,
+  getWarehouseStockPlan,
+} from "@/lib/warehousePlanning";
 
 import type { WarehouseItem } from "@/types/warehouseItem";
+import type {
+  WarehousePurchaseInsights,
+} from "@/types/warehousePurchase";
 
 type Props = {
   items?: WarehouseItem[];
   initialItemId?: number;
+  purchaseInsights?: WarehousePurchaseInsights;
   onCreated?: () => void;
 };
 
 export default function AddPurchaseForm({
   items = [],
   initialItemId,
+  purchaseInsights = {},
   onCreated,
 }: Props) {
   const router =
@@ -73,16 +83,16 @@ export default function AddPurchaseForm({
       return "";
     }
 
-    const recommendedQuantity =
-      Math.max(
-        Number(
-          item.min_quantity
-        ) -
-          Number(
-            item.quantity
-          ),
-        0
+    const insight =
+      getWarehousePurchaseInsight(
+        purchaseInsights,
+        item.id
       );
+    const recommendedQuantity =
+      getWarehouseStockPlan(
+        item,
+        insight.plannedQuantity
+      ).suggestedPurchaseQuantity;
 
     return recommendedQuantity >
       0
@@ -97,15 +107,25 @@ export default function AddPurchaseForm({
   ) {
     if (
       !item ||
-      Number(
-        item.purchase_price
+      (
+        getWarehousePurchaseInsight(
+          purchaseInsights,
+          item.id
+        ).lastPurchasePrice ??
+        Number(
+          item.purchase_price
+        )
       ) <= 0
     ) {
       return "";
     }
 
     return String(
-      item.purchase_price
+      getWarehousePurchaseInsight(
+        purchaseInsights,
+        item.id
+      ).lastPurchasePrice ??
+        item.purchase_price
     );
   }
 
@@ -218,6 +238,21 @@ export default function AddPurchaseForm({
       safeItems,
       selectedItemId,
     ]);
+  const selectedInsight =
+    selectedItem
+      ? getWarehousePurchaseInsight(
+          purchaseInsights,
+          selectedItem.id
+        )
+      : null;
+  const selectedPlan =
+    selectedItem &&
+    selectedInsight
+      ? getWarehouseStockPlan(
+          selectedItem,
+          selectedInsight.plannedQuantity
+        )
+      : null;
 
   function handleItemChange(
     itemId: string
@@ -448,16 +483,18 @@ export default function AddPurchaseForm({
 
       {/* ITEM INFO */}
       {selectedItem && (
-        <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-gray-50 p-3 sm:grid-cols-3 sm:p-4">
+        <div className="grid min-w-0 grid-cols-2 gap-3 rounded-xl border bg-gray-50 p-3 sm:grid-cols-3 lg:grid-cols-6 sm:p-4">
           <div className="min-w-0">
             <p className="text-xs text-gray-500">
               Зараз на складі
             </p>
 
             <p className="mt-1 break-words font-semibold text-gray-900">
-              {
-                selectedItem.quantity
-              }{" "}
+              {formatWarehouseQuantity(
+                Number(
+                  selectedItem.quantity
+                )
+              )}{" "}
               {
                 selectedItem.unit
               }
@@ -470,9 +507,11 @@ export default function AddPurchaseForm({
             </p>
 
             <p className="mt-1 break-words font-semibold text-gray-900">
-              {
-                selectedItem.min_quantity
-              }{" "}
+              {formatWarehouseQuantity(
+                Number(
+                  selectedItem.min_quantity
+                )
+              )}{" "}
               {
                 selectedItem.unit
               }
@@ -481,25 +520,79 @@ export default function AddPurchaseForm({
 
           <div className="min-w-0">
             <p className="text-xs text-gray-500">
-              Рекомендовано
-              закупити
+              Цільовий запас
+            </p>
+
+            <p className="mt-1 break-words font-semibold text-gray-900">
+              {selectedPlan?.targetQuantity ===
+              null
+                ? "Не задано"
+                : `${formatWarehouseQuantity(
+                    selectedPlan?.targetQuantity ||
+                      0
+                  )} ${selectedItem.unit}`}
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">
+              Вже заплановано
+            </p>
+
+            <p className="mt-1 break-words font-semibold text-blue-700">
+              {formatWarehouseQuantity(
+                selectedPlan?.plannedIncoming ||
+                  0
+              )}{" "}
+              {selectedItem.unit}
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">
+              Після запланованого
+            </p>
+
+            <p className="mt-1 break-words font-semibold text-gray-900">
+              {formatWarehouseQuantity(
+                selectedPlan?.expectedQuantity ||
+                  0
+              )}{" "}
+              {selectedItem.unit}
+            </p>
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">
+              {selectedPlan?.recommendationBasis ===
+              "minimum"
+                ? "До мінімального"
+                : "Ще рекомендовано"}
             </p>
 
             <p className="mt-1 break-words font-semibold text-orange-700">
-              {Math.max(
-                Number(
-                  selectedItem.min_quantity
-                ) -
-                  Number(
-                    selectedItem.quantity
-                  ),
-                0
+              {formatWarehouseQuantity(
+                selectedPlan?.suggestedPurchaseQuantity ||
+                  0
               )}{" "}
-              {
-                selectedItem.unit
-              }
+              {selectedItem.unit}
             </p>
           </div>
+        </div>
+      )}
+
+      {selectedItem &&
+        selectedPlan &&
+        selectedPlan.plannedIncoming >
+          0 && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm leading-5 text-blue-700">
+          Уже заплановано{" "}
+          {formatWarehouseQuantity(
+            selectedPlan.plannedIncoming
+          )}{" "}
+          {selectedItem.unit}. Нова
+          кількість буде додана до
+          чинного плану закупівлі.
         </div>
       )}
 
@@ -567,6 +660,18 @@ export default function AddPurchaseForm({
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           />
+
+          {selectedInsight?.lastPurchasePrice !==
+            null &&
+            selectedInsight?.lastPurchasePrice !==
+              undefined && (
+            <p className="mt-2 text-xs leading-5 text-gray-500">
+              Підставлено ціну останньої
+              оприбуткованої закупівлі.
+              Вкажи фактичну нову ціну
+              перед збереженням.
+            </p>
+          )}
         </div>
       </div>
 
@@ -591,6 +696,15 @@ export default function AddPurchaseForm({
           placeholder="Назва постачальника"
           className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
         />
+
+        {selectedItem?.supplier && (
+          <p className="mt-2 text-xs text-gray-500">
+            Підставлено основного
+            постачальника товару. Його
+            можна змінити для цієї
+            закупівлі.
+          </p>
+        )}
       </div>
 
       {/* NOTE */}

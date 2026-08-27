@@ -75,7 +75,7 @@ export default function AddWarehouseItemForm({
 
         <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-gray-700">
-            Постачальник
+            Основний постачальник
           </label>
 
           <input
@@ -84,11 +84,17 @@ export default function AddWarehouseItemForm({
             placeholder="Назва постачальника"
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
           />
+
+          <p className="mt-2 text-xs text-gray-400">
+            Буде запропонований у
+            новій закупівлі, але його
+            можна змінити.
+          </p>
         </div>
       </div>
 
       {/* VALUES */}
-      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-gray-700">
             Кількість
@@ -173,6 +179,27 @@ export default function AddWarehouseItemForm({
           <p className="mt-2 text-xs text-gray-400">
             При цьому значенні позиція
             вважатиметься малозалишковою.
+          </p>
+        </div>
+
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Цільовий запас
+          </label>
+
+          <input
+            type="number"
+            name="target_quantity"
+            inputMode="decimal"
+            min="0"
+            step="0.01"
+            placeholder="Не задано"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          />
+
+          <p className="mt-2 text-xs text-gray-400">
+            До цього рівня ViCourt
+            рекомендуватиме поповнення.
           </p>
         </div>
 

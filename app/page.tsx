@@ -21,6 +21,10 @@ import { canManageObjects } from "@/lib/auth/permissions";
 import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
+import {
+  formatWarehouseQuantity,
+  getWarehouseStockPlan,
+} from "@/lib/warehousePlanning";
 import type {
   TaskWithObject,
 } from "@/types/taskWithObject";
@@ -580,32 +584,24 @@ export default async function HomePage() {
                 secondItem.id
               ] || 0
             );
-
-          const firstExpected =
-            firstQuantity +
-            firstPlanned;
-
-          const secondExpected =
-            secondQuantity +
-            secondPlanned;
-
-          const firstMinimum =
-            Number(
-              firstItem.min_quantity
+          const firstPlan =
+            getWarehouseStockPlan(
+              firstItem,
+              firstPlanned
             );
-
-          const secondMinimum =
-            Number(
-              secondItem.min_quantity
+          const secondPlan =
+            getWarehouseStockPlan(
+              secondItem,
+              secondPlanned
             );
 
           const firstNeedsPurchase =
-            firstExpected <
-            firstMinimum;
+            firstPlan.suggestedPurchaseQuantity >
+            0;
 
           const secondNeedsPurchase =
-            secondExpected <
-            secondMinimum;
+            secondPlan.suggestedPurchaseQuantity >
+            0;
 
           if (
             firstNeedsPurchase &&
@@ -622,8 +618,8 @@ export default async function HomePage() {
           }
 
           return (
-            firstExpected -
-            secondExpected
+            firstQuantity -
+            secondQuantity
           );
         }
       )
@@ -635,16 +631,6 @@ export default async function HomePage() {
   const itemsNeedingPurchase =
     warehouseItemList.filter(
       (item) => {
-        const quantity =
-          Number(
-            item.quantity
-          );
-
-        const minimum =
-          Number(
-            item.min_quantity
-          );
-
         const planned =
           Number(
             plannedPurchaseTotals[
@@ -652,15 +638,18 @@ export default async function HomePage() {
             ] || 0
           );
 
-        const expected =
-          quantity +
-          planned;
+        const plan =
+          getWarehouseStockPlan(
+            item,
+            planned
+          );
 
         return (
           lowStockItemIds.has(
             item.id
           ) &&
-          expected < minimum
+          plan.suggestedPurchaseQuantity >
+            0
         );
       }
     );
@@ -1260,30 +1249,33 @@ export default async function HomePage() {
                 const expected =
                   quantity +
                   planned;
-
-                const shortage =
-                  Math.max(
-                    minimum -
-                      expected,
-                    0
+                const plan =
+                  getWarehouseStockPlan(
+                    item,
+                    planned
                   );
+                const shortage =
+                  plan.suggestedPurchaseQuantity;
 
                 const purchaseCovered =
-                  expected >=
-                  minimum;
+                  plan.isLowStock &&
+                  planned > 0 &&
+                  shortage === 0;
 
                 const isOutOfStock =
                   quantity <= 0;
 
                 const percentage =
-                  minimum > 0
+                  (plan.targetQuantity ??
+                    minimum) > 0
                     ? Math.max(
                         0,
                         Math.min(
                           100,
                           (
                             expected /
-                            minimum
+                            (plan.targetQuantity ??
+                              minimum)
                           ) *
                             100
                         )
@@ -1337,7 +1329,9 @@ export default async function HomePage() {
                         </p>
 
                         <p className="mt-1 break-words text-lg font-bold text-gray-900 sm:text-xl">
-                          {quantity}{" "}
+                          {formatWarehouseQuantity(
+                            quantity
+                          )}{" "}
                           {item.unit}
                         </p>
                       </div>
@@ -1348,8 +1342,25 @@ export default async function HomePage() {
                         </p>
 
                         <p className="mt-1 break-words text-lg font-bold text-gray-700 sm:text-xl">
-                          {minimum}{" "}
+                          {formatWarehouseQuantity(
+                            minimum
+                          )}{" "}
                           {item.unit}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs text-gray-500">
+                          Ціль
+                        </p>
+
+                        <p className="mt-1 break-words text-lg font-bold text-gray-700 sm:text-xl">
+                          {plan.targetQuantity ===
+                          null
+                            ? "Не задано"
+                            : `${formatWarehouseQuantity(
+                                plan.targetQuantity
+                              )} ${item.unit}`}
                         </p>
                       </div>
 
@@ -1365,7 +1376,9 @@ export default async function HomePage() {
                               : "text-gray-400"
                           }`}
                         >
-                          +{planned}{" "}
+                          +{formatWarehouseQuantity(
+                            planned
+                          )}{" "}
                           {item.unit}
                         </p>
                       </div>
@@ -1382,7 +1395,9 @@ export default async function HomePage() {
                               : "text-orange-700"
                           }`}
                         >
-                          {expected}{" "}
+                          {formatWarehouseQuantity(
+                            expected
+                          )}{" "}
                           {item.unit}
                         </p>
                       </div>
@@ -1423,12 +1438,16 @@ export default async function HomePage() {
                       <>
                         <div className="mt-4 rounded-lg border border-orange-200 bg-white/70 p-3">
                           <p className="text-sm text-gray-600">
-                            Ще потрібно
-                            запланувати:
+                            {plan.recommendationBasis ===
+                            "minimum"
+                              ? "До мінімального залишку:"
+                              : "Ще рекомендується:"}
                           </p>
 
                           <p className="mt-1 font-semibold text-orange-700">
-                            {shortage}{" "}
+                            {formatWarehouseQuantity(
+                              shortage
+                            )}{" "}
                             {item.unit}
                           </p>
                         </div>
@@ -1443,7 +1462,9 @@ export default async function HomePage() {
                             }`}
                           >
                             + Запланувати
-                            ще {shortage}{" "}
+                            ще {formatWarehouseQuantity(
+                              shortage
+                            )}{" "}
                             {item.unit}
                           </Link>
                         </div>

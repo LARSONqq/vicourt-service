@@ -21,3 +21,36 @@ export interface WarehousePurchase {
     min_quantity: number;
   } | null;
 }
+
+export type WarehousePurchasePlanningRow = Pick<
+  WarehousePurchase,
+  | "id"
+  | "item_id"
+  | "quantity"
+  | "purchase_price"
+  | "supplier"
+  | "status"
+  | "created_at"
+  | "purchased_at"
+>;
+
+export interface WarehousePurchaseInsight {
+  plannedQuantity: number;
+  lastPurchasePrice: number | null;
+  previousPurchasePrice: number | null;
+  priceChangePercent: number | null;
+}
+
+export type WarehousePurchaseInsights = Record<
+  number,
+  WarehousePurchaseInsight
+>;
+
+export interface WarehousePurchaseHistoryEntry {
+  id: number;
+  quantity: number;
+  purchasePrice: number;
+  totalAmount: number;
+  supplier: string | null;
+  purchasedAt: string;
+}

@@ -24,6 +24,12 @@ import {
   PERIODIC_SUPERVISION_STATUS,
 } from "@/lib/objectSupervision";
 import {
+  buildWarehousePurchaseInsights,
+  formatWarehouseQuantity,
+  getWarehousePurchaseInsight,
+  getWarehouseStockPlan,
+} from "@/lib/warehousePlanning";
+import {
   getObjects,
 } from "@/services/objectService";
 import {
@@ -251,6 +257,10 @@ export function buildNotificationItems({
   equipment,
 }: NotificationSourceData): NotificationItem[] {
   const items: NotificationItem[] = [];
+  const purchaseInsights =
+    buildWarehousePurchaseInsights(
+      purchases
+    );
 
   for (const task of tasks) {
     if (
@@ -359,20 +369,56 @@ export function buildNotificationItems({
   }
 
   for (const item of warehouseItems) {
-    const quantity =
-      Number(item.quantity);
-    const minimum =
-      Number(
-        item.min_quantity
+    const insight =
+      getWarehousePurchaseInsight(
+        purchaseInsights,
+        item.id
+      );
+    const plan =
+      getWarehouseStockPlan(
+        item,
+        insight.plannedQuantity
       );
 
     if (
-      !Number.isFinite(quantity) ||
-      !Number.isFinite(minimum) ||
-      quantity > minimum
+      !plan.isLowStock
     ) {
       continue;
     }
+
+    const recommendation =
+      plan.targetQuantity !==
+        null &&
+      plan.remainingRecommended !==
+        null &&
+      plan.remainingRecommended > 0
+        ? ` Рекомендовано докупити ${formatWarehouseQuantity(
+            plan.remainingRecommended
+          )} ${item.unit}.`
+        : "";
+    const planningDetails = [
+      plan.targetQuantity ===
+      null
+        ? "Цільовий запас не заданий"
+        : `Ціль: ${formatWarehouseQuantity(
+            plan.targetQuantity
+          )} ${item.unit}`,
+      plan.plannedIncoming > 0
+        ? `Заплановано: ${formatWarehouseQuantity(
+            plan.plannedIncoming
+          )} ${item.unit}`
+        : null,
+      plan.remainingRecommended !==
+          null &&
+        plan.remainingRecommended > 0
+        ? `Ще рекомендується: ${formatWarehouseQuantity(
+            plan.remainingRecommended
+          )} ${item.unit}`
+        : null,
+    ].filter(
+      (value): value is string =>
+        Boolean(value)
+    );
 
     items.push({
       key: `warehouse-low-stock:${item.id}`,
@@ -381,12 +427,19 @@ export function buildNotificationItems({
       severity: "warning",
       timing: "current",
       title: "Низький залишок",
-      message: `${item.name} — залишилось ${quantity} ${item.unit}.`,
-      detail: `Мінімальний залишок: ${minimum} ${item.unit}`,
+      message: `${item.name}: залишилось ${formatWarehouseQuantity(
+        plan.currentQuantity
+      )} ${item.unit}. Мінімум — ${formatWarehouseQuantity(
+        plan.minimumQuantity
+      )} ${item.unit}.${recommendation}`,
+      detail:
+        planningDetails.join(
+          " · "
+        ),
       contextLabel:
         item.category ||
         null,
-      href: "/warehouse",
+      href: `/warehouse?item=${item.id}#warehouse-item-${item.id}`,
       date: null,
       overdueDays: null,
       warehouseItemId: item.id,

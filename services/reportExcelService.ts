@@ -1060,11 +1060,66 @@ export async function createReportsWorkbook(
         },
         {
           header:
+            "Цільовий запас",
+          width: 20,
+          value: (row) =>
+            optionalNumber(
+              row.targetQuantity
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
+            "Нестача до цілі",
+          width: 20,
+          value: (row) =>
+            optionalNumber(
+              row.targetShortage
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
+            "Вже заплановано",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.plannedIncoming
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
+            "Ще рекомендується",
+          width: 22,
+          value: (row) =>
+            optionalNumber(
+              row.remainingRecommended
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
             "Середня ціна",
           width: 18,
           value: (row) =>
             safeNumber(
               row.averagePrice
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Остання закупівельна ціна",
+          width: 26,
+          value: (row) =>
+            optionalNumber(
+              row.lastPurchasePrice
             ),
           numberFormat:
             moneyFormat,
@@ -1081,7 +1136,8 @@ export async function createReportsWorkbook(
             moneyFormat,
         },
         {
-          header: "Постачальник",
+          header:
+            "Основний постачальник",
           width: 28,
           value: (row) =>
             safeText(

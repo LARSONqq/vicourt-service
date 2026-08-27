@@ -32,6 +32,13 @@ import {
 import {
   getWarehouseItems,
 } from "@/services/warehouseService";
+import {
+  getWarehousePurchaseInsights,
+} from "@/services/purchaseService";
+import {
+  getWarehousePurchaseInsight,
+  getWarehouseStockPlan,
+} from "@/lib/warehousePlanning";
 
 type ExportType =
   | "object-costs"
@@ -389,13 +396,30 @@ async function getSnapshotCsv(
     }
 
     case "warehouse-current": {
-      const items =
-        await getWarehouseItems();
+      const [
+        items,
+        purchaseInsights,
+      ] = await Promise.all([
+        getWarehouseItems(),
+        getWarehousePurchaseInsights(),
+      ]);
 
       return {
         filename: `vicourt-warehouse-current-${currentDate}.csv`,
         rows: items.map(
-          (item) => ({
+          (item) => {
+            const insight =
+              getWarehousePurchaseInsight(
+                purchaseInsights,
+                item.id
+              );
+            const plan =
+              getWarehouseStockPlan(
+                item,
+                insight.plannedQuantity
+              );
+
+            return {
             material:
               item.name,
             category:
@@ -405,8 +429,18 @@ async function getSnapshotCsv(
             unit: item.unit,
             minimumQuantity:
               item.min_quantity,
+            targetQuantity:
+              plan.targetQuantity,
+            targetShortage:
+              plan.rawShortage,
+            plannedIncoming:
+              plan.plannedIncoming,
+            remainingRecommended:
+              plan.remainingRecommended,
             averagePrice:
               item.purchase_price,
+            lastPurchasePrice:
+              insight.lastPurchasePrice,
             stockValue:
               Number(
                 item.quantity
@@ -414,9 +448,10 @@ async function getSnapshotCsv(
               Number(
                 item.purchase_price
               ),
-            supplier:
+            preferredSupplier:
               item.supplier,
-          })
+            };
+          }
         ),
       };
     }

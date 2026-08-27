@@ -127,7 +127,12 @@ export type ReportWarehouseSnapshotRow = {
   stockQuantity: number;
   unit: string;
   minimumQuantity: number;
+  targetQuantity: number | null;
+  targetShortage: number | null;
+  plannedIncoming: number;
+  remainingRecommended: number | null;
   averagePrice: number;
+  lastPurchasePrice: number | null;
   stockValue: number;
   supplier: string | null;
 };

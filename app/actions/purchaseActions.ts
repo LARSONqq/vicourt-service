@@ -15,6 +15,9 @@ import {
 import {
   recordActivity,
 } from "@/services/activityLogService";
+import {
+  getWarehouseItemPurchaseHistory,
+} from "@/services/purchaseService";
 
 type PurchaseSnapshot = {
   id: number;
@@ -51,6 +54,22 @@ async function requirePurchaseManagement() {
   }
 
   return profile;
+}
+
+export async function loadWarehouseItemPurchaseHistory(
+  itemId: number
+) {
+  await requirePurchaseManagement();
+
+  validateId(
+    itemId,
+    "Не вдалося визначити позицію складу."
+  );
+
+  return getWarehouseItemPurchaseHistory(
+    itemId,
+    20
+  );
 }
 
 function getText(

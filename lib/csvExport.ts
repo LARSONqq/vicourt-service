@@ -26,11 +26,23 @@ const columnLabels: Record<
   unit: "Одиниця виміру",
   minimumQuantity:
     "Мінімальний залишок",
+  targetQuantity:
+    "Цільовий запас",
+  targetShortage:
+    "Нестача до цільового запасу",
+  plannedIncoming:
+    "Вже заплановано",
+  remainingRecommended:
+    "Ще рекомендується закупити",
   averagePrice:
     "Поточна середньозважена ціна",
+  lastPurchasePrice:
+    "Остання закупівельна ціна",
   stockValue:
     "Поточна вартість залишку",
   supplier: "Постачальник",
+  preferredSupplier:
+    "Основний постачальник",
   inventoryNumber:
     "Інвентарний номер",
   responsible: "Відповідальний",
