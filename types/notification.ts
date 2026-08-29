@@ -3,7 +3,8 @@ export type NotificationCategory =
   | "supervision"
   | "warehouse"
   | "purchases"
-  | "equipment";
+  | "equipment"
+  | "finance";
 
 export type NotificationType =
   | "overdue_task"
@@ -12,6 +13,8 @@ export type NotificationType =
   | "low_stock"
   | "equipment_maintenance_today"
   | "equipment_maintenance_overdue"
+  | "client_payment_due_today"
+  | "client_payment_overdue"
   | "planned_purchase";
 
 export type AutomaticPushNotificationType =
@@ -20,7 +23,9 @@ export type AutomaticPushNotificationType =
   | "supervision_overdue"
   | "low_stock"
   | "equipment_maintenance_today"
-  | "equipment_maintenance_overdue";
+  | "equipment_maintenance_overdue"
+  | "client_payment_due_today"
+  | "client_payment_overdue";
 
 export type NotificationSeverity =
   | "critical"
@@ -50,6 +55,7 @@ export interface NotificationItem {
   warehouseItemId?: number;
   purchaseId?: number;
   equipmentId?: number;
+  paymentScheduleItemId?: number;
 }
 
 export interface NotificationSummary {

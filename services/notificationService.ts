@@ -10,6 +10,7 @@ import {
 } from "@/constants/taskSource";
 import {
   canAccessSection,
+  canManageObjects,
 } from "@/lib/auth/permissions";
 import {
   getDateDifferenceInDays,
@@ -50,6 +51,13 @@ import {
 import {
   getWarehouseItems,
 } from "@/services/warehouseService";
+import {
+  getDueObjectPaymentSchedules,
+  getObjectPaymentTotals,
+} from "@/services/objectPaymentScheduleService";
+import {
+  calculateObjectPaymentSchedule,
+} from "@/lib/objectPaymentSchedule";
 
 import type {
   AutomaticPushNotificationType,
@@ -75,6 +83,10 @@ import type {
 import type {
   Equipment,
 } from "@/types/equipment";
+import type {
+  AllocatedObjectPaymentScheduleItem,
+  ObjectPaymentScheduleWithObject,
+} from "@/types/objectPaymentSchedule";
 
 const COMPLETED_TASK_STATUS =
   "Виконано";
@@ -89,6 +101,9 @@ export type NotificationSourceData = {
   warehouseItems: WarehouseItem[];
   purchases: WarehousePurchase[];
   equipment: Equipment[];
+  paymentSchedules: Array<
+    AllocatedObjectPaymentScheduleItem<ObjectPaymentScheduleWithObject>
+  >;
 };
 
 const AUTOMATIC_PUSH_TYPES =
@@ -99,6 +114,8 @@ const AUTOMATIC_PUSH_TYPES =
     "low_stock",
     "equipment_maintenance_today",
     "equipment_maintenance_overdue",
+    "client_payment_due_today",
+    "client_payment_overdue",
   ]);
 
 export function isAutomaticPushNotification(
@@ -143,6 +160,16 @@ export function getAutomaticPushStateToken(
         : null;
 
     case "equipment_maintenance_overdue":
+      return item.date
+        ? `overdue:${item.date}`
+        : null;
+
+    case "client_payment_due_today":
+      return item.date
+        ? `today:${item.date}`
+        : null;
+
+    case "client_payment_overdue":
       return item.date
         ? `overdue:${item.date}`
         : null;
@@ -255,6 +282,7 @@ export function buildNotificationItems({
   warehouseItems,
   purchases,
   equipment,
+  paymentSchedules,
 }: NotificationSourceData): NotificationItem[] {
   const items: NotificationItem[] = [];
   const purchaseInsights =
@@ -502,6 +530,70 @@ export function buildNotificationItems({
     });
   }
 
+  for (const item of paymentSchedules) {
+    if (
+      item.remainingAmount <= 0 ||
+      (item.status !==
+        "due_today" &&
+        item.status !== "overdue")
+    ) {
+      continue;
+    }
+
+    const isOverdue =
+      item.status === "overdue";
+    const overdueDays =
+      isOverdue
+        ? getDateDifferenceInDays(
+            item.due_date,
+            today
+          ) || 0
+        : null;
+    const objectName =
+      item.object?.name ||
+      `Об’єкт #${item.object_id}`;
+
+    items.push({
+      key: `client-payment-schedule:${item.id}`,
+      type: isOverdue
+        ? "client_payment_overdue"
+        : "client_payment_due_today",
+      category: "finance",
+      severity: isOverdue
+        ? "critical"
+        : "warning",
+      timing: isOverdue
+        ? "overdue"
+        : "today",
+      title: isOverdue
+        ? "Прострочений платіж"
+        : "Платіж сьогодні",
+      message: isOverdue
+        ? `Етап «${item.title}» по об’єкту «${objectName}» прострочено на ${overdueDays} ${getDayWord(
+            overdueDays || 0
+          )}. Залишок — ${formatMoney(
+            item.remainingAmount,
+            currency
+          )}.`
+        : `Етап «${item.title}» по об’єкту «${objectName}» потрібно сплатити сьогодні. Залишок — ${formatMoney(
+            item.remainingAmount,
+            currency
+          )}.`,
+      detail: isOverdue
+        ? `Прострочено на ${overdueDays} ${getDayWord(
+            overdueDays || 0
+          )}`
+        : "До сплати сьогодні",
+      contextLabel: objectName,
+      href: `/objects/${item.object_id}#payment-schedule`,
+      date: item.due_date,
+      overdueDays,
+      objectId: item.object_id,
+      paymentScheduleItemId:
+        item.id,
+    });
+  }
+
   for (const purchase of purchases) {
     if (
       purchase.status !==
@@ -616,6 +708,10 @@ export const getNotificationCenter =
           profile.role,
           "equipment"
         );
+      const canViewFinance =
+        canManageObjects(
+          profile.role
+        );
 
       const [
         tasks,
@@ -624,6 +720,7 @@ export const getNotificationCenter =
         purchases,
         settings,
         equipment,
+        paymentSchedules,
       ] = await Promise.all([
         canViewTasks
           ? getAllTasks({
@@ -668,7 +765,56 @@ export const getNotificationCenter =
           : Promise.resolve<
               Equipment[]
             >([]),
+        canViewFinance
+          ? getDueObjectPaymentSchedules(
+              today
+            )
+          : Promise.resolve<
+              ObjectPaymentScheduleWithObject[]
+            >([]),
       ]);
+
+      const paymentTotals =
+        canViewFinance
+          ? await getObjectPaymentTotals(
+              paymentSchedules.map(
+                (item) =>
+                  item.object_id
+              )
+            )
+          : new Map<number, number>();
+      const schedulesByObject =
+        new Map<
+          number,
+          ObjectPaymentScheduleWithObject[]
+        >();
+
+      for (const item of paymentSchedules) {
+        const current =
+          schedulesByObject.get(
+            item.object_id
+          ) || [];
+        current.push(item);
+        schedulesByObject.set(
+          item.object_id,
+          current
+        );
+      }
+
+      const allocatedPaymentSchedules =
+        Array.from(
+          schedulesByObject.entries()
+        ).flatMap(
+          ([objectId, items]) =>
+            calculateObjectPaymentSchedule(
+              items,
+              paymentTotals.get(
+                objectId
+              ) || 0,
+              null,
+              today
+            ).items
+        );
 
       const items =
         buildNotificationItems({
@@ -681,6 +827,8 @@ export const getNotificationCenter =
           warehouseItems,
           purchases,
           equipment,
+          paymentSchedules:
+            allocatedPaymentSchedules,
         });
 
       return {

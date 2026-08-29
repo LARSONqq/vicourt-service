@@ -117,6 +117,15 @@ const columnLabels: Record<
     "Дата платежу",
   paymentMethod:
     "Спосіб оплати",
+  scheduleTitle:
+    "Етап оплати",
+  dueDate:
+    "Дата за графіком",
+  plannedAmount:
+    "Планова сума",
+  paidAmount: "Покрито",
+  remainingAmount:
+    "Залишок",
   share: "Частка",
   sharePercent: "Частка, %",
   unitPrice:

@@ -114,6 +114,11 @@ export async function savePushNotificationPreferences(
         input,
         "equipment_maintenance_enabled"
       );
+    const clientPaymentsEnabled =
+      getBooleanValue(
+        input,
+        "client_payments_enabled"
+      );
     const quietHoursEnabled =
       getBooleanValue(
         input,
@@ -172,6 +177,8 @@ export async function savePushNotificationPreferences(
             lowStockEnabled,
           equipment_maintenance_enabled:
             equipmentMaintenanceEnabled,
+          client_payments_enabled:
+            clientPaymentsEnabled,
           quiet_hours_enabled:
             quietHoursEnabled,
           quiet_start:
@@ -190,6 +197,7 @@ export async function savePushNotificationPreferences(
         supervision_enabled,
         low_stock_enabled,
         equipment_maintenance_enabled,
+        client_payments_enabled,
         quiet_hours_enabled,
         quiet_start,
         quiet_end,

@@ -19,6 +19,13 @@ import {
   PERIODIC_SUPERVISION_STATUS,
 } from "@/lib/objectSupervision";
 import {
+  calculateObjectPaymentSchedule,
+} from "@/lib/objectPaymentSchedule";
+import {
+  fromMoneyInCents,
+  toMoneyInCents,
+} from "@/lib/objectPayments";
+import {
   createServiceRoleClient,
 } from "@/lib/supabase/admin";
 import {
@@ -68,6 +75,9 @@ import type {
 import type {
   Equipment,
 } from "@/types/equipment";
+import type {
+  ObjectPaymentScheduleWithObject,
+} from "@/types/objectPaymentSchedule";
 
 const COMPLETED_TASK_STATUS =
   "Виконано";
@@ -139,6 +149,12 @@ type DeliveryAttemptInsert = {
     | "failed"
     | "dead";
   provider_status_code: number | null;
+};
+
+type AutomaticPushPaymentRow = {
+  id: number;
+  object_id: number;
+  amount: number;
 };
 
 type PageResult<T> = {
@@ -384,6 +400,18 @@ function canReceiveNotification(
       return canAccessSection(
         profile.role,
         "equipment"
+      );
+    }
+
+    if (
+      notification.type ===
+        "client_payment_due_today" ||
+      notification.type ===
+        "client_payment_overdue"
+    ) {
+      return canAccessSection(
+        profile.role,
+        "objects"
       );
     }
 
@@ -728,6 +756,8 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
       warehouseItems,
       purchases,
       equipment,
+      paymentSchedules,
+      paymentRows,
     ] = await Promise.all([
       loadAllPages<PushSubscriptionRecord>(
         "Не вдалося завантажити push subscriptions",
@@ -803,6 +833,7 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
                 supervision_enabled,
                 low_stock_enabled,
                 equipment_maintenance_enabled,
+                client_payments_enabled,
                 quiet_hours_enabled,
                 quiet_start,
                 quiet_end,
@@ -999,6 +1030,61 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
           };
         }
       ),
+      loadAllPages<ObjectPaymentScheduleWithObject>(
+        "Не вдалося завантажити актуальний графік оплат",
+        async (from, to) => {
+          const { data, error } =
+            await supabase
+              .from(
+                "object_payment_schedule"
+              )
+              .select(`
+                id,
+                object_id,
+                title,
+                due_date,
+                amount,
+                note,
+                created_at,
+                updated_at,
+                object:objects (
+                  id,
+                  name
+                )
+              `)
+              .lte(
+                "due_date",
+                today
+              )
+              .order("id")
+              .range(from, to)
+              .overrideTypes<
+                ObjectPaymentScheduleWithObject[]
+              >();
+
+          return { data, error };
+        }
+      ),
+      loadAllPages<AutomaticPushPaymentRow>(
+        "Не вдалося завантажити фактичні платежі для графіка",
+        async (from, to) => {
+          const { data, error } =
+            await supabase
+              .from("object_payments")
+              .select(`
+                id,
+                object_id,
+                amount
+              `)
+              .order("id")
+              .range(from, to)
+              .overrideTypes<
+                AutomaticPushPaymentRow[]
+              >();
+
+          return { data, error };
+        }
+      ),
     ]);
 
     const subscriptionsByUser =
@@ -1068,6 +1154,85 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
           ]
         )
       );
+    const paymentTotalsInCents =
+      new Map<number, number>();
+
+    for (const payment of paymentRows) {
+      const objectId = Number(
+        payment.object_id
+      );
+      const amount = Number(
+        payment.amount
+      );
+
+      if (
+        !Number.isInteger(objectId) ||
+        objectId <= 0 ||
+        !Number.isFinite(amount)
+      ) {
+        continue;
+      }
+
+      paymentTotalsInCents.set(
+        objectId,
+        (paymentTotalsInCents.get(
+          objectId
+        ) || 0) +
+          Math.max(
+            toMoneyInCents(
+              amount
+            ),
+            0
+          )
+      );
+    }
+
+    const paymentTotalsByObject =
+      new Map(
+        Array.from(
+          paymentTotalsInCents.entries()
+        ).map(
+          ([objectId, total]) => [
+            objectId,
+            fromMoneyInCents(
+              total
+            ),
+          ]
+        )
+      );
+
+    const schedulesByObject =
+      new Map<
+        number,
+        ObjectPaymentScheduleWithObject[]
+      >();
+
+    for (const item of paymentSchedules) {
+      const current =
+        schedulesByObject.get(
+          item.object_id
+        ) || [];
+      current.push(item);
+      schedulesByObject.set(
+        item.object_id,
+        current
+      );
+    }
+
+    const allocatedPaymentSchedules =
+      Array.from(
+        schedulesByObject.entries()
+      ).flatMap(
+        ([objectId, items]) =>
+          calculateObjectPaymentSchedule(
+            items,
+            paymentTotalsByObject.get(
+              objectId
+            ) || 0,
+            null,
+            today
+          ).items
+      );
     const notificationItems =
       buildNotificationItems({
         today,
@@ -1077,6 +1242,8 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
         warehouseItems,
         purchases,
         equipment,
+        paymentSchedules:
+          allocatedPaymentSchedules,
       }).filter(
         isAutomaticPushNotification
       );

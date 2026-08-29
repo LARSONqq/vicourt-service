@@ -8,6 +8,7 @@ import ObjectExpenses from "@/components/objects/ObjectExpenses";
 import ObjectInfo from "@/components/objects/ObjectInfo";
 import ObjectMaterials from "@/components/objects/ObjectMaterials";
 import ObjectPayments from "@/components/objects/ObjectPayments";
+import ObjectPaymentSchedule from "@/components/objects/ObjectPaymentSchedule";
 import ObjectPhotos from "@/components/objects/ObjectPhotos";
 import ObjectSummary from "@/components/objects/ObjectSummary";
 import ObjectSupervisionCard from "@/components/objects/ObjectSupervisionCard";
@@ -30,6 +31,9 @@ import {
 import {
   getObjectPayments,
 } from "@/services/objectPaymentService";
+import {
+  getObjectPaymentSchedule,
+} from "@/services/objectPaymentScheduleService";
 
 import {
   getWarehouseItems,
@@ -120,6 +124,7 @@ export default async function ObjectPage({
     warehouseItems,
     expenses,
     payments,
+    paymentSchedule,
   ] = await Promise.all([
     getObject(objectId),
     getObjectTasks(objectId),
@@ -131,6 +136,11 @@ export default async function ObjectPage({
     getObjectExpenses(objectId),
     canViewPayments
       ? getObjectPayments(
+          objectId
+        )
+      : Promise.resolve([]),
+    canViewPayments
+      ? getObjectPaymentSchedule(
           objectId
         )
       : Promise.resolve([]),
@@ -193,6 +203,12 @@ export default async function ObjectPage({
       payments
     )
       ? payments
+      : [];
+  const paymentScheduleList =
+    Array.isArray(
+      paymentSchedule
+    )
+      ? paymentSchedule
       : [];
 
   const activeTasks =
@@ -348,6 +364,8 @@ export default async function ObjectPage({
           )
         )
       : undefined;
+  const today =
+    getKyivDateValue();
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-8">
@@ -418,7 +436,7 @@ export default async function ObjectPage({
             object.next_supervision_date
           }
           today={
-            getKyivDateValue()
+            today
           }
           canManage={
             canManageSupervision
@@ -461,13 +479,28 @@ export default async function ObjectPage({
       />
 
       {canViewPayments && (
-        <ObjectPayments
-          objectId={object.id}
-          payments={paymentList}
-          today={
-            getKyivDateValue()
-          }
-        />
+        <>
+          <ObjectPaymentSchedule
+            objectId={object.id}
+            clientPrice={
+              object.client_price
+            }
+            lifetimeTotalPaid={
+              paymentSummary
+                ?.totalPaid ?? 0
+            }
+            scheduleItems={
+              paymentScheduleList
+            }
+            today={today}
+          />
+
+          <ObjectPayments
+            objectId={object.id}
+            payments={paymentList}
+            today={today}
+          />
+        </>
       )}
 
       {/* CONTENT */}

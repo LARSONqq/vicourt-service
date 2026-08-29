@@ -4,6 +4,7 @@ export interface PushNotificationPreferenceRow {
   supervision_enabled: boolean;
   low_stock_enabled: boolean;
   equipment_maintenance_enabled: boolean;
+  client_payments_enabled: boolean;
   quiet_hours_enabled: boolean;
   quiet_start: string | null;
   quiet_end: string | null;
@@ -17,6 +18,7 @@ export type PushNotificationPreferences = Pick<
   | "supervision_enabled"
   | "low_stock_enabled"
   | "equipment_maintenance_enabled"
+  | "client_payments_enabled"
   | "quiet_hours_enabled"
   | "quiet_start"
   | "quiet_end"
@@ -27,6 +29,7 @@ export const DEFAULT_PUSH_NOTIFICATION_PREFERENCES: PushNotificationPreferences 
   supervision_enabled: true,
   low_stock_enabled: true,
   equipment_maintenance_enabled: true,
+  client_payments_enabled: true,
   quiet_hours_enabled: false,
   quiet_start: null,
   quiet_end: null,

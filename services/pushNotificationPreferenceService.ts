@@ -42,6 +42,8 @@ export function resolvePushNotificationPreferences(
       row.low_stock_enabled,
     equipment_maintenance_enabled:
       row.equipment_maintenance_enabled,
+    client_payments_enabled:
+      row.client_payments_enabled,
     quiet_hours_enabled:
       row.quiet_hours_enabled,
     quiet_start:
@@ -73,6 +75,10 @@ export function isAutomaticPushCategoryEnabled(
     case "equipment_maintenance_today":
     case "equipment_maintenance_overdue":
       return preferences.equipment_maintenance_enabled;
+
+    case "client_payment_due_today":
+    case "client_payment_overdue":
+      return preferences.client_payments_enabled;
   }
 }
 
@@ -126,6 +132,7 @@ export async function getPushNotificationPreferences(
       supervision_enabled,
       low_stock_enabled,
       equipment_maintenance_enabled,
+      client_payments_enabled,
       quiet_hours_enabled,
       quiet_start,
       quiet_end,

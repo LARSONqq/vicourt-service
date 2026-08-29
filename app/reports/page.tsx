@@ -177,6 +177,16 @@ export default async function ReportsPage({
             "За вибраний період",
         },
         {
+          title: "Графік оплат",
+          href:
+            createPeriodExportHref(
+              "payment-schedule",
+              data.filters
+            ),
+          note:
+            "За датою платежу",
+        },
+        {
           title:
             "Закупівлі за період",
           href:
@@ -287,7 +297,7 @@ export default async function ReportsPage({
               data.filters
             ),
           note:
-            "Один файл із 8 вкладками",
+            "Один файл із 9 вкладками",
         }}
         groups={exportGroups}
       />

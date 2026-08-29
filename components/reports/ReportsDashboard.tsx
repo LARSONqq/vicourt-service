@@ -3,6 +3,9 @@ import Link from "next/link";
 import {
   objectPaymentStatusLabels,
 } from "@/constants/objectPayments";
+import {
+  objectPaymentScheduleStatusLabels,
+} from "@/constants/objectPaymentSchedule";
 
 import type {
   ReportsData,
@@ -255,6 +258,21 @@ export default function ReportsDashboard({
           : "Поточний стан за встановленими цінами",
       style:
         "bg-teal-50 text-teal-700",
+    },
+    {
+      label:
+        "Прострочено за графіком",
+      value: formatMoney(
+        data.kpis
+          .overdueScheduleAmount
+      ),
+      note:
+        "Поточний стан, не дохід за період",
+      style:
+        data.kpis
+          .overdueScheduleAmount > 0
+          ? "bg-red-50 text-red-700"
+          : "bg-gray-50 text-gray-700",
     },
   ];
 
@@ -1230,6 +1248,82 @@ export default function ReportsDashboard({
                       </tr>
                     )
                   )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </section>
+
+      <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+        <div className="border-b p-4 sm:p-5">
+          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+            Графік оплат
+          </h2>
+          <p className="mt-1 text-sm leading-5 text-gray-500">
+            Планові етапи з датою платежу у вибраному періоді. Покриття розраховане з усієї історії фактичних надходжень.
+          </p>
+        </div>
+
+        {data.paymentScheduleDetails.length === 0 ? (
+          <div className="p-3 sm:p-5">
+            <EmptyState>
+              За вибраними фільтрами планових етапів оплати немає.
+            </EmptyState>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3 p-3 md:hidden">
+              {data.paymentScheduleDetails.map((item) => (
+                <article key={item.id} className="min-w-0 rounded-xl border p-4">
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="break-words font-semibold text-gray-900">{item.title}</p>
+                      <Link href={`/objects/${item.objectId}#payment-schedule`} className="mt-1 block break-words text-xs text-green-700 hover:underline">
+                        {item.objectName}
+                      </Link>
+                    </div>
+                    <span className="shrink-0 text-xs text-gray-500">{formatDate(item.dueDate)}</span>
+                  </div>
+                  <dl className="mt-4 grid grid-cols-3 gap-2 border-y py-3 text-sm">
+                    <div><dt className="text-xs text-gray-500">План</dt><dd className="mt-1 font-medium">{formatMoney(item.plannedAmount)}</dd></div>
+                    <div><dt className="text-xs text-gray-500">Покрито</dt><dd className="mt-1 font-medium text-green-700">{formatMoney(item.paidAmount)}</dd></div>
+                    <div><dt className="text-xs text-gray-500">Залишок</dt><dd className="mt-1 font-medium">{formatMoney(item.remainingAmount)}</dd></div>
+                  </dl>
+                  <p className="mt-3 text-sm font-medium text-gray-700">{objectPaymentScheduleStatusLabels[item.status]}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[900px] text-sm">
+                <thead className="bg-gray-50 text-left text-gray-500">
+                  <tr>
+                    {[
+                      "Дата",
+                      "Об’єкт",
+                      "Етап",
+                      "Планова сума",
+                      "Покрито",
+                      "Залишок",
+                      "Статус",
+                    ].map((label) => (
+                      <th key={label} className="p-4 font-medium">{label}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.paymentScheduleDetails.map((item) => (
+                    <tr key={item.id} className="border-t align-top">
+                      <td className="p-4 text-gray-700">{formatDate(item.dueDate)}</td>
+                      <td className="p-4"><Link href={`/objects/${item.objectId}#payment-schedule`} className="font-semibold text-gray-900 hover:text-green-700 hover:underline">{item.objectName}</Link></td>
+                      <td className="max-w-xs p-4"><p className="break-words font-medium">{item.title}</p>{item.note && <p className="mt-1 break-words text-xs text-gray-500">{item.note}</p>}</td>
+                      <td className="p-4 font-medium">{formatMoney(item.plannedAmount)}</td>
+                      <td className="p-4 font-medium text-green-700">{formatMoney(item.paidAmount)}</td>
+                      <td className="p-4 font-medium">{formatMoney(item.remainingAmount)}</td>
+                      <td className="p-4 text-gray-700">{objectPaymentScheduleStatusLabels[item.status]}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

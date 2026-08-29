@@ -8,7 +8,12 @@ import {
 } from "@/lib/objectFinancials";
 import {
   calculateObjectPaymentSummary,
+  fromMoneyInCents,
+  toMoneyInCents,
 } from "@/lib/objectPayments";
+import {
+  calculateObjectPaymentSchedule,
+} from "@/lib/objectPaymentSchedule";
 import {
   buildWarehousePurchaseInsights,
   getWarehousePurchaseInsight,
@@ -27,6 +32,7 @@ import type {
   ReportObjectCost,
   ReportObjectOption,
   ReportPaymentDetail,
+  ReportPaymentScheduleDetail,
   ReportPurchaseExportRow,
   ReportWarehouseMovement,
   ReportWarehouseSnapshotRow,
@@ -354,6 +360,17 @@ type ReportPaymentRow = {
   payment_method: string | null;
   note: string | null;
   created_at: string;
+};
+
+type ReportPaymentScheduleRow = {
+  id: number;
+  object_id: number;
+  title: string;
+  due_date: string;
+  amount: number;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 type ReportPurchaseRow = {
@@ -1079,6 +1096,46 @@ export async function getReportsData(
       }
     );
 
+  const loadPaymentSchedule = () =>
+    fetchAllReportRows<
+      ReportPaymentScheduleRow
+    >(
+      "Не вдалося завантажити графік оплат для звіту",
+      async (from, to) => {
+        let query =
+          supabase
+            .from(
+              "object_payment_schedule"
+            )
+            .select(`
+              id,
+              object_id,
+              title,
+              due_date,
+              amount,
+              note,
+              created_at,
+              updated_at
+            `);
+
+        if (filters.objectId) {
+          query = query.eq(
+            "object_id",
+            filters.objectId
+          );
+        }
+
+        return await query
+          .order("id", {
+            ascending: true,
+          })
+          .range(from, to)
+          .overrideTypes<
+            ReportPaymentScheduleRow[]
+          >();
+      }
+    );
+
   const loadPurchases = (
     status:
       | "Заплановано"
@@ -1350,6 +1407,7 @@ export async function getReportsData(
     expenses,
     payments,
     lifetimePayments,
+    paymentSchedule,
     plannedPurchases,
     purchasedPurchases,
     movements,
@@ -1379,6 +1437,7 @@ export async function getReportsData(
         >()
       : loadPayments(),
     loadLifetimePayments(),
+    loadPaymentSchedule(),
     invalidPeriod
       ? emptyRows<
           ReportPurchaseRow
@@ -1426,7 +1485,7 @@ export async function getReportsData(
       )
     );
 
-  const lifetimePaymentTotals =
+  const lifetimePaymentTotalsInCents =
     new Map<number, number>();
 
   lifetimePayments.forEach(
@@ -1444,17 +1503,36 @@ export async function getReportsData(
         return;
       }
 
-      lifetimePaymentTotals.set(
+      lifetimePaymentTotalsInCents.set(
         objectId,
-        (lifetimePaymentTotals.get(
+        (lifetimePaymentTotalsInCents.get(
           objectId
         ) || 0) +
-          toSafeNumber(
-            payment.amount
+          Math.max(
+            toMoneyInCents(
+              toSafeNumber(
+                payment.amount
+              )
+            ),
+            0
           )
       );
     }
   );
+
+  const lifetimePaymentTotals =
+    new Map(
+      Array.from(
+        lifetimePaymentTotalsInCents.entries()
+      ).map(
+        ([objectId, total]) => [
+          objectId,
+          fromMoneyInCents(
+            total
+          ),
+        ]
+      )
+    );
 
   const objectPaymentSummaries =
     new Map<
@@ -1482,6 +1560,66 @@ export async function getReportsData(
       );
     }
   );
+  const reportToday =
+    formatKyivDate(
+      new Date()
+    );
+  const scheduleByObject =
+    new Map<
+      number,
+      ReportPaymentScheduleRow[]
+    >();
+
+  for (const item of paymentSchedule) {
+    const objectId = Number(
+      item.object_id
+    );
+
+    if (
+      !Number.isInteger(objectId) ||
+      objectId <= 0
+    ) {
+      continue;
+    }
+
+    const current =
+      scheduleByObject.get(
+        objectId
+      ) || [];
+    current.push(item);
+    scheduleByObject.set(
+      objectId,
+      current
+    );
+  }
+
+  const allocatedPaymentSchedule =
+    Array.from(
+      scheduleByObject.entries()
+    ).flatMap(
+      ([objectId, items]) =>
+        calculateObjectPaymentSchedule(
+          items,
+          lifetimePaymentTotals.get(
+            objectId
+          ) || 0,
+          objectFinancialParameters.get(
+            objectId
+          )?.clientPrice ?? null,
+          reportToday
+        ).items
+    );
+  const overdueScheduleAmount =
+    fromMoneyInCents(
+      allocatedPaymentSchedule.reduce(
+        (total, item) =>
+          total +
+          toMoneyInCents(
+            item.overdueAmount
+          ),
+        0
+      )
+    );
   const financeObjectsForKpi =
     filters.objectId
       ? objects.filter(
@@ -2245,6 +2383,49 @@ export async function getReportsData(
           payment.amount
       )
     ).totalPaid;
+  const paymentScheduleDetails:
+    ReportPaymentScheduleDetail[] =
+    invalidPeriod
+      ? []
+      : allocatedPaymentSchedule
+          .filter(
+            (item) =>
+              item.due_date >=
+                filters.dateFrom &&
+              item.due_date <=
+                filters.dateTo
+          )
+          .sort(
+            (first, second) =>
+              first.due_date.localeCompare(
+                second.due_date
+              ) ||
+              first.created_at.localeCompare(
+                second.created_at
+              ) ||
+              first.id - second.id
+          )
+          .map((item) => ({
+            id: item.id,
+            objectId:
+              item.object_id,
+            objectName:
+              objectNames.get(
+                item.object_id
+              ) ||
+              `Об’єкт #${item.object_id}`,
+            title: item.title,
+            dueDate:
+              item.due_date,
+            plannedAmount:
+              item.amount,
+            paidAmount:
+              item.paidAmount,
+            remainingAmount:
+              item.remainingAmount,
+            status: item.status,
+            note: item.note,
+          }));
 
   const plannedAmount =
     plannedPurchases.reduce(
@@ -2505,6 +2686,7 @@ export async function getReportsData(
       paymentsReceived,
       outstandingReceivables,
       objectsWithoutClientPrice,
+      overdueScheduleAmount,
     },
     objectCosts,
     employeeWork,
@@ -2512,6 +2694,7 @@ export async function getReportsData(
     expenseHighlights,
     expenseDetails,
     paymentDetails,
+    paymentScheduleDetails,
     purchases: {
       plannedCount:
         plannedPurchases.length,

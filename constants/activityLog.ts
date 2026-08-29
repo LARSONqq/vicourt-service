@@ -32,6 +32,11 @@ export const activityEntityTypes: Array<{
       "Платежі клієнтів",
   },
   {
+    value:
+      "object_payment_schedule",
+    label: "Графік оплат",
+  },
+  {
     value: "purchase",
     label: "Закупівлі",
   },

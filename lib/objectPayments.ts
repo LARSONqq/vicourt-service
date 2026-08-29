@@ -3,7 +3,7 @@ import type {
   ObjectPaymentSummary,
 } from "@/types/objectPayment";
 
-function toMoneyInCents(
+export function toMoneyInCents(
   value: number
 ) {
   if (!Number.isFinite(value)) {
@@ -13,7 +13,7 @@ function toMoneyInCents(
   return Math.round(value * 100);
 }
 
-function fromMoneyInCents(
+export function fromMoneyInCents(
   value: number
 ) {
   return value / 100;

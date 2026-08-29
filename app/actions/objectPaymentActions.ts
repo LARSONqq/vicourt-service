@@ -246,6 +246,9 @@ function refreshPaymentPages(
   revalidatePath(
     "/reports"
   );
+  revalidatePath(
+    "/notifications"
+  );
 }
 
 export async function createObjectPayment(

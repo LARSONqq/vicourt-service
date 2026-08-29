@@ -4,6 +4,9 @@ import type {
 import type {
   ObjectPaymentStatus,
 } from "@/types/objectPayment";
+import type {
+  ObjectPaymentScheduleStatus,
+} from "@/types/objectPaymentSchedule";
 
 export type ReportMovementType =
   | "Прихід"
@@ -51,6 +54,7 @@ export type ReportKpis = {
   paymentsReceived: number;
   outstandingReceivables: number;
   objectsWithoutClientPrice: number;
+  overdueScheduleAmount: number;
 };
 
 export type ReportObjectCost = {
@@ -82,6 +86,19 @@ export type ReportPaymentDetail = {
   paymentDate: string;
   amount: number;
   paymentMethod: string | null;
+  note: string | null;
+};
+
+export type ReportPaymentScheduleDetail = {
+  id: number;
+  objectId: number;
+  objectName: string;
+  title: string;
+  dueDate: string;
+  plannedAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  status: ObjectPaymentScheduleStatus;
   note: string | null;
 };
 
@@ -203,6 +220,8 @@ export type ReportsData = {
     ReportExpenseDetail[];
   paymentDetails:
     ReportPaymentDetail[];
+  paymentScheduleDetails:
+    ReportPaymentScheduleDetail[];
   purchases:
     ReportPurchaseSummary;
   purchaseExportRows:

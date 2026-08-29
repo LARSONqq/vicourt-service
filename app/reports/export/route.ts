@@ -39,12 +39,16 @@ import {
   getWarehousePurchaseInsight,
   getWarehouseStockPlan,
 } from "@/lib/warehousePlanning";
+import {
+  objectPaymentScheduleStatusLabels,
+} from "@/constants/objectPaymentSchedule";
 
 type ExportType =
   | "object-costs"
   | "employee-work"
   | "expense-categories"
   | "client-payments"
+  | "payment-schedule"
   | "purchases"
   | "warehouse-movements"
   | "objects"
@@ -64,6 +68,7 @@ const exportTypes =
     "employee-work",
     "expense-categories",
     "client-payments",
+    "payment-schedule",
     "purchases",
     "warehouse-movements",
     "objects",
@@ -300,6 +305,40 @@ async function getPeriodCsv(
                 payment.paymentMethod,
               note:
                 payment.note,
+            })
+          ),
+      };
+
+    case "payment-schedule":
+      return {
+        filename:
+          createPeriodFilename(
+            "payment-schedule",
+            filters.dateFrom,
+            filters.dateTo
+          ),
+        rows:
+          data.paymentScheduleDetails.map(
+            (item) => ({
+              dueDate:
+                formatDate(
+                  item.dueDate
+                ),
+              objectName:
+                item.objectName,
+              scheduleTitle:
+                item.title,
+              plannedAmount:
+                item.plannedAmount,
+              paidAmount:
+                item.paidAmount,
+              remainingAmount:
+                item.remainingAmount,
+              status:
+                objectPaymentScheduleStatusLabels[
+                  item.status
+                ],
+              note: item.note,
             })
           ),
       };
@@ -670,6 +709,7 @@ export async function GET(
       "employee-work",
       "expense-categories",
       "client-payments",
+      "payment-schedule",
       "purchases",
       "warehouse-movements",
     ].includes(type)

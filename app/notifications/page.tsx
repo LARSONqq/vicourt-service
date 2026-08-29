@@ -67,6 +67,10 @@ const filters: Array<{
     value: "equipment",
     label: "Техніка",
   },
+  {
+    value: "finance",
+    label: "Фінанси",
+  },
 ];
 
 function getFirstParam(
@@ -161,6 +165,10 @@ function getNotificationIcon(
     case "equipment_maintenance_today":
     case "equipment_maintenance_overdue":
       return "⚙";
+
+    case "client_payment_due_today":
+    case "client_payment_overdue":
+      return "₴";
   }
 }
 
@@ -261,6 +269,11 @@ export default async function NotificationsPage({
             )
           }
           showEquipmentMaintenance={
+            !isWorker(
+              profile.role
+            )
+          }
+          showClientPayments={
             !isWorker(
               profile.role
             )

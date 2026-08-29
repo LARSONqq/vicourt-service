@@ -9,6 +9,9 @@ import ExcelJS, {
 import {
   sanitizeSpreadsheetText,
 } from "@/lib/exportSecurity";
+import {
+  objectPaymentScheduleStatusLabels,
+} from "@/constants/objectPaymentSchedule";
 
 import type {
   ReportsData,
@@ -484,6 +487,13 @@ function addSummaryWorksheet(
     },
     {
       label:
+        "Прострочено за графіком (поточний стан)",
+      value:
+        data.kpis.overdueScheduleAmount,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
         "Об’єктів без встановленої ціни",
       value:
         data.kpis.objectsWithoutClientPrice,
@@ -907,6 +917,90 @@ export async function createReportsWorkbook(
           value: (row) =>
             safeText(
               row.paymentMethod
+            ),
+        },
+        {
+          header: "Примітка",
+          width: 38,
+          value: (row) =>
+            safeText(row.note),
+        },
+      ],
+    }
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name: "Графік оплат",
+      rows:
+        data.paymentScheduleDetails,
+      note:
+        "Планові етапи за датою у вибраному періоді; фактичні платежі наведені на окремій вкладці.",
+      columns: [
+        {
+          header: "Дата",
+          width: 14,
+          value: (row) =>
+            toDateOnly(
+              row.dueDate
+            ),
+          numberFormat:
+            dateFormat,
+        },
+        {
+          header: "Об’єкт",
+          width: 32,
+          value: (row) =>
+            safeText(
+              row.objectName
+            ),
+        },
+        {
+          header: "Етап",
+          width: 30,
+          value: (row) =>
+            safeText(row.title),
+        },
+        {
+          header:
+            "Планова сума",
+          width: 18,
+          value: (row) =>
+            safeNumber(
+              row.plannedAmount
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Покрито",
+          width: 18,
+          value: (row) =>
+            safeNumber(
+              row.paidAmount
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Залишок",
+          width: 18,
+          value: (row) =>
+            safeNumber(
+              row.remainingAmount
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header: "Статус",
+          width: 22,
+          value: (row) =>
+            safeText(
+              objectPaymentScheduleStatusLabels[
+                row.status
+              ]
             ),
         },
         {

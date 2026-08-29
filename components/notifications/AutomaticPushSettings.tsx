@@ -20,6 +20,7 @@ type Props = {
   initialPreferences: PushNotificationPreferences;
   showLowStock: boolean;
   showEquipmentMaintenance: boolean;
+  showClientPayments: boolean;
 };
 
 type PreferenceToggleProps = {
@@ -67,6 +68,7 @@ export default function AutomaticPushSettings({
   initialPreferences,
   showLowStock,
   showEquipmentMaintenance,
+  showClientPayments,
 }: Props) {
   const [preferences, setPreferences] =
     useState(
@@ -227,6 +229,22 @@ export default function AutomaticPushSettings({
             onChange={(checked) =>
               updatePreference(
                 "equipment_maintenance_enabled",
+                checked
+              )
+            }
+          />
+        )}
+
+        {showClientPayments && (
+          <PreferenceToggle
+            checked={
+              preferences.client_payments_enabled
+            }
+            label="Платежі клієнтів"
+            description="Повідомляти про платежі за графіком на сьогодні та прострочені етапи."
+            onChange={(checked) =>
+              updatePreference(
+                "client_payments_enabled",
                 checked
               )
             }
