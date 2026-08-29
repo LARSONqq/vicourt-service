@@ -13,7 +13,10 @@ import {
 import { createPortal } from "react-dom";
 
 import { rescheduleDashboardTask } from "@/app/actions/dashboardTaskActions";
-import { SUPERVISION_TASK_SOURCE } from "@/constants/taskSource";
+import {
+  EQUIPMENT_MAINTENANCE_TASK_SOURCE,
+  SUPERVISION_TASK_SOURCE,
+} from "@/constants/taskSource";
 import {
   addDaysToDateValue,
   getKyivDateValue,
@@ -26,11 +29,11 @@ import type { TaskSource } from "@/types/objectTask";
 
 type Props = {
   taskId: number;
-  objectId: number;
   currentDate: string | null;
   compact?: boolean;
   taskSource?: TaskSource;
   canManageSupervision?: boolean;
+  canManageEquipment?: boolean;
   onRescheduled?: (
     newDate: string
   ) => void;
@@ -74,11 +77,11 @@ function formatDisplayDate(
 
 export default function RescheduleTaskButton({
   taskId,
-  objectId,
   currentDate,
   compact = false,
   taskSource = "manual",
   canManageSupervision = false,
+  canManageEquipment = false,
   onRescheduled,
 }: Props) {
   const router =
@@ -123,6 +126,10 @@ export default function RescheduleTaskButton({
     taskSource ===
       SUPERVISION_TASK_SOURCE &&
     !canManageSupervision;
+  const isProtectedMaintenance =
+    taskSource ===
+      EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
+    !canManageEquipment;
 
   const [
     customDate,
@@ -332,7 +339,8 @@ export default function RescheduleTaskButton({
   ) {
     if (
       isSaving ||
-      isProtectedSupervision
+      isProtectedSupervision ||
+      isProtectedMaintenance
     ) {
       return;
     }
@@ -345,7 +353,6 @@ export default function RescheduleTaskButton({
       const updatedTask =
         await rescheduleDashboardTask(
           taskId,
-          objectId,
           newDate
         );
 
@@ -387,7 +394,8 @@ export default function RescheduleTaskButton({
 
     if (
       isSaving ||
-      isProtectedSupervision
+      isProtectedSupervision ||
+      isProtectedMaintenance
     ) {
       return;
     }
@@ -586,11 +594,14 @@ export default function RescheduleTaskButton({
           type="button"
           disabled={
             isSaving ||
-            isProtectedSupervision
+            isProtectedSupervision ||
+            isProtectedMaintenance
           }
           title={
             isProtectedSupervision
               ? "Дата автоматичного огляду доступна для керування адміністратору або менеджеру об’єктів."
+              : isProtectedMaintenance
+                ? "Дату планового ТО може змінювати лише адміністратор."
               : undefined
           }
           onClick={

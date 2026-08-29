@@ -6,11 +6,17 @@ export type TaskPriority =
 
 export type TaskSource =
   | "manual"
-  | "supervision";
+  | "supervision"
+  | "equipment_maintenance";
+
+export type TaskTargetType =
+  | "object"
+  | "equipment";
 
 export interface ObjectTask {
   id: number;
-  object_id: number;
+  object_id: number | null;
+  equipment_id: number | null;
   title: string;
   description: string | null;
   due_date: string | null;

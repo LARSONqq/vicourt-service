@@ -25,6 +25,8 @@ export type EquipmentMaintenanceCompletionResult = {
   previous_next_service_date: string | null;
   new_next_service_date: string;
   maintenance_interval_days: number;
+  completed_task_id: number | null;
+  next_task_id: number | null;
 };
 
 export type EquipmentMaintenanceActionResult =

@@ -6,7 +6,12 @@ import { useState } from "react";
 
 import { completeDashboardTask } from "@/app/actions/dashboardTaskActions";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
-import { SUPERVISION_TASK_SOURCE } from "@/constants/taskSource";
+import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
+import {
+  EQUIPMENT_MAINTENANCE_TASK_SOURCE,
+  SUPERVISION_TASK_SOURCE,
+} from "@/constants/taskSource";
+import { getTaskTarget } from "@/lib/taskTarget";
 
 import type { TaskWithObject } from "@/types/taskWithObject";
 
@@ -14,6 +19,7 @@ type Props = {
   tasks: TaskWithObject[];
   today: string;
   canManageSupervision: boolean;
+  canManageEquipment: boolean;
 };
 
 function getPriorityStyle(priority: string) {
@@ -39,6 +45,7 @@ export default function TodayTasksSection({
   tasks,
   today,
   canManageSupervision,
+  canManageEquipment,
 }: Props) {
   const router = useRouter();
 
@@ -74,6 +81,14 @@ export default function TodayTasksSection({
       return;
     }
 
+    if (
+      task.task_source === EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
+      !canManageEquipment
+    ) {
+      setErrorMessage("Планове ТО може виконати лише адміністратор.");
+      return;
+    }
+
     if (updatingTaskId !== null) {
       return;
     }
@@ -92,8 +107,7 @@ export default function TodayTasksSection({
 
     try {
       await completeDashboardTask(
-        task.id,
-        task.object_id
+        task.id
       );
 
       router.refresh();
@@ -202,6 +216,10 @@ export default function TodayTasksSection({
               task.task_source ===
                 SUPERVISION_TASK_SOURCE &&
               !canManageSupervision;
+            const isProtectedMaintenance =
+              task.task_source === EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
+              !canManageEquipment;
+            const target = getTaskTarget(task);
 
             return (
               <article
@@ -227,16 +245,22 @@ export default function TodayTasksSection({
                       </span>
                     </div>
 
-                    {task.object ? (
+                    {task.task_source === EQUIPMENT_MAINTENANCE_TASK_SOURCE && (
+                      <div className="mt-2">
+                        <EquipmentMaintenanceTaskBadge compact />
+                      </div>
+                    )}
+
+                    {target ? (
                       <Link
-                        href={`/objects/${task.object.id}`}
+                        href={target.href}
                         className="mt-1 block break-words text-sm text-gray-500 hover:text-green-700 hover:underline"
                       >
-                        {task.object.name}
+                        {target.type === "equipment" ? "🔧" : "📍"} {target.name}
                       </Link>
                     ) : (
                       <p className="mt-1 text-sm text-gray-500">
-                        Об’єкт не вказано
+                        Пов’язаний запис не знайдено
                       </p>
                     )}
                   </div>
@@ -255,13 +279,15 @@ export default function TodayTasksSection({
                     <div className="flex flex-wrap items-center gap-2">
                       <RescheduleTaskButton
                         taskId={task.id}
-                        objectId={task.object_id}
                         currentDate={task.due_date}
                         taskSource={
                           task.task_source
                         }
                         canManageSupervision={
                           canManageSupervision
+                        }
+                        canManageEquipment={
+                          canManageEquipment
                         }
                         compact
                         onRescheduled={(newDate) =>
@@ -277,11 +303,14 @@ export default function TodayTasksSection({
                         disabled={
                           updatingTaskId !==
                             null ||
-                          isProtectedSupervision
+                          isProtectedSupervision ||
+                          isProtectedMaintenance
                         }
                         title={
                           isProtectedSupervision
                             ? "Періодичний огляд можуть виконати адміністратор або менеджер об’єктів."
+                            : isProtectedMaintenance
+                              ? "Планове ТО може виконати лише адміністратор."
                             : undefined
                         }
                         onClick={() =>

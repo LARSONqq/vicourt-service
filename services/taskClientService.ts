@@ -26,6 +26,7 @@ export async function getAllTasksClient(): Promise<
     .select(`
       id,
       object_id,
+      equipment_id,
       title,
       description,
       due_date,
@@ -38,6 +39,11 @@ export async function getAllTasksClient(): Promise<
       object:objects (
         id,
         name
+      ),
+      equipment:equipment (
+        id,
+        name,
+        inventory_number
       ),
       checklist_items:task_checklist_items (
         id,

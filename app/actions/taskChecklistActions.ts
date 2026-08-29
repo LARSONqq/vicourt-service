@@ -21,23 +21,11 @@ function validateId(
   }
 }
 
-function validateTaskData(
-  taskId: number,
-  objectId?: number
-) {
+function validateTaskData(taskId: number) {
   validateId(
     taskId,
     "Не вдалося визначити завдання."
   );
-
-  if (
-    objectId !== undefined
-  ) {
-    validateId(
-      objectId,
-      "Не вдалося визначити об’єкт."
-    );
-  }
 }
 
 function normalizeTitle(
@@ -79,17 +67,13 @@ async function requireAuthenticatedUser() {
   return profile;
 }
 
-function refreshTaskPages(
-  objectId: number
-) {
+function refreshTaskPages() {
   revalidatePath("/");
   revalidatePath("/task");
   revalidatePath("/calendar");
   revalidatePath("/employees");
   revalidatePath("/objects");
-  revalidatePath(
-    `/objects/${objectId}`
-  );
+  revalidatePath("/equipment");
 }
 
 export async function getTaskChecklistItems(
@@ -142,14 +126,12 @@ export async function getTaskChecklistItems(
 
 export async function addTaskChecklistItem(
   taskId: number,
-  objectId: number,
   title: string
 ): Promise<TaskChecklistItem> {
   await requireAuthenticatedUser();
 
   validateTaskData(
-    taskId,
-    objectId
+    taskId
   );
 
   const normalizedTitle =
@@ -198,9 +180,7 @@ export async function addTaskChecklistItem(
     );
   }
 
-  refreshTaskPages(
-    objectId
-  );
+  refreshTaskPages();
 
   return data as TaskChecklistItem;
 }
@@ -208,7 +188,6 @@ export async function addTaskChecklistItem(
 export async function toggleTaskChecklistItem(
   itemId: number,
   taskId: number,
-  objectId: number,
   isCompleted: boolean
 ): Promise<TaskChecklistItem> {
   await requireAuthenticatedUser();
@@ -219,8 +198,7 @@ export async function toggleTaskChecklistItem(
   );
 
   validateTaskData(
-    taskId,
-    objectId
+    taskId
   );
 
   const supabase =
@@ -268,17 +246,14 @@ export async function toggleTaskChecklistItem(
     );
   }
 
-  refreshTaskPages(
-    objectId
-  );
+  refreshTaskPages();
 
   return data as TaskChecklistItem;
 }
 
 export async function deleteTaskChecklistItem(
   itemId: number,
-  taskId: number,
-  objectId: number
+  taskId: number
 ) {
   await requireAuthenticatedUser();
 
@@ -288,8 +263,7 @@ export async function deleteTaskChecklistItem(
   );
 
   validateTaskData(
-    taskId,
-    objectId
+    taskId
   );
 
   const supabase =
@@ -317,9 +291,7 @@ export async function deleteTaskChecklistItem(
     );
   }
 
-  refreshTaskPages(
-    objectId
-  );
+  refreshTaskPages();
 
   return {
     id: itemId,

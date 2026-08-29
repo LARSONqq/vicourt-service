@@ -20,12 +20,10 @@ import type { TaskChecklistItem } from "@/types/taskChecklistItem";
 
 type Props = {
   taskId: number;
-  objectId: number;
 };
 
 export default function TaskChecklist({
   taskId,
-  objectId,
 }: Props) {
   const router = useRouter();
 
@@ -130,7 +128,6 @@ export default function TaskChecklist({
       const createdItem =
         await addTaskChecklistItem(
           taskId,
-          objectId,
           normalizedTitle
         );
 
@@ -196,7 +193,6 @@ export default function TaskChecklist({
         await toggleTaskChecklistItem(
           item.id,
           taskId,
-          objectId,
           nextCompleted
         );
 
@@ -265,8 +261,7 @@ export default function TaskChecklist({
     try {
       await deleteTaskChecklistItem(
         item.id,
-        taskId,
-        objectId
+        taskId
       );
 
       router.refresh();

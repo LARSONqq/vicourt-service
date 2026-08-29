@@ -1,21 +1,27 @@
 import WeeklyTaskCalendar from "@/components/calendar/WeeklyTaskCalendar";
 
 import { getEmployees } from "@/services/employeeService";
+import { getEquipment } from "@/services/equipmentService";
 import { getObjects } from "@/services/objectService";
 import { getCurrentUserProfile } from "@/services/profileService";
 import { getAllTasks } from "@/services/taskService";
-import { canManageObjects } from "@/lib/auth/permissions";
+import {
+  canManageEquipment,
+  canManageObjects,
+} from "@/lib/auth/permissions";
 
 export default async function CalendarPage() {
   const [
     tasks,
     employees,
     objects,
+    equipment,
     profile,
   ] = await Promise.all([
     getAllTasks(),
     getEmployees(),
     getObjects(),
+    getEquipment(),
     getCurrentUserProfile(),
   ]);
 
@@ -24,6 +30,10 @@ export default async function CalendarPage() {
       ? canManageObjects(
           profile.role
         )
+      : false;
+  const canManageMaintenance =
+    profile
+      ? canManageEquipment(profile.role)
       : false;
 
   const taskList =
@@ -39,6 +49,10 @@ export default async function CalendarPage() {
   const objectList =
     Array.isArray(objects)
       ? objects
+      : [];
+  const equipmentList =
+    Array.isArray(equipment)
+      ? equipment
       : [];
 
   return (
@@ -60,8 +74,12 @@ export default async function CalendarPage() {
           tasks={taskList}
           employees={employeeList}
           objects={objectList}
+          equipment={equipmentList}
           canManageSupervision={
             canManageSupervision
+          }
+          canManageEquipment={
+            canManageMaintenance
           }
         />
       </div>

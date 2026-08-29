@@ -12,5 +12,11 @@ export interface TaskWithObject
     name: string;
   } | null;
 
+  equipment: {
+    id: number;
+    name: string;
+    inventory_number: string | null;
+  } | null;
+
   checklist_items?: TaskChecklistSummaryItem[];
 }

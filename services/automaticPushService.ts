@@ -861,6 +861,7 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
               .select(`
                 id,
                 object_id,
+                equipment_id,
                 title,
                 description,
                 due_date,
@@ -873,6 +874,11 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
                 object:objects (
                   id,
                   name
+                ),
+                equipment:equipment (
+                  id,
+                  name,
+                  inventory_number
                 )
               `)
               .eq(

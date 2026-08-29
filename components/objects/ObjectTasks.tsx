@@ -245,8 +245,7 @@ export default function ObjectTasks({
                     <form
                       action={deleteObjectTask.bind(
                         null,
-                        task.id,
-                        objectId
+                        task.id
                       )}
                       onSubmit={(
                         event

@@ -19,17 +19,23 @@ import {
 } from "@/app/actions/taskActions";
 
 import EditTaskForm from "@/components/objects/EditTaskForm";
+import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
 import AddGlobalTaskForm from "@/components/tasks/AddGlobalTaskForm";
+import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
+  EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE,
+  EQUIPMENT_MAINTENANCE_TASK_SOURCE,
   SUPERVISION_TASK_MANAGED_MESSAGE,
   SUPERVISION_TASK_SOURCE,
 } from "@/constants/taskSource";
+import { getTaskTarget } from "@/lib/taskTarget";
 import {
   useMediaQuery,
 } from "@/lib/useMediaQuery";
 
 import type { Employee } from "@/types/employee";
+import type { Equipment } from "@/types/equipment";
 import type { ObjectItem } from "@/types/object";
 import type { TaskWithObject } from "@/types/taskWithObject";
 
@@ -37,7 +43,9 @@ type Props = {
   tasks: TaskWithObject[];
   employees: Employee[];
   objects: ObjectItem[];
+  equipment: Equipment[];
   canManageSupervision: boolean;
+  canManageEquipment: boolean;
 };
 
 type TaskCardProps = {
@@ -348,6 +356,10 @@ function TaskCard({
   const isSupervisionTask =
     task.task_source ===
     SUPERVISION_TASK_SOURCE;
+  const isMaintenanceTask =
+    task.task_source ===
+    EQUIPMENT_MAINTENANCE_TASK_SOURCE;
+  const target = getTaskTarget(task);
 
   return (
     <article
@@ -424,6 +436,9 @@ function TaskCard({
         {isSupervisionTask && (
           <SupervisionTaskBadge compact />
         )}
+        {isMaintenanceTask && (
+          <EquipmentMaintenanceTaskBadge compact />
+        )}
 
         <span
           className={`rounded-full px-2 py-1 text-[10px] font-medium ${
@@ -448,10 +463,10 @@ function TaskCard({
         </span>
       </div>
 
-      {/* OBJECT */}
-      {task.object && (
+      {/* TARGET */}
+      {target && (
         <Link
-          href={`/objects/${task.object.id}`}
+          href={target.href}
           draggable={false}
           onPointerDown={(
             event
@@ -469,10 +484,7 @@ function TaskCard({
               : "text-green-700"
           }`}
         >
-          {
-            task.object
-              .name
-          }
+          {target.type === "equipment" ? "🔧" : "📍"} {target.name}
         </Link>
       )}
 
@@ -548,6 +560,8 @@ function TaskCard({
       <p className="mt-3 border-t pt-2 text-[11px] text-gray-400">
         {isSupervisionTask
           ? "Натисни картку, щоб відкрити деталі"
+          : isMaintenanceTask
+            ? "Автоматичне завдання планового ТО"
           : "Натисни картку, щоб редагувати"}
       </p>
     </article>
@@ -558,7 +572,9 @@ export default function WeeklyTaskCalendar({
   tasks,
   employees,
   objects,
+  equipment,
   canManageSupervision,
+  canManageEquipment,
 }: Props) {
   const router =
     useRouter();
@@ -944,12 +960,18 @@ export default function WeeklyTaskCalendar({
       (!canManageSupervision ||
         task.status ===
           "Виконано");
+    const isProtectedMaintenance =
+      task.task_source ===
+        EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
+      (!canManageEquipment ||
+        task.status === "Виконано");
 
     if (
       !canDrag ||
       movingTaskId !==
         null ||
-      isProtectedSupervision
+      isProtectedSupervision ||
+      isProtectedMaintenance
     ) {
       event.preventDefault();
 
@@ -1135,6 +1157,26 @@ export default function WeeklyTaskCalendar({
       }
     }
 
+    if (
+      task.task_source ===
+      EQUIPMENT_MAINTENANCE_TASK_SOURCE
+    ) {
+      if (!canManageEquipment) {
+        setQuickActionError(
+          "Дату планового ТО може змінювати лише адміністратор."
+        );
+        return;
+      }
+      if (task.status === "Виконано") {
+        setQuickActionError("Завершене планове ТО не можна переносити.");
+        return;
+      }
+      if (!dueDate) {
+        setQuickActionError("Автоматичне ТО повинно мати дату.");
+        return;
+      }
+    }
+
     const normalizedDueDate =
       dueDate || null;
 
@@ -1183,7 +1225,6 @@ export default function WeeklyTaskCalendar({
     try {
       await updateTaskDueDate(
         task.id,
-        task.object_id,
         normalizedDueDate
       );
     } catch (error) {
@@ -1262,6 +1303,20 @@ export default function WeeklyTaskCalendar({
       }
     }
 
+    if (
+      task.task_source ===
+      EQUIPMENT_MAINTENANCE_TASK_SOURCE
+    ) {
+      if (!canManageEquipment) {
+        setQuickActionError("Планове ТО може виконати лише адміністратор.");
+        return;
+      }
+      if (task.status === "Виконано") {
+        setQuickActionError("Завершене планове ТО не можна повернути в роботу.");
+        return;
+      }
+    }
+
     const previousStatus =
       task.status;
 
@@ -1297,13 +1352,16 @@ export default function WeeklyTaskCalendar({
     try {
       await updateTaskStatus(
         task.id,
-        task.object_id,
         nextStatus
       );
 
       if (
         task.task_source ===
           SUPERVISION_TASK_SOURCE &&
+        nextStatus ===
+          "Виконано" ||
+        task.task_source ===
+          EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
         nextStatus ===
           "Виконано"
       ) {
@@ -1341,11 +1399,12 @@ export default function WeeklyTaskCalendar({
     task: TaskWithObject
   ) {
     if (
-      task.task_source ===
-      SUPERVISION_TASK_SOURCE
+      task.task_source !== "manual"
     ) {
       setDeleteErrorMessage(
-        SUPERVISION_TASK_MANAGED_MESSAGE
+        task.task_source === SUPERVISION_TASK_SOURCE
+          ? SUPERVISION_TASK_MANAGED_MESSAGE
+          : EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE
       );
 
       return;
@@ -1370,8 +1429,7 @@ export default function WeeklyTaskCalendar({
 
     try {
       await deleteObjectTask(
-        task.id,
-        task.object_id
+        task.id
       );
 
       setLocalTasks(
@@ -1873,14 +1931,21 @@ export default function WeeklyTaskCalendar({
                               SUPERVISION_TASK_SOURCE ||
                               (canManageSupervision &&
                                 task.status !==
-                                  "Виконано"))
+                                  "Виконано")) &&
+                            (task.task_source !==
+                              EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
+                              (canManageEquipment &&
+                                task.status !== "Виконано"))
                           }
                           canUseQuickAction={
-                            task.task_source !==
+                            (task.task_source !==
                               SUPERVISION_TASK_SOURCE ||
-                            (canManageSupervision &&
-                              task.status !==
-                                "Виконано")
+                              (canManageSupervision &&
+                                task.status !== "Виконано")) &&
+                            (task.task_source !==
+                              EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
+                              (canManageEquipment &&
+                                task.status !== "Виконано"))
                           }
                           onOpen={() =>
                             handleTaskClick(
@@ -2021,14 +2086,21 @@ export default function WeeklyTaskCalendar({
                       SUPERVISION_TASK_SOURCE ||
                       (canManageSupervision &&
                         task.status !==
-                          "Виконано"))
+                          "Виконано")) &&
+                    (task.task_source !==
+                      EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
+                      (canManageEquipment &&
+                        task.status !== "Виконано"))
                   }
                   canUseQuickAction={
-                    task.task_source !==
+                    (task.task_source !==
                       SUPERVISION_TASK_SOURCE ||
-                    (canManageSupervision &&
-                      task.status !==
-                        "Виконано")
+                      (canManageSupervision &&
+                        task.status !== "Виконано")) &&
+                    (task.task_source !==
+                      EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
+                      (canManageEquipment &&
+                        task.status !== "Виконано"))
                   }
                   onOpen={() =>
                     handleTaskClick(
@@ -2116,6 +2188,9 @@ export default function WeeklyTaskCalendar({
                 objects={
                   objects
                 }
+                equipment={
+                  equipment
+                }
                 employees={
                   employees
                 }
@@ -2164,10 +2239,11 @@ export default function WeeklyTaskCalendar({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="text-lg font-semibold">
-                    {selectedTask.task_source ===
-                    SUPERVISION_TASK_SOURCE
+                    {selectedTask.task_source === SUPERVISION_TASK_SOURCE
                       ? "Автоматичний огляд"
-                      : "Редагування завдання"}
+                      : selectedTask.task_source === EQUIPMENT_MAINTENANCE_TASK_SOURCE
+                        ? "Автоматичне ТО"
+                        : "Редагування завдання"}
                   </h2>
 
                   <p className="mt-1 line-clamp-2 break-words text-sm text-gray-500">
@@ -2175,8 +2251,8 @@ export default function WeeklyTaskCalendar({
                       selectedTask.title
                     }
 
-                    {selectedTask.object
-                      ? ` • ${selectedTask.object.name}`
+                    {getTaskTarget(selectedTask)
+                      ? ` • ${getTaskTarget(selectedTask)?.name}`
                       : ""}
                   </p>
                 </div>
@@ -2203,8 +2279,7 @@ export default function WeeklyTaskCalendar({
                 </button>
               </div>
 
-              {selectedTask.task_source !==
-                SUPERVISION_TASK_SOURCE && (
+              {selectedTask.task_source === "manual" && (
                 <button
                   type="button"
                   disabled={
@@ -2236,24 +2311,35 @@ export default function WeeklyTaskCalendar({
                 </div>
               )}
 
-              {selectedTask.task_source ===
-              SUPERVISION_TASK_SOURCE ? (
+              {selectedTask.task_source !== "manual" ? (
                 <div className="space-y-4 rounded-xl border border-rose-100 bg-rose-50/60 p-4">
-                  <SupervisionTaskBadge />
+                  {selectedTask.task_source === SUPERVISION_TASK_SOURCE
+                    ? <SupervisionTaskBadge />
+                    : <EquipmentMaintenanceTaskBadge />}
 
                   <p className="text-sm leading-6 text-rose-800">
-                    {
-                      SUPERVISION_TASK_MANAGED_MESSAGE
-                    }
+                    {selectedTask.task_source === SUPERVISION_TASK_SOURCE
+                      ? SUPERVISION_TASK_MANAGED_MESSAGE
+                      : EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE}
                   </p>
 
-                  {selectedTask.object && (
+                  {getTaskTarget(selectedTask) && (
                     <Link
-                      href={`/objects/${selectedTask.object.id}`}
+                      href={getTaskTarget(selectedTask)?.href || "/task"}
                       className="inline-flex min-h-10 items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
                     >
-                      Відкрити об’єкт
+                      Відкрити {getTaskTarget(selectedTask)?.type === "equipment" ? "техніку" : "об’єкт"}
                     </Link>
+                  )}
+
+                  {selectedTask.status !== "Виконано" && (
+                    <RescheduleTaskButton
+                      taskId={selectedTask.id}
+                      currentDate={selectedTask.due_date}
+                      taskSource={selectedTask.task_source}
+                      canManageSupervision={canManageSupervision}
+                      canManageEquipment={canManageEquipment}
+                    />
                   )}
                 </div>
               ) : (
@@ -2261,9 +2347,8 @@ export default function WeeklyTaskCalendar({
                   task={
                     selectedTask
                   }
-                  objectId={
-                    selectedTask.object_id
-                  }
+                  objects={objects}
+                  equipment={equipment}
                   employees={
                     employees
                   }

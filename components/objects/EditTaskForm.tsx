@@ -7,6 +7,8 @@ import { updateObjectTask } from "@/app/actions/taskActions";
 import TaskChecklist from "@/components/tasks/TaskChecklist";
 
 import type { Employee } from "@/types/employee";
+import type { Equipment } from "@/types/equipment";
+import type { ObjectItem } from "@/types/object";
 
 import type {
   ObjectTask,
@@ -15,7 +17,9 @@ import type {
 
 type Props = {
   task: ObjectTask;
-  objectId: number;
+  objectId?: number;
+  objects?: ObjectItem[];
+  equipment?: Equipment[];
   employees: Employee[];
   onCancel: () => void;
 };
@@ -30,6 +34,8 @@ const priorities: TaskPriority[] = [
 export default function EditTaskForm({
   task,
   objectId,
+  objects,
+  equipment,
   employees,
   onCancel,
 }: Props) {
@@ -40,6 +46,15 @@ export default function EditTaskForm({
     errorMessage,
     setErrorMessage,
   ] = useState("");
+  const [targetType, setTargetType] =
+    useState<"object" | "equipment">(
+      task.equipment_id !== null
+        ? "equipment"
+        : "object"
+    );
+  const canChangeTarget =
+    objects !== undefined &&
+    equipment !== undefined;
 
   async function handleSubmit(
     formData: FormData
@@ -75,11 +90,20 @@ export default function EditTaskForm({
         value={task.id}
       />
 
-      <input
-        type="hidden"
-        name="object_id"
-        value={objectId}
-      />
+      {!canChangeTarget && task.object_id !== null && (
+        <input
+          type="hidden"
+          name="object_id"
+          value={objectId ?? task.object_id}
+        />
+      )}
+      {!canChangeTarget && task.equipment_id !== null && (
+        <input
+          type="hidden"
+          name="equipment_id"
+          value={task.equipment_id}
+        />
+      )}
 
       <input
         type="hidden"
@@ -100,6 +124,61 @@ export default function EditTaskForm({
       {errorMessage && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
           {errorMessage}
+        </div>
+      )}
+
+      {canChangeTarget && (
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Пов’язано з
+          </label>
+          <div className="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1">
+            <button
+              type="button"
+              onClick={() => setTargetType("object")}
+              className={`min-h-10 rounded-md px-3 text-sm font-medium ${
+                targetType === "object" ? "bg-white shadow-sm" : "text-gray-600"
+              }`}
+            >
+              Об’єкт
+            </button>
+            <button
+              type="button"
+              onClick={() => setTargetType("equipment")}
+              className={`min-h-10 rounded-md px-3 text-sm font-medium ${
+                targetType === "equipment" ? "bg-white shadow-sm" : "text-gray-600"
+              }`}
+            >
+              Техніка
+            </button>
+          </div>
+          {targetType === "object" ? (
+            <select
+              name="object_id"
+              defaultValue={task.object_id ?? ""}
+              className="min-h-11 w-full rounded-lg border bg-white px-3 py-3"
+              required
+            >
+              <option value="" disabled>Обери об’єкт</option>
+              {objects.map((object) => (
+                <option key={object.id} value={object.id}>{object.name}</option>
+              ))}
+            </select>
+          ) : (
+            <select
+              name="equipment_id"
+              defaultValue={task.equipment_id ?? ""}
+              className="min-h-11 w-full rounded-lg border bg-white px-3 py-3"
+              required
+            >
+              <option value="" disabled>Обери техніку</option>
+              {equipment.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}{item.inventory_number ? ` — ${item.inventory_number}` : ""}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       )}
 
@@ -257,7 +336,6 @@ export default function EditTaskForm({
       <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
         <TaskChecklist
           taskId={task.id}
-          objectId={objectId}
         />
       </div>
 

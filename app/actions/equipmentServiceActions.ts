@@ -15,8 +15,9 @@ import {
   getCurrentUserProfile,
 } from "@/services/profileService";
 import {
-  recordActivity,
-} from "@/services/activityLogService";
+  completeEquipmentMaintenanceCycle,
+  syncEquipmentMaintenanceTask,
+} from "@/services/equipmentMaintenanceTaskService";
 
 import {
   equipmentServiceTypes,
@@ -24,7 +25,6 @@ import {
 
 import type {
   EquipmentMaintenanceActionResult,
-  EquipmentMaintenanceCompletionResult,
 } from "@/types/equipment";
 
 async function requireEquipmentManagement() {
@@ -59,60 +59,10 @@ function getText(
   ).trim();
 }
 
-function isRecord(
-  value: unknown
-): value is Record<
-  string,
-  unknown
-> {
-  return (
-    typeof value === "object" &&
-    value !== null
-  );
-}
-
-function isNullableString(
-  value: unknown
-): value is string | null {
-  return (
-    typeof value === "string" ||
-    value === null
-  );
-}
-
-function isMaintenanceCompletionResult(
-  value: unknown
-): value is EquipmentMaintenanceCompletionResult {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return (
-    typeof value.service_history_id ===
-      "number" &&
-    typeof value.equipment_name ===
-      "string" &&
-    isNullableString(
-      value.previous_last_maintenance_date
-    ) &&
-    typeof value.new_last_maintenance_date ===
-      "string" &&
-    isNullableString(
-      value.previous_next_service_date
-    ) &&
-    typeof value.new_next_service_date ===
-      "string" &&
-    typeof value.maintenance_interval_days ===
-      "number"
-  );
-}
-
 export async function completeEquipmentMaintenance(
   formData: FormData
 ): Promise<EquipmentMaintenanceActionResult> {
   try {
-    const profile =
-      await requireEquipmentManagement();
     const equipmentId =
       Number(
         formData.get(
@@ -154,110 +104,12 @@ export async function completeEquipmentMaintenance(
       );
     }
 
-    const performedBy =
-      profile.full_name
-        ?.trim() ||
-      profile.email
-        ?.trim() ||
-      "Користувач ViCourt";
-    const supabase =
-      await createClient();
-    const {
-      data,
-      error,
-    } = await supabase.rpc(
-      "complete_equipment_maintenance",
-      {
-        p_equipment_id:
-          equipmentId,
-        p_cost: cost,
-        p_performed_by:
-          performedBy,
-        p_description:
-          description || null,
-      }
-    );
-
-    if (error) {
-      const normalizedMessage =
-        error.message.toLowerCase();
-
-      if (
-        normalizedMessage.includes(
-          "maintenance interval"
-        )
-      ) {
-        throw new Error(
-          "Спочатку налаштуйте періодичність ТО."
-        );
-      }
-
-      if (
-        normalizedMessage.includes(
-          "already completed"
-        )
-      ) {
-        throw new Error(
-          "Планове ТО вже відмічено виконаним сьогодні."
-        );
-      }
-
-      throw new Error(
-        `Не вдалося завершити планове ТО: ${error.message}`
-      );
-    }
-
-    if (
-      !isMaintenanceCompletionResult(
-        data
-      )
-    ) {
-      throw new Error(
-        "Система отримала некоректний результат завершення ТО."
-      );
-    }
-
-    await recordActivity({
-      action:
-        "equipment.maintenance_completed",
-      entityType:
-        "equipment",
-      entityId:
+    const data =
+      await completeEquipmentMaintenanceCycle({
         equipmentId,
-      entityName:
-        data.equipment_name,
-      description: `Виконано планове ТО техніки «${data.equipment_name}». Наступне ТО: ${
-        formatDateValue(
-          data.new_next_service_date
-        ) ||
-        data.new_next_service_date
-      }.`,
-      metadata: {
-        previous_last_maintenance_date:
-          data.previous_last_maintenance_date,
-        new_last_maintenance_date:
-          data.new_last_maintenance_date,
-        previous_next_service_date:
-          data.previous_next_service_date,
-        new_next_service_date:
-          data.new_next_service_date,
-        maintenance_interval_days:
-          data.maintenance_interval_days,
-        service_history_id:
-          data.service_history_id,
-      },
-    });
-
-    revalidatePath("/");
-    revalidatePath(
-      "/equipment"
-    );
-    revalidatePath(
-      "/notifications"
-    );
-    revalidatePath(
-      "/reports"
-    );
+        cost,
+        description,
+      });
 
     return {
       success: true,
@@ -431,6 +283,10 @@ export async function createEquipmentServiceRecord(
         `Запис створено, але не вдалося оновити дату наступного сервісу: ${updateError.message}`
       );
     }
+
+    await syncEquipmentMaintenanceTask(
+      equipmentId
+    );
   }
 
   revalidatePath("/");

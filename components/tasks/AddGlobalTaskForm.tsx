@@ -6,10 +6,12 @@ import { useState } from "react";
 import { createObjectTask } from "@/app/actions/taskActions";
 
 import type { Employee } from "@/types/employee";
+import type { Equipment } from "@/types/equipment";
 import type { ObjectItem } from "@/types/object";
 
 type Props = {
   objects: ObjectItem[];
+  equipment: Equipment[];
   employees: Employee[];
   initialDueDate?: string;
   defaultOpen?: boolean;
@@ -20,6 +22,7 @@ type Props = {
 
 export default function AddGlobalTaskForm({
   objects,
+  equipment,
   employees,
   initialDueDate = "",
   defaultOpen = false,
@@ -46,6 +49,9 @@ export default function AddGlobalTaskForm({
     errorMessage,
     setErrorMessage,
   ] = useState("");
+
+  const [targetType, setTargetType] =
+    useState<"object" | "equipment">("object");
 
   function closeForm() {
     setIsOpen(false);
@@ -125,8 +131,7 @@ export default function AddGlobalTaskForm({
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Створи завдання та
-              прив’яжи його до об’єкта
+              Створи завдання та прив’яжи його до об’єкта або техніки
             </p>
           </div>
 
@@ -137,48 +142,75 @@ export default function AddGlobalTaskForm({
             </div>
           )}
 
-          {/* OBJECT */}
+          {/* TARGET */}
           <div className="min-w-0">
             <label className="mb-2 block text-sm font-medium text-gray-700">
-              Об’єкт
+              Пов’язано з
             </label>
 
-            <select
-              name="object_id"
-              defaultValue=""
-              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-              required
-            >
-              <option
-                value=""
-                disabled
+            <div className="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1">
+              <button
+                type="button"
+                onClick={() => setTargetType("object")}
+                className={`min-h-10 rounded-md px-3 py-2 text-sm font-medium transition ${
+                  targetType === "object"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
               >
-                Обери об’єкт
-              </option>
+                Об’єкт
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetType("equipment")}
+                className={`min-h-10 rounded-md px-3 py-2 text-sm font-medium transition ${
+                  targetType === "equipment"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                Техніка
+              </button>
+            </div>
 
-              {objects.map(
-                (object) => (
-                  <option
-                    key={
-                      object.id
-                    }
-                    value={
-                      object.id
-                    }
-                  >
-                    {
-                      object.name
-                    }
+            {targetType === "object" ? (
+              <select
+                name="object_id"
+                defaultValue=""
+                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                required
+              >
+                <option value="" disabled>Обери об’єкт</option>
+                {objects.map((object) => (
+                  <option key={object.id} value={object.id}>
+                    {object.name}
                   </option>
-                )
-              )}
-            </select>
+                ))}
+              </select>
+            ) : (
+              <select
+                name="equipment_id"
+                defaultValue=""
+                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                required
+              >
+                <option value="" disabled>Обери техніку</option>
+                {equipment.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}{item.inventory_number ? ` — ${item.inventory_number}` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
 
-            {objects.length ===
-              0 && (
+            {targetType === "object" && objects.length === 0 && (
               <p className="mt-2 text-xs text-orange-600">
-                Спочатку додай хоча б
-                один об’єкт.
+                Спочатку додай хоча б один об’єкт.
+              </p>
+            )}
+            {targetType === "equipment" && equipment.length === 0 && (
+              <p className="mt-2 text-xs text-orange-600">
+                Спочатку додай хоча б одну одиницю техніки.
               </p>
             )}
           </div>
@@ -343,7 +375,9 @@ export default function AddGlobalTaskForm({
               type="submit"
               disabled={
                 isSubmitting ||
-                objects.length === 0
+                (targetType === "object"
+                  ? objects.length === 0
+                  : equipment.length === 0)
               }
               className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
             >

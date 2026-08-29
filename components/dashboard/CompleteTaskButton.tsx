@@ -6,24 +6,27 @@ import {
   type MouseEvent,
 } from "react";
 import { completeDashboardTask } from "@/app/actions/dashboardTaskActions";
-import { SUPERVISION_TASK_SOURCE } from "@/constants/taskSource";
+import {
+  EQUIPMENT_MAINTENANCE_TASK_SOURCE,
+  SUPERVISION_TASK_SOURCE,
+} from "@/constants/taskSource";
 
 import type { TaskSource } from "@/types/objectTask";
 
 type Props = {
   taskId: number;
-  objectId: number;
   compact?: boolean;
   taskSource?: TaskSource;
   canManageSupervision?: boolean;
+  canManageEquipment?: boolean;
 };
 
 export default function CompleteTaskButton({
   taskId,
-  objectId,
   compact = false,
   taskSource = "manual",
   canManageSupervision = false,
+  canManageEquipment = false,
 }: Props) {
   const router = useRouter();
 
@@ -40,6 +43,10 @@ export default function CompleteTaskButton({
     taskSource ===
       SUPERVISION_TASK_SOURCE &&
     !canManageSupervision;
+  const isProtectedMaintenance =
+    taskSource ===
+      EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
+    !canManageEquipment;
 
   async function handleComplete(
     event: MouseEvent<HTMLButtonElement>
@@ -50,7 +57,8 @@ export default function CompleteTaskButton({
     if (
       isSaving ||
       isCompleted ||
-      isProtectedSupervision
+      isProtectedSupervision ||
+      isProtectedMaintenance
     ) {
       return;
     }
@@ -60,8 +68,7 @@ export default function CompleteTaskButton({
 
     try {
       await completeDashboardTask(
-        taskId,
-        objectId
+        taskId
       );
 
       setIsCompleted(true);
@@ -91,11 +98,14 @@ export default function CompleteTaskButton({
         type="button"
         disabled={
           isSaving ||
-          isProtectedSupervision
+          isProtectedSupervision ||
+          isProtectedMaintenance
         }
         title={
           isProtectedSupervision
             ? "Періодичний огляд можуть виконати адміністратор або менеджер об’єктів."
+            : isProtectedMaintenance
+              ? "Планове ТО може виконати лише адміністратор."
             : undefined
         }
         onClick={handleComplete}

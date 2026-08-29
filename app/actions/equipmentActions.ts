@@ -17,6 +17,9 @@ import {
 import {
   recordActivity,
 } from "@/services/activityLogService";
+import {
+  syncEquipmentMaintenanceTask,
+} from "@/services/equipmentMaintenanceTaskService";
 
 import {
   equipmentCategories,
@@ -299,7 +302,10 @@ export async function createEquipment(
       responsibleEmployeeValue
     );
 
-  const { error } =
+  const {
+    data: createdEquipment,
+    error,
+  } =
     await supabase
       .from("equipment")
       .insert({
@@ -333,7 +339,9 @@ export async function createEquipment(
 
         notes:
           notes || null,
-      });
+      })
+      .select("id")
+      .single();
 
   if (error) {
     throw getEquipmentError(
@@ -341,6 +349,10 @@ export async function createEquipment(
       inventoryNumber
     );
   }
+
+  await syncEquipmentMaintenanceTask(
+    Number(createdEquipment.id)
+  );
 
   revalidatePath("/");
   revalidatePath(
@@ -574,6 +586,10 @@ export async function updateEquipment(
       },
     });
   }
+
+  await syncEquipmentMaintenanceTask(
+    equipmentId
+  );
 
   revalidatePath("/");
   revalidatePath(

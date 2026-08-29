@@ -17,22 +17,33 @@ import {
 } from "@/app/actions/taskActions";
 
 import EditTaskForm from "@/components/objects/EditTaskForm";
+import CompleteTaskButton from "@/components/dashboard/CompleteTaskButton";
+import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
+import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
+  EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE,
+  EQUIPMENT_MAINTENANCE_TASK_SOURCE,
   SUPERVISION_TASK_MANAGED_MESSAGE,
   SUPERVISION_TASK_SOURCE,
 } from "@/constants/taskSource";
+import { getTaskTarget } from "@/lib/taskTarget";
 import {
   useMediaQuery,
 } from "@/lib/useMediaQuery";
 
 import type { Employee } from "@/types/employee";
+import type { Equipment } from "@/types/equipment";
+import type { ObjectItem } from "@/types/object";
 import type { TaskWithObject } from "@/types/taskWithObject";
 
 type Props = {
   tasks: TaskWithObject[];
   employees?: Employee[];
+  objects?: ObjectItem[];
+  equipment?: Equipment[];
   canManageSupervision: boolean;
+  canManageEquipment: boolean;
 };
 
 type TaskStatus =
@@ -357,7 +368,10 @@ function sortListTasks(
 export default function TasksList({
   tasks,
   employees = [],
+  objects = [],
+  equipment = [],
   canManageSupervision,
+  canManageEquipment,
 }: Props) {
   const router =
     useRouter();
@@ -413,6 +427,8 @@ export default function TasksList({
     employeeFilter,
     setEmployeeFilter,
   ] = useState("Усі");
+  const [targetFilter, setTargetFilter] =
+    useState("Усі");
 
   const [
     editingTask,
@@ -599,6 +615,8 @@ export default function TasksList({
                 task.assignee,
                 employeeName,
                 task.object?.name,
+                task.equipment?.name,
+                task.equipment?.inventory_number,
                 priority,
                 task.status,
               ]
@@ -635,11 +653,19 @@ export default function TasksList({
               ) ===
                 employeeFilter;
 
+            const matchesTarget =
+              targetFilter === "Усі" ||
+              (targetFilter === "Об’єкти" &&
+                task.object_id !== null) ||
+              (targetFilter === "Техніка" &&
+                task.equipment_id !== null);
+
             return (
               matchesSearch &&
               matchesStatus &&
               matchesPriority &&
-              matchesEmployee
+              matchesEmployee &&
+              matchesTarget
             );
           }
         )
@@ -652,6 +678,7 @@ export default function TasksList({
       statusFilter,
       priorityFilter,
       employeeFilter,
+      targetFilter,
       employeesById,
     ]);
 
@@ -744,6 +771,23 @@ export default function TasksList({
       }
     }
 
+    if (
+      task.task_source ===
+      EQUIPMENT_MAINTENANCE_TASK_SOURCE
+    ) {
+      if (!canManageEquipment) {
+        setErrorMessage(
+          "Планове ТО може виконати або перенести лише адміністратор."
+        );
+        return;
+      }
+
+      if (newStatus !== "Виконано") {
+        setErrorMessage(EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE);
+        return;
+      }
+    }
+
     const previousStatus =
       task.status;
 
@@ -771,13 +815,16 @@ export default function TasksList({
     try {
       await updateTaskStatus(
         task.id,
-        task.object_id,
         newStatus
       );
 
       if (
         task.task_source ===
           SUPERVISION_TASK_SOURCE &&
+        newStatus ===
+          "Виконано" ||
+        task.task_source ===
+          EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
         newStatus ===
           "Виконано"
       ) {
@@ -829,11 +876,12 @@ export default function TasksList({
     task: TaskWithObject
   ) {
     if (
-      task.task_source ===
-      SUPERVISION_TASK_SOURCE
+      task.task_source !== "manual"
     ) {
       setErrorMessage(
-        SUPERVISION_TASK_MANAGED_MESSAGE
+        task.task_source === SUPERVISION_TASK_SOURCE
+          ? SUPERVISION_TASK_MANAGED_MESSAGE
+          : EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE
       );
 
       return;
@@ -868,8 +916,7 @@ export default function TasksList({
 
     try {
       await deleteObjectTask(
-        task.id,
-        task.object_id
+        task.id
       );
 
       if (
@@ -908,7 +955,11 @@ export default function TasksList({
         SUPERVISION_TASK_SOURCE &&
         (!canManageSupervision ||
           task.status ===
-            "Виконано"))
+            "Виконано")) ||
+      (task.task_source ===
+        EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
+        (!canManageEquipment ||
+          task.status === "Виконано"))
     ) {
       event.preventDefault();
 
@@ -1081,6 +1132,7 @@ export default function TasksList({
     setEmployeeFilter(
       "Усі"
     );
+    setTargetFilter("Усі");
   }
 
   function closeEditForm() {
@@ -1111,10 +1163,19 @@ export default function TasksList({
       task.task_source ===
       SUPERVISION_TASK_SOURCE;
 
+    const isMaintenanceTask =
+      task.task_source ===
+      EQUIPMENT_MAINTENANCE_TASK_SOURCE;
+
+    const target = getTaskTarget(task);
+
     const canChangeSupervisionTask =
       !isSupervisionTask ||
       (canManageSupervision &&
         !completed);
+    const canChangeAutomaticTask =
+      canChangeSupervisionTask &&
+      !isMaintenanceTask;
 
     const isUpdating =
       updatingId ===
@@ -1158,7 +1219,7 @@ export default function TasksList({
             draggable={
               !isUpdating &&
               !isDeleting &&
-              canChangeSupervisionTask
+              canChangeAutomaticTask
             }
             title="Перетягни завдання"
             onDragStart={(
@@ -1195,6 +1256,11 @@ export default function TasksList({
                     <SupervisionTaskBadge compact />
                   </div>
                 )}
+                {isMaintenanceTask && (
+                  <div className="mt-2">
+                    <EquipmentMaintenanceTaskBadge compact />
+                  </div>
+                )}
               </div>
 
               <span
@@ -1210,23 +1276,20 @@ export default function TasksList({
               </span>
             </div>
 
-            {task.object ? (
+            {target ? (
               <Link
-                href={`/objects/${task.object.id}`}
+                href={target.href}
                 className={`mt-1 block break-words text-sm font-medium hover:underline ${
                   completed
                     ? "text-gray-400"
                     : "text-green-700"
                 }`}
               >
-                {
-                  task.object
-                    .name
-                }
+                {target.type === "equipment" ? "🔧" : "📍"} {target.name}
               </Link>
             ) : (
               <p className="mt-1 text-sm text-gray-400">
-                Об’єкт не знайдено
+                Пов’язаний запис не знайдено
               </p>
             )}
           </div>
@@ -1358,7 +1421,7 @@ export default function TasksList({
             disabled={
               isUpdating ||
               isDeleting ||
-              !canChangeSupervisionTask
+              !canChangeAutomaticTask
             }
             onChange={(
               event
@@ -1384,12 +1447,31 @@ export default function TasksList({
           </select>
         </div>
 
-        {isSupervisionTask ? (
-          <p className="mt-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-            {
-              SUPERVISION_TASK_MANAGED_MESSAGE
-            }
-          </p>
+        {isSupervisionTask || isMaintenanceTask ? (
+          <div className="mt-4 space-y-2">
+            <p className="rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+              {isSupervisionTask
+                ? SUPERVISION_TASK_MANAGED_MESSAGE
+                : EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE}
+            </p>
+            {isMaintenanceTask && !completed && (
+              <div className="flex flex-wrap gap-2">
+                <RescheduleTaskButton
+                  taskId={task.id}
+                  currentDate={task.due_date}
+                  taskSource={task.task_source}
+                  canManageEquipment={canManageEquipment}
+                  compact
+                />
+                <CompleteTaskButton
+                  taskId={task.id}
+                  taskSource={task.task_source}
+                  canManageEquipment={canManageEquipment}
+                  compact
+                />
+              </div>
+            )}
+          </div>
         ) : (
         <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-3">
           <button
@@ -1547,7 +1629,7 @@ export default function TasksList({
           </div>
         </div>
 
-        <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_180px_180px_240px]">
+        <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_160px_160px_180px_220px]">
           <input
             type="search"
             value={search}
@@ -1626,6 +1708,16 @@ export default function TasksList({
                 </option>
               )
             )}
+          </select>
+
+          <select
+            value={targetFilter}
+            onChange={(event) => setTargetFilter(event.target.value)}
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+          >
+            <option value="Усі">Усі типи</option>
+            <option value="Об’єкти">Об’єкти</option>
+            <option value="Техніка">Техніка</option>
           </select>
 
           <select
@@ -1822,10 +1914,19 @@ export default function TasksList({
                 task.task_source ===
                 SUPERVISION_TASK_SOURCE;
 
+              const isMaintenanceTask =
+                task.task_source ===
+                EQUIPMENT_MAINTENANCE_TASK_SOURCE;
+
+              const target = getTaskTarget(task);
+
               const canChangeSupervisionTask =
                 !isSupervisionTask ||
                 (canManageSupervision &&
                   !completed);
+              const canChangeAutomaticTask =
+                canChangeSupervisionTask &&
+                !isMaintenanceTask;
 
               const priority =
                 task.priority ||
@@ -1885,26 +1986,26 @@ export default function TasksList({
                           <SupervisionTaskBadge />
                         </div>
                       )}
+                      {isMaintenanceTask && (
+                        <div className="mt-2">
+                          <EquipmentMaintenanceTaskBadge />
+                        </div>
+                      )}
 
-                      {task.object ? (
+                      {target ? (
                         <Link
-                          href={`/objects/${task.object.id}`}
+                          href={target.href}
                           className={`mt-1 block break-words text-sm font-medium hover:underline ${
                             completed
                               ? "text-gray-400"
                               : "text-green-700"
                           }`}
                         >
-                          {
-                            task
-                              .object
-                              .name
-                          }
+                          {target.type === "equipment" ? "🔧" : "📍"} {target.name}
                         </Link>
                       ) : (
                         <p className="mt-1 text-sm text-gray-400">
-                          Об’єкт не
-                          знайдено
+                          Пов’язаний запис не знайдено
                         </p>
                       )}
 
@@ -2050,7 +2151,7 @@ export default function TasksList({
                         disabled={
                           isUpdating ||
                           isDeleting ||
-                          !canChangeSupervisionTask
+                          !canChangeAutomaticTask
                         }
                         onChange={(
                           event
@@ -2078,12 +2179,31 @@ export default function TasksList({
                   </div>
 
                   {/* ACTIONS */}
-                  {isSupervisionTask ? (
-                    <p className="mt-4 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-                      {
-                        SUPERVISION_TASK_MANAGED_MESSAGE
-                      }
-                    </p>
+                  {isSupervisionTask || isMaintenanceTask ? (
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+                        {isSupervisionTask
+                          ? SUPERVISION_TASK_MANAGED_MESSAGE
+                          : EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE}
+                      </p>
+                      {isMaintenanceTask && !completed && (
+                        <div className="flex flex-wrap gap-2">
+                          <RescheduleTaskButton
+                            taskId={task.id}
+                            currentDate={task.due_date}
+                            taskSource={task.task_source}
+                            canManageEquipment={canManageEquipment}
+                            compact
+                          />
+                          <CompleteTaskButton
+                            taskId={task.id}
+                            taskSource={task.task_source}
+                            canManageEquipment={canManageEquipment}
+                            compact
+                          />
+                        </div>
+                      )}
+                    </div>
                   ) : (
                   <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:flex sm:justify-end">
                     <button
@@ -2130,8 +2250,7 @@ export default function TasksList({
 
       {/* EDIT MODAL */}
       {editingTask &&
-        editingTask.task_source !==
-          SUPERVISION_TASK_SOURCE && (
+        editingTask.task_source === "manual" && (
         <div
           className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/40 sm:items-start sm:overflow-y-auto sm:p-4 md:p-8"
           onMouseDown={(
@@ -2159,8 +2278,8 @@ export default function TasksList({
                     editingTask.title
                   }
 
-                  {editingTask.object
-                    ? ` • ${editingTask.object.name}`
+                  {getTaskTarget(editingTask)
+                    ? ` • ${getTaskTarget(editingTask)?.name}`
                     : ""}
                 </p>
               </div>
@@ -2183,9 +2302,8 @@ export default function TasksList({
                 task={
                   editingTask
                 }
-                objectId={
-                  editingTask.object_id
-                }
+                objects={objects}
+                equipment={equipment}
                 employees={
                   employees
                 }

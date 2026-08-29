@@ -4,6 +4,7 @@ import CompleteTaskButton from "@/components/dashboard/CompleteTaskButton";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
 import TodayTasksSection from "@/components/dashboard/TodayTasksSection";
 import {
+  EQUIPMENT_MAINTENANCE_TASK_SOURCE,
   SUPERVISION_TASK_SOURCE,
 } from "@/constants/taskSource";
 
@@ -17,7 +18,11 @@ import { getCurrentUserProfile } from "@/services/profileService";
 import {
   getNotificationCenter,
 } from "@/services/notificationService";
-import { canManageObjects } from "@/lib/auth/permissions";
+import {
+  canManageEquipment,
+  canManageObjects,
+} from "@/lib/auth/permissions";
+import { getTaskTarget } from "@/lib/taskTarget";
 import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
@@ -217,6 +222,10 @@ export default async function HomePage() {
           profile.role
         )
       : false;
+  const canManageMaintenance =
+    profile
+      ? canManageEquipment(profile.role)
+      : false;
 
   const objectList =
     Array.isArray(
@@ -316,9 +325,10 @@ export default async function HomePage() {
   ) {
     return task.task_source ===
       SUPERVISION_TASK_SOURCE
-      ? overdueSupervisionObjectIds.has(
-          task.object_id
-        )
+      ? task.object_id !== null &&
+        overdueSupervisionObjectIds.has(task.object_id)
+      : task.task_source === EQUIPMENT_MAINTENANCE_TASK_SOURCE
+        ? false
       : overdueTaskIds.has(
           task.id
         );
@@ -962,6 +972,8 @@ export default async function HomePage() {
                 const priority =
                   task.priority ||
                   "Середній";
+                const target =
+                  getTaskTarget(task);
 
                 return (
                   <article
@@ -978,16 +990,12 @@ export default async function HomePage() {
                           }
                         </h3>
 
-                        {task.object && (
+                        {target && (
                           <Link
-                            href={`/objects/${task.object.id}`}
+                            href={target.href}
                             className="mt-1 block break-words text-sm font-medium text-green-700 hover:underline"
                           >
-                            {
-                              task
-                                .object
-                                .name
-                            }
+                            {target.type === "equipment" ? "🔧" : "📍"} {target.name}
                           </Link>
                         )}
                       </div>
@@ -1062,9 +1070,6 @@ export default async function HomePage() {
                           taskId={
                             task.id
                           }
-                          objectId={
-                            task.object_id
-                          }
                           currentDate={
                             task.due_date
                           }
@@ -1074,6 +1079,9 @@ export default async function HomePage() {
                           canManageSupervision={
                             canManageSupervision
                           }
+                          canManageEquipment={
+                            canManageMaintenance
+                          }
                           compact
                         />
 
@@ -1081,14 +1089,14 @@ export default async function HomePage() {
                           taskId={
                             task.id
                           }
-                          objectId={
-                            task.object_id
-                          }
                           taskSource={
                             task.task_source
                           }
                           canManageSupervision={
                             canManageSupervision
+                          }
+                          canManageEquipment={
+                            canManageMaintenance
                           }
                           compact
                         />
@@ -1144,6 +1152,9 @@ export default async function HomePage() {
           today={today}
           canManageSupervision={
             canManageSupervision
+          }
+          canManageEquipment={
+            canManageMaintenance
           }
         />
       )}
@@ -1521,6 +1532,8 @@ export default async function HomePage() {
                   const priority =
                     task.priority ||
                     "Середній";
+                  const target =
+                    getTaskTarget(task);
 
                   return (
                     <div
@@ -1535,16 +1548,12 @@ export default async function HomePage() {
                             }
                           </p>
 
-                          {task.object && (
+                          {target && (
                             <Link
-                              href={`/objects/${task.object.id}`}
+                              href={target.href}
                               className="mt-1 block break-words text-sm text-green-700 hover:underline"
                             >
-                              {
-                                task
-                                  .object
-                                  .name
-                              }
+                              {target.type === "equipment" ? "🔧" : "📍"} {target.name}
                             </Link>
                           )}
                         </div>
@@ -1605,9 +1614,6 @@ export default async function HomePage() {
                             taskId={
                               task.id
                             }
-                            objectId={
-                              task.object_id
-                            }
                             currentDate={
                               task.due_date
                             }
@@ -1617,6 +1623,9 @@ export default async function HomePage() {
                             canManageSupervision={
                               canManageSupervision
                             }
+                            canManageEquipment={
+                              canManageMaintenance
+                            }
                             compact
                           />
 
@@ -1624,14 +1633,14 @@ export default async function HomePage() {
                             taskId={
                               task.id
                             }
-                            objectId={
-                              task.object_id
-                            }
                             taskSource={
                               task.task_source
                             }
                             canManageSupervision={
                               canManageSupervision
+                            }
+                            canManageEquipment={
+                              canManageMaintenance
                             }
                             compact
                           />

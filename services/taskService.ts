@@ -32,6 +32,7 @@ export async function getAllTasks(
     .select(`
       id,
       object_id,
+      equipment_id,
       title,
       description,
       due_date,
@@ -44,6 +45,11 @@ export async function getAllTasks(
       object:objects (
         id,
         name
+      ),
+      equipment:equipment (
+        id,
+        name,
+        inventory_number
       ),
       checklist_items:task_checklist_items (
         id,

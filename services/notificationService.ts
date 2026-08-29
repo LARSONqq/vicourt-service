@@ -6,7 +6,6 @@ import {
 
 import {
   MANUAL_TASK_SOURCE,
-  SUPERVISION_TASK_SOURCE,
 } from "@/constants/taskSource";
 import {
   canAccessSection,
@@ -16,6 +15,7 @@ import {
   getDateDifferenceInDays,
   getKyivDateValue,
 } from "@/lib/kyivDate";
+import { getTaskTarget } from "@/lib/taskTarget";
 import {
   getDayWord,
   getEquipmentMaintenanceState,
@@ -292,8 +292,8 @@ export function buildNotificationItems({
 
   for (const task of tasks) {
     if (
-      task.task_source ===
-        SUPERVISION_TASK_SOURCE ||
+      task.task_source !==
+        MANUAL_TASK_SOURCE ||
       task.status ===
         COMPLETED_TASK_STATUS ||
       !task.due_date ||
@@ -307,6 +307,8 @@ export function buildNotificationItems({
         task.due_date,
         today
       ) || 0;
+    const target =
+      getTaskTarget(task);
 
     items.push({
       key: `task-overdue:${task.id}`,
@@ -320,14 +322,20 @@ export function buildNotificationItems({
         overdueDays
       )}`,
       contextLabel:
-        task.object?.name ||
-        null,
-      href: "/task",
+        target
+          ? `${target.label}: ${target.name}`
+          : null,
+      href: target?.href || "/task",
       date: task.due_date,
       overdueDays,
       objectId:
-        task.object?.id ??
-        task.object_id,
+        target?.type === "object"
+          ? target.id
+          : undefined,
+      equipmentId:
+        target?.type === "equipment"
+          ? target.id
+          : undefined,
       taskId: task.id,
     });
   }
