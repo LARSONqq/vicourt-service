@@ -117,6 +117,7 @@ function parseScheduleInput(formData: FormData) {
 }
 
 function refreshSchedulePages(objectId: number) {
+  revalidatePath("/");
   revalidatePath(`/objects/${objectId}`);
   revalidatePath("/reports");
   revalidatePath("/notifications");

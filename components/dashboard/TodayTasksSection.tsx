@@ -7,6 +7,7 @@ import { useState } from "react";
 import { completeDashboardTask } from "@/app/actions/dashboardTaskActions";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
 import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
+import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
   EQUIPMENT_MAINTENANCE_TASK_SOURCE,
   SUPERVISION_TASK_SOURCE,
@@ -38,6 +39,21 @@ function getPriorityStyle(priority: string) {
 
     default:
       return "bg-violet-100 text-violet-700";
+  }
+}
+
+function getStatusStyle(
+  status: string
+) {
+  switch (status) {
+    case "Заплановано":
+      return "bg-blue-50 text-blue-700";
+    case "В роботі":
+      return "bg-yellow-50 text-yellow-700";
+    case "Виконано":
+      return "bg-green-50 text-green-700";
+    default:
+      return "bg-gray-100 text-gray-700";
   }
 }
 
@@ -243,11 +259,25 @@ export default function TodayTasksSection({
                       >
                         {priority}
                       </span>
+
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${getStatusStyle(
+                          task.status
+                        )}`}
+                      >
+                        {task.status}
+                      </span>
                     </div>
 
                     {task.task_source === EQUIPMENT_MAINTENANCE_TASK_SOURCE && (
                       <div className="mt-2">
                         <EquipmentMaintenanceTaskBadge compact />
+                      </div>
+                    )}
+
+                    {task.task_source === SUPERVISION_TASK_SOURCE && (
+                      <div className="mt-2">
+                        <SupervisionTaskBadge compact />
                       </div>
                     )}
 

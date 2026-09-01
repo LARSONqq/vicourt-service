@@ -237,6 +237,7 @@ async function getPaymentSnapshot(
 function refreshPaymentPages(
   objectId: number
 ) {
+  revalidatePath("/");
   revalidatePath(
     `/objects/${objectId}`
   );

@@ -50,6 +50,7 @@ export interface NotificationItem {
   href: string;
   date: string | null;
   overdueDays: number | null;
+  amount?: number;
   objectId?: number;
   taskId?: number;
   warehouseItemId?: number;

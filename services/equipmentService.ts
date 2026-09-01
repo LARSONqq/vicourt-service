@@ -1,9 +1,13 @@
+import {
+  cache,
+} from "react";
+
 import { createClient } from "@/lib/supabase/server";
 
 import type { Equipment } from "@/types/equipment";
 import type { EquipmentServiceRecord } from "@/types/equipmentServiceRecord";
 
-export async function getEquipment(): Promise<Equipment[]> {
+async function loadEquipment(): Promise<Equipment[]> {
   const supabase =
     await createClient();
 
@@ -29,6 +33,9 @@ export async function getEquipment(): Promise<Equipment[]> {
       : []
   ) as Equipment[];
 }
+
+export const getEquipment =
+  cache(loadEquipment);
 
 export async function getEquipmentServiceRecords(): Promise<
   EquipmentServiceRecord[]

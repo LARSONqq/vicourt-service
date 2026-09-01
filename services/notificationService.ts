@@ -40,7 +40,7 @@ import {
   getEquipment,
 } from "@/services/equipmentService";
 import {
-  getWarehousePurchases,
+  getPlannedWarehousePurchases,
 } from "@/services/purchaseService";
 import {
   getAppSettings,
@@ -596,6 +596,8 @@ export function buildNotificationItems({
       href: `/objects/${item.object_id}#payment-schedule`,
       date: item.due_date,
       overdueDays,
+      amount:
+        item.remainingAmount,
       objectId: item.object_id,
       paymentScheduleItemId:
         item.id,
@@ -758,10 +760,7 @@ export const getNotificationCenter =
               WarehouseItem[]
             >([]),
         canViewPurchases
-          ? getWarehousePurchases({
-              status:
-                PLANNED_PURCHASE_STATUS,
-            })
+          ? getPlannedWarehousePurchases()
           : Promise.resolve<
               WarehousePurchase[]
             >([]),

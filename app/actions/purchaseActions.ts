@@ -96,6 +96,9 @@ function validateId(
 function refreshPurchasePages() {
   revalidatePath("/");
   revalidatePath(
+    "/notifications"
+  );
+  revalidatePath(
     "/purchases"
   );
   revalidatePath(

@@ -248,6 +248,9 @@ function refreshObjectPages(
   revalidatePath("/reports");
   revalidatePath("/task");
   revalidatePath("/calendar");
+  revalidatePath(
+    "/notifications"
+  );
 
   if (objectId) {
     revalidatePath(

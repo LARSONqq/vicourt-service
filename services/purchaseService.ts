@@ -1,3 +1,7 @@
+import {
+  cache,
+} from "react";
+
 import { createClient } from "@/lib/supabase/server";
 import {
   buildWarehousePurchaseInsights,
@@ -113,6 +117,15 @@ export async function getWarehousePurchases(
   return purchases;
 }
 
+export const getPlannedWarehousePurchases =
+  cache(
+    async () =>
+      getWarehousePurchases({
+        status:
+          "Заплановано",
+      })
+  );
+
 export async function getWarehousePurchaseInsights(): Promise<WarehousePurchaseInsights> {
   const purchases =
     await getWarehousePurchases();
@@ -217,9 +230,7 @@ export async function getPlannedPurchaseTotals(): Promise<
   PlannedPurchaseTotals
 > {
   const purchases =
-    await getWarehousePurchases({
-      status: "Заплановано",
-    });
+    await getPlannedWarehousePurchases();
   const rows:
     PlannedPurchaseRow[] =
     purchases.map(

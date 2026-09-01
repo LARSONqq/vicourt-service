@@ -27,7 +27,9 @@ export type EmployeeWorkLog =
 
 export type ObjectQueryFilters = {
   status?: string;
+  statuses?: string[];
   nextSupervisionDateTo?: string;
+  limit?: number;
 };
 
 function createReadableError(
@@ -68,6 +70,14 @@ export async function getObjects(
       "status",
       filters.status
     );
+  } else if (
+    filters.statuses &&
+    filters.statuses.length > 0
+  ) {
+    query = query.in(
+      "status",
+      filters.statuses
+    );
   }
 
   if (
@@ -85,13 +95,30 @@ export async function getObjects(
       );
   }
 
+  query = query.order(
+    "created_at",
+    {
+      ascending: false,
+    }
+  );
+
+  if (
+    filters.limit !==
+      undefined &&
+    Number.isInteger(
+      filters.limit
+    ) &&
+    filters.limit > 0
+  ) {
+    query = query.limit(
+      filters.limit
+    );
+  }
+
   const {
     data,
     error,
-  } = await query
-    .order("created_at", {
-      ascending: false,
-    });
+  } = await query;
 
   if (error) {
     throw createReadableError(

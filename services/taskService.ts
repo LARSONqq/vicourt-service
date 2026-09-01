@@ -5,6 +5,7 @@ import type { TaskSource } from "@/types/objectTask";
 
 export type TaskQueryFilters = {
   dueDateBefore?: string;
+  dueDateOnOrBefore?: string;
   excludeStatus?: string;
   taskSource?: TaskSource;
 };
@@ -61,6 +62,13 @@ export async function getAllTasks(
     query = query.lt(
       "due_date",
       filters.dueDateBefore
+    );
+  } else if (
+    filters.dueDateOnOrBefore
+  ) {
+    query = query.lte(
+      "due_date",
+      filters.dueDateOnOrBefore
     );
   }
 
