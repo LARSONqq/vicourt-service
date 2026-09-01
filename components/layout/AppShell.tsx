@@ -35,7 +35,10 @@ export default function AppShell({
 
   const isAuthPage =
     pathname === "/login" ||
-    pathname === "/register";
+    pathname === "/register" ||
+    pathname.startsWith(
+      "/auth/"
+    );
 
   if (
     pathname !==

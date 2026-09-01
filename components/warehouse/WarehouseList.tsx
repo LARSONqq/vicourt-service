@@ -2,6 +2,7 @@
 
 import {
   Fragment,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -158,6 +159,45 @@ export default function WarehouseList({
   >(
     focusedItemId || null
   );
+
+  useEffect(() => {
+    if (!focusedItemId) {
+      return;
+    }
+
+    const frameId =
+      window.requestAnimationFrame(
+        () => {
+          const focusedElement =
+            Array.from(
+              document.querySelectorAll<HTMLElement>(
+                "[data-warehouse-item-id]"
+              )
+            ).find(
+              (element) =>
+                element.dataset
+                  .warehouseItemId ===
+                  String(
+                    focusedItemId
+                  ) &&
+                element.getClientRects()
+                  .length > 0
+            );
+
+          focusedElement?.scrollIntoView(
+            {
+              block: "center",
+            }
+          );
+        }
+      );
+
+    return () => {
+      window.cancelAnimationFrame(
+        frameId
+      );
+    };
+  }, [focusedItemId]);
 
   const categories =
     useMemo(() => {
@@ -483,6 +523,9 @@ export default function WarehouseList({
                       item.id
                     }
                     id={`warehouse-item-${item.id}`}
+                    data-warehouse-item-id={
+                      item.id
+                    }
                     className={`scroll-mt-24 min-w-0 rounded-xl border bg-white p-4 ${
                       isLowStock
                         ? "border-red-200"
@@ -959,6 +1002,9 @@ export default function WarehouseList({
                       >
                         <tr
                           id={`warehouse-item-${item.id}`}
+                          data-warehouse-item-id={
+                            item.id
+                          }
                           className={`scroll-mt-24 border-t ${
                             focusedItemId ===
                             item.id

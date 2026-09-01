@@ -12,6 +12,7 @@ import {
 import {
   createClient,
 } from "@/lib/supabase/client";
+import GlobalSearch from "@/components/search/GlobalSearch";
 
 type UserRole =
   | "admin"
@@ -166,6 +167,8 @@ export function Header() {
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
+        <GlobalSearch />
+
         <div className="hidden text-right md:block">
           {isLoadingUser ? (
             <p className="text-sm text-gray-400">
