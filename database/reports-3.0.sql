@@ -16,9 +16,8 @@ as $function$
 begin
   if auth.uid() is null
     or not private.is_active_user()
-    or not (
-      private.has_role('admin')
-      or private.has_role('object_manager')
+    or not private.has_role(
+      array['admin', 'object_manager']::text[]
     )
   then
     raise exception 'Недостатньо прав для перегляду звітів.'
@@ -58,9 +57,8 @@ as $function$
 begin
   if auth.uid() is null
     or not private.is_active_user()
-    or not (
-      private.has_role('admin')
-      or private.has_role('object_manager')
+    or not private.has_role(
+      array['admin', 'object_manager']::text[]
     )
   then
     raise exception 'Недостатньо прав для перегляду звітів.'
