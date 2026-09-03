@@ -6,6 +6,7 @@ export type ActivityEntityType =
   | "object_expense"
   | "object_payment"
   | "object_payment_schedule"
+  | "object_document"
   | "purchase"
   | "equipment";
 

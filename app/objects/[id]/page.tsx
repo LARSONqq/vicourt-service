@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ObjectTabs from "@/components/ObjectTabs";
 
 import DeleteObjectButton from "@/components/objects/DeleteObjectButton";
+import ObjectDocuments from "@/components/objects/ObjectDocuments";
 import ObjectExpenses from "@/components/objects/ObjectExpenses";
 import ObjectInfo from "@/components/objects/ObjectInfo";
 import ObjectMaterials from "@/components/objects/ObjectMaterials";
@@ -34,6 +35,9 @@ import {
 import {
   getObjectPaymentSchedule,
 } from "@/services/objectPaymentScheduleService";
+import {
+  getObjectDocuments,
+} from "@/services/objectDocumentService";
 
 import {
   getWarehouseItems,
@@ -125,6 +129,7 @@ export default async function ObjectPage({
     expenses,
     payments,
     paymentSchedule,
+    documents,
   ] = await Promise.all([
     getObject(objectId),
     getObjectTasks(objectId),
@@ -144,6 +149,9 @@ export default async function ObjectPage({
           objectId
         )
       : Promise.resolve([]),
+    getObjectDocuments(
+      objectId
+    ),
   ]);
 
   if (!object) {
@@ -209,6 +217,12 @@ export default async function ObjectPage({
       paymentSchedule
     )
       ? paymentSchedule
+      : [];
+  const documentList =
+    Array.isArray(
+      documents
+    )
+      ? documents
       : [];
 
   const activeTasks =
@@ -346,7 +360,7 @@ export default async function ObjectPage({
       0
     );
 
-  const canManageSupervision =
+  const canManageObject =
     profile
       ? canManageObjects(
           profile.role
@@ -439,7 +453,7 @@ export default async function ObjectPage({
             today
           }
           canManage={
-            canManageSupervision
+            canManageObject
           }
         />
       )}
@@ -561,6 +575,19 @@ export default async function ObjectPage({
             }
             objectId={
               object.id
+            }
+          />
+        }
+        documents={
+          <ObjectDocuments
+            objectId={
+              object.id
+            }
+            documents={
+              documentList
+            }
+            canManage={
+              canManageObject
             }
           />
         }

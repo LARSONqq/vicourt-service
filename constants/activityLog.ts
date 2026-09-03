@@ -37,6 +37,10 @@ export const activityEntityTypes: Array<{
     label: "Графік оплат",
   },
   {
+    value: "object_document",
+    label: "Документи об’єктів",
+  },
+  {
     value: "purchase",
     label: "Закупівлі",
   },

@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
+import { OBJECT_DOCUMENTS_BUCKET } from "@/constants/objectDocuments";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { canManageObjects } from "@/lib/auth/permissions";
 import {
   formatDateValue,
@@ -897,6 +899,59 @@ export async function deleteObject(
   }
 
   const {
+    data: objectDocuments,
+    error: documentsError,
+  } = await supabase
+    .from("object_documents")
+    .select("storage_path")
+    .eq("object_id", objectId);
+
+  if (documentsError) {
+    throw new Error(
+      "Не вдалося перевірити документи об’єкта перед видаленням. Об’єкт не видалено."
+    );
+  }
+
+  const documentStoragePaths = [
+    ...new Set(
+      (objectDocuments || [])
+        .map(
+          (document) =>
+            document.storage_path
+        )
+        .filter(
+          (storagePath): storagePath is string =>
+            typeof storagePath ===
+              "string" &&
+            storagePath.length > 0
+        )
+    ),
+  ];
+
+  if (
+    documentStoragePaths.length >
+    0
+  ) {
+    const adminClient =
+      createServiceRoleClient();
+    const {
+      error: storageError,
+    } = await adminClient.storage
+      .from(
+        OBJECT_DOCUMENTS_BUCKET
+      )
+      .remove(
+        documentStoragePaths
+      );
+
+    if (storageError) {
+      throw new Error(
+        "Не вдалося видалити всі файли документів. Об’єкт не видалено, щоб не залишити файли без власника."
+      );
+    }
+  }
+
+  const {
     error,
   } = await supabase
     .from("objects")
@@ -907,6 +962,15 @@ export async function deleteObject(
     );
 
   if (error) {
+    if (
+      documentStoragePaths.length >
+      0
+    ) {
+      throw new Error(
+        "Файли документів очищено, але об’єкт не вдалося видалити. Повідом адміністратора, щоб завершити очищення."
+      );
+    }
+
     throw new Error(
       `Не вдалося видалити об’єкт: ${error.message}`
     );
@@ -930,6 +994,8 @@ export async function deleteObject(
     metadata: {
       status:
         object.status,
+      documents_removed:
+        documentStoragePaths.length,
     },
   });
 

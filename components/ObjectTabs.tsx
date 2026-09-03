@@ -12,6 +12,7 @@ type TabId =
   | "materials"
   | "journal"
   | "expenses"
+  | "documents"
   | "photos";
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
   materials: ReactNode;
   journal: ReactNode;
   expenses?: ReactNode;
+  documents: ReactNode;
   photos: ReactNode;
 };
 
@@ -54,6 +56,11 @@ const baseTabs: Array<{
     icon: "💰",
   },
   {
+    id: "documents",
+    label: "Документи",
+    icon: "📄",
+  },
+  {
     id: "photos",
     label: "Фото",
     icon: "📷",
@@ -66,6 +73,7 @@ export default function ObjectTabs({
   materials,
   journal,
   expenses,
+  documents,
   photos,
 }: Props) {
   const [tab, setTab] =
@@ -165,6 +173,10 @@ export default function ObjectTabs({
         {tab ===
           "expenses" &&
           expenses}
+
+        {tab ===
+          "documents" &&
+          documents}
 
         {tab === "photos" &&
           photos}
