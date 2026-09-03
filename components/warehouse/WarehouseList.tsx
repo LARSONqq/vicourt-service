@@ -11,7 +11,6 @@ import Link from "next/link";
 import { deleteWarehouseItem } from "@/app/actions/warehouseActions";
 
 import type { AppCurrency } from "@/types/appSettings";
-import type { ObjectItem } from "@/types/object";
 import type { WarehouseItem } from "@/types/warehouseItem";
 import type {
   WarehousePurchaseInsights,
@@ -26,18 +25,17 @@ import AddWarehouseMovementForm from "./AddWarehouseMovementForm";
 import EditWarehouseItemForm from "./EditWarehouseItemForm";
 import WarehouseItemPlanningPanel from "./WarehouseItemPlanningPanel";
 
-type MovementType =
-  | "Прихід"
-  | "Списання";
+type MovementDirection =
+  | "in"
+  | "out";
 
 type MovementEditor = {
   itemId: number;
-  movementType: MovementType;
+  direction: MovementDirection;
 };
 
 type Props = {
   items?: WarehouseItem[];
-  objects?: ObjectItem[];
   currency: AppCurrency;
   canManage?: boolean;
   canCreatePurchases?: boolean;
@@ -95,7 +93,6 @@ function formatMoney(
 
 export default function WarehouseList({
   items = [],
-  objects = [],
   currency,
   canManage = false,
   canCreatePurchases = false,
@@ -110,15 +107,6 @@ export default function WarehouseList({
           ? items
           : [],
       [items]
-    );
-
-  const safeObjects =
-    useMemo(
-      () =>
-        Array.isArray(objects)
-          ? objects
-          : [],
-      [objects]
     );
 
   const [
@@ -293,7 +281,7 @@ export default function WarehouseList({
 
   function toggleMovementForm(
     itemId: number,
-    movementType: MovementType
+    direction: MovementDirection
   ) {
     if (!canManage) {
       return;
@@ -308,15 +296,15 @@ export default function WarehouseList({
         if (
           current?.itemId ===
             itemId &&
-          current.movementType ===
-            movementType
+          current.direction ===
+            direction
         ) {
           return null;
         }
 
         return {
           itemId,
-          movementType,
+          direction,
         };
       }
     );
@@ -723,12 +711,12 @@ export default function WarehouseList({
                           onClick={() =>
                             toggleMovementForm(
                               item.id,
-                              "Прихід"
+                              "in"
                             )
                           }
                           className="min-h-10 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-100"
                         >
-                          + Прихід
+                          + Корекція
                         </button>
 
                         <button
@@ -736,7 +724,7 @@ export default function WarehouseList({
                           onClick={() =>
                             toggleMovementForm(
                               item.id,
-                              "Списання"
+                              "out"
                             )
                           }
                           disabled={
@@ -745,7 +733,7 @@ export default function WarehouseList({
                           }
                           className="min-h-10 rounded-lg bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          − Списання
+                          − Корекція
                         </button>
 
                         <button
@@ -800,7 +788,9 @@ export default function WarehouseList({
                               <div className="min-w-0">
                                 <h4 className="break-words font-semibold text-gray-900">
                                   {
-                                    movementEditor.movementType
+                                    movementEditor.direction === "in"
+                                      ? "збільшення"
+                                      : "зменшення"
                                   }{" "}
                                   —{" "}
                                   {
@@ -838,17 +828,14 @@ export default function WarehouseList({
                               items={[
                                 item,
                               ]}
-                              objects={
-                                safeObjects
-                              }
                               initialItemId={
                                 item.id
                               }
-                              initialMovementType={
-                                movementEditor.movementType
+                              initialDirection={
+                                movementEditor.direction
                               }
                               lockItem
-                              lockMovementType
+                              lockDirection
                               onCreated={() =>
                                 setMovementEditor(
                                   null
@@ -1125,12 +1112,12 @@ export default function WarehouseList({
                                   onClick={() =>
                                     toggleMovementForm(
                                       item.id,
-                                      "Прихід"
+                                      "in"
                                     )
                                   }
                                   className="rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100"
                                 >
-                                  + Прихід
+                                  + Корекція
                                 </button>
 
                                 <button
@@ -1138,7 +1125,7 @@ export default function WarehouseList({
                                   onClick={() =>
                                     toggleMovementForm(
                                       item.id,
-                                      "Списання"
+                                      "out"
                                     )
                                   }
                                   disabled={
@@ -1147,7 +1134,7 @@ export default function WarehouseList({
                                   }
                                   className="rounded-lg bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-40"
                                 >
-                                  − Списання
+                                  − Корекція
                                 </button>
 
                                 <button
@@ -1223,7 +1210,9 @@ export default function WarehouseList({
                                     <div>
                                       <h3 className="text-lg font-semibold">
                                         {
-                                          movementEditor.movementType
+                                          movementEditor.direction === "in"
+                                            ? "збільшення"
+                                            : "зменшення"
                                         }{" "}
                                         —{" "}
                                         {
@@ -1260,17 +1249,14 @@ export default function WarehouseList({
                                     items={[
                                       item,
                                     ]}
-                                    objects={
-                                      safeObjects
-                                    }
                                     initialItemId={
                                       item.id
                                     }
-                                    initialMovementType={
-                                      movementEditor.movementType
+                                    initialDirection={
+                                      movementEditor.direction
                                     }
                                     lockItem
-                                    lockMovementType
+                                    lockDirection
                                     onCreated={() =>
                                       setMovementEditor(
                                         null

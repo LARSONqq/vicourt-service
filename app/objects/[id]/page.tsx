@@ -41,14 +41,17 @@ import {
 } from "@/services/objectDocumentService";
 
 import {
+  getObjectMaterialMovements,
   getWarehouseItems,
 } from "@/services/warehouseService";
+import { getAppSettings } from "@/services/settingsService";
 import {
   getCurrentUserProfile,
 } from "@/services/profileService";
 import {
   canManageObjects,
   canViewActivityLog,
+  canViewWarehouseLedger,
 } from "@/lib/auth/permissions";
 import {
   getObjectActivityLogs,
@@ -128,6 +131,12 @@ export default async function ObjectPage({
           profile.role
         )
       : false;
+  const canViewLedger =
+    profile
+      ? canViewWarehouseLedger(
+          profile.role
+        )
+      : false;
 
   const [
     object,
@@ -142,6 +151,8 @@ export default async function ObjectPage({
     paymentSchedule,
     documents,
     activityPage,
+    materialMovements,
+    settings,
   ] = await Promise.all([
     getObject(objectId),
     getObjectTasks(objectId),
@@ -172,6 +183,12 @@ export default async function ObjectPage({
           logs: [],
           nextCursor: null,
         }),
+    canViewLedger
+      ? getObjectMaterialMovements(
+          objectId
+        )
+      : Promise.resolve([]),
+    getAppSettings(),
   ]);
 
   if (!object) {
@@ -572,6 +589,18 @@ export default async function ObjectPage({
             }
             objectId={
               object.id
+            }
+            movements={
+              materialMovements
+            }
+            currency={
+              settings.currency
+            }
+            canViewLedger={
+              canViewLedger
+            }
+            canManage={
+              canManageObject
             }
           />
         }

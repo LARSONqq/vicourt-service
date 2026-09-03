@@ -177,7 +177,7 @@ export default function EditMaterialForm({
                 name="quantity"
                 type="number"
                 inputMode="decimal"
-                min="0.01"
+                min={material.quantity}
                 step="0.01"
                 max={maximumQuantity}
                 defaultValue={
@@ -193,9 +193,9 @@ export default function EditMaterialForm({
             </div>
 
             <div className="mt-3 rounded-lg bg-white p-3 text-xs leading-5 text-gray-500">
-              При збільшенні кількості різниця
-              автоматично спишеться зі складу.
-              При зменшенні — повернеться на склад.
+              При збільшенні кількості різниця автоматично спишеться
+              зі складу. Для зменшення використовуй окрему дію
+              «Повернути» — так рух і собівартість фіксуються явно.
             </div>
           </div>
         </>

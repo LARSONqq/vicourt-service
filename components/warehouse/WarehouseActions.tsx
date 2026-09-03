@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import type { ObjectItem } from "@/types/object";
 import type { WarehouseItem } from "@/types/warehouseItem";
 
 import AddWarehouseItemForm from "./AddWarehouseItemForm";
@@ -10,7 +9,6 @@ import AddWarehouseMovementForm from "./AddWarehouseMovementForm";
 
 type Props = {
   items: WarehouseItem[];
-  objects: ObjectItem[];
 };
 
 type ActiveForm =
@@ -20,7 +18,6 @@ type ActiveForm =
 
 export default function WarehouseActions({
   items,
-  objects,
 }: Props) {
   const [
     activeForm,
@@ -81,7 +78,7 @@ export default function WarehouseActions({
           {activeForm ===
           "movement"
             ? "Закрити форму"
-            : "Прихід / списання"}
+            : "Корекція залишку"}
         </button>
       </div>
 
@@ -116,20 +113,16 @@ export default function WarehouseActions({
         <div className="mt-4 min-w-0 rounded-xl border bg-white p-4 sm:mt-5 sm:p-5">
           <div className="mb-4 sm:mb-5">
             <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
-              Рух товару
+              Корекція залишку
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Прихід, списання або
-              передача матеріалу
+              Контрольована зміна фактичної кількості з обов’язковою причиною
             </p>
           </div>
 
           <AddWarehouseMovementForm
             items={items}
-            objects={
-              objects
-            }
             onCreated={() =>
               setActiveForm(
                 null

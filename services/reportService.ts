@@ -21,6 +21,7 @@ import {
 } from "@/lib/warehousePlanning";
 
 import type { WorkLog } from "@/types/workLog";
+import type { WarehouseMovementCode } from "@/types/warehouseMovement";
 
 import type {
   ReportEmployeeOption,
@@ -283,6 +284,18 @@ export async function getObjectReportSummaries(): Promise<
 const REPORT_QUERY_PAGE_SIZE =
   1000;
 
+// Reports 2.0 зберігає поточну warehouse-only семантику.
+// Direct-object та cutover snapshots використає Reports 3.0.
+const REPORT_WAREHOUSE_MOVEMENT_CODES: WarehouseMovementCode[] = [
+  "legacy_receipt",
+  "legacy_write_off",
+  "purchase_receipt",
+  "issue_to_object",
+  "return_from_object",
+  "adjustment_in",
+  "adjustment_out",
+];
+
 const KYIV_TIME_ZONE =
   "Europe/Kyiv";
 
@@ -389,14 +402,19 @@ type ReportPurchaseRow = {
 
 type ReportWarehouseMovementRow = {
   id: number;
-  item_id: number;
+  item_id: number | null;
   object_id: number | null;
   movement_type: ReportMovementType;
+  movement_code: WarehouseMovementCode;
   quantity: number;
   note: string | null;
   performed_by: string | null;
   performed_by_name: string | null;
   unit_price: number;
+  total_cost: number;
+  item_name_snapshot: string;
+  unit_snapshot: string;
+  object_name_snapshot: string | null;
   created_at: string;
 };
 
@@ -1221,11 +1239,16 @@ export async function getReportsData(
               item_id,
               object_id,
               movement_type,
+              movement_code,
               quantity,
               note,
               performed_by,
               performed_by_name,
               unit_price,
+              total_cost,
+              item_name_snapshot,
+              unit_snapshot,
+              object_name_snapshot,
               created_at
             `)
             .gte(
@@ -1235,6 +1258,10 @@ export async function getReportsData(
             .lt(
               "created_at",
               timestampToExclusive
+            )
+            .in(
+              "movement_code",
+              REPORT_WAREHOUSE_MOVEMENT_CODES
             );
 
         if (filters.objectId) {
@@ -2529,7 +2556,9 @@ export async function getReportsData(
           );
 
         const totalValue =
-          quantity * unitPrice;
+          toSafeNumber(
+            movement.total_cost
+          );
 
         if (
           movement.movement_type ===
@@ -2555,21 +2584,26 @@ export async function getReportsData(
           id:
             Number(movement.id),
           itemName:
+            movement.item_name_snapshot ||
             item?.name ||
-            `Матеріал #${movement.item_id}`,
+            (movement.item_id
+              ? `Матеріал #${movement.item_id}`
+              : "Матеріал"),
           objectName:
-            movement.object_id
+            movement.object_name_snapshot ||
+            (movement.object_id
               ? objectNames.get(
                   Number(
                     movement.object_id
                   )
                 ) ||
                 `Об’єкт #${movement.object_id}`
-              : null,
+              : null),
           movementType:
             movement.movement_type,
           quantity,
           unit:
+            movement.unit_snapshot ||
             item?.unit || "",
           unitPrice,
           totalValue,

@@ -142,6 +142,11 @@ const detailRegistry: Partial<
     { kind: "value", label: "Кількість", key: "quantity", format: "number" },
     { kind: "value", label: "Одиниця", key: "unit" },
   ],
+  "material.returned_to_warehouse": [
+    { kind: "value", label: "Повернено", key: "quantity", format: "number" },
+    { kind: "value", label: "Одиниця", key: "unit" },
+    { kind: "change", label: "Залишок на об’єкті", previousKey: "previous_quantity", newKey: "new_quantity", format: "number" },
+  ],
   "work_log.created": [
     { kind: "value", label: "Дата робіт", key: "work_date", format: "date" },
     { kind: "value", label: "Години", key: "hours", format: "number" },
@@ -250,6 +255,12 @@ const detailRegistry: Partial<
     { kind: "change", label: "Мінімальний залишок", previousKey: "old_min_quantity", newKey: "new_min_quantity", format: "number" },
     { kind: "change", label: "Цільовий залишок", previousKey: "old_target_quantity", newKey: "new_target_quantity", format: "number" },
     { kind: "change", label: "Постачальник", previousKey: "old_supplier", newKey: "new_supplier" },
+  ],
+  "warehouse_item.stock_adjusted": [
+    { kind: "change", label: "Залишок", previousKey: "previous_quantity", newKey: "new_quantity", format: "number" },
+    { kind: "value", label: "Кількість руху", key: "quantity", format: "number" },
+    { kind: "value", label: "Облікова ціна", key: "unit_price", format: "money" },
+    { kind: "value", label: "Причина", key: "reason" },
   ],
   "warehouse_item.deleted": [
     { kind: "value", label: "Мінімальний залишок", key: "min_quantity", format: "number" },

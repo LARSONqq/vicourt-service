@@ -121,6 +121,15 @@ export function canManageWarehouse(
   return role === "admin";
 }
 
+export function canViewWarehouseLedger(
+  role: UserRole
+) {
+  return (
+    role === "admin" ||
+    role === "object_manager"
+  );
+}
+
 export function canUseWarehouseForObjects(
   role: UserRole
 ) {

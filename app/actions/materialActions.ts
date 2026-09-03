@@ -78,6 +78,42 @@ function validateId(
   }
 }
 
+function getRpcId(
+  value: unknown,
+  message: string
+) {
+  const id = Number(value);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error(message);
+  }
+
+  return id;
+}
+
+function getMaterialOperationError(
+  message: string,
+  fallback: string
+) {
+  if (
+    message.includes(
+      "Недостатньо матеріалу на складі"
+    )
+  ) {
+    return "Недостатньо матеріалу на складі.";
+  }
+
+  if (
+    message.includes(
+      "Не можна повернути більше"
+    )
+  ) {
+    return "Не можна повернути більше, ніж є на об’єкті.";
+  }
+
+  return fallback;
+}
+
 async function requireMaterialManagementAccess() {
   const profile =
     await getCurrentUserProfile();
@@ -118,6 +154,10 @@ function refreshMaterialPages(
 
   revalidatePath(
     "/reports"
+  );
+
+  revalidatePath(
+    "/notifications"
   );
 
   revalidatePath(
@@ -234,7 +274,10 @@ export async function createMaterial(
 
     if (error) {
       throw new Error(
-        `Не вдалося списати матеріал зі складу: ${error.message}`
+        getMaterialOperationError(
+          error.message,
+          "Не вдалося списати матеріал зі складу. Спробуй ще раз."
+        )
       );
     }
 
@@ -298,43 +341,28 @@ export async function createMaterial(
     );
   }
 
-  const {
-    data: createdMaterial,
-    error,
-  } =
-    await supabase
-      .from(
-        "materials"
-      )
-      .insert({
-        object_id:
-          objectId,
-
-        warehouse_item_id:
-          null,
-
-        name,
-
-        quantity,
-
-        unit,
-
-        price,
-      })
-      .select(`
-        id,
-        name,
-        quantity,
-        unit,
-        price
-      `)
-      .single();
+  const { data: createdMaterialId, error } =
+    await supabase.rpc(
+      "create_direct_object_material",
+      {
+        p_object_id: objectId,
+        p_name: name,
+        p_quantity: quantity,
+        p_unit: unit,
+        p_unit_cost: price,
+      }
+    );
 
   if (error) {
     throw new Error(
-      `Не вдалося додати матеріал: ${error.message}`
+      "Не вдалося додати матеріал. Спробуй ще раз."
     );
   }
+
+  const createdMaterialIdValue = getRpcId(
+    createdMaterialId,
+    "Матеріал створено, але не вдалося визначити його запис."
+  );
 
   await recordActivity({
     action:
@@ -342,25 +370,21 @@ export async function createMaterial(
     entityType:
       "material",
     entityId:
-      createdMaterial.id,
+      createdMaterialIdValue,
     entityName:
-      createdMaterial.name,
+      name,
     objectId,
     description:
-      `Додав ${createdMaterial.quantity} ${createdMaterial.unit} матеріалу «${createdMaterial.name}» до об’єкта.`,
+      `Додав ${quantity} ${unit} матеріалу «${name}» до об’єкта.`,
     metadata: {
       source:
         "direct",
       quantity:
-        Number(
-          createdMaterial.quantity
-        ),
+        quantity,
       unit:
-        createdMaterial.unit,
+        unit,
       price:
-        Number(
-          createdMaterial.price
-        ),
+        price,
     },
   });
 
@@ -469,7 +493,10 @@ export async function updateMaterial(
 
     if (error) {
       throw new Error(
-        `Не вдалося змінити кількість матеріалу: ${error.message}`
+        getMaterialOperationError(
+          error.message,
+          "Не вдалося змінити кількість матеріалу. Спробуй ще раз."
+        )
       );
     }
 
@@ -536,31 +563,21 @@ export async function updateMaterial(
     );
   }
 
-  const {
-    error,
-  } =
-    await supabase
-      .from(
-        "materials"
-      )
-      .update({
-        name,
-        quantity,
-        unit,
-        price,
-      })
-      .eq(
-        "id",
-        materialId
-      )
-      .eq(
-        "object_id",
-        objectId
-      );
+  const { error } = await supabase.rpc(
+    "update_direct_object_material",
+    {
+      p_material_id: materialId,
+      p_object_id: objectId,
+      p_name: name,
+      p_quantity: quantity,
+      p_unit: unit,
+      p_unit_cost: price,
+    }
+  );
 
   if (error) {
     throw new Error(
-      `Не вдалося оновити матеріал: ${error.message}`
+      "Не вдалося оновити матеріал. Спробуй ще раз."
     );
   }
 
@@ -711,4 +728,104 @@ export async function deleteMaterial(
   refreshMaterialPages(
     objectId
   );
+}
+
+export async function returnMaterialToWarehouse(
+  formData: FormData
+) {
+  await requireMaterialManagementAccess();
+
+  const materialId = Number(
+    formData.get("material_id")
+  );
+  const objectId = Number(
+    formData.get("object_id")
+  );
+  const quantity = getPositiveNumber(
+    formData,
+    "quantity"
+  );
+
+  validateId(
+    materialId,
+    "Не вдалося визначити матеріал."
+  );
+  validateId(
+    objectId,
+    "Не вдалося визначити об’єкт."
+  );
+
+  const supabase = await createClient();
+  const { data: material, error: materialError } =
+    await supabase
+      .from("materials")
+      .select(`
+        id,
+        warehouse_item_id,
+        name,
+        quantity,
+        unit
+      `)
+      .eq("id", materialId)
+      .eq("object_id", objectId)
+      .maybeSingle();
+
+  if (materialError || !material) {
+    throw new Error("Матеріал не знайдено.");
+  }
+
+  if (!material.warehouse_item_id) {
+    throw new Error(
+      "Цей матеріал не був виданий зі складу."
+    );
+  }
+
+  const previousQuantity = Number(material.quantity);
+
+  if (quantity > previousQuantity) {
+    throw new Error(
+      "Не можна повернути більше, ніж є на об’єкті."
+    );
+  }
+
+  const { error } = await supabase.rpc(
+    "return_object_material_to_warehouse",
+    {
+      p_material_id: materialId,
+      p_object_id: objectId,
+      p_quantity: quantity,
+    }
+  );
+
+  if (error) {
+    throw new Error(
+      getMaterialOperationError(
+        error.message,
+        "Не вдалося повернути матеріал на склад. Спробуй ще раз."
+      )
+    );
+  }
+
+  const remainingQuantity = previousQuantity - quantity;
+
+  await recordActivity({
+    action: "material.returned_to_warehouse",
+    entityType: "material",
+    entityId: material.id,
+    entityName: material.name,
+    objectId,
+    description:
+      remainingQuantity > 0
+        ? `Повернув ${quantity} ${material.unit} матеріалу «${material.name}» з об’єкта на склад.`
+        : `Повернув увесь залишок матеріалу «${material.name}» з об’єкта на склад.`,
+    metadata: {
+      quantity,
+      unit: material.unit,
+      previous_quantity: previousQuantity,
+      new_quantity: Math.max(remainingQuantity, 0),
+      restored_to_warehouse: true,
+    },
+  });
+
+  refreshMaterialPages(objectId);
 }

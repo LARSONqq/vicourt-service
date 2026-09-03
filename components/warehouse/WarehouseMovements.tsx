@@ -1,736 +1,424 @@
-"use client";
-
 import Link from "next/link";
 
 import {
-  useMemo,
-  useState,
-} from "react";
+  isWarehouseInboundMovement,
+  isWarehouseOutboundMovement,
+  warehouseMovementLabels,
+  warehouseMovementOptions,
+} from "@/constants/warehouseLedger";
+import { formatKyivTimestamp } from "@/lib/kyivDate";
 
-import type { WarehouseMovement } from "@/types/warehouseMovement";
+import type { AppCurrency } from "@/types/appSettings";
+import type { ObjectItem } from "@/types/object";
+import type { WarehouseItem } from "@/types/warehouseItem";
+import type {
+  WarehouseMovement,
+  WarehouseMovementPage,
+} from "@/types/warehouseMovement";
 
-type Props = {
-  movements?: WarehouseMovement[];
+type FilterValues = {
+  search?: string;
+  item?: string;
+  object?: string;
+  movement?: string;
+  from?: string;
+  to?: string;
 };
 
-function formatDate(
-  date: string
-) {
-  const parsedDate =
-    new Date(date);
+type Props = {
+  movementPage: WarehouseMovementPage;
+  items: WarehouseItem[];
+  objects: ObjectItem[];
+  currency: AppCurrency;
+  filters: FilterValues;
+};
 
+function formatMoney(value: number, currency: AppCurrency) {
+  return new Intl.NumberFormat("uk-UA", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(Number.isFinite(value) ? value : 0);
+}
+
+function formatQuantity(value: number) {
+  return new Intl.NumberFormat("uk-UA", {
+    maximumFractionDigits: 3,
+  }).format(Number.isFinite(value) ? value : 0);
+}
+
+function getQuantitySign(movement: WarehouseMovement) {
   if (
-    Number.isNaN(
-      parsedDate.getTime()
-    )
+    isWarehouseInboundMovement(movement.movement_code) ||
+    movement.movement_code === "direct_to_object" ||
+    movement.movement_code === "object_opening_balance"
   ) {
-    return "Невідома дата";
-  }
-
-  return new Intl.DateTimeFormat(
-    "uk-UA",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  ).format(parsedDate);
-}
-
-function formatMoney(
-  value: number
-) {
-  const safeValue =
-    Number.isFinite(value)
-      ? value
-      : 0;
-
-  return new Intl.NumberFormat(
-    "uk-UA",
-    {
-      style: "currency",
-      currency: "UAH",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }
-  ).format(safeValue);
-}
-
-function formatQuantity(
-  value: number
-) {
-  const safeValue =
-    Number.isFinite(value)
-      ? value
-      : 0;
-
-  return new Intl.NumberFormat(
-    "uk-UA",
-    {
-      maximumFractionDigits: 3,
-    }
-  ).format(safeValue);
-}
-
-function getPerformerName(
-  movement: WarehouseMovement
-) {
-  const name =
-    movement.performed_by_name
-      ?.trim();
-
-  if (name) {
-    return name;
+    return "+";
   }
 
   if (
-    movement.performed_by
+    isWarehouseOutboundMovement(movement.movement_code) ||
+    movement.movement_code === "direct_object_reversal"
   ) {
-    return "Користувач";
+    return "−";
   }
 
-  return "Не зафіксовано";
+  return "";
 }
 
-export default function WarehouseMovements({
-  movements = [],
-}: Props) {
-  const safeMovements =
-    Array.isArray(
-      movements
-    )
-      ? movements
-      : [];
+function getBadgeClass(movement: WarehouseMovement) {
+  if (movement.ledger_version < 3) {
+    return "bg-gray-100 text-gray-600";
+  }
 
-  const [
-    search,
-    setSearch,
-  ] = useState("");
+  if (isWarehouseInboundMovement(movement.movement_code)) {
+    return "bg-green-50 text-green-700";
+  }
 
-  const [
-    movementType,
-    setMovementType,
-  ] = useState("Усі");
+  if (isWarehouseOutboundMovement(movement.movement_code)) {
+    return "bg-orange-50 text-orange-700";
+  }
 
-  const [
-    selectedObjectId,
-    setSelectedObjectId,
-  ] = useState("Усі");
+  return "bg-blue-50 text-blue-700";
+}
 
-  const objectOptions =
-    useMemo(() => {
-      const objects =
-        new Map<
-          number,
-          string
-        >();
+function getItemName(movement: WarehouseMovement) {
+  return movement.item_name_snapshot || movement.item?.name || "Матеріал";
+}
 
-      safeMovements.forEach(
-        (movement) => {
-          if (
-            movement.object
-          ) {
-            objects.set(
-              movement.object.id,
-              movement.object.name
-            );
-          }
-        }
-      );
+function getObjectName(movement: WarehouseMovement) {
+  return movement.object_name_snapshot || movement.object?.name || null;
+}
 
-      return Array.from(
-        objects.entries()
-      )
-        .map(
-          ([
-            id,
-            name,
-          ]) => ({
-            id,
-            name,
-          })
-        )
-        .sort(
-          (
-            first,
-            second
-          ) =>
-            first.name.localeCompare(
-              second.name,
-              "uk"
-            )
-        );
-    }, [safeMovements]);
+function buildPageHref(filters: FilterValues, page: number) {
+  const params = new URLSearchParams();
 
-  const filteredMovements =
-    useMemo(() => {
-      const normalizedSearch =
-        search
-          .trim()
-          .toLowerCase();
+  if (filters.search) params.set("ledger_search", filters.search);
+  if (filters.item) params.set("ledger_item", filters.item);
+  if (filters.object) params.set("ledger_object", filters.object);
+  if (filters.movement) params.set("ledger_movement", filters.movement);
+  if (filters.from) params.set("ledger_from", filters.from);
+  if (filters.to) params.set("ledger_to", filters.to);
+  if (page > 1) params.set("ledger_page", String(page));
 
-      return safeMovements.filter(
-        (movement) => {
-          const searchableText =
-            [
-              movement.item
-                ?.name,
-              movement.object
-                ?.name,
-              movement.note,
-              movement
-                .performed_by_name,
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
+  const query = params.toString();
+  return `/warehouse${query ? `?${query}` : ""}#materials-ledger`;
+}
 
-          const matchesSearch =
-            !normalizedSearch ||
-            searchableText.includes(
-              normalizedSearch
-            );
-
-          const matchesType =
-            movementType ===
-              "Усі" ||
-            movement.movement_type ===
-              movementType;
-
-          const matchesObject =
-            selectedObjectId ===
-              "Усі" ||
-            (
-              selectedObjectId ===
-                "Без об’єкта" &&
-              !movement.object
-            ) ||
-            String(
-              movement.object
-                ?.id
-            ) ===
-              selectedObjectId;
-
-          return (
-            matchesSearch &&
-            matchesType &&
-            matchesObject
-          );
-        }
-      );
-    }, [
-      safeMovements,
-      search,
-      movementType,
-      selectedObjectId,
-    ]);
+function MovementDetails({
+  movement,
+  currency,
+}: {
+  movement: WarehouseMovement;
+  currency: AppCurrency;
+}) {
+  const objectName = getObjectName(movement);
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
-      {/* HEADER */}
-      <div className="border-b p-4 sm:p-5">
-        <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
-          Історія руху товарів
-        </h2>
-
-        <p className="mt-1 text-sm text-gray-500">
-          Приходи, списання,
-          вартість та виконавці
-          складських операцій
+    <>
+      <div className="min-w-0">
+        <p className="break-words font-semibold text-gray-900">
+          {getItemName(movement)}
+        </p>
+        <p className="mt-1 text-xs text-gray-500">
+          {formatKyivTimestamp(movement.created_at) || "Невідома дата"}
         </p>
       </div>
 
-      {/* FILTERS */}
-      {safeMovements.length >
-        0 && (
-        <div className="grid min-w-0 grid-cols-1 gap-3 border-b bg-gray-50 p-3 sm:p-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_220px_260px]">
+      <span
+        className={`inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-medium ${getBadgeClass(
+          movement
+        )}`}
+      >
+        {warehouseMovementLabels[movement.movement_code]}
+      </span>
+
+      <div>
+        <p className="font-semibold text-gray-900">
+          {getQuantitySign(movement)}
+          {formatQuantity(Number(movement.quantity))} {movement.unit_snapshot}
+        </p>
+        <p className="mt-1 text-xs text-gray-500">
+          {formatMoney(Number(movement.unit_price), currency)} / од. ·{" "}
+          {formatMoney(Number(movement.total_cost), currency)}
+        </p>
+      </div>
+
+      <div className="min-w-0 text-sm">
+        {objectName ? (
+          movement.object_id ? (
+            <Link
+              href={`/objects/${movement.object_id}`}
+              className="break-words font-medium text-green-700 hover:underline"
+            >
+              {objectName}
+            </Link>
+          ) : (
+            <p className="break-words text-gray-700">{objectName}</p>
+          )
+        ) : (
+          <p className="text-gray-400">Без об’єкта</p>
+        )}
+        <p className="mt-1 break-words text-xs text-gray-500">
+          {movement.performed_by_name ||
+            (movement.performed_by ? "Користувач" : "Система")}
+        </p>
+      </div>
+
+      <div className="text-sm text-gray-600">
+        {movement.warehouse_quantity_after !== null && (
+          <p>
+            Склад після: {formatQuantity(Number(movement.warehouse_quantity_after))}{" "}
+            {movement.unit_snapshot}
+          </p>
+        )}
+        {movement.object_quantity_after !== null && (
+          <p>
+            Об’єкт після: {formatQuantity(Number(movement.object_quantity_after))}{" "}
+            {movement.unit_snapshot}
+          </p>
+        )}
+        {movement.note && (
+          <p className="mt-1 break-words text-xs text-gray-500">
+            {movement.note}
+          </p>
+        )}
+      </div>
+    </>
+  );
+}
+
+export default function WarehouseMovements({
+  movementPage,
+  items,
+  objects,
+  currency,
+  filters,
+}: Props) {
+  return (
+    <section
+      id="materials-ledger"
+      className="scroll-mt-4 overflow-hidden rounded-xl border bg-white"
+    >
+      <div className="border-b p-4 sm:p-5">
+        <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+          Рух матеріалів
+        </h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Незмінна історія кількості, собівартості, об’єктів і виконавців
+        </p>
+      </div>
+
+      <form
+        method="get"
+        className="grid gap-3 border-b bg-gray-50 p-3 sm:p-4 md:grid-cols-2 xl:grid-cols-3"
+      >
+        <label className="min-w-0 text-sm font-medium text-gray-700">
+          Пошук
           <input
             type="search"
-            value={search}
-            onChange={(
-              event
-            ) =>
-              setSearch(
-                event.target.value
-              )
-            }
-            placeholder="Матеріал, об’єкт, виконавець або примітка"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            name="ledger_search"
+            defaultValue={filters.search || ""}
+            placeholder="Матеріал, об’єкт, виконавець або причина"
+            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
           />
+        </label>
 
+        <label className="min-w-0 text-sm font-medium text-gray-700">
+          Матеріал
           <select
-            value={
-              movementType
-            }
-            onChange={(
-              event
-            ) =>
-              setMovementType(
-                event.target.value
-              )
-            }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            name="ledger_item"
+            defaultValue={filters.item || ""}
+            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
           >
-            <option value="Усі">
-              Усі операції
-            </option>
-
-            <option value="Прихід">
-              Тільки приходи
-            </option>
-
-            <option value="Списання">
-              Тільки списання
-            </option>
+            <option value="">Усі матеріали</option>
+            {items.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
           </select>
+        </label>
 
+        <label className="min-w-0 text-sm font-medium text-gray-700">
+          Тип руху
           <select
-            value={
-              selectedObjectId
-            }
-            onChange={(
-              event
-            ) =>
-              setSelectedObjectId(
-                event.target.value
-              )
-            }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 md:col-span-2 lg:col-span-1"
+            name="ledger_movement"
+            defaultValue={filters.movement || ""}
+            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
           >
-            <option value="Усі">
-              Усі об’єкти
-            </option>
-
-            <option value="Без об’єкта">
-              Без прив’язки до об’єкта
-            </option>
-
-            {objectOptions.map(
-              (object) => (
-                <option
-                  key={
-                    object.id
-                  }
-                  value={
-                    object.id
-                  }
-                >
-                  {
-                    object.name
-                  }
-                </option>
-              )
-            )}
+            <option value="">Усі типи</option>
+            {warehouseMovementOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
+        </label>
+
+        <label className="min-w-0 text-sm font-medium text-gray-700">
+          Об’єкт
+          <select
+            name="ledger_object"
+            defaultValue={filters.object || ""}
+            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
+          >
+            <option value="">Усі об’єкти</option>
+            {objects.map((object) => (
+              <option key={object.id} value={object.id}>
+                {object.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="min-w-0 text-sm font-medium text-gray-700">
+          Дата від
+          <input
+            type="date"
+            name="ledger_from"
+            defaultValue={filters.from || ""}
+            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
+          />
+        </label>
+
+        <label className="min-w-0 text-sm font-medium text-gray-700">
+          Дата до
+          <input
+            type="date"
+            name="ledger_to"
+            defaultValue={filters.to || ""}
+            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
+          />
+        </label>
+
+        <div className="flex flex-col gap-2 md:col-span-2 sm:flex-row xl:col-span-3">
+          <button
+            type="submit"
+            className="min-h-11 rounded-lg bg-green-600 px-5 py-2 font-medium text-white hover:bg-green-700"
+          >
+            Застосувати
+          </button>
+          <Link
+            href="/warehouse#materials-ledger"
+            className="flex min-h-11 items-center justify-center rounded-lg border bg-white px-5 py-2 font-medium text-gray-700 hover:bg-gray-100"
+          >
+            Скинути
+          </Link>
         </div>
-      )}
+      </form>
 
-      {/* EMPTY */}
-      {safeMovements.length ===
-      0 ? (
-        <div className="p-6 text-center sm:p-8">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-            ↕
-          </div>
-
-          <p className="mt-3 font-medium text-gray-700">
-            Операцій поки немає
-          </p>
-
+      {movementPage.movements.length === 0 ? (
+        <div className="p-8 text-center">
+          <p className="font-medium text-gray-700">Рухів не знайдено</p>
           <p className="mt-1 text-sm text-gray-500">
-            Історія приходів та
-            списань з’явиться тут.
-          </p>
-        </div>
-      ) : filteredMovements.length ===
-        0 ? (
-        <div className="p-6 text-center sm:p-8">
-          <p className="font-medium text-gray-700">
-            Операцій не знайдено
-          </p>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Спробуй змінити пошук або
-            фільтри.
+            Зміни фільтри або виконай першу складську операцію.
           </p>
         </div>
       ) : (
         <>
-          {/* COUNT */}
-          <div className="border-b px-4 py-3 sm:px-5">
-            <p className="text-sm text-gray-500">
-              Показано операцій:{" "}
-              <span className="font-semibold text-gray-800">
-                {
-                  filteredMovements.length
-                }
-              </span>{" "}
-              із{" "}
-              {
-                safeMovements.length
-              }
-            </p>
+          <div className="border-b px-4 py-3 text-sm text-gray-500 sm:px-5">
+            Знайдено: <strong className="text-gray-800">{movementPage.total}</strong>
           </div>
 
-          {/* MOBILE CARDS */}
           <div className="space-y-3 p-3 md:hidden">
-            {filteredMovements.map(
-              (movement) => {
-                const isIncome =
-                  movement.movement_type ===
-                  "Прихід";
-
-                const quantity =
-                  Number(
-                    movement.quantity
-                  ) || 0;
-
-                const unitPrice =
-                  Number(
-                    movement.unit_price
-                  ) || 0;
-
-                const totalPrice =
-                  quantity *
-                  unitPrice;
-
-                return (
-                  <article
-                    key={
-                      movement.id
-                    }
-                    className="min-w-0 rounded-xl border bg-white p-4"
-                  >
-                    {/* TOP */}
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${
-                          isIncome
-                            ? "bg-green-50 text-green-700"
-                            : "bg-orange-50 text-orange-700"
-                        }`}
-                      >
-                        {
-                          movement.movement_type
-                        }
-                      </span>
-
-                      <p className="text-xs text-gray-400">
-                        {formatDate(
-                          movement.created_at
-                        )}
-                      </p>
-                    </div>
-
-                    {/* MATERIAL */}
-                    <div className="mt-4">
-                      <p className="text-xs text-gray-500">
-                        Матеріал
-                      </p>
-
-                      <p className="mt-1 break-words font-semibold text-gray-900">
-                        {movement.item
-                          ?.name ||
-                          "Позицію видалено"}
-                      </p>
-                    </div>
-
-                    {/* QUANTITY */}
-                    <div
-                      className={`mt-3 rounded-lg p-3 ${
-                        isIncome
-                          ? "bg-green-50"
-                          : "bg-orange-50"
-                      }`}
-                    >
-                      <p className="text-xs text-gray-500">
-                        Кількість
-                      </p>
-
-                      <p
-                        className={`mt-1 text-xl font-bold ${
-                          isIncome
-                            ? "text-green-700"
-                            : "text-orange-700"
-                        }`}
-                      >
-                        {isIncome
-                          ? "+"
-                          : "−"}
-                        {formatQuantity(
-                          quantity
-                        )}{" "}
-                        {movement.item
-                          ?.unit ||
-                          ""}
-                      </p>
-                    </div>
-
-                    {/* PRICE */}
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <div className="min-w-0 rounded-lg bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">
-                          Ціна
-                        </p>
-
-                        <p className="mt-1 break-words font-semibold text-gray-800">
-                          {formatMoney(
-                            unitPrice
-                          )}
-                        </p>
-
-                        {movement.item
-                          ?.unit && (
-                          <p className="mt-0.5 text-[11px] text-gray-400">
-                            за{" "}
-                            {
-                              movement
-                                .item
-                                .unit
-                            }
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 rounded-lg bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">
-                          Сума
-                        </p>
-
-                        <p className="mt-1 break-words font-semibold text-gray-900">
-                          {formatMoney(
-                            totalPrice
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* DETAILS */}
-                    <div className="mt-4 grid grid-cols-1 gap-4 border-t pt-4">
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">
-                          Об’єкт
-                        </p>
-
-                        {movement.object ? (
-                          <Link
-                            href={`/objects/${movement.object.id}`}
-                            className="mt-1 block break-words font-medium text-green-700 hover:underline"
-                          >
-                            {
-                              movement
-                                .object
-                                .name
-                            }
-                          </Link>
-                        ) : (
-                          <p className="mt-1 text-sm text-gray-400">
-                            Не прив’язано
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">
-                          Виконав
-                        </p>
-
-                        <p className="mt-1 break-words text-sm font-medium text-gray-800">
-                          {getPerformerName(
-                            movement
-                          )}
-                        </p>
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">
-                          Примітка
-                        </p>
-
-                        <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-700">
-                          {movement.note ||
-                            "Без примітки"}
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-                );
-              }
-            )}
+            {movementPage.movements.map((movement) => (
+              <article key={movement.id} className="space-y-3 rounded-xl border p-4">
+                <MovementDetails movement={movement} currency={currency} />
+              </article>
+            ))}
           </div>
 
-          {/* DESKTOP TABLE */}
           <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[1400px]">
-              <thead className="bg-gray-50 text-left">
+            <table className="w-full min-w-[1100px] text-sm">
+              <thead className="bg-gray-50 text-left text-gray-600">
                 <tr>
-                  <th className="p-4">
-                    Дата
-                  </th>
-
-                  <th className="p-4">
-                    Операція
-                  </th>
-
-                  <th className="p-4">
-                    Матеріал
-                  </th>
-
-                  <th className="p-4">
-                    Кількість
-                  </th>
-
-                  <th className="p-4">
-                    Ціна
-                  </th>
-
-                  <th className="p-4">
-                    Сума
-                  </th>
-
-                  <th className="p-4">
-                    Об’єкт
-                  </th>
-
-                  <th className="p-4">
-                    Виконав
-                  </th>
-
-                  <th className="p-4">
-                    Примітка
-                  </th>
+                  <th className="p-4 font-medium">Матеріал / дата</th>
+                  <th className="p-4 font-medium">Тип</th>
+                  <th className="p-4 font-medium">Кількість / вартість</th>
+                  <th className="p-4 font-medium">Об’єкт / виконавець</th>
+                  <th className="p-4 font-medium">Залишки / причина</th>
                 </tr>
               </thead>
-
               <tbody>
-                {filteredMovements.map(
-                  (movement) => {
-                    const isIncome =
-                      movement.movement_type ===
-                      "Прихід";
-
-                    const quantity =
-                      Number(
-                        movement.quantity
-                      ) || 0;
-
-                    const unitPrice =
-                      Number(
-                        movement.unit_price
-                      ) || 0;
-
-                    const totalPrice =
-                      quantity *
-                      unitPrice;
-
-                    return (
-                      <tr
-                        key={
-                          movement.id
-                        }
-                        className="border-t align-top"
-                      >
-                        <td className="whitespace-nowrap p-4 text-sm text-gray-500">
-                          {formatDate(
-                            movement.created_at
-                          )}
-                        </td>
-
-                        <td className="p-4">
-                          <span
-                            className={`rounded-full px-3 py-1 text-sm font-medium ${
-                              isIncome
-                                ? "bg-green-50 text-green-700"
-                                : "bg-orange-50 text-orange-700"
-                            }`}
-                          >
-                            {
-                              movement.movement_type
-                            }
-                          </span>
-                        </td>
-
-                        <td className="p-4 font-medium text-gray-900">
-                          {movement.item
-                            ?.name ||
-                            "Позицію видалено"}
-                        </td>
-
-                        <td
-                          className={`whitespace-nowrap p-4 font-semibold ${
-                            isIncome
-                              ? "text-green-700"
-                              : "text-orange-700"
-                          }`}
-                        >
-                          {isIncome
-                            ? "+"
-                            : "−"}
-
-                          {formatQuantity(
-                            quantity
-                          )}{" "}
-
-                          {movement.item
-                            ?.unit ||
-                            ""}
-                        </td>
-
-                        <td className="whitespace-nowrap p-4 text-gray-700">
-                          {formatMoney(
-                            unitPrice
-                          )}
-                        </td>
-
-                        <td className="whitespace-nowrap p-4 font-semibold text-gray-900">
-                          {formatMoney(
-                            totalPrice
-                          )}
-                        </td>
-
-                        <td className="p-4">
-                          {movement.object ? (
-                            <Link
-                              href={`/objects/${movement.object.id}`}
-                              className="font-medium text-green-700 hover:underline"
-                            >
-                              {
-                                movement
-                                  .object
-                                  .name
-                              }
-                            </Link>
-                          ) : (
-                            <span className="text-gray-400">
-                              Не прив’язано
-                            </span>
-                          )}
-                        </td>
-
-                        <td className="p-4">
-                          <span className="break-words text-sm font-medium text-gray-700">
-                            {getPerformerName(
-                              movement
-                            )}
-                          </span>
-                        </td>
-
-                        <td className="max-w-[300px] p-4 text-gray-600">
-                          <span className="whitespace-pre-wrap break-words">
-                            {movement.note ||
-                              "Без примітки"}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  }
-                )}
+                {movementPage.movements.map((movement) => (
+                  <tr key={movement.id} className="border-t align-top">
+                    <td className="p-4">
+                      <p className="break-words font-semibold text-gray-900">
+                        {getItemName(movement)}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {formatKyivTimestamp(movement.created_at) || "Невідома дата"}
+                      </p>
+                    </td>
+                    <td className="p-4">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getBadgeClass(movement)}`}>
+                        {warehouseMovementLabels[movement.movement_code]}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <p className="font-semibold">
+                        {getQuantitySign(movement)}{formatQuantity(Number(movement.quantity))}{" "}
+                        {movement.unit_snapshot}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {formatMoney(Number(movement.unit_price), currency)} / од.
+                      </p>
+                      <p className="mt-1 font-medium">
+                        {formatMoney(Number(movement.total_cost), currency)}
+                      </p>
+                    </td>
+                    <td className="p-4">
+                      {getObjectName(movement) ? (
+                        movement.object_id ? (
+                          <Link href={`/objects/${movement.object_id}`} className="font-medium text-green-700 hover:underline">
+                            {getObjectName(movement)}
+                          </Link>
+                        ) : (
+                          <p>{getObjectName(movement)}</p>
+                        )
+                      ) : (
+                        <p className="text-gray-400">Без об’єкта</p>
+                      )}
+                      <p className="mt-1 text-xs text-gray-500">
+                        {movement.performed_by_name || (movement.performed_by ? "Користувач" : "Система")}
+                      </p>
+                    </td>
+                    <td className="p-4 text-gray-600">
+                      {movement.warehouse_quantity_after !== null && (
+                        <p>Склад: {formatQuantity(Number(movement.warehouse_quantity_after))} {movement.unit_snapshot}</p>
+                      )}
+                      {movement.object_quantity_after !== null && (
+                        <p>Об’єкт: {formatQuantity(Number(movement.object_quantity_after))} {movement.unit_snapshot}</p>
+                      )}
+                      {movement.note && <p className="mt-1 max-w-sm break-words text-xs">{movement.note}</p>}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </>
+      )}
+
+      {(movementPage.hasPreviousPage || movementPage.hasNextPage) && (
+        <nav aria-label="Пагінація рухів" className="flex items-center justify-between gap-3 border-t p-4">
+          {movementPage.hasPreviousPage ? (
+            <Link href={buildPageHref(filters, movementPage.page - 1)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50">
+              ← Новіші
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-sm text-gray-500">Сторінка {movementPage.page}</span>
+          {movementPage.hasNextPage ? (
+            <Link href={buildPageHref(filters, movementPage.page + 1)} className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-gray-50">
+              Старіші →
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
       )}
     </section>
   );

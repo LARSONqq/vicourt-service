@@ -11,6 +11,9 @@ import { recordActivity } from "@/services/activityLogService";
 type WarehouseItemSnapshot = {
   id: number;
   name: string;
+  quantity: number;
+  unit: string;
+  purchase_price: number;
   min_quantity: number;
   target_quantity: number | null;
   supplier: string | null;
@@ -52,13 +55,23 @@ function getNumber(
   formData: FormData,
   field: string
 ) {
-  const value = Number(
-    formData.get(field)
-  );
+  const rawValue = String(
+    formData.get(field) ?? ""
+  ).trim();
 
-  return Number.isFinite(value)
-    ? value
-    : 0;
+  if (!rawValue) {
+    return 0;
+  }
+
+  const value = Number(rawValue);
+
+  if (!Number.isFinite(value)) {
+    throw new Error(
+      "Вкажи коректне числове значення."
+    );
+  }
+
+  return value;
 }
 
 function getOptionalNumber(
@@ -191,33 +204,31 @@ export async function createWarehouseItem(
     purchasePrice
   );
 
-  const {
-    data,
-    error,
-  } =
-    await supabase
-      .from("warehouse_items")
-      .insert({
-        name,
-        category:
-          category || null,
-        quantity,
-        unit,
-        min_quantity:
-          minQuantity,
-        target_quantity:
-          targetQuantity,
-        purchase_price:
-          purchasePrice,
-        supplier:
-          supplier || null,
-      })
-      .select("id")
-      .single();
+  const { data, error } = await supabase.rpc(
+    "create_warehouse_item_with_opening_balance",
+    {
+      p_name: name,
+      p_category: category || null,
+      p_quantity: quantity,
+      p_unit: unit,
+      p_min_quantity: minQuantity,
+      p_target_quantity: targetQuantity,
+      p_unit_cost: purchasePrice,
+      p_supplier: supplier || null,
+    }
+  );
 
   if (error) {
     throw new Error(
-      `Не вдалося створити позицію складу: ${error.message}`
+      "Не вдалося створити позицію складу. Спробуй ще раз."
+    );
+  }
+
+  const createdItemId = Number(data);
+
+  if (!Number.isInteger(createdItemId) || createdItemId <= 0) {
+    throw new Error(
+      "Позицію створено, але не вдалося визначити її запис."
     );
   }
 
@@ -226,7 +237,7 @@ export async function createWarehouseItem(
       "warehouse_item.created",
     entityType:
       "material",
-    entityId: data.id,
+    entityId: createdItemId,
     entityName: name,
     description:
       `Створив позицію складу «${name}».`,
@@ -237,11 +248,19 @@ export async function createWarehouseItem(
         targetQuantity,
       supplier:
         supplier || null,
+      quantity,
+      unit,
+      purchase_price:
+        purchasePrice,
     },
   });
 
   revalidatePath(
     "/warehouse"
+  );
+
+  revalidatePath(
+    "/notifications"
   );
 
   revalidatePath("/");
@@ -277,12 +296,6 @@ export async function updateWarehouseItem(
       "category"
     );
 
-  const quantity =
-    getNumber(
-      formData,
-      "quantity"
-    );
-
   const unit =
     getText(
       formData,
@@ -293,12 +306,6 @@ export async function updateWarehouseItem(
     getNumber(
       formData,
       "min_quantity"
-    );
-
-  const purchasePrice =
-    getNumber(
-      formData,
-      "purchase_price"
     );
 
   const targetQuantity =
@@ -337,10 +344,10 @@ export async function updateWarehouseItem(
   }
 
   validateValues(
-    quantity,
+    0,
     minQuantity,
     targetQuantity,
-    purchasePrice
+    0
   );
 
   const {
@@ -351,6 +358,9 @@ export async function updateWarehouseItem(
     .select(`
       id,
       name,
+      quantity,
+      unit,
+      purchase_price,
       min_quantity,
       target_quantity,
       supplier
@@ -380,14 +390,11 @@ export async function updateWarehouseItem(
         name,
         category:
           category || null,
-        quantity,
         unit,
         min_quantity:
           minQuantity,
         target_quantity:
           targetQuantity,
-        purchase_price:
-          purchasePrice,
         supplier:
           supplier || null,
       })
@@ -431,11 +438,23 @@ export async function updateWarehouseItem(
         previousItem.supplier,
       new_supplier:
         supplier || null,
+      quantity:
+        Number(
+          previousItem.quantity
+        ),
+      purchase_price:
+        Number(
+          previousItem.purchase_price
+        ),
     },
   });
 
   revalidatePath(
     "/warehouse"
+  );
+
+  revalidatePath(
+    "/notifications"
   );
 
   revalidatePath("/");
@@ -471,6 +490,9 @@ export async function deleteWarehouseItem(
     .select(`
       id,
       name,
+      quantity,
+      unit,
+      purchase_price,
       min_quantity,
       target_quantity,
       supplier
@@ -487,14 +509,22 @@ export async function deleteWarehouseItem(
     );
   }
 
+  if (
+    previousItem &&
+    Number(previousItem.quantity) !== 0
+  ) {
+    throw new Error(
+      "Спочатку скоригуй залишок позиції до нуля. Історія рухів буде збережена."
+    );
+  }
+
   const { error } =
-    await supabase
-      .from("warehouse_items")
-      .delete()
-      .eq(
-        "id",
-        itemId
-      );
+    await supabase.rpc(
+      "delete_warehouse_item",
+      {
+        p_item_id: itemId,
+      }
+    );
 
   if (error) {
     throw new Error(
@@ -533,6 +563,10 @@ export async function deleteWarehouseItem(
 
   revalidatePath(
     "/warehouse"
+  );
+
+  revalidatePath(
+    "/notifications"
   );
 
   revalidatePath("/");

@@ -152,26 +152,19 @@ export default function EditWarehouseItemForm({
         </div>
       </div>
 
-      {/* VALUES */}
-      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
-            Кількість
-          </label>
+      <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800 sm:p-4">
+        <p className="font-medium">
+          Залишок: {item.quantity} {item.unit} · облікова ціна:{" "}
+          {Number(item.purchase_price).toFixed(2)} ₴
+        </p>
+        <p className="mt-1 text-xs leading-5 text-blue-700">
+          Кількість і середня облікова ціна змінюються тільки через
+          закупівлю, видачу, повернення або «Корекцію залишку».
+        </p>
+      </div>
 
-          <input
-            type="number"
-            name="quantity"
-            inputMode="decimal"
-            min="0"
-            step="0.01"
-            defaultValue={
-              item.quantity
-            }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-            required
-          />
-        </div>
+      {/* VALUES */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
 
         <div className="min-w-0">
           <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -272,23 +265,6 @@ export default function EditWarehouseItemForm({
           </p>
         </div>
 
-        <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
-            Закупівельна ціна
-          </label>
-
-          <input
-            type="number"
-            name="purchase_price"
-            inputMode="decimal"
-            min="0"
-            step="0.01"
-            defaultValue={
-              item.purchase_price
-            }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-          />
-        </div>
       </div>
 
       {/* ACTIONS */}

@@ -10,20 +10,32 @@ import { deleteMaterial } from "@/app/actions/materialActions";
 
 import type { Material } from "@/types/material";
 import type { WarehouseItem } from "@/types/warehouseItem";
+import type { WarehouseMovement } from "@/types/warehouseMovement";
+import type { AppCurrency } from "@/types/appSettings";
 
 import AddMaterialForm from "./AddMaterialForm";
 import EditMaterialForm from "./EditMaterialForm";
+import ObjectMaterialHistory from "./ObjectMaterialHistory";
+import ReturnMaterialForm from "./ReturnMaterialForm";
 
 type Props = {
   materials?: Material[];
   warehouseItems?: WarehouseItem[];
+  movements?: WarehouseMovement[];
   objectId: number;
+  currency: AppCurrency;
+  canViewLedger?: boolean;
+  canManage?: boolean;
 };
 
 export default function ObjectMaterials({
   materials = [],
   warehouseItems = [],
+  movements = [],
   objectId,
+  currency,
+  canViewLedger = false,
+  canManage = false,
 }: Props) {
   const [
     showForm,
@@ -43,11 +55,15 @@ export default function ObjectMaterials({
       : [];
 
   const safeWarehouseItems =
-    Array.isArray(
-      warehouseItems
-    )
-      ? warehouseItems
-      : [];
+    useMemo(
+      () =>
+        Array.isArray(
+          warehouseItems
+        )
+          ? warehouseItems
+          : [],
+      [warehouseItems]
+    );
 
   const warehouseItemsById =
     useMemo(() => {
@@ -123,24 +139,26 @@ export default function ObjectMaterials({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() =>
-            setShowForm(
-              (previous) =>
-                !previous
-            )
-          }
-          className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition sm:w-fit ${
-            showForm
-              ? "border bg-white text-gray-700 hover:bg-gray-50"
-              : "bg-green-600 text-white hover:bg-green-700"
-          }`}
-        >
-          {showForm
-            ? "Закрити форму"
-            : "+ Додати матеріал"}
-        </button>
+        {canManage && (
+          <button
+            type="button"
+            onClick={() =>
+              setShowForm(
+                (previous) =>
+                  !previous
+              )
+            }
+            className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition sm:w-fit ${
+              showForm
+                ? "border bg-white text-gray-700 hover:bg-gray-50"
+                : "bg-green-600 text-white hover:bg-green-700"
+            }`}
+          >
+            {showForm
+              ? "Закрити форму"
+              : "+ Додати матеріал"}
+          </button>
+        )}
       </div>
 
       {/* ADD FORM */}
@@ -235,7 +253,8 @@ export default function ObjectMaterials({
                         </div>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-4">
+                      {canManage && (
+                      <div className="mt-4 grid grid-cols-1 gap-2 border-t pt-4 sm:grid-cols-2">
                         <button
                           type="button"
                           onClick={() =>
@@ -259,30 +278,33 @@ export default function ObjectMaterials({
                             : "Редагувати"}
                         </button>
 
-                        <form
-                          action={deleteMaterial.bind(
-                            null,
-                            material.id,
-                            objectId
-                          )}
-                          onSubmit={(
-                            event
-                          ) =>
-                            handleDeleteSubmit(
-                              event,
-                              material
-                            )
-                          }
-                          className="w-full"
-                        >
-                          <button
-                            type="submit"
-                            className="min-h-10 w-full rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                        {isWarehouseMaterial ? (
+                          <ReturnMaterialForm
+                            material={material}
+                            objectId={objectId}
+                          />
+                        ) : (
+                          <form
+                            action={deleteMaterial.bind(
+                              null,
+                              material.id,
+                              objectId
+                            )}
+                            onSubmit={(event) =>
+                              handleDeleteSubmit(event, material)
+                            }
+                            className="w-full"
                           >
-                            Видалити
-                          </button>
-                        </form>
+                            <button
+                              type="submit"
+                              className="min-h-10 w-full rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                            >
+                              Видалити
+                            </button>
+                          </form>
+                        )}
                       </div>
+                      )}
                     </article>
 
                     {editingId ===
@@ -390,6 +412,7 @@ export default function ObjectMaterials({
                           </td>
 
                           <td className="p-4">
+                            {canManage && (
                             <div className="flex justify-end gap-2">
                               <button
                                 type="button"
@@ -409,29 +432,32 @@ export default function ObjectMaterials({
                                   : "Редагувати"}
                               </button>
 
-                              <form
-                                action={deleteMaterial.bind(
-                                  null,
-                                  material.id,
-                                  objectId
-                                )}
-                                onSubmit={(
-                                  event
-                                ) =>
-                                  handleDeleteSubmit(
-                                    event,
-                                    material
-                                  )
-                                }
-                              >
-                                <button
-                                  type="submit"
-                                  className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                              {isWarehouseMaterial ? (
+                                <ReturnMaterialForm
+                                  material={material}
+                                  objectId={objectId}
+                                />
+                              ) : (
+                                <form
+                                  action={deleteMaterial.bind(
+                                    null,
+                                    material.id,
+                                    objectId
+                                  )}
+                                  onSubmit={(event) =>
+                                    handleDeleteSubmit(event, material)
+                                  }
                                 >
-                                  Видалити
-                                </button>
-                              </form>
+                                  <button
+                                    type="submit"
+                                    className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                                  >
+                                    Видалити
+                                  </button>
+                                </form>
+                              )}
                             </div>
+                            )}
                           </td>
                         </tr>
 
@@ -471,6 +497,13 @@ export default function ObjectMaterials({
             </table>
           </div>
         </>
+      )}
+
+      {canViewLedger && (
+        <ObjectMaterialHistory
+          movements={movements}
+          currency={currency}
+        />
       )}
     </section>
   );

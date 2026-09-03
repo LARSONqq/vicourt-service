@@ -6,6 +6,7 @@ import { requireSectionAccess } from "@/lib/auth/requireAccess";
 import {
   canManagePurchases,
   canManageWarehouse,
+  canViewWarehouseLedger,
 } from "@/lib/auth/permissions";
 
 import { getObjects } from "@/services/objectService";
@@ -16,7 +17,7 @@ import {
 
 import {
   getWarehouseItems,
-  getWarehouseMovements,
+  getWarehouseMovementPage,
 } from "@/services/warehouseService";
 
 import type { AppCurrency } from "@/types/appSettings";
@@ -27,6 +28,13 @@ import type {
 type Props = {
   searchParams: Promise<{
     item?: string;
+    ledger_search?: string;
+    ledger_item?: string;
+    ledger_object?: string;
+    ledger_movement?: string;
+    ledger_from?: string;
+    ledger_to?: string;
+    ledger_page?: string;
   }>;
 };
 
@@ -93,6 +101,10 @@ export default async function WarehousePage({
     canManagePurchases(
       currentProfile.role
     );
+  const canViewLedger =
+    canViewWarehouseLedger(
+      currentProfile.role
+    );
   const resolvedSearchParams =
     await searchParams;
   const requestedItemId =
@@ -105,17 +117,53 @@ export default async function WarehousePage({
     ) && requestedItemId > 0
       ? requestedItemId
       : undefined;
+  const ledgerFilters = {
+    search:
+      resolvedSearchParams.ledger_search,
+    item:
+      resolvedSearchParams.ledger_item,
+    object:
+      resolvedSearchParams.ledger_object,
+    movement:
+      resolvedSearchParams.ledger_movement,
+    from:
+      resolvedSearchParams.ledger_from,
+    to:
+      resolvedSearchParams.ledger_to,
+  };
 
   const [
     items,
-    movements,
+    movementPage,
     objects,
     settings,
     purchaseInsights,
   ] = await Promise.all([
     getWarehouseItems(),
-    getWarehouseMovements(),
-    getObjects(),
+    canViewLedger
+      ? getWarehouseMovementPage({
+          search:
+            ledgerFilters.search,
+          itemId: Number(
+            ledgerFilters.item
+          ),
+          objectId: Number(
+            ledgerFilters.object
+          ),
+          movementCode:
+            ledgerFilters.movement,
+          dateFrom:
+            ledgerFilters.from,
+          dateTo:
+            ledgerFilters.to,
+          page: Number(
+            resolvedSearchParams.ledger_page
+          ),
+        })
+      : Promise.resolve(null),
+    canViewLedger
+      ? getObjects()
+      : Promise.resolve([]),
     getAppSettings(),
     canCreatePurchases
       ? getWarehousePurchaseInsights()
@@ -127,13 +175,6 @@ export default async function WarehousePage({
   const itemList =
     Array.isArray(items)
       ? items
-      : [];
-
-  const movementList =
-    Array.isArray(
-      movements
-    )
-      ? movements
       : [];
 
   const objectList =
@@ -199,9 +240,6 @@ export default async function WarehousePage({
               items={
                 itemList
               }
-              objects={
-                objectList
-              }
             />
           </div>
         )}
@@ -222,10 +260,11 @@ export default async function WarehousePage({
 
               <p className="mt-1 text-sm leading-5 text-blue-700">
                 Ти можеш переглядати
-                залишки та історію руху
-                матеріалів, але змінювати
-                склад може лише
-                адміністратор.
+                залишки матеріалів
+                {canViewLedger
+                  ? " та історію рухів"
+                  : ""}, але змінювати склад
+                може лише адміністратор.
               </p>
             </div>
           </div>
@@ -296,9 +335,6 @@ export default async function WarehousePage({
           items={
             itemList
           }
-          objects={
-            objectList
-          }
           currency={
             settings.currency
           }
@@ -321,13 +357,17 @@ export default async function WarehousePage({
       </div>
 
       {/* MOVEMENTS */}
-      <div className="min-w-0">
-        <WarehouseMovements
-          movements={
-            movementList
-          }
-        />
-      </div>
+      {canViewLedger && movementPage && (
+        <div className="min-w-0">
+          <WarehouseMovements
+            movementPage={movementPage}
+            items={itemList}
+            objects={objectList}
+            currency={settings.currency}
+            filters={ledgerFilters}
+          />
+        </div>
+      )}
     </div>
   );
 }
