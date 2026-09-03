@@ -13,7 +13,8 @@ type TabId =
   | "journal"
   | "expenses"
   | "documents"
-  | "photos";
+  | "photos"
+  | "history";
 
 type Props = {
   info: ReactNode;
@@ -23,6 +24,7 @@ type Props = {
   expenses?: ReactNode;
   documents: ReactNode;
   photos: ReactNode;
+  history?: ReactNode;
 };
 
 const baseTabs: Array<{
@@ -65,6 +67,11 @@ const baseTabs: Array<{
     label: "Фото",
     icon: "📷",
   },
+  {
+    id: "history",
+    label: "Історія",
+    icon: "🕘",
+  },
 ];
 
 export default function ObjectTabs({
@@ -75,6 +82,7 @@ export default function ObjectTabs({
   expenses,
   documents,
   photos,
+  history,
 }: Props) {
   const [tab, setTab] =
     useState<TabId>("info");
@@ -90,6 +98,12 @@ export default function ObjectTabs({
         item.id !==
           "expenses" ||
         expenses !==
+          undefined
+    ).filter(
+      (item) =>
+        item.id !==
+          "history" ||
+        history !==
           undefined
     );
 
@@ -180,6 +194,9 @@ export default function ObjectTabs({
 
         {tab === "photos" &&
           photos}
+
+        {tab === "history" &&
+          history}
       </div>
     </div>
   );

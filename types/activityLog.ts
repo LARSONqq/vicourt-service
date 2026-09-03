@@ -8,7 +8,20 @@ export type ActivityEntityType =
   | "object_payment_schedule"
   | "object_document"
   | "purchase"
-  | "equipment";
+  | "equipment"
+  | "employee";
+
+export type ActivityCategory =
+  | "objects"
+  | "tasks"
+  | "warehouse"
+  | "purchases"
+  | "finance"
+  | "equipment"
+  | "supervision"
+  | "documents"
+  | "employees"
+  | "other";
 
 export type ActivityMetadataValue =
   | string
@@ -25,7 +38,7 @@ export type ActivityMetadata =
 export interface ActivityLog {
   id: number;
   actor_id: string | null;
-  actor_name: string;
+  actor_name: string | null;
   action: string;
   entity_type: ActivityEntityType;
   entity_id: string | null;
@@ -39,9 +52,11 @@ export interface ActivityLog {
 
 export interface ActivityLogFilters {
   search?: string;
-  entityType?: string;
+  category?: string;
+  action?: string;
+  actorId?: string;
   actorName?: string;
-  objectName?: string;
+  objectId?: number;
   dateFrom?: string;
   dateTo?: string;
   page?: number;
@@ -54,4 +69,57 @@ export interface ActivityLogPage {
   pageSize: number;
   hasPreviousPage: boolean;
   hasNextPage: boolean;
+  existingObjectIds: number[];
+}
+
+export interface ActivityActorOption {
+  id: string;
+  name: string;
+}
+
+export interface ActivityObjectOption {
+  id: number;
+  name: string;
+}
+
+export interface ActivityFilterOptions {
+  actors: ActivityActorOption[];
+  objects: ActivityObjectOption[];
+}
+
+export interface ActivityLogCursor {
+  createdAt: string;
+  id: number;
+}
+
+export interface ObjectActivityLogPage {
+  logs: ActivityLog[];
+  nextCursor: ActivityLogCursor | null;
+}
+
+export interface ActivityDetail {
+  label: string;
+  value?: string;
+  previousValue?: string;
+  newValue?: string;
+}
+
+export interface ActivityEntityLink {
+  label: string;
+  name: string;
+  href: string | null;
+}
+
+export interface ActivityPresentation {
+  label: string;
+  category: ActivityCategory;
+  categoryLabel: string;
+  icon: string;
+  actorName: string;
+  description: string;
+  details: ActivityDetail[];
+  entity: ActivityEntityLink | null;
+  object: ActivityEntityLink | null;
+  sectionHref: string | null;
+  isKnownEvent: boolean;
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import ObjectTabs from "@/components/ObjectTabs";
+import ObjectActivityTimeline from "@/components/activity/ObjectActivityTimeline";
 
 import DeleteObjectButton from "@/components/objects/DeleteObjectButton";
 import ObjectDocuments from "@/components/objects/ObjectDocuments";
@@ -47,7 +48,11 @@ import {
 } from "@/services/profileService";
 import {
   canManageObjects,
+  canViewActivityLog,
 } from "@/lib/auth/permissions";
+import {
+  getObjectActivityLogs,
+} from "@/services/activityLogService";
 import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
@@ -117,6 +122,12 @@ export default async function ObjectPage({
           profile.role
         )
       : false;
+  const canViewActivity =
+    profile
+      ? canViewActivityLog(
+          profile.role
+        )
+      : false;
 
   const [
     object,
@@ -130,6 +141,7 @@ export default async function ObjectPage({
     payments,
     paymentSchedule,
     documents,
+    activityPage,
   ] = await Promise.all([
     getObject(objectId),
     getObjectTasks(objectId),
@@ -152,6 +164,14 @@ export default async function ObjectPage({
     getObjectDocuments(
       objectId
     ),
+    canViewActivity
+      ? getObjectActivityLogs(
+          objectId
+        )
+      : Promise.resolve({
+          logs: [],
+          nextCursor: null,
+        }),
   ]);
 
   if (!object) {
@@ -600,6 +620,19 @@ export default async function ObjectPage({
               object.id
             }
           />
+        }
+        history={
+          canViewActivity ? (
+            <ObjectActivityTimeline
+              key={object.id}
+              objectId={
+                object.id
+              }
+              initialPage={
+                activityPage
+              }
+            />
+          ) : undefined
         }
       />
     </div>
