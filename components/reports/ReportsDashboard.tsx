@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import MaterialLedgerReport from "@/components/reports/MaterialLedgerReport";
+
 import {
   objectPaymentStatusLabels,
 } from "@/constants/objectPayments";
@@ -162,7 +164,13 @@ export default function ReportsDashboard({
             .materialsCost
         ),
       note:
-        "Кількість × зафіксована ціна",
+        data.materialAccounting.periodMode ===
+        "exact"
+            ? "Точні історичні рухи Ledger"
+          : data.materialAccounting.periodMode ===
+              "mixed"
+            ? "Лише підтверджена exact-частина після cutover"
+            : "Legacy approximation",
       style:
         "bg-amber-50 text-amber-700",
     },
@@ -287,6 +295,20 @@ export default function ReportsDashboard({
         </div>
       )}
 
+      {!data.invalidPeriod &&
+        data.materialAccounting
+          .limitation && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900 sm:px-5">
+            <span className="font-semibold">
+              Метод обліку матеріалів. {" "}
+            </span>
+            {
+              data.materialAccounting
+                .limitation
+            }
+          </div>
+        )}
+
       <section className="min-w-0">
         <div className="mb-3 sm:mb-4">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
@@ -352,6 +374,12 @@ export default function ReportsDashboard({
             управлінський розрахунок
             від поточної собівартості,
             а не касовий прибуток.
+            {" "}
+            {data.materialAccounting
+              .lifetimeMethod ===
+            "exact_ledger"
+              ? "Матеріали за весь час рахуються як початковий знімок плюс подальші exact-рухи."
+              : "Матеріали за весь час поки використовують поточний legacy-баланс."}
           </p>
         </div>
 
@@ -419,6 +447,17 @@ export default function ReportsDashboard({
                         </p>
                       </div>
 
+                      <div className="rounded-lg bg-emerald-50 p-3">
+                        <p className="text-xs text-emerald-700/70">
+                          Оплати за період
+                        </p>
+                        <p className="mt-1 break-words font-semibold text-emerald-700">
+                          {formatMoney(
+                            object.periodPaymentsReceived
+                          )}
+                        </p>
+                      </div>
+
                       <div className="rounded-lg bg-gray-50 p-3">
                         <p className="text-xs text-gray-500">
                           Години
@@ -481,6 +520,9 @@ export default function ReportsDashboard({
                             {formatMoney(
                               object.lifetimeActualCost
                             )}
+                          </dd>
+                          <dd className="mt-1 text-xs leading-5 text-gray-500">
+                            Матеріали {formatMoney(object.lifetimeMaterialsCost)} · роботи {formatMoney(object.lifetimeLaborCost)} · інше {formatMoney(object.lifetimeOtherExpensesCost)}
                           </dd>
                         </div>
 
@@ -669,6 +711,16 @@ export default function ReportsDashboard({
                             </div>
                             <div className="flex justify-between gap-3">
                               <dt className="text-gray-500">
+                                Оплати
+                              </dt>
+                              <dd className="font-medium text-emerald-700">
+                                {formatMoney(
+                                  object.periodPaymentsReceived
+                                )}
+                              </dd>
+                            </div>
+                            <div className="flex justify-between gap-3">
+                              <dt className="text-gray-500">
                                 Роботи
                               </dt>
                               <dd className="font-medium text-blue-700">
@@ -728,6 +780,9 @@ export default function ReportsDashboard({
                           )}
                           <p className="mt-1 text-xs font-normal text-gray-500">
                             За весь час
+                          </p>
+                          <p className="mt-1 text-xs font-normal leading-5 text-gray-500">
+                            Матеріали {formatMoney(object.lifetimeMaterialsCost)} · роботи {formatMoney(object.lifetimeLaborCost)} · інше {formatMoney(object.lifetimeOtherExpensesCost)}
                           </p>
                         </td>
                         <td className="p-4">
@@ -1265,6 +1320,47 @@ export default function ReportsDashboard({
           </p>
         </div>
 
+        <div className="grid grid-cols-2 gap-3 border-b p-3 sm:p-5 xl:grid-cols-4">
+          {[
+            {
+              label: "Заплановано",
+              value:
+                data.paymentScheduleSummary
+                  .plannedAmount,
+            },
+            {
+              label: "Покрито",
+              value:
+                data.paymentScheduleSummary
+                  .paidAmount,
+            },
+            {
+              label: "До сплати сьогодні",
+              value:
+                data.paymentScheduleSummary
+                  .dueTodayAmount,
+            },
+            {
+              label: "Прострочено",
+              value:
+                data.paymentScheduleSummary
+                  .overdueAmount,
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="min-w-0 rounded-xl bg-gray-50 p-3"
+            >
+              <p className="break-words text-xs text-gray-500">
+                {item.label}
+              </p>
+              <p className="mt-1 break-words font-semibold text-gray-900">
+                {formatMoney(item.value)}
+              </p>
+            </div>
+          ))}
+        </div>
+
         {data.paymentScheduleDetails.length === 0 ? (
           <div className="p-3 sm:p-5">
             <EmptyState>
@@ -1330,6 +1426,10 @@ export default function ReportsDashboard({
           </>
         )}
       </section>
+
+      <MaterialLedgerReport
+        data={data}
+      />
 
       <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -1568,9 +1668,12 @@ export default function ReportsDashboard({
 
       <p className="text-xs leading-5 text-gray-500 sm:text-sm">
         Дані розраховані за вибраний
-        період. Для матеріалів період
-        визначається за датою їх
-        додавання до об’єкта.
+        період. Після переходу на
+        Warehouse 3.0 матеріальні
+        витрати визначаються за
+        історичними рухами Ledger;
+        legacy-частина позначена як
+        приблизна.
       </p>
     </div>
   );

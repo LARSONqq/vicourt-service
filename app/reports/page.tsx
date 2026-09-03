@@ -134,6 +134,17 @@ export default async function ReportsPage({
       items: [
         {
           title:
+            "Підсумок за період",
+          href:
+            createPeriodExportHref(
+              "summary",
+              data.filters
+            ),
+          note:
+            "KPI та метод обліку матеріалів",
+        },
+        {
+          title:
             "Витрати по об’єктах",
           href:
             createPeriodExportHref(
@@ -199,14 +210,14 @@ export default async function ReportsPage({
         },
         {
           title:
-            "Рухи складу за період",
+            "Рух матеріалів за період",
           href:
             createPeriodExportHref(
               "warehouse-movements",
               data.filters
             ),
           note:
-            "За вибраний період",
+            "Ledger, snapshots і метод обліку",
         },
       ],
     },

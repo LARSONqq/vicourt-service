@@ -44,6 +44,7 @@ import {
 } from "@/constants/objectPaymentSchedule";
 
 type ExportType =
+  | "summary"
   | "object-costs"
   | "employee-work"
   | "expense-categories"
@@ -64,6 +65,7 @@ type CsvResult = {
 
 const exportTypes =
   new Set<ExportType>([
+    "summary",
     "object-costs",
     "employee-work",
     "expense-categories",
@@ -212,6 +214,56 @@ async function getPeriodCsv(
     );
 
   switch (type) {
+    case "summary":
+      return {
+        filename:
+          createPeriodFilename(
+            "summary",
+            filters.dateFrom,
+            filters.dateTo
+          ),
+        rows: [
+          {
+            dateFrom:
+              formatDate(
+                filters.dateFrom
+              ),
+            dateTo:
+              formatDate(filters.dateTo),
+            materialAccountingMethod:
+              data.materialAccounting
+                .periodMode,
+            exactMaterialsCost:
+              data.materialAccounting
+                .exactCost,
+            legacyApproximateMaterialsCost:
+              data.materialAccounting
+                .legacyApproximateCost,
+            materialsCost:
+              data.kpis.materialsCost,
+            laborCost:
+              data.kpis.laborCost,
+            otherExpensesCost:
+              data.kpis
+                .otherExpensesCost,
+            totalObjectCost:
+              data.kpis.totalObjectCost,
+            totalHours:
+              data.kpis.totalHours,
+            paymentsReceived:
+              data.kpis.paymentsReceived,
+            purchasedCost:
+              data.kpis.purchasedCost,
+            overdueScheduleAmount:
+              data.kpis
+                .overdueScheduleAmount,
+            materialAccountingLimitation:
+              data.materialAccounting
+                .limitation,
+          },
+        ],
+      };
+
     case "object-costs":
       return {
         filename:
@@ -235,12 +287,23 @@ async function getPeriodCsv(
                 object.totalCost,
               hours:
                 object.hours,
+              paymentsReceivedInPeriod:
+                object.periodPaymentsReceived,
+              materialAccountingMethod:
+                data.materialAccounting
+                  .periodMode,
               costBudget:
                 object.costBudget,
               clientPrice:
                 object.clientPrice,
               actualCost:
                 object.lifetimeActualCost,
+              lifetimeMaterialsCost:
+                object.lifetimeMaterialsCost,
+              lifetimeLaborCost:
+                object.lifetimeLaborCost,
+              lifetimeOtherExpensesCost:
+                object.lifetimeOtherExpensesCost,
               budgetRemaining:
                 object.budgetRemaining,
               budgetOverrun:
@@ -405,6 +468,10 @@ async function getPeriodCsv(
                 movement.objectName,
               movementType:
                 movement.movementType,
+              movementCode:
+                movement.movementCode,
+              movementLabel:
+                movement.movementLabel,
               quantity:
                 movement.quantity,
               unit:
@@ -413,8 +480,14 @@ async function getPeriodCsv(
                 movement.unitPrice,
               totalValue:
                 movement.totalValue,
+              objectCostImpact:
+                movement.objectCostImpact,
               performedBy:
                 movement.performedBy,
+              source:
+                movement.source,
+              accountingMethod:
+                movement.accountingMethod,
               note:
                 movement.note,
             })

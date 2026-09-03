@@ -7,6 +7,9 @@ import type {
 import type {
   ObjectPaymentScheduleStatus,
 } from "@/types/objectPaymentSchedule";
+import type {
+  WarehouseMovementCode,
+} from "@/types/warehouseMovement";
 
 export type ReportMovementType =
   | "Прихід"
@@ -65,8 +68,12 @@ export type ReportObjectCost = {
   otherExpensesCost: number;
   totalCost: number;
   hours: number;
+  periodPaymentsReceived: number;
   costBudget: number | null;
   clientPrice: number | null;
+  lifetimeMaterialsCost: number;
+  lifetimeLaborCost: number;
+  lifetimeOtherExpensesCost: number;
   lifetimeActualCost: number;
   budgetRemaining: number | null;
   budgetOverrun: number | null;
@@ -77,6 +84,30 @@ export type ReportObjectCost = {
   overpayment: number | null;
   paymentStatus:
     ObjectPaymentStatus;
+};
+
+export type ReportMaterialAccountingMethod =
+  | "exact_ledger"
+  | "legacy_approximation"
+  | "opening_snapshot";
+
+export type ReportMaterialPeriodMode =
+  | "exact"
+  | "legacy"
+  | "mixed";
+
+export type ReportMaterialAccounting = {
+  periodMode: ReportMaterialPeriodMode;
+  periodTotal: number;
+  exactCost: number;
+  legacyApproximateCost:
+    number | null;
+  cutoverAt: string | null;
+  exactFromDate: string | null;
+  lifetimeMethod:
+    | "exact_ledger"
+    | "legacy_current_balance";
+  limitation: string | null;
 };
 
 export type ReportPaymentDetail = {
@@ -180,13 +211,26 @@ export type ReportWarehouseMovement = {
   itemName: string;
   objectName: string | null;
   movementType: ReportMovementType;
+  movementCode: WarehouseMovementCode;
+  movementLabel: string;
+  accountingMethod:
+    ReportMaterialAccountingMethod;
+  objectCostImpact: number | null;
   quantity: number;
   unit: string;
   unitPrice: number;
   totalValue: number;
   createdAt: string;
   performedBy: string | null;
+  source: string;
   note: string | null;
+};
+
+export type ReportPaymentScheduleSummary = {
+  plannedAmount: number;
+  paidAmount: number;
+  dueTodayAmount: number;
+  overdueAmount: number;
 };
 
 export type ReportWarehouseSummary = {
@@ -209,6 +253,8 @@ export type ReportsData = {
   employeeOptions:
     ReportEmployeeOption[];
   kpis: ReportKpis;
+  materialAccounting:
+    ReportMaterialAccounting;
   objectCosts: ReportObjectCost[];
   employeeWork:
     ReportEmployeeWork[];
@@ -222,6 +268,8 @@ export type ReportsData = {
     ReportPaymentDetail[];
   paymentScheduleDetails:
     ReportPaymentScheduleDetail[];
+  paymentScheduleSummary:
+    ReportPaymentScheduleSummary;
   purchases:
     ReportPurchaseSummary;
   purchaseExportRows:

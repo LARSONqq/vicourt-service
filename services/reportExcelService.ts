@@ -412,6 +412,18 @@ function addSummaryWorksheet(
       argb: "FF4B5563",
     },
   };
+  worksheet.getCell("A3").value =
+    "Метод обліку матеріалів";
+  worksheet.getCell("B3").value =
+    safeText(
+      data.materialAccounting
+        .periodMode === "exact"
+        ? "Точний Ledger"
+        : data.materialAccounting
+              .periodMode === "mixed"
+          ? "Mixed: legacy + exact Ledger"
+          : "Legacy approximation"
+    );
 
   const summaryRows = [
     {
@@ -419,6 +431,22 @@ function addSummaryWorksheet(
         "Витрати на матеріали",
       value:
         data.kpis.materialsCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Матеріали — exact Ledger",
+      value:
+        data.materialAccounting
+          .exactCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Матеріали — legacy approximation",
+      value:
+        data.materialAccounting
+          .legacyApproximateCost,
       numberFormat: moneyFormat,
     },
     {
@@ -494,6 +522,30 @@ function addSummaryWorksheet(
     },
     {
       label:
+        "До сплати сьогодні за графіком",
+      value:
+        data.paymentScheduleSummary
+          .dueTodayAmount,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Заплановано за графіком",
+      value:
+        data.paymentScheduleSummary
+          .plannedAmount,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Покрито за графіком",
+      value:
+        data.paymentScheduleSummary
+          .paidAmount,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
         "Об’єктів без встановленої ціни",
       value:
         data.kpis.objectsWithoutClientPrice,
@@ -529,7 +581,9 @@ function addSummaryWorksheet(
 
       row.values = [
         safeText(item.label),
-        safeNumber(item.value),
+        item.value === null
+          ? ""
+          : safeNumber(item.value),
       ];
       row.getCell(2).numFmt =
         item.numberFormat;
@@ -614,6 +668,50 @@ export async function createReportsWorkbook(
           value: (row) =>
             safeNumber(
               row.totalCost
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Отримано за період",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.periodPaymentsReceived
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Матеріали за весь час",
+          width: 22,
+          value: (row) =>
+            safeNumber(
+              row.lifetimeMaterialsCost
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Роботи за весь час",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.lifetimeLaborCost
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
+          header:
+            "Інші витрати за весь час",
+          width: 22,
+          value: (row) =>
+            safeNumber(
+              row.lifetimeOtherExpensesCost
             ),
           numberFormat:
             moneyFormat,
@@ -1111,7 +1209,10 @@ export async function createReportsWorkbook(
   addTableWorksheet(
     workbook,
     {
-      name: "Рухи складу",
+      name: "Рух матеріалів",
+      note:
+        data.materialAccounting.limitation ||
+        "Матеріальні витрати після cutover розраховані за точними історичними рухами Ledger.",
       rows:
         data.warehouseMovementExportRows,
       columns: [
@@ -1144,10 +1245,10 @@ export async function createReportsWorkbook(
         },
         {
           header: "Тип руху",
-          width: 16,
+          width: 28,
           value: (row) =>
             safeText(
-              row.movementType
+              row.movementLabel
             ),
         },
         {
@@ -1190,11 +1291,36 @@ export async function createReportsWorkbook(
             moneyFormat,
         },
         {
+          header:
+            "Вплив на собівартість об’єкта",
+          width: 26,
+          value: (row) =>
+            optionalNumber(
+              row.objectCostImpact
+            ),
+          numberFormat:
+            moneyFormat,
+        },
+        {
           header: "Виконав",
           width: 24,
           value: (row) =>
             safeText(
               row.performedBy
+            ),
+        },
+        {
+          header: "Джерело",
+          width: 24,
+          value: (row) =>
+            safeText(row.source),
+        },
+        {
+          header: "Метод обліку",
+          width: 24,
+          value: (row) =>
+            safeText(
+              row.accountingMethod
             ),
         },
         {

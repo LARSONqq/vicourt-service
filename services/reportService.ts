@@ -15,13 +15,23 @@ import {
   calculateObjectPaymentSchedule,
 } from "@/lib/objectPaymentSchedule";
 import {
+  addDaysToDateValue,
+  getKyivDateStartUtc,
+  getKyivDateValue,
+  isValidDateValue,
+} from "@/lib/kyivDate";
+import {
   buildWarehousePurchaseInsights,
   getWarehousePurchaseInsight,
   getWarehouseStockPlan,
 } from "@/lib/warehousePlanning";
+import {
+  getMaterialLedgerCutover,
+  getMaterialLedgerReport,
+  getReportMaterialPeriodMode,
+} from "@/services/reportMaterialLedgerService";
 
 import type { WorkLog } from "@/types/workLog";
-import type { WarehouseMovementCode } from "@/types/warehouseMovement";
 
 import type {
   ReportEmployeeOption,
@@ -29,13 +39,11 @@ import type {
   ReportExpenseCategory,
   ReportExpenseDetail,
   ReportExpenseHighlight,
-  ReportMovementType,
   ReportObjectCost,
   ReportObjectOption,
   ReportPaymentDetail,
   ReportPaymentScheduleDetail,
   ReportPurchaseExportRow,
-  ReportWarehouseMovement,
   ReportWarehouseSnapshotRow,
   ReportsData,
   ReportsFilterInput,
@@ -284,21 +292,6 @@ export async function getObjectReportSummaries(): Promise<
 const REPORT_QUERY_PAGE_SIZE =
   1000;
 
-// Reports 2.0 зберігає поточну warehouse-only семантику.
-// Direct-object та cutover snapshots використає Reports 3.0.
-const REPORT_WAREHOUSE_MOVEMENT_CODES: WarehouseMovementCode[] = [
-  "legacy_receipt",
-  "legacy_write_off",
-  "purchase_receipt",
-  "issue_to_object",
-  "return_from_object",
-  "adjustment_in",
-  "adjustment_out",
-];
-
-const KYIV_TIME_ZONE =
-  "Europe/Kyiv";
-
 type ReportQueryError = {
   message: string;
 };
@@ -400,24 +393,6 @@ type ReportPurchaseRow = {
   purchased_at: string | null;
 };
 
-type ReportWarehouseMovementRow = {
-  id: number;
-  item_id: number | null;
-  object_id: number | null;
-  movement_type: ReportMovementType;
-  movement_code: WarehouseMovementCode;
-  quantity: number;
-  note: string | null;
-  performed_by: string | null;
-  performed_by_name: string | null;
-  unit_price: number;
-  total_cost: number;
-  item_name_snapshot: string;
-  unit_snapshot: string;
-  object_name_snapshot: string | null;
-  created_at: string;
-};
-
 type ReportLifetimeWorkLogRow = {
   id: number;
   object_id: number;
@@ -462,164 +437,6 @@ type InternalEmployeeWork =
   > & {
     objectIds: Set<number>;
   };
-
-const kyivDateFormatter =
-  new Intl.DateTimeFormat(
-    "en-US",
-    {
-      timeZone:
-        KYIV_TIME_ZONE,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }
-  );
-
-const kyivDateTimeFormatter =
-  new Intl.DateTimeFormat(
-    "en-US",
-    {
-      timeZone:
-        KYIV_TIME_ZONE,
-      hourCycle: "h23",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    }
-  );
-
-function getDateParts(
-  formatter: Intl.DateTimeFormat,
-  date: Date
-) {
-  return Object.fromEntries(
-    formatter
-      .formatToParts(date)
-      .filter(
-        (part) =>
-          part.type !==
-          "literal"
-      )
-      .map((part) => [
-        part.type,
-        part.value,
-      ])
-  );
-}
-
-function formatKyivDate(
-  date: Date
-) {
-  const parts =
-    getDateParts(
-      kyivDateFormatter,
-      date
-    );
-
-  return `${parts.year}-${parts.month}-${parts.day}`;
-}
-
-function isValidDateValue(
-  value: string
-) {
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(
-      value
-    )
-  ) {
-    return false;
-  }
-
-  const parsed =
-    new Date(
-      `${value}T00:00:00.000Z`
-    );
-
-  return (
-    !Number.isNaN(
-      parsed.getTime()
-    ) &&
-    parsed
-      .toISOString()
-      .slice(0, 10) ===
-      value
-  );
-}
-
-function getNextDateValue(
-  value: string
-) {
-  const date =
-    new Date(
-      `${value}T00:00:00.000Z`
-    );
-
-  date.setUTCDate(
-    date.getUTCDate() + 1
-  );
-
-  return date
-    .toISOString()
-    .slice(0, 10);
-}
-
-function getKyivDateStartIso(
-  value: string
-) {
-  const [
-    year,
-    month,
-    day,
-  ] = value
-    .split("-")
-    .map(Number);
-
-  const targetUtc =
-    Date.UTC(
-      year,
-      month - 1,
-      day
-    );
-
-  let instant = targetUtc;
-
-  for (
-    let attempt = 0;
-    attempt < 2;
-    attempt += 1
-  ) {
-    const parts =
-      getDateParts(
-        kyivDateTimeFormatter,
-        new Date(instant)
-      );
-
-    const representedAsUtc =
-      Date.UTC(
-        Number(parts.year),
-        Number(parts.month) -
-          1,
-        Number(parts.day),
-        Number(parts.hour),
-        Number(parts.minute),
-        Number(parts.second)
-      );
-
-    const offset =
-      representedAsUtc -
-      instant;
-
-    instant =
-      targetUtc - offset;
-  }
-
-  return new Date(
-    instant
-  ).toISOString();
-}
 
 function getPositiveInteger(
   value: string | undefined
@@ -705,7 +522,7 @@ export function normalizeReportsFilters(
   now = new Date()
 ): ReportsFilters {
   const today =
-    formatKyivDate(now);
+    getKyivDateValue(now);
 
   const defaultFrom =
     `${today.slice(0, 7)}-01`;
@@ -769,16 +586,54 @@ export async function getReportsData(
     filters.dateTo;
 
   const timestampFrom =
-    getKyivDateStartIso(
+    getKyivDateStartUtc(
       filters.dateFrom
     );
 
   const timestampToExclusive =
-    getKyivDateStartIso(
-      getNextDateValue(
-        filters.dateTo
+    getKyivDateStartUtc(
+      addDaysToDateValue(
+        filters.dateTo,
+        1
       )
     );
+
+  if (
+    !timestampFrom ||
+    !timestampToExclusive
+  ) {
+    throw new Error(
+      "Не вдалося визначити межі звітного періоду."
+    );
+  }
+
+  const materialLedgerCutover =
+    await getMaterialLedgerCutover(
+      supabase
+    );
+  const materialPeriodMode =
+    getReportMaterialPeriodMode(
+      timestampFrom,
+      timestampToExclusive,
+      materialLedgerCutover
+    );
+  const legacyTimestampToExclusive =
+    materialLedgerCutover &&
+    Date.parse(
+      materialLedgerCutover.cutoverAt
+    ) <
+      Date.parse(
+        timestampToExclusive
+      )
+      ? materialLedgerCutover.cutoverAt
+      : timestampToExclusive;
+  const hasLegacyPeriodSegment =
+    !invalidPeriod &&
+    materialPeriodMode === "legacy" &&
+    Date.parse(timestampFrom) <
+      Date.parse(
+        legacyTimestampToExclusive
+      );
 
   const loadObjects = () =>
     fetchAllReportRows<
@@ -944,7 +799,7 @@ export async function getReportsData(
             )
             .lt(
               "created_at",
-              timestampToExclusive
+              legacyTimestampToExclusive
             );
 
         if (filters.objectId) {
@@ -1220,75 +1075,6 @@ export async function getReportsData(
       }
     );
 
-  const loadMovements = () =>
-    fetchAllReportRows<
-      ReportWarehouseMovementRow
-    >(
-      "Не вдалося завантажити рухи складу для звіту",
-      async (
-        from,
-        to
-      ) => {
-        let query =
-          supabase
-            .from(
-              "warehouse_movements"
-            )
-            .select(`
-              id,
-              item_id,
-              object_id,
-              movement_type,
-              movement_code,
-              quantity,
-              note,
-              performed_by,
-              performed_by_name,
-              unit_price,
-              total_cost,
-              item_name_snapshot,
-              unit_snapshot,
-              object_name_snapshot,
-              created_at
-            `)
-            .gte(
-              "created_at",
-              timestampFrom
-            )
-            .lt(
-              "created_at",
-              timestampToExclusive
-            )
-            .in(
-              "movement_code",
-              REPORT_WAREHOUSE_MOVEMENT_CODES
-            );
-
-        if (filters.objectId) {
-          query = query.eq(
-            "object_id",
-            filters.objectId
-          );
-        }
-
-        if (filters.movementType) {
-          query = query.eq(
-            "movement_type",
-            filters.movementType
-          );
-        }
-
-        return await query
-          .order("id", {
-            ascending: true,
-          })
-          .range(from, to)
-          .overrideTypes<
-            ReportWarehouseMovementRow[]
-          >();
-      }
-    );
-
   const loadWarehousePlanningPurchases = () =>
     fetchAllReportRows<
       ReportPurchaseRow
@@ -1437,7 +1223,7 @@ export async function getReportsData(
     paymentSchedule,
     plannedPurchases,
     purchasedPurchases,
-    movements,
+    materialLedger,
     warehousePlanningPurchases,
   ] = await Promise.all([
     loadObjects(),
@@ -1448,7 +1234,7 @@ export async function getReportsData(
           ReportWorkLogRow
         >()
       : loadWorkLogs(),
-    invalidPeriod
+    !hasLegacyPeriodSegment
       ? emptyRows<
           ReportMaterialRow
         >()
@@ -1480,10 +1266,25 @@ export async function getReportsData(
           "Закуплено"
         ),
     invalidPeriod
-      ? emptyRows<
-          ReportWarehouseMovementRow
-        >()
-      : loadMovements(),
+      ? Promise.resolve({
+          cutover:
+            materialLedgerCutover,
+          periodMode:
+            materialPeriodMode,
+          costs: [],
+          movements: [],
+        })
+      : getMaterialLedgerReport(
+          {
+            timestampFrom,
+            timestampToExclusive,
+            objectId:
+              filters.objectId,
+            movementType:
+              filters.movementType,
+          },
+          materialLedgerCutover
+        ),
     loadWarehousePlanningPurchases(),
   ]);
 
@@ -1588,9 +1389,7 @@ export async function getReportsData(
     }
   );
   const reportToday =
-    formatKyivDate(
-      new Date()
-    );
+    getKyivDateValue();
   const scheduleByObject =
     new Map<
       number,
@@ -1781,6 +1580,7 @@ export async function getReportsData(
       otherExpensesCost: 0,
       totalCost: 0,
       hours: 0,
+      periodPaymentsReceived: 0,
       costBudget:
         objectFinancialParameters.get(
           objectId
@@ -1788,7 +1588,10 @@ export async function getReportsData(
       clientPrice:
         objectFinancialParameters.get(
           objectId
-        )?.clientPrice ?? null,
+          )?.clientPrice ?? null,
+      lifetimeMaterialsCost: 0,
+      lifetimeLaborCost: 0,
+      lifetimeOtherExpensesCost: 0,
       lifetimeActualCost: 0,
       budgetRemaining: null,
       budgetOverrun: null,
@@ -1910,7 +1713,51 @@ export async function getReportsData(
     }
   );
 
-  let materialsCost = 0;
+  let exactMaterialsCostInCents = 0;
+
+  materialLedger.costs.forEach(
+    (ledgerCost) => {
+      const objectId =
+        Number(
+          ledgerCost.objectId
+        );
+
+      if (
+        !Number.isInteger(
+          objectId
+        ) || objectId <= 0
+      ) {
+        return;
+      }
+
+      const costInCents =
+        toMoneyInCents(
+          ledgerCost.periodExactCost
+        );
+
+      exactMaterialsCostInCents +=
+        costInCents;
+
+      if (
+        costInCents !== 0 ||
+        ledgerCost.periodMovementCount >
+          0
+      ) {
+        const objectCost =
+          getObjectCost(objectId);
+
+        objectCost.materialsCost =
+          fromMoneyInCents(
+            toMoneyInCents(
+              objectCost.materialsCost
+            ) + costInCents
+          );
+        objectCost.hasData = true;
+      }
+    }
+  );
+
+  let legacyMaterialsCostInCents = 0;
 
   materials.forEach(
     (material) => {
@@ -1927,25 +1774,46 @@ export async function getReportsData(
         return;
       }
 
-      const cost =
-        toSafeNumber(
-          material.quantity
-        ) *
-        toSafeNumber(
-          material.price
+      const costInCents =
+        toMoneyInCents(
+          toSafeNumber(
+            material.quantity
+          ) *
+            toSafeNumber(
+              material.price
+            )
         );
 
-      materialsCost += cost;
+      legacyMaterialsCostInCents +=
+        costInCents;
 
       const objectCost =
         getObjectCost(objectId);
 
-      objectCost.materialsCost +=
-        cost;
+      objectCost.materialsCost =
+        fromMoneyInCents(
+          toMoneyInCents(
+            objectCost.materialsCost
+          ) + costInCents
+        );
       objectCost.hasData =
         true;
     }
   );
+
+  const exactMaterialsCost =
+    fromMoneyInCents(
+      exactMaterialsCostInCents
+    );
+  const legacyMaterialsCost =
+    fromMoneyInCents(
+      legacyMaterialsCostInCents
+    );
+  const materialsCost =
+    fromMoneyInCents(
+      exactMaterialsCostInCents +
+        legacyMaterialsCostInCents
+    );
 
   let otherExpensesCost = 0;
 
@@ -1982,6 +1850,34 @@ export async function getReportsData(
     }
   );
 
+  payments.forEach((payment) => {
+    const objectId = Number(
+      payment.object_id
+    );
+
+    if (
+      !Number.isInteger(objectId) ||
+      objectId <= 0
+    ) {
+      return;
+    }
+
+    const objectCost =
+      getObjectCost(objectId);
+    objectCost.periodPaymentsReceived =
+      fromMoneyInCents(
+        toMoneyInCents(
+          objectCost.periodPaymentsReceived
+        ) +
+          toMoneyInCents(
+            toSafeNumber(
+              payment.amount
+            )
+          )
+      );
+    objectCost.hasData = true;
+  });
+
   const periodObjectCosts =
     Array.from(
       objectCostMap.values()
@@ -1994,6 +1890,8 @@ export async function getReportsData(
       (objectCost) =>
         objectCost.objectId
     );
+  const reportObjectIdSet =
+    new Set(reportObjectIds);
   const [
     lifetimeWorkLogs,
     lifetimeMaterials,
@@ -2004,9 +1902,13 @@ export async function getReportsData(
           loadLifetimeWorkLogs(
             reportObjectIds
           ),
-          loadLifetimeMaterials(
-            reportObjectIds
-          ),
+          materialLedgerCutover
+            ? emptyRows<
+                ReportLifetimeMaterialRow
+              >()
+            : loadLifetimeMaterials(
+                reportObjectIds
+              ),
           loadLifetimeExpenses(
             reportObjectIds
           ),
@@ -2043,6 +1945,27 @@ export async function getReportsData(
 
     return created;
   };
+
+  if (materialLedgerCutover) {
+    materialLedger.costs.forEach(
+      (ledgerCost) => {
+        const objectId = Number(
+          ledgerCost.objectId
+        );
+
+        if (
+          reportObjectIdSet.has(
+            objectId
+          )
+        ) {
+          getLifetimeCost(
+            objectId
+          ).materialsCost =
+            ledgerCost.lifetimeExactCost;
+        }
+      }
+    );
+  }
 
   lifetimeMaterials.forEach(
     (material) => {
@@ -2144,10 +2067,18 @@ export async function getReportsData(
             objectCost.otherExpensesCost,
           hours:
             objectCost.hours,
+          periodPaymentsReceived:
+            objectCost.periodPaymentsReceived,
           costBudget:
             financials.costBudget,
           clientPrice:
             financials.clientPrice,
+          lifetimeMaterialsCost:
+            lifetimeCost.materialsCost,
+          lifetimeLaborCost:
+            lifetimeCost.laborCost,
+          lifetimeOtherExpensesCost:
+            lifetimeCost.otherExpensesCost,
           lifetimeActualCost:
             financials.actualCost,
           budgetRemaining:
@@ -2455,29 +2386,37 @@ export async function getReportsData(
           }));
 
   const plannedAmount =
-    plannedPurchases.reduce(
-      (total, purchase) =>
-        total +
-        toSafeNumber(
-          purchase.quantity
-        ) *
-          toSafeNumber(
-            purchase.purchase_price
+    fromMoneyInCents(
+      plannedPurchases.reduce(
+        (total, purchase) =>
+          total +
+          toMoneyInCents(
+            toSafeNumber(
+              purchase.quantity
+            ) *
+              toSafeNumber(
+                purchase.purchase_price
+              )
           ),
-      0
+        0
+      )
     );
 
   const purchasedAmount =
-    purchasedPurchases.reduce(
-      (total, purchase) =>
-        total +
-        toSafeNumber(
-          purchase.quantity
-        ) *
-          toSafeNumber(
-            purchase.purchase_price
+    fromMoneyInCents(
+      purchasedPurchases.reduce(
+        (total, purchase) =>
+          total +
+          toMoneyInCents(
+            toSafeNumber(
+              purchase.quantity
+            ) *
+              toSafeNumber(
+                purchase.purchase_price
+              )
           ),
-      0
+        0
+      )
     );
 
   const purchaseExportRows:
@@ -2515,7 +2454,11 @@ export async function getReportsData(
             item?.unit || "",
           unitPrice,
           totalAmount:
-            quantity * unitPrice,
+            fromMoneyInCents(
+              toMoneyInCents(
+                quantity * unitPrice
+              )
+            ),
           supplier:
             purchase.supplier,
           createdAt:
@@ -2541,84 +2484,43 @@ export async function getReportsData(
   let incomeValue = 0;
   let writeOffValue = 0;
 
-  const normalizedMovements:
-    ReportWarehouseMovement[] =
-    movements.map(
-      (movement) => {
-        const quantity =
-          toSafeNumber(
-            movement.quantity
-          );
+  const normalizedMovements =
+    materialLedger.movements;
+  const warehouseIncomeCodes =
+    new Set([
+      "legacy_receipt",
+      "purchase_receipt",
+      "return_from_object",
+      "adjustment_in",
+    ]);
+  const warehouseWriteOffCodes =
+    new Set([
+      "legacy_write_off",
+      "issue_to_object",
+      "adjustment_out",
+    ]);
 
-        const unitPrice =
-          toSafeNumber(
-            movement.unit_price
-          );
-
-        const totalValue =
-          toSafeNumber(
-            movement.total_cost
-          );
-
-        if (
-          movement.movement_type ===
-          "Прихід"
-        ) {
-          incomeCount += 1;
-          incomeValue +=
-            totalValue;
-        } else {
-          writeOffCount += 1;
-          writeOffValue +=
-            totalValue;
-        }
-
-        const item =
-          warehouseItemDetails.get(
-            Number(
-              movement.item_id
-            )
-          );
-
-        return {
-          id:
-            Number(movement.id),
-          itemName:
-            movement.item_name_snapshot ||
-            item?.name ||
-            (movement.item_id
-              ? `Матеріал #${movement.item_id}`
-              : "Матеріал"),
-          objectName:
-            movement.object_name_snapshot ||
-            (movement.object_id
-              ? objectNames.get(
-                  Number(
-                    movement.object_id
-                  )
-                ) ||
-                `Об’єкт #${movement.object_id}`
-              : null),
-          movementType:
-            movement.movement_type,
-          quantity,
-          unit:
-            movement.unit_snapshot ||
-            item?.unit || "",
-          unitPrice,
-          totalValue,
-          createdAt:
-            movement.created_at,
-          performedBy:
-            movement.performed_by_name ||
-            (movement.performed_by
-              ? "Користувач"
-              : null),
-          note:
-            movement.note,
-        };
+  normalizedMovements.forEach(
+    (movement) => {
+      if (
+        warehouseIncomeCodes.has(
+          movement.movementCode
+        )
+      ) {
+        incomeCount += 1;
+        incomeValue +=
+          movement.totalValue;
+      } else if (
+        warehouseWriteOffCodes.has(
+          movement.movementCode
+        )
+      ) {
+        writeOffCount += 1;
+        writeOffValue +=
+          movement.totalValue;
       }
-    );
+    }
+  );
 
   const warehousePurchaseInsights =
     buildWarehousePurchaseInsights(
@@ -2701,6 +2603,60 @@ export async function getReportsData(
         item.minimumQuantity
     ).length;
 
+  const sumScheduleMoney = (
+    select: (
+      item: (typeof allocatedPaymentSchedule)[number]
+    ) => number
+  ) =>
+    fromMoneyInCents(
+      allocatedPaymentSchedule.reduce(
+        (total, item) =>
+          total +
+          toMoneyInCents(
+            select(item)
+          ),
+        0
+      )
+    );
+
+  const paymentScheduleSummary = {
+    plannedAmount:
+      sumScheduleMoney((item) =>
+        item.status === "planned" ||
+        item.status ===
+          "partially_paid"
+          ? item.remainingAmount
+          : 0
+      ),
+    paidAmount:
+      sumScheduleMoney(
+        (item) => item.paidAmount
+      ),
+    dueTodayAmount:
+      sumScheduleMoney((item) =>
+        item.status === "due_today"
+          ? item.remainingAmount
+          : 0
+      ),
+    overdueAmount:
+      overdueScheduleAmount,
+  };
+
+  const exactFromDate =
+    materialLedgerCutover
+      ? getKyivDateValue(
+          new Date(
+            materialLedgerCutover.cutoverAt
+          )
+        )
+      : null;
+  const materialLimitation =
+    materialPeriodMode === "exact"
+      ? null
+      : materialPeriodMode === "mixed"
+        ? "Показано лише підтверджену exact-частину після переходу на Ledger. Legacy-частина цього змішаного періоду не включена, щоб не змішувати несумісні методи й не допустити подвійного обліку."
+        : "Історичні матеріальні витрати до переходу на Ledger розраховані за поточними legacy-рядками й можуть відрізнятися від фактичного руху в минулому.";
+
   return {
     filters,
     invalidPeriod,
@@ -2722,6 +2678,29 @@ export async function getReportsData(
       objectsWithoutClientPrice,
       overdueScheduleAmount,
     },
+    materialAccounting: {
+      periodMode:
+        materialPeriodMode,
+      periodTotal:
+        materialsCost,
+      exactCost:
+        exactMaterialsCost,
+      legacyApproximateCost:
+        materialPeriodMode ===
+        "mixed"
+          ? null
+          : legacyMaterialsCost,
+      cutoverAt:
+        materialLedgerCutover?.cutoverAt ??
+        null,
+      exactFromDate,
+      lifetimeMethod:
+        materialLedgerCutover
+          ? "exact_ledger"
+          : "legacy_current_balance",
+      limitation:
+        materialLimitation,
+    },
     objectCosts,
     employeeWork,
     expenseCategories,
@@ -2729,6 +2708,7 @@ export async function getReportsData(
     expenseDetails,
     paymentDetails,
     paymentScheduleDetails,
+    paymentScheduleSummary,
     purchases: {
       plannedCount:
         plannedPurchases.length,
