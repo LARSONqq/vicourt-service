@@ -175,10 +175,23 @@ order by
   state.material_id;
 
 -- 4. Exact post-cutover object-material cost formula for Reports 3.0.
--- Supply :period_from and :period_to as timestamptz boundaries. The immutable
--- global movement-id checkpoint excludes every fact absorbed by the opening
--- snapshot, including exact Warehouse 3.0 movements committed before POST.
-with cutover as (
+-- Standalone SQL Editor example: edit only the two Kyiv business dates below.
+-- period_from is inclusive; period_to is exclusive. AT TIME ZONE converts each
+-- local Kyiv midnight to the correct timestamptz boundary, including DST.
+with params as (
+  select
+    date '2026-09-01' as period_from_date,
+    date '2026-10-01' as period_to_date
+),
+bounds as (
+  select
+    cast(period_from_date as timestamp) at time zone 'Europe/Kyiv'
+      as period_from,
+    cast(period_to_date as timestamp) at time zone 'Europe/Kyiv'
+      as period_to
+  from params
+),
+cutover as (
   select boundary_movement_id
   from public.warehouse_ledger_cutovers
   where ledger_version = 3
@@ -196,11 +209,12 @@ select
   ), 2) as object_material_cost_for_period
 from public.warehouse_movements wm
 cross join cutover
+cross join bounds
 where wm.object_id is not null
   and wm.id > cutover.boundary_movement_id
   and wm.ledger_version = 3
-  and wm.created_at >= :period_from
-  and wm.created_at < :period_to
+  and wm.created_at >= bounds.period_from
+  and wm.created_at < bounds.period_to
   and wm.movement_code in (
     'issue_to_object',
     'return_from_object',
