@@ -99,6 +99,9 @@ export default async function TasksPage() {
           canManageEquipment={
             canManageMaintenance
           }
+          canManageRecurrence={
+            canManageTaskTemplates
+          }
           taskTemplates={templates}
         />
       </div>

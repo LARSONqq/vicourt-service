@@ -23,6 +23,7 @@ import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
 import AddGlobalTaskForm from "@/components/tasks/AddGlobalTaskForm";
 import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
 import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
+import StopRecurringTaskButton from "@/components/tasks/StopRecurringTaskButton";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
   EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE,
@@ -1400,6 +1401,15 @@ export default function WeeklyTaskCalendar({
   async function handleDeleteTask(
     task: TaskWithObject
   ) {
+    if (task.task_template_id !== null) {
+      setDeleteErrorMessage(
+        canManageSupervision
+          ? "Спочатку зупини повторення. Після цього поточне завдання стане разовим і його можна буде видалити."
+          : "Повторюване завдання не можна видалити напряму."
+      );
+      return;
+    }
+
     if (
       task.task_source !== "manual"
     ) {
@@ -2292,7 +2302,8 @@ export default function WeeklyTaskCalendar({
                 </button>
               </div>
 
-              {selectedTask.task_source === "manual" && (
+              {selectedTask.task_source === "manual" &&
+                selectedTask.task_template_id === null && (
                 <button
                   type="button"
                   disabled={
@@ -2311,6 +2322,35 @@ export default function WeeklyTaskCalendar({
                     ? "Видалення..."
                     : "Видалити завдання"}
                 </button>
+              )}
+
+              {selectedTask.task_source === "manual" &&
+                selectedTask.task_template_id !== null &&
+                selectedTask.status !== "Виконано" &&
+                canManageSupervision && (
+                <div className="mt-3 sm:w-fit">
+                  <StopRecurringTaskButton
+                    templateId={
+                      selectedTask.task_template_id
+                    }
+                    taskTitle={selectedTask.title}
+                    compact
+                    onStopped={() =>
+                      setSelectedTask(null)
+                    }
+                  />
+                </div>
+              )}
+
+              {selectedTask.task_source === "manual" &&
+                selectedTask.task_template_id !== null &&
+                (selectedTask.status === "Виконано" ||
+                  !canManageSupervision) && (
+                <p className="mt-3 text-xs leading-5 text-gray-500">
+                  {selectedTask.status === "Виконано"
+                    ? "Історичне повторення не видаляється."
+                    : "Серією керує адміністратор або керівник об’єкта."}
+                </p>
               )}
             </div>
 

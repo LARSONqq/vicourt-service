@@ -7,6 +7,7 @@ import {
 
 import { deleteObjectTask } from "@/app/actions/taskActions";
 import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
+import StopRecurringTaskButton from "@/components/tasks/StopRecurringTaskButton";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
   SUPERVISION_TASK_MANAGED_MESSAGE,
@@ -281,9 +282,18 @@ export default function ObjectTasks({
                           Видалити
                         </button>
                       </form>
+                    ) : canManageRecurrence &&
+                      task.status !== "Виконано" ? (
+                      <StopRecurringTaskButton
+                        templateId={task.task_template_id}
+                        taskTitle={task.title}
+                        compact
+                      />
                     ) : (
                       <p className="col-span-2 text-xs leading-5 text-gray-500 sm:max-w-xs sm:text-right">
-                        Щоб припинити серію, відкрий «Шаблони» на сторінці завдань.
+                        {task.status === "Виконано"
+                          ? "Історичне повторення не видаляється."
+                          : "Серією керує адміністратор або керівник об’єкта."}
                       </p>
                     )}
                   </div>

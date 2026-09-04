@@ -21,6 +21,7 @@ import CompleteTaskButton from "@/components/dashboard/CompleteTaskButton";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
 import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
 import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
+import StopRecurringTaskButton from "@/components/tasks/StopRecurringTaskButton";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
   EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE,
@@ -54,6 +55,7 @@ type Props = {
   equipment?: Equipment[];
   canManageSupervision: boolean;
   canManageEquipment: boolean;
+  canManageRecurrence: boolean;
   taskTemplates?: TaskTemplate[];
 };
 
@@ -365,6 +367,7 @@ export default function TasksList({
   equipment = [],
   canManageSupervision,
   canManageEquipment,
+  canManageRecurrence,
   taskTemplates = [],
 }: Props) {
   const router =
@@ -944,6 +947,15 @@ export default function TasksList({
   async function handleDeleteTask(
     task: TaskWithObject
   ) {
+    if (task.task_template_id !== null) {
+      setErrorMessage(
+        canManageRecurrence
+          ? "Спочатку зупини повторення. Після цього поточне завдання стане разовим і його можна буде видалити."
+          : "Повторюване завдання не можна видалити напряму."
+      );
+      return;
+    }
+
     if (
       task.task_source !== "manual"
     ) {
@@ -1587,25 +1599,39 @@ export default function TasksList({
             Редагувати
           </button>
 
-          <button
-            type="button"
-            disabled={
-              isUpdating ||
-              isDeleting
-            }
-            onClick={() =>
-              handleDeleteTask(
-                task
-              )
-            }
-            className="min-h-10 rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isDeleting
-              ? "..."
-              : task.task_template_id !== null
-                ? "Зупини через шаблони"
+          {task.task_template_id !== null ? (
+            canManageRecurrence && !completed ? (
+              <StopRecurringTaskButton
+                templateId={task.task_template_id}
+                taskTitle={task.title}
+                compact
+              />
+            ) : (
+              <p className="self-center text-xs leading-5 text-gray-500">
+                {completed
+                  ? "Історичне повторення не видаляється."
+                  : "Серією керує адміністратор або керівник об’єкта."}
+              </p>
+            )
+          ) : (
+            <button
+              type="button"
+              disabled={
+                isUpdating ||
+                isDeleting
+              }
+              onClick={() =>
+                handleDeleteTask(
+                  task
+                )
+              }
+              className="min-h-10 rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isDeleting
+                ? "..."
                 : "Видалити"}
-          </button>
+            </button>
+          )}
         </div>
         )}
       </article>
@@ -2393,25 +2419,39 @@ export default function TasksList({
                       Редагувати
                     </button>
 
-                    <button
-                      type="button"
-                      disabled={
-                        isUpdating ||
-                        isDeleting
-                      }
-                      onClick={() =>
-                        handleDeleteTask(
-                          task
-                        )
-                      }
-                      className="min-h-10 rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isDeleting
-                        ? "..."
-                        : task.task_template_id !== null
-                          ? "Зупини через шаблони"
+                    {task.task_template_id !== null ? (
+                      canManageRecurrence && !completed ? (
+                        <StopRecurringTaskButton
+                          templateId={task.task_template_id}
+                          taskTitle={task.title}
+                          compact
+                        />
+                      ) : (
+                        <p className="self-center text-xs leading-5 text-gray-500">
+                          {completed
+                            ? "Історичне повторення не видаляється."
+                            : "Серією керує адміністратор або керівник об’єкта."}
+                        </p>
+                      )
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={
+                          isUpdating ||
+                          isDeleting
+                        }
+                        onClick={() =>
+                          handleDeleteTask(
+                            task
+                          )
+                        }
+                        className="min-h-10 rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isDeleting
+                          ? "..."
                           : "Видалити"}
-                    </button>
+                      </button>
+                    )}
                   </div>
                   )}
                 </article>
