@@ -2,6 +2,10 @@ import {
   getDateDifferenceInDays,
 } from "@/lib/kyivDate";
 
+import type {
+  Equipment,
+} from "@/types/equipment";
+
 export type EquipmentMaintenanceState =
   | {
       kind: "unconfigured";
@@ -23,6 +27,21 @@ export type EquipmentMaintenanceState =
       kind: "overdue";
       overdueDays: number;
     };
+
+export type EquipmentMaintenanceDueReason =
+  | "date"
+  | "usage";
+
+export type EquipmentMaintenanceEvaluation = {
+  dateState: EquipmentMaintenanceState;
+  dateDue: boolean;
+  usageConfigured: boolean;
+  usageDue: boolean;
+  isDue: boolean;
+  dueReasons: EquipmentMaintenanceDueReason[];
+  usageRemaining: number | null;
+  usageOverage: number | null;
+};
 
 export function getEquipmentMaintenanceState(
   maintenanceIntervalDays: number | null,
@@ -101,6 +120,106 @@ export function getEquipmentMaintenanceLabel(
         state.overdueDays
       )}`;
   }
+}
+
+/**
+ * Canonical Equipment 2.1 due evaluator. Date and cumulative-usage criteria
+ * are independent; maintenance is due as soon as either criterion is met.
+ */
+export function evaluateEquipmentMaintenance(
+  equipment: Pick<
+    Equipment,
+    | "maintenance_interval_days"
+    | "next_service_date"
+    | "usage_type"
+    | "current_usage"
+    | "maintenance_interval_usage"
+    | "next_maintenance_usage"
+  >,
+  today: string
+): EquipmentMaintenanceEvaluation {
+  const dateState =
+    getEquipmentMaintenanceState(
+      equipment.maintenance_interval_days,
+      equipment.next_service_date,
+      today
+    );
+  const dateDifference =
+    equipment.next_service_date
+      ? getDateDifferenceInDays(
+          equipment.next_service_date,
+          today
+        )
+      : null;
+  const dateDue =
+    dateDifference !== null &&
+    dateDifference >= 0;
+  const currentUsage =
+    equipment.current_usage;
+  const nextUsage =
+    equipment.next_maintenance_usage;
+  const usageConfigured =
+    equipment.usage_type !==
+      "none" &&
+    equipment.maintenance_interval_usage !==
+      null &&
+    Number.isFinite(
+      equipment.maintenance_interval_usage
+    ) &&
+    equipment.maintenance_interval_usage >
+      0 &&
+    nextUsage !== null &&
+    Number.isFinite(nextUsage) &&
+    nextUsage >= 0;
+  const hasCurrentUsage =
+    currentUsage !== null &&
+    Number.isFinite(
+      currentUsage
+    ) &&
+    currentUsage >= 0;
+  const usageDifference =
+    usageConfigured &&
+    hasCurrentUsage &&
+    nextUsage !== null &&
+    currentUsage !== null
+      ? nextUsage - currentUsage
+      : null;
+  const usageDue =
+    usageDifference !== null &&
+    usageDifference <= 0;
+  const dueReasons: EquipmentMaintenanceDueReason[] = [];
+
+  if (dateDue) {
+    dueReasons.push("date");
+  }
+
+  if (usageDue) {
+    dueReasons.push("usage");
+  }
+
+  return {
+    dateState,
+    dateDue,
+    usageConfigured,
+    usageDue,
+    isDue:
+      dateDue || usageDue,
+    dueReasons,
+    usageRemaining:
+      usageDifference === null
+        ? null
+        : Math.max(
+            usageDifference,
+            0
+          ),
+    usageOverage:
+      usageDifference === null
+        ? null
+        : Math.max(
+            -usageDifference,
+            0
+          ),
+  };
 }
 
 export function getDayWord(

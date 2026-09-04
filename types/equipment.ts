@@ -1,3 +1,8 @@
+export type EquipmentUsageType =
+  | "none"
+  | "hours"
+  | "km";
+
 export interface Equipment {
   id: number;
   name: string;
@@ -13,6 +18,11 @@ export interface Equipment {
   maintenance_interval_days: number | null;
   last_maintenance_date: string | null;
   next_service_date: string | null;
+  usage_type: EquipmentUsageType;
+  current_usage: number | null;
+  maintenance_interval_usage: number | null;
+  last_maintenance_usage: number | null;
+  next_maintenance_usage: number | null;
   notes: string | null;
   created_at: string;
 }
@@ -21,10 +31,19 @@ export type EquipmentMaintenanceCompletionResult = {
   service_history_id: number;
   equipment_name: string;
   previous_last_maintenance_date: string | null;
-  new_last_maintenance_date: string;
+  new_last_maintenance_date: string | null;
   previous_next_service_date: string | null;
-  new_next_service_date: string;
-  maintenance_interval_days: number;
+  new_next_service_date: string | null;
+  maintenance_interval_days: number | null;
+  usage_type: EquipmentUsageType;
+  previous_current_usage: number | null;
+  new_current_usage: number | null;
+  previous_last_maintenance_usage: number | null;
+  new_last_maintenance_usage: number | null;
+  previous_next_maintenance_usage: number | null;
+  new_next_maintenance_usage: number | null;
+  maintenance_interval_usage: number | null;
+  usage_log_id: number | null;
   completed_task_id: number | null;
   next_task_id: number | null;
 };

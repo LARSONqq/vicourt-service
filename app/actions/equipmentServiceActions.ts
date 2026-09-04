@@ -1,23 +1,22 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
-import { createClient } from "@/lib/supabase/server";
 import {
   formatDateValue,
+  getKyivDateValue,
+  isValidDateValue,
 } from "@/lib/kyivDate";
 
 import {
-  canManageEquipment,
-} from "@/lib/auth/permissions";
-
-import {
-  getCurrentUserProfile,
-} from "@/services/profileService";
-import {
   completeEquipmentMaintenanceCycle,
-  syncEquipmentMaintenanceTask,
+  revalidateEquipmentMaintenancePages,
 } from "@/services/equipmentMaintenanceTaskService";
+import {
+  createEquipmentServiceRecordV2,
+  voidEquipmentServiceRecordV2,
+} from "@/services/equipmentService";
+import {
+  recordActivity,
+} from "@/services/activityLogService";
 
 import {
   equipmentServiceTypes,
@@ -25,30 +24,11 @@ import {
 
 import type {
   EquipmentMaintenanceActionResult,
+  EquipmentMaintenanceCompletionResult,
 } from "@/types/equipment";
-
-async function requireEquipmentManagement() {
-  const profile =
-    await getCurrentUserProfile();
-
-  if (!profile) {
-    throw new Error(
-      "Для виконання цієї дії потрібно увійти в систему."
-    );
-  }
-
-  if (
-    !canManageEquipment(
-      profile.role
-    )
-  ) {
-    throw new Error(
-      "У тебе немає прав для керування обслуговуванням техніки."
-    );
-  }
-
-  return profile;
-}
+import type {
+  EquipmentServiceType,
+} from "@/types/equipmentServiceRecord";
 
 function getText(
   formData: FormData,
@@ -57,6 +37,43 @@ function getText(
   return String(
     formData.get(field) ?? ""
   ).trim();
+}
+
+function getOptionalNumber(
+  formData: FormData,
+  field: string
+) {
+  const value = getText(
+    formData,
+    field
+  );
+
+  if (!value) {
+    return null;
+  }
+
+  const numberValue = Number(value);
+
+  if (!Number.isFinite(numberValue) || numberValue < 0) {
+    throw new Error("Показник напрацювання має бути невід’ємним числом.");
+  }
+
+  return numberValue;
+}
+
+function getNextMaintenanceSummary(
+  data: EquipmentMaintenanceCompletionResult
+) {
+  const nextDate = formatDateValue(data.new_next_service_date);
+  const usageUnit = data.usage_type === "hours" ? "мотогод." : "км";
+  const parts = [
+    nextDate,
+    data.new_next_maintenance_usage !== null && data.usage_type !== "none"
+      ? `${data.new_next_maintenance_usage} ${usageUnit}`
+      : null,
+  ].filter((value): value is string => Boolean(value));
+
+  return parts.join("; ") || "не заплановано";
 }
 
 export async function completeEquipmentMaintenance(
@@ -83,6 +100,10 @@ export async function completeEquipmentMaintenance(
         formData,
         "description"
       );
+    const usageReading = getOptionalNumber(
+      formData,
+      "usage_reading"
+    );
 
     if (
       !Number.isInteger(
@@ -109,16 +130,12 @@ export async function completeEquipmentMaintenance(
         equipmentId,
         cost,
         description,
+        usageReading,
       });
 
     return {
       success: true,
-      message: `ТО виконано. Наступне ТО: ${
-        formatDateValue(
-          data.new_next_service_date
-        ) ||
-        data.new_next_service_date
-      }.`,
+      message: `ТО виконано. Наступне ТО: ${getNextMaintenanceSummary(data)}.`,
       completion: data,
     };
   } catch (error) {
@@ -135,11 +152,6 @@ export async function completeEquipmentMaintenance(
 export async function createEquipmentServiceRecord(
   formData: FormData
 ) {
-  await requireEquipmentManagement();
-
-  const supabase =
-    await createClient();
-
   const equipmentId =
     Number(
       formData.get(
@@ -183,6 +195,10 @@ export async function createEquipmentServiceRecord(
       formData,
       "next_service_date"
     );
+  const usageReading = getOptionalNumber(
+    formData,
+    "usage_reading"
+  );
 
   if (
     !Number.isInteger(
@@ -205,9 +221,9 @@ export async function createEquipmentServiceRecord(
     );
   }
 
-  if (!serviceDate) {
+  if (!isValidDateValue(serviceDate)) {
     throw new Error(
-      "Вкажи дату обслуговування."
+      "Вкажи коректну дату обслуговування."
     );
   }
 
@@ -222,126 +238,103 @@ export async function createEquipmentServiceRecord(
 
   if (
     nextServiceDate &&
-    nextServiceDate <
-      serviceDate
+    (!isValidDateValue(nextServiceDate) ||
+      nextServiceDate < serviceDate)
   ) {
     throw new Error(
       "Наступне обслуговування не може бути раніше за поточне."
     );
   }
 
-  const {
-    error: insertError,
-  } = await supabase
-    .from(
-      "equipment_service_records"
-    )
-    .insert({
-      equipment_id:
-        equipmentId,
-
-      service_type:
-        serviceType,
-
-      service_date:
-        serviceDate,
-
-      cost,
-
-      performed_by:
-        performedBy || null,
-
-      description:
-        description || null,
-
-      next_service_date:
-        nextServiceDate || null,
-    });
-
-  if (insertError) {
-    throw new Error(
-      `Не вдалося додати запис обслуговування: ${insertError.message}`
-    );
-  }
-
-  if (nextServiceDate) {
-    const {
-      error: updateError,
-    } = await supabase
-      .from("equipment")
-      .update({
-        next_service_date:
-          nextServiceDate,
-      })
-      .eq(
-        "id",
-        equipmentId
-      );
-
-    if (updateError) {
+  if (serviceType === "Планове обслуговування") {
+    if (serviceDate !== getKyivDateValue()) {
       throw new Error(
-        `Запис створено, але не вдалося оновити дату наступного сервісу: ${updateError.message}`
+        "Планове ТО фіксується поточною датою за київським часом."
       );
     }
 
-    await syncEquipmentMaintenanceTask(
-      equipmentId
-    );
+    if (nextServiceDate) {
+      throw new Error(
+        "Дата наступного планового ТО розраховується автоматично за налаштованим інтервалом."
+      );
+    }
+
+    await completeEquipmentMaintenanceCycle({
+      equipmentId,
+      cost,
+      performedBy,
+      description,
+      usageReading,
+    });
+    return;
   }
 
-  revalidatePath("/");
-  revalidatePath(
-    "/equipment"
-  );
-  revalidatePath(
-    "/notifications"
-  );
-  revalidatePath(
-    "/reports"
-  );
+  const data = await createEquipmentServiceRecordV2({
+    equipmentId,
+    serviceType: serviceType as EquipmentServiceType,
+    serviceDate,
+    cost,
+    performedBy,
+    description,
+    nextServiceDate,
+    usageReading,
+  });
+
+  await recordActivity({
+    action: "equipment.service_record_created",
+    entityType: "equipment",
+    entityId: data.equipment_id,
+    entityName: data.equipment_name,
+    description: `Додано сервісний запис «${data.service_type}» для техніки «${data.equipment_name}».`,
+    metadata: {
+      service_history_id: data.service_history_id,
+      service_type: data.service_type,
+      service_date: data.service_date,
+      cost: data.cost,
+      performed_by: data.performed_by,
+      description: data.description,
+      next_service_date: data.next_service_date,
+      usage_type: data.usage_type,
+      usage_reading: data.usage_reading,
+      usage_log_id: data.usage_log_id,
+    },
+  });
+
+  revalidateEquipmentMaintenancePages();
 }
 
 export async function deleteEquipmentServiceRecord(
   recordId: number
 ) {
-  await requireEquipmentManagement();
-
-  const supabase =
-    await createClient();
-
-  if (
-    !Number.isInteger(
-      recordId
-    ) ||
-    recordId <= 0
-  ) {
-    throw new Error(
-      "Не вдалося визначити запис обслуговування."
-    );
-  }
-
-  const { error } =
-    await supabase
-      .from(
-        "equipment_service_records"
-      )
-      .delete()
-      .eq(
-        "id",
-        recordId
-      );
-
-  if (error) {
-    throw new Error(
-      `Не вдалося видалити запис: ${error.message}`
-    );
-  }
-
-  revalidatePath("/");
-  revalidatePath(
-    "/equipment"
+  await voidEquipmentServiceRecord(
+    recordId,
+    "Сервісний запис анульовано через дію видалення."
   );
-  revalidatePath(
-    "/reports"
-  );
+}
+
+export async function voidEquipmentServiceRecord(
+  recordId: number,
+  reason: string
+) {
+  const data = await voidEquipmentServiceRecordV2({
+    serviceRecordId: recordId,
+    reason,
+  });
+
+  await recordActivity({
+    action: "equipment.service_record_voided",
+    entityType: "equipment",
+    entityId: data.equipment_id,
+    entityName: data.equipment_name,
+    description: `Анульовано сервісний запис «${data.service_type}» для техніки «${data.equipment_name}».`,
+    metadata: {
+      service_history_id: data.service_history_id,
+      service_type: data.service_type,
+      service_date: data.service_date,
+      cost: data.cost,
+      void_reason: data.void_reason,
+    },
+  });
+
+  revalidateEquipmentMaintenancePages();
 }

@@ -72,6 +72,10 @@ export const activityEventRegistry = {
   "equipment.maintenance_schedule_updated": { label: "Оновлено графік планового ТО", category: "equipment", icon: "🛠️" },
   "equipment.maintenance_rescheduled": { label: "Перенесено планове ТО", category: "equipment", icon: "📅" },
   "equipment.maintenance_completed": { label: "Виконано планове ТО", category: "equipment", icon: "🔧" },
+  "equipment.usage_recorded": { label: "Зафіксовано напрацювання техніки", category: "equipment", icon: "⏱️" },
+  "equipment.usage_corrected": { label: "Скориговано напрацювання техніки", category: "equipment", icon: "🧭" },
+  "equipment.service_record_created": { label: "Додано сервісний запис", category: "equipment", icon: "🧰" },
+  "equipment.service_record_voided": { label: "Анульовано сервісний запис", category: "equipment", icon: "🚫" },
 } satisfies Record<string, ActivityEventDefinition>;
 
 export type ActivityEventName = keyof typeof activityEventRegistry;

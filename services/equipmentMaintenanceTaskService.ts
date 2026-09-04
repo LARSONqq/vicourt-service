@@ -31,6 +31,10 @@ function isNullableString(value: unknown): value is string | null {
   return typeof value === "string" || value === null;
 }
 
+function isNullableNumber(value: unknown): value is number | null {
+  return typeof value === "number" || value === null;
+}
+
 function isSyncResult(value: unknown): value is MaintenanceTaskSyncResult {
   return (
     isRecord(value) &&
@@ -63,10 +67,22 @@ function isCompletionResult(
     typeof value.service_history_id === "number" &&
     typeof value.equipment_name === "string" &&
     isNullableString(value.previous_last_maintenance_date) &&
-    typeof value.new_last_maintenance_date === "string" &&
+    isNullableString(value.new_last_maintenance_date) &&
     isNullableString(value.previous_next_service_date) &&
-    typeof value.new_next_service_date === "string" &&
-    typeof value.maintenance_interval_days === "number" &&
+    isNullableString(value.new_next_service_date) &&
+    isNullableNumber(value.maintenance_interval_days) &&
+    (value.usage_type === "none" ||
+      value.usage_type === "hours" ||
+      value.usage_type === "km") &&
+    isNullableNumber(value.previous_current_usage) &&
+    isNullableNumber(value.new_current_usage) &&
+    isNullableNumber(value.previous_last_maintenance_usage) &&
+    isNullableNumber(value.new_last_maintenance_usage) &&
+    isNullableNumber(value.previous_next_maintenance_usage) &&
+    isNullableNumber(value.new_next_maintenance_usage) &&
+    isNullableNumber(value.maintenance_interval_usage) &&
+    (typeof value.usage_log_id === "number" ||
+      value.usage_log_id === null) &&
     (typeof value.completed_task_id === "number" ||
       value.completed_task_id === null) &&
     (typeof value.next_task_id === "number" ||
@@ -174,7 +190,9 @@ export async function completeEquipmentMaintenanceCycle(input: {
   equipmentId: number;
   taskId?: number | null;
   cost?: number;
+  performedBy?: string | null;
   description?: string | null;
+  usageReading?: number | null;
 }): Promise<EquipmentMaintenanceCompletionResult> {
   const profile = await requireEquipmentMaintenanceManagement();
   const cost = input.cost ?? 0;
@@ -195,19 +213,33 @@ export async function completeEquipmentMaintenanceCycle(input: {
     throw new Error("Вартість ТО не може бути від’ємною.");
   }
 
+  if (
+    input.usageReading !== undefined &&
+    input.usageReading !== null &&
+    (!Number.isFinite(input.usageReading) || input.usageReading < 0)
+  ) {
+    throw new Error("Показник напрацювання має бути невід’ємним числом.");
+  }
+
   const performedBy =
+    input.performedBy?.trim() ||
     profile.full_name?.trim() ||
     profile.email?.trim() ||
     "Користувач ViCourt";
+
+  if (performedBy.length > 300) {
+    throw new Error("Поле «Хто виконав» не може перевищувати 300 символів.");
+  }
   const supabase = await createClient();
   const { data, error } = await supabase.rpc(
-    "complete_equipment_maintenance",
+    "complete_equipment_maintenance_v2",
     {
       p_equipment_id: input.equipmentId,
       p_task_id: input.taskId ?? null,
       p_cost: cost,
       p_performed_by: performedBy,
       p_description: input.description?.trim() || null,
+      p_usage_reading: input.usageReading ?? null,
     }
   );
 
@@ -234,15 +266,22 @@ export async function completeEquipmentMaintenanceCycle(input: {
     entityType: "equipment",
     entityId: input.equipmentId,
     entityName: data.equipment_name,
-    description: `Виконано планове ТО техніки «${data.equipment_name}». Наступне ТО: ${
-      formatDateValue(data.new_next_service_date) || data.new_next_service_date
-    }.`,
+    description: getMaintenanceCompletionDescription(data),
     metadata: {
       previous_last_maintenance_date: data.previous_last_maintenance_date,
       new_last_maintenance_date: data.new_last_maintenance_date,
       previous_next_service_date: data.previous_next_service_date,
       new_next_service_date: data.new_next_service_date,
       maintenance_interval_days: data.maintenance_interval_days,
+      usage_type: data.usage_type,
+      previous_current_usage: data.previous_current_usage,
+      new_current_usage: data.new_current_usage,
+      previous_last_maintenance_usage: data.previous_last_maintenance_usage,
+      new_last_maintenance_usage: data.new_last_maintenance_usage,
+      previous_next_maintenance_usage: data.previous_next_maintenance_usage,
+      new_next_maintenance_usage: data.new_next_maintenance_usage,
+      maintenance_interval_usage: data.maintenance_interval_usage,
+      usage_log_id: data.usage_log_id,
       service_history_id: data.service_history_id,
       completed_task_id: data.completed_task_id,
       next_task_id: data.next_task_id,
@@ -251,4 +290,22 @@ export async function completeEquipmentMaintenanceCycle(input: {
 
   revalidateEquipmentMaintenancePages();
   return data;
+}
+
+function getMaintenanceCompletionDescription(
+  data: EquipmentMaintenanceCompletionResult
+) {
+  const nextDate = formatDateValue(data.new_next_service_date);
+  const nextUsage = data.new_next_maintenance_usage;
+  const usageUnit = data.usage_type === "hours" ? "мотогод." : "км";
+  const nextParts = [
+    nextDate ? `за датою — ${nextDate}` : null,
+    nextUsage !== null && data.usage_type !== "none"
+      ? `за напрацюванням — ${nextUsage} ${usageUnit}`
+      : null,
+  ].filter((value): value is string => Boolean(value));
+
+  return `Виконано планове ТО техніки «${data.equipment_name}». Наступне ТО: ${
+    nextParts.join("; ") || "не заплановано"
+  }.`;
 }
