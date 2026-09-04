@@ -872,6 +872,8 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
                 priority,
                 status,
                 task_source,
+                task_template_id,
+                recurrence_sequence,
                 created_at,
                 object:objects (
                   id,

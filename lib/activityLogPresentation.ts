@@ -115,6 +115,20 @@ const detailRegistry: Partial<
     { kind: "value", label: "Дата виконання", key: "due_date", format: "date" },
     { kind: "value", label: "Пріоритет", key: "priority" },
   ],
+  "task_template.created": [
+    { kind: "value", label: "Повторення", key: "recurrence_type" },
+    { kind: "value", label: "Інтервал", key: "recurrence_interval", format: "number" },
+    { kind: "value", label: "Опорна дата", key: "anchor_due_date", format: "date" },
+  ],
+  "task_template.updated": [
+    { kind: "value", label: "Повторення", key: "recurrence_type" },
+    { kind: "value", label: "Інтервал", key: "recurrence_interval", format: "number" },
+    { kind: "value", label: "Опорна дата", key: "anchor_due_date", format: "date" },
+  ],
+  "task_template.disabled": [
+    { kind: "value", label: "Повторення", key: "recurrence_type" },
+    { kind: "value", label: "Активна серія", key: "is_active", format: "boolean" },
+  ],
   "material.added_from_warehouse": [
     { kind: "value", label: "Кількість", key: "quantity", format: "number" },
     { kind: "value", label: "Одиниця", key: "unit" },

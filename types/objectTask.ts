@@ -25,5 +25,7 @@ export interface ObjectTask {
   priority: TaskPriority;
   status: string;
   task_source: TaskSource;
+  task_template_id: number | null;
+  recurrence_sequence: number | null;
   created_at: string;
 }

@@ -21,6 +21,9 @@ import {
   requireSupervisionTaskManagement,
   rescheduleSupervisionTask,
 } from "@/services/supervisionTaskService";
+import {
+  completeManualRecurringTask,
+} from "@/services/taskTemplateService";
 
 import type {
   TaskPriority,
@@ -41,10 +44,15 @@ type TaskSnapshot = {
   object_id: number | null;
   equipment_id: number | null;
   title: string;
+  description: string | null;
   status: string;
   due_date: string | null;
+  assignee: string | null;
+  assigned_employee_id: number | null;
   priority: TaskPriority;
   task_source: TaskSource;
+  task_template_id: number | null;
+  recurrence_sequence: number | null;
   object: { id: number; name: string } | null;
   equipment: {
     id: number;
@@ -254,10 +262,15 @@ async function getTaskSnapshot(taskId: number): Promise<TaskSnapshot> {
       object_id,
       equipment_id,
       title,
+      description,
       status,
       due_date,
+      assignee,
+      assigned_employee_id,
       priority,
       task_source,
+      task_template_id,
+      recurrence_sequence,
       object:objects (id, name),
       equipment:equipment (id, name, inventory_number)
     `)
@@ -301,6 +314,98 @@ function assertManualTask(task: TaskSnapshot) {
   }
 }
 
+function assertRecurringTaskTargetUnchanged(
+  task: TaskSnapshot,
+  target: ParsedTaskTarget
+) {
+  if (
+    task.task_template_id !== null &&
+    (task.object_id !== target.objectId ||
+      task.equipment_id !== target.equipmentId)
+  ) {
+    throw new Error(
+      "Ціль повторюваного завдання керується серією і не може бути змінена окремо."
+    );
+  }
+}
+
+async function completeRecurringTaskWithActivity(
+  task: TaskSnapshot
+) {
+  const result =
+    await completeManualRecurringTask(
+      task.id
+    );
+
+  if (result.already_completed) {
+    refreshTaskPages(task);
+    return result;
+  }
+
+  const targetMetadata =
+    getTaskTargetMetadata(task);
+
+  await recordActivity({
+    action: "task.completed",
+    entityType: "task",
+    entityId: result.completed_task.id,
+    entityName:
+      result.completed_task.title,
+    objectId: targetMetadata.objectId,
+    description: `Виконав повторюване завдання «${result.completed_task.title}».`,
+    metadata: {
+      previous_status: task.status,
+      new_status: "Виконано",
+      previous_due_date:
+        task.due_date,
+      new_due_date:
+        result.completed_task.due_date,
+      target_type:
+        targetMetadata.targetType,
+      target_id:
+        targetMetadata.targetId,
+      target_name:
+        targetMetadata.targetName,
+      task_template_id:
+        result.template_id,
+      recurrence_sequence:
+        result.completed_task.recurrence_sequence,
+    },
+  });
+
+  if (result.next_task) {
+    await recordActivity({
+      action: "task.created",
+      entityType: "task",
+      entityId: result.next_task.id,
+      entityName: result.next_task.title,
+      objectId: targetMetadata.objectId,
+      description: `Автоматично створено наступне завдання «${result.next_task.title}».`,
+      metadata: {
+        status: result.next_task.status,
+        priority: result.next_task.priority,
+        due_date:
+          result.next_task.due_date,
+        target_type:
+          targetMetadata.targetType,
+        target_id:
+          targetMetadata.targetId,
+        target_name:
+          targetMetadata.targetName,
+        task_template_id:
+          result.template_id,
+        recurrence_sequence:
+          result.next_task.recurrence_sequence,
+        generated_by:
+          "recurring_completion",
+      },
+    });
+  }
+
+  refreshTaskPages(task);
+  return result;
+}
+
 export async function createObjectTask(formData: FormData) {
   await requireAuthenticatedUser();
   const target = parseTaskTarget(formData);
@@ -339,7 +444,9 @@ export async function createObjectTask(formData: FormData) {
       task_source: MANUAL_TASK_SOURCE,
     })
     .select(`
-      id, object_id, equipment_id, title, status, due_date, priority, task_source,
+      id, object_id, equipment_id, title, description, status, due_date,
+      assignee, assigned_employee_id, priority, task_source,
+      task_template_id, recurrence_sequence,
       object:objects (id, name),
       equipment:equipment (id, name, inventory_number)
     `)
@@ -376,6 +483,10 @@ export async function updateObjectTask(formData: FormData) {
   const previousTask = await getTaskSnapshot(taskId);
   assertManualTask(previousTask);
   const target = parseTaskTarget(formData);
+  assertRecurringTaskTargetUnchanged(
+    previousTask,
+    target
+  );
   await ensureTaskTargetExists(target);
 
   const title = getText(formData, "title");
@@ -395,6 +506,39 @@ export async function updateObjectTask(formData: FormData) {
     employeeValue,
     oldAssigneeValue
   );
+
+  if (
+    previousTask.task_template_id !== null &&
+    previousTask.status !== "Виконано" &&
+    status === "Виконано"
+  ) {
+    const normalizedDescription =
+      description || null;
+    const normalizedDueDate =
+      dueDate || null;
+    const changedAlongsideCompletion =
+      previousTask.title !== title ||
+      previousTask.description !==
+        normalizedDescription ||
+      previousTask.due_date !==
+        normalizedDueDate ||
+      previousTask.assigned_employee_id !==
+        assignment.employeeId ||
+      previousTask.assignee !==
+        assignment.assignee ||
+      previousTask.priority !== priority;
+
+    if (changedAlongsideCompletion) {
+      throw new Error(
+        "Спочатку збережи зміни повторюваного завдання, а потім познач його виконаним окремою дією."
+      );
+    }
+
+    await completeRecurringTaskWithActivity(
+      previousTask
+    );
+    return;
+  }
   const supabase = await createClient();
   const { error } = await supabase
     .from("object_tasks")
@@ -477,6 +621,24 @@ export async function updateTaskStatus(taskId: number, status: string) {
       taskId,
     });
     return { id: taskId, status: "Виконано" };
+  }
+
+  if (
+    previousTask.task_source ===
+      MANUAL_TASK_SOURCE &&
+    previousTask.task_template_id !==
+      null &&
+    status === "Виконано"
+  ) {
+    const result =
+      await completeRecurringTaskWithActivity(
+        previousTask
+      );
+    return {
+      id: taskId,
+      status:
+        result.completed_task.status,
+    };
   }
 
   const supabase = await createClient();
@@ -582,6 +744,11 @@ export async function deleteObjectTask(taskId: number) {
   await requireAuthenticatedUser();
   const task = await getTaskSnapshot(taskId);
   assertManualTask(task);
+  if (task.task_template_id !== null) {
+    throw new Error(
+      "Повторюване завдання не можна видалити напряму. Вимкни серію, щоб припинити створення наступних завдань."
+    );
+  }
   const supabase = await createClient();
   const { error } = await supabase.from("object_tasks").delete().eq("id", taskId);
 

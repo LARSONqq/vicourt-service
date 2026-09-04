@@ -42,6 +42,8 @@ export async function getAllTasks(
       priority,
       status,
       task_source,
+      task_template_id,
+      recurrence_sequence,
       created_at,
       object:objects (
         id,
