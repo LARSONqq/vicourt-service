@@ -13,6 +13,7 @@ type Props = {
   equipment: Equipment[];
   employees: Employee[];
   currency: AppCurrency;
+  today: string;
 };
 
 type ActiveForm =
@@ -24,6 +25,7 @@ export default function EquipmentActions({
   equipment,
   employees,
   currency,
+  today,
 }: Props) {
   const [
     activeForm,
@@ -142,6 +144,7 @@ export default function EquipmentActions({
             currency={
               currency
             }
+            today={today}
             onCreated={() =>
               setActiveForm(
                 null

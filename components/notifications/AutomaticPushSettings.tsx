@@ -225,7 +225,7 @@ export default function AutomaticPushSettings({
               preferences.equipment_maintenance_enabled
             }
             label="ТО техніки"
-            description="Повідомляти про планове ТО на сьогодні та прострочене обслуговування."
+            description="Повідомляти про ТО за датою або досягнутим порогом напрацювання."
             onChange={(checked) =>
               updatePreference(
                 "equipment_maintenance_enabled",

@@ -219,6 +219,17 @@ export default async function ReportsPage({
           note:
             "Ledger, snapshots і метод обліку",
         },
+        {
+          title:
+            "Витрати на техніку",
+          href:
+            createPeriodExportHref(
+              "equipment-costs",
+              data.filters
+            ),
+          note:
+            "ТО, ремонти та інший сервіс",
+        },
       ],
     },
     {
@@ -255,7 +266,7 @@ export default async function ReportsPage({
           href:
             "/reports/export?type=equipment-service",
           note:
-            "Уся історія",
+            "Уся історія, включно з анульованими",
         },
         {
           title:
@@ -308,7 +319,7 @@ export default async function ReportsPage({
               data.filters
             ),
           note:
-            "Один файл із 9 вкладками",
+            "Один файл із 11 вкладками",
         }}
         groups={exportGroups}
       />

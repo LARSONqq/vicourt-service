@@ -17,7 +17,7 @@ import {
 } from "@/services/employeeService";
 import {
   getEquipment,
-  getEquipmentServiceRecords,
+  getEquipmentServiceHistoryRecords,
 } from "@/services/equipmentService";
 import {
   getObjects,
@@ -52,6 +52,7 @@ type ExportType =
   | "payment-schedule"
   | "purchases"
   | "warehouse-movements"
+  | "equipment-costs"
   | "objects"
   | "warehouse-current"
   | "equipment"
@@ -73,6 +74,7 @@ const exportTypes =
     "payment-schedule",
     "purchases",
     "warehouse-movements",
+    "equipment-costs",
     "objects",
     "warehouse-current",
     "equipment",
@@ -257,6 +259,15 @@ async function getPeriodCsv(
             overdueScheduleAmount:
               data.kpis
                 .overdueScheduleAmount,
+            equipmentPlannedMaintenanceCost:
+              data.equipmentCostSummary
+                .periodPlannedMaintenanceCost,
+            equipmentRepairAndOtherCost:
+              data.equipmentCostSummary
+                .periodOtherServiceCost,
+            equipmentTotalCost:
+              data.equipmentCostSummary
+                .periodTotalCost,
             materialAccountingLimitation:
               data.materialAccounting
                 .limitation,
@@ -494,6 +505,37 @@ async function getPeriodCsv(
           ),
       };
 
+    case "equipment-costs":
+      return {
+        filename:
+          createPeriodFilename(
+            "equipment-costs",
+            filters.dateFrom,
+            filters.dateTo
+          ),
+        rows:
+          data.equipmentCosts.map(
+            (item) => ({
+              equipment:
+                item.equipmentName,
+              inventoryNumber:
+                item.inventoryNumber,
+              plannedMaintenanceCost:
+                item.periodPlannedMaintenanceCost,
+              repairAndOtherCost:
+                item.periodOtherServiceCost,
+              totalCost:
+                item.periodTotalCost,
+              lifetimePlannedMaintenanceCost:
+                item.lifetimePlannedMaintenanceCost,
+              lifetimeRepairAndOtherCost:
+                item.lifetimeOtherServiceCost,
+              lifetimeTotalCost:
+                item.lifetimeTotalCost,
+            })
+          ),
+      };
+
     default:
       throw new Error(
         "Невідомий періодний звіт."
@@ -639,6 +681,16 @@ async function getSnapshotCsv(
               formatDate(
                 item.next_service_date
               ),
+            usageType:
+              item.usage_type,
+            currentUsage:
+              item.current_usage,
+            maintenanceIntervalUsage:
+              item.maintenance_interval_usage,
+            lastMaintenanceUsage:
+              item.last_maintenance_usage,
+            nextMaintenanceUsage:
+              item.next_maintenance_usage,
             notes: item.notes,
             createdAt:
               formatDateTime(
@@ -651,7 +703,7 @@ async function getSnapshotCsv(
 
     case "equipment-service": {
       const records =
-        await getEquipmentServiceRecords();
+        await getEquipmentServiceHistoryRecords();
 
       return {
         filename: `vicourt-equipment-service-${currentDate}.csv`,
@@ -675,6 +727,10 @@ async function getSnapshotCsv(
             cost: record.cost,
             performedBy:
               record.performed_by,
+            usageReading:
+              record.usage_reading,
+            usageType:
+              record.usage_type_snapshot,
             description:
               record.description,
             nextServiceDate:
@@ -685,6 +741,12 @@ async function getSnapshotCsv(
               formatDateTime(
                 record.created_at
               ),
+            status:
+              record.voided_at
+                ? "Анульовано"
+                : "Активний",
+            voidReason:
+              record.void_reason,
           })
         ),
       };
@@ -785,6 +847,7 @@ export async function GET(
       "payment-schedule",
       "purchases",
       "warehouse-movements",
+      "equipment-costs",
     ].includes(type)
       ? await getPeriodCsv(
           type,

@@ -74,6 +74,7 @@ export function isAutomaticPushCategoryEnabled(
 
     case "equipment_maintenance_today":
     case "equipment_maintenance_overdue":
+    case "equipment_maintenance_usage_due":
       return preferences.equipment_maintenance_enabled;
 
     case "client_payment_due_today":

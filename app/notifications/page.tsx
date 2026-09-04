@@ -164,6 +164,7 @@ function getNotificationIcon(
 
     case "equipment_maintenance_today":
     case "equipment_maintenance_overdue":
+    case "equipment_maintenance_usage_due":
       return "⚙";
 
     case "client_payment_due_today":

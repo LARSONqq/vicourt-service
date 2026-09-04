@@ -486,6 +486,30 @@ function addSummaryWorksheet(
     },
     {
       label:
+        "Планове ТО техніки за період",
+      value:
+        data.equipmentCostSummary
+          .periodPlannedMaintenanceCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Ремонти та інший сервіс техніки за період",
+      value:
+        data.equipmentCostSummary
+          .periodOtherServiceCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
+        "Витрати на техніку за період",
+      value:
+        data.equipmentCostSummary
+          .periodTotalCost,
+      numberFormat: moneyFormat,
+    },
+    {
+      label:
         "Заплановано закупівель",
       value:
         data.purchases.plannedCount,
@@ -1470,6 +1494,213 @@ export async function createReportsWorkbook(
           value: (row) =>
             safeText(
               row.supplier
+            ),
+        },
+      ],
+    }
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name: "Витрати на техніку",
+      note: `Період: ${formatPeriodDate(
+        data.filters.dateFrom
+      )} – ${formatPeriodDate(
+        data.filters.dateTo
+      )}. Анульовані записи не входять у суми.`,
+      rows: data.equipmentCosts,
+      columns: [
+        {
+          header: "Техніка",
+          width: 32,
+          value: (row) =>
+            safeText(
+              row.equipmentName
+            ),
+        },
+        {
+          header:
+            "Інвентарний номер",
+          width: 22,
+          value: (row) =>
+            safeText(
+              row.inventoryNumber
+            ),
+        },
+        {
+          header:
+            "Планове ТО за період",
+          width: 23,
+          value: (row) =>
+            safeNumber(
+              row.periodPlannedMaintenanceCost
+            ),
+          numberFormat: moneyFormat,
+        },
+        {
+          header:
+            "Ремонти та інше за період",
+          width: 25,
+          value: (row) =>
+            safeNumber(
+              row.periodOtherServiceCost
+            ),
+          numberFormat: moneyFormat,
+        },
+        {
+          header:
+            "Разом за період",
+          width: 20,
+          value: (row) =>
+            safeNumber(
+              row.periodTotalCost
+            ),
+          numberFormat: moneyFormat,
+        },
+        {
+          header:
+            "Планове ТО за весь час",
+          width: 24,
+          value: (row) =>
+            safeNumber(
+              row.lifetimePlannedMaintenanceCost
+            ),
+          numberFormat: moneyFormat,
+        },
+        {
+          header:
+            "Ремонти та інше за весь час",
+          width: 26,
+          value: (row) =>
+            safeNumber(
+              row.lifetimeOtherServiceCost
+            ),
+          numberFormat: moneyFormat,
+        },
+        {
+          header:
+            "Разом за весь час",
+          width: 21,
+          value: (row) =>
+            safeNumber(
+              row.lifetimeTotalCost
+            ),
+          numberFormat: moneyFormat,
+        },
+      ],
+    }
+  );
+
+  addTableWorksheet(
+    workbook,
+    {
+      name: "Сервіс техніки",
+      note: `Події за період: ${formatPeriodDate(
+        data.filters.dateFrom
+      )} – ${formatPeriodDate(
+        data.filters.dateTo
+      )}. Анульовані записи показані для аудиту, але не входять у витрати.`,
+      rows:
+        data.equipmentServiceDetails,
+      columns: [
+        {
+          header: "Дата",
+          width: 15,
+          value: (row) =>
+            toDateOnly(
+              row.serviceDate
+            ),
+          numberFormat: dateFormat,
+        },
+        {
+          header: "Техніка",
+          width: 32,
+          value: (row) =>
+            safeText(
+              row.equipmentName
+            ),
+        },
+        {
+          header:
+            "Інвентарний номер",
+          width: 22,
+          value: (row) =>
+            safeText(
+              row.inventoryNumber
+            ),
+        },
+        {
+          header: "Тип сервісу",
+          width: 25,
+          value: (row) =>
+            safeText(
+              row.serviceType
+            ),
+        },
+        {
+          header: "Вартість",
+          width: 18,
+          value: (row) =>
+            safeNumber(row.cost),
+          numberFormat: moneyFormat,
+        },
+        {
+          header: "Показник",
+          width: 17,
+          value: (row) =>
+            optionalNumber(
+              row.usageReading
+            ),
+          numberFormat:
+            decimalFormat,
+        },
+        {
+          header:
+            "Тип показника",
+          width: 18,
+          value: (row) =>
+            safeText(
+              row.usageType === "hours"
+                ? "Мотогодини"
+                : row.usageType === "km"
+                  ? "Кілометри"
+                  : ""
+            ),
+        },
+        {
+          header: "Хто виконав",
+          width: 28,
+          value: (row) =>
+            safeText(
+              row.performedBy
+            ),
+        },
+        {
+          header: "Опис",
+          width: 38,
+          value: (row) =>
+            safeText(
+              row.description
+            ),
+        },
+        {
+          header: "Стан",
+          width: 16,
+          value: (row) =>
+            safeText(
+              row.status === "voided"
+                ? "Анульовано"
+                : "Активний"
+            ),
+        },
+        {
+          header:
+            "Причина анулювання",
+          width: 34,
+          value: (row) =>
+            safeText(
+              row.voidReason
             ),
         },
       ],

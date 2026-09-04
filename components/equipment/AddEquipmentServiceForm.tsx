@@ -12,28 +12,14 @@ import type { Equipment } from "@/types/equipment";
 type Props = {
   equipment: Equipment[];
   currency: AppCurrency;
+  today: string;
   onCreated: () => void;
 };
-
-function getToday() {
-  const date = new Date();
-
-  const timezoneOffset =
-    date.getTimezoneOffset();
-
-  return new Date(
-    date.getTime() -
-      timezoneOffset *
-        60 *
-        1000
-  )
-    .toISOString()
-    .split("T")[0];
-}
 
 export default function AddEquipmentServiceForm({
   equipment,
   currency,
+  today,
   onCreated,
 }: Props) {
   const [
@@ -45,6 +31,15 @@ export default function AddEquipmentServiceForm({
     errorMessage,
     setErrorMessage,
   ] = useState("");
+  const [selectedEquipmentId, setSelectedEquipmentId] =
+    useState("");
+  const selectedEquipment = equipment.find(
+    (item) =>
+      String(item.id) === selectedEquipmentId
+  );
+  const manualServiceTypes = equipmentServiceTypes.filter(
+    (type) => type !== "Планове обслуговування"
+  );
 
   async function handleSubmit(
     formData: FormData
@@ -115,7 +110,12 @@ export default function AddEquipmentServiceForm({
 
         <select
           name="equipment_id"
-          defaultValue=""
+          value={selectedEquipmentId}
+          onChange={(event) =>
+            setSelectedEquipmentId(
+              event.target.value
+            )
+          }
           className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           required
         >
@@ -150,11 +150,11 @@ export default function AddEquipmentServiceForm({
 
           <select
             name="service_type"
-            defaultValue="Планове обслуговування"
+            defaultValue="Ремонт"
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           >
-            {equipmentServiceTypes.map(
+            {manualServiceTypes.map(
               (type) => (
                 <option
                   key={type}
@@ -175,12 +175,35 @@ export default function AddEquipmentServiceForm({
           <input
             type="date"
             name="service_date"
-            defaultValue={getToday()}
+            defaultValue={today}
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
             required
           />
         </div>
       </div>
+
+      {selectedEquipment &&
+        selectedEquipment.usage_type !== "none" && (
+        <div className="min-w-0 sm:max-w-sm">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Показник напрацювання, {selectedEquipment?.usage_type === "hours" ? "мотогод." : "км"}
+          </label>
+          <input
+            key={`usage-reading-${selectedEquipment.id}`}
+            type="number"
+            name="usage_reading"
+            inputMode="decimal"
+            min="0"
+            step="0.001"
+            defaultValue={selectedEquipment?.current_usage ?? ""}
+            placeholder="Необов’язково"
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          />
+          <p className="mt-2 text-xs leading-5 text-gray-500">
+            Нове значення буде додано до історії показників разом із сервісним записом.
+          </p>
+        </div>
+      )}
 
       {/* COST + PERFORMED BY + NEXT DATE */}
       <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

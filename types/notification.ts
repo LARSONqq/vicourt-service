@@ -13,6 +13,7 @@ export type NotificationType =
   | "low_stock"
   | "equipment_maintenance_today"
   | "equipment_maintenance_overdue"
+  | "equipment_maintenance_usage_due"
   | "client_payment_due_today"
   | "client_payment_overdue"
   | "planned_purchase";
@@ -24,6 +25,7 @@ export type AutomaticPushNotificationType =
   | "low_stock"
   | "equipment_maintenance_today"
   | "equipment_maintenance_overdue"
+  | "equipment_maintenance_usage_due"
   | "client_payment_due_today"
   | "client_payment_overdue";
 
@@ -56,6 +58,9 @@ export interface NotificationItem {
   warehouseItemId?: number;
   purchaseId?: number;
   equipmentId?: number;
+  equipmentUsageType?: "hours" | "km";
+  equipmentMaintenanceUsage?: number;
+  equipmentMaintenanceDate?: string;
   paymentScheduleItemId?: number;
 }
 

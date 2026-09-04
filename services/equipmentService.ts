@@ -199,6 +199,57 @@ export async function getEquipmentServiceRecords(): Promise<
     : [];
 }
 
+export async function getEquipmentServiceHistoryRecords(): Promise<
+  EquipmentServiceRecord[]
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("equipment_service_records")
+    .select(`
+      id,
+      equipment_id,
+      service_type,
+      service_date,
+      cost,
+      performed_by,
+      description,
+      next_service_date,
+      usage_reading,
+      usage_type_snapshot,
+      usage_log_id,
+      created_by,
+      created_by_name,
+      voided_at,
+      voided_by,
+      void_reason,
+      created_at,
+      equipment:equipment (
+        id,
+        name,
+        inventory_number
+      )
+    `)
+    .order("service_date", {
+      ascending: false,
+    })
+    .order("created_at", {
+      ascending: false,
+    })
+    .overrideTypes<
+      EquipmentServiceRecord[]
+    >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити повну історію обслуговування: ${error.message}`
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
+}
+
 export async function getEquipmentServiceRecordsByEquipmentId(
   equipmentId: number
 ): Promise<

@@ -395,7 +395,9 @@ function canReceiveNotification(
       notification.type ===
         "equipment_maintenance_today" ||
       notification.type ===
-        "equipment_maintenance_overdue"
+        "equipment_maintenance_overdue" ||
+      notification.type ===
+        "equipment_maintenance_usage_due"
     ) {
       return canAccessSection(
         profile.role,
@@ -1010,20 +1012,6 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
             await supabase
               .from("equipment")
               .select("*")
-              .not(
-                "maintenance_interval_days",
-                "is",
-                null
-              )
-              .not(
-                "next_service_date",
-                "is",
-                null
-              )
-              .lte(
-                "next_service_date",
-                today
-              )
               .order("id")
               .range(from, to)
               .overrideTypes<

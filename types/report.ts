@@ -10,6 +10,12 @@ import type {
 import type {
   WarehouseMovementCode,
 } from "@/types/warehouseMovement";
+import type {
+  EquipmentServiceType,
+} from "@/types/equipmentServiceRecord";
+import type {
+  EquipmentUsageType,
+} from "@/types/equipment";
 
 export type ReportMovementType =
   | "Прихід"
@@ -245,6 +251,50 @@ export type ReportWarehouseSummary = {
     ReportWarehouseMovement[];
 };
 
+export type ReportEquipmentServiceStatus =
+  | "active"
+  | "voided";
+
+export type ReportEquipmentServiceDetail = {
+  id: number;
+  equipmentId: number;
+  equipmentName: string;
+  inventoryNumber: string | null;
+  serviceDate: string;
+  serviceType: EquipmentServiceType;
+  cost: number;
+  usageReading: number | null;
+  usageType: Exclude<
+    EquipmentUsageType,
+    "none"
+  > | null;
+  performedBy: string | null;
+  description: string | null;
+  status: ReportEquipmentServiceStatus;
+  voidReason: string | null;
+};
+
+export type ReportEquipmentCost = {
+  equipmentId: number;
+  equipmentName: string;
+  inventoryNumber: string | null;
+  periodPlannedMaintenanceCost: number;
+  periodOtherServiceCost: number;
+  periodTotalCost: number;
+  lifetimePlannedMaintenanceCost: number;
+  lifetimeOtherServiceCost: number;
+  lifetimeTotalCost: number;
+};
+
+export type ReportEquipmentCostSummary = {
+  periodPlannedMaintenanceCost: number;
+  periodOtherServiceCost: number;
+  periodTotalCost: number;
+  lifetimePlannedMaintenanceCost: number;
+  lifetimeOtherServiceCost: number;
+  lifetimeTotalCost: number;
+};
+
 export type ReportsData = {
   filters: ReportsFilters;
   invalidPeriod: boolean;
@@ -280,4 +330,12 @@ export type ReportsData = {
     ReportWarehouseSnapshotRow[];
   warehouse:
     ReportWarehouseSummary;
+  equipmentCosts:
+    ReportEquipmentCost[];
+  equipmentServiceDetails:
+    ReportEquipmentServiceDetail[];
+  equipmentServiceHistory:
+    ReportEquipmentServiceDetail[];
+  equipmentCostSummary:
+    ReportEquipmentCostSummary;
 };

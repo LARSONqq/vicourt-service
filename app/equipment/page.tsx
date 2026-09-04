@@ -2,12 +2,11 @@ import EquipmentActions from "@/components/equipment/EquipmentActions";
 import EquipmentList from "@/components/equipment/EquipmentList";
 import EquipmentMaintenancePanel from "@/components/equipment/EquipmentMaintenancePanel";
 import EquipmentServiceHistory from "@/components/equipment/EquipmentServiceHistory";
+import EquipmentUsagePanel from "@/components/equipment/EquipmentUsagePanel";
 
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
 import { canManageEquipment } from "@/lib/auth/permissions";
-import {
-  getEquipmentMaintenanceState,
-} from "@/lib/equipmentMaintenance";
+import { evaluateEquipmentMaintenance } from "@/lib/equipmentMaintenance";
 import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
@@ -16,8 +15,9 @@ import { getEmployees } from "@/services/employeeService";
 
 import {
   getEquipment,
-  getEquipmentServiceRecords,
+  getEquipmentServiceHistoryRecords,
 } from "@/services/equipmentService";
+import { getEquipmentUsageLogs } from "@/services/equipmentUsageService";
 
 import { getAppSettings } from "@/services/settingsService";
 
@@ -35,11 +35,13 @@ export default async function EquipmentPage() {
   const [
     equipment,
     serviceRecords,
+    usageLogs,
     employees,
     settings,
   ] = await Promise.all([
     getEquipment(),
-    getEquipmentServiceRecords(),
+    getEquipmentServiceHistoryRecords(),
+    getEquipmentUsageLogs(),
     getEmployees(),
     getAppSettings(),
   ]);
@@ -67,19 +69,10 @@ export default async function EquipmentPage() {
   const maintenanceAttentionCount =
     equipment.filter(
       (item) => {
-        const state =
-          getEquipmentMaintenanceState(
-            item.maintenance_interval_days,
-            item.next_service_date,
-            today
-          );
-
-        return (
-          state.kind ===
-            "today" ||
-          state.kind ===
-            "overdue"
-        );
+        return evaluateEquipmentMaintenance(
+          item,
+          today
+        ).isDue;
       }
     ).length;
 
@@ -111,6 +104,7 @@ export default async function EquipmentPage() {
               currency={
                 settings.currency
               }
+              today={today}
             />
           </div>
         )}
@@ -231,6 +225,13 @@ export default async function EquipmentPage() {
         currency={
           settings.currency
         }
+        canManage={canManage}
+        today={today}
+      />
+
+      <EquipmentUsagePanel
+        equipment={equipment}
+        logs={usageLogs}
         canManage={canManage}
         today={today}
       />

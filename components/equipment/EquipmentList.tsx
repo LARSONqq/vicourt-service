@@ -8,8 +8,11 @@ import {
 
 import { deleteEquipment } from "@/app/actions/equipmentActions";
 import {
-  getEquipmentMaintenanceLabel,
-  getEquipmentMaintenanceState,
+  evaluateEquipmentMaintenance,
+  formatEquipmentUsage,
+  getEquipmentMaintenanceOverallKind,
+  getEquipmentMaintenanceOverallLabel,
+  getEquipmentUsageTypeLabel,
 } from "@/lib/equipmentMaintenance";
 import {
   formatDateValue,
@@ -187,30 +190,28 @@ export default function EquipmentList({
               status;
 
           const maintenanceState =
-            getEquipmentMaintenanceState(
-              item.maintenance_interval_days,
-              item.next_service_date,
+            evaluateEquipmentMaintenance(
+              item,
               today
+            );
+          const maintenanceKind =
+            getEquipmentMaintenanceOverallKind(
+              maintenanceState
             );
           const matchesMaintenance =
             maintenanceFilter ===
               "all" ||
             (maintenanceFilter ===
               "attention" &&
-              (maintenanceState.kind ===
-                "today" ||
-                maintenanceState.kind ===
-                  "overdue")) ||
+              maintenanceState.isDue) ||
             (maintenanceFilter ===
               "scheduled" &&
-              maintenanceState.kind ===
+              maintenanceKind ===
                 "scheduled") ||
             (maintenanceFilter ===
               "unconfigured" &&
-              (maintenanceState.kind ===
-                "unconfigured" ||
-                maintenanceState.kind ===
-                  "unscheduled"));
+              maintenanceKind ===
+                "unconfigured");
 
           return (
             matchesSearch &&
@@ -385,14 +386,17 @@ export default function EquipmentList({
             {filteredEquipment.map(
               (item) => {
                 const maintenanceState =
-                  getEquipmentMaintenanceState(
-                    item.maintenance_interval_days,
-                    item.next_service_date,
+                  evaluateEquipmentMaintenance(
+                    item,
                     today
                   );
+                const maintenanceKind =
+                  getEquipmentMaintenanceOverallKind(
+                    maintenanceState
+                  );
                 const serviceOverdue =
-                  maintenanceState.kind ===
-                  "overdue";
+                  maintenanceKind === "overdue" ||
+                  maintenanceKind === "due";
 
                 const isEditing =
                   canManage &&
@@ -484,7 +488,7 @@ export default function EquipmentList({
                               : "text-gray-800"
                           }`}
                         >
-                          {getEquipmentMaintenanceLabel(
+                          {getEquipmentMaintenanceOverallLabel(
                             maintenanceState
                           )}
                         </p>
@@ -497,6 +501,18 @@ export default function EquipmentList({
                             )}
                           </p>
                         )}
+
+                        <p className="mt-2 break-words text-xs text-gray-500">
+                          {getEquipmentUsageTypeLabel(
+                            item.usage_type
+                          )}
+                          {item.usage_type !== "none"
+                            ? ` · ${formatEquipmentUsage(
+                                item.current_usage,
+                                item.usage_type
+                              )}`
+                            : ""}
+                        </p>
                       </div>
                     </div>
 
@@ -638,14 +654,17 @@ export default function EquipmentList({
                 {filteredEquipment.map(
                   (item) => {
                     const maintenanceState =
-                      getEquipmentMaintenanceState(
-                        item.maintenance_interval_days,
-                        item.next_service_date,
+                      evaluateEquipmentMaintenance(
+                        item,
                         today
                       );
+                    const maintenanceKind =
+                      getEquipmentMaintenanceOverallKind(
+                        maintenanceState
+                      );
                     const serviceOverdue =
-                      maintenanceState.kind ===
-                      "overdue";
+                      maintenanceKind === "overdue" ||
+                      maintenanceKind === "due";
 
                     const isEditing =
                       canManage &&
@@ -715,19 +734,31 @@ export default function EquipmentList({
                                   : "text-gray-600"
                               }
                             >
-                              {getEquipmentMaintenanceLabel(
+                              {getEquipmentMaintenanceOverallLabel(
                                 maintenanceState
                               )}
                             </span>
 
                             {item.maintenance_interval_days &&
                               item.next_service_date && (
-                              <p className="mt-1 text-xs text-gray-500">
-                                {formatDateValue(
-                                  item.next_service_date
-                                )}
-                              </p>
-                            )}
+                                <p className="mt-1 text-xs text-gray-500">
+                                  {formatDateValue(
+                                    item.next_service_date
+                                  )}
+                                </p>
+                              )}
+
+                            <p className="mt-1 max-w-xs break-words text-xs text-gray-500">
+                              {getEquipmentUsageTypeLabel(
+                                item.usage_type
+                              )}
+                              {item.usage_type !== "none"
+                                ? ` · ${formatEquipmentUsage(
+                                    item.current_usage,
+                                    item.usage_type
+                                  )}`
+                                : ""}
+                            </p>
                           </td>
 
                           {canManage && (

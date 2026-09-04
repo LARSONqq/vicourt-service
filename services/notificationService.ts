@@ -17,8 +17,11 @@ import {
 } from "@/lib/kyivDate";
 import { getTaskTarget } from "@/lib/taskTarget";
 import {
+  evaluateEquipmentMaintenance,
+  formatEquipmentUsage,
   getDayWord,
-  getEquipmentMaintenanceState,
+  getEquipmentDateMaintenanceLabel,
+  getEquipmentUsageMaintenanceLabel,
 } from "@/lib/equipmentMaintenance";
 import {
   getObjectSupervisionState,
@@ -114,6 +117,7 @@ const AUTOMATIC_PUSH_TYPES =
     "low_stock",
     "equipment_maintenance_today",
     "equipment_maintenance_overdue",
+    "equipment_maintenance_usage_due",
     "client_payment_due_today",
     "client_payment_overdue",
   ]);
@@ -133,6 +137,17 @@ export function getAutomaticPushStateToken(
     type: AutomaticPushNotificationType;
   }
 ) {
+  if (
+    (item.type === "equipment_maintenance_today" ||
+      item.type === "equipment_maintenance_overdue" ||
+      item.type === "equipment_maintenance_usage_due") &&
+    item.equipmentMaintenanceDate &&
+    item.equipmentUsageType &&
+    item.equipmentMaintenanceUsage !== undefined
+  ) {
+    return `combined:${item.equipmentMaintenanceDate}:${item.equipmentUsageType}:${item.equipmentMaintenanceUsage}`;
+  }
+
   switch (item.type) {
     case "overdue_task":
       return item.date
@@ -162,6 +177,12 @@ export function getAutomaticPushStateToken(
     case "equipment_maintenance_overdue":
       return item.date
         ? `overdue:${item.date}`
+        : null;
+
+    case "equipment_maintenance_usage_due":
+      return item.equipmentUsageType &&
+        item.equipmentMaintenanceUsage !== undefined
+        ? `usage:${item.equipmentUsageType}:${item.equipmentMaintenanceUsage}`
         : null;
 
     case "client_payment_due_today":
@@ -483,58 +504,102 @@ export function buildNotificationItems({
   }
 
   for (const item of equipment) {
-    const state =
-      getEquipmentMaintenanceState(
-        item.maintenance_interval_days,
-        item.next_service_date,
+    const evaluation =
+      evaluateEquipmentMaintenance(
+        item,
         today
       );
 
-    if (
-      state.kind !== "today" &&
-      state.kind !== "overdue"
-    ) {
+    if (!evaluation.isDue) {
       continue;
     }
 
     const isOverdue =
-      state.kind === "overdue";
+      evaluation.dateState.kind === "overdue";
+    const isDueToday =
+      evaluation.dateState.kind === "today";
+    const usageDue =
+      evaluation.usageDue;
+    const notificationType = isOverdue
+      ? "equipment_maintenance_overdue"
+      : isDueToday
+        ? "equipment_maintenance_today"
+        : "equipment_maintenance_usage_due";
+    const dateDetail = evaluation.dateDue
+      ? getEquipmentDateMaintenanceLabel(
+          item,
+          today
+        )
+      : null;
+    const usageDetail = usageDue
+      ? `${getEquipmentUsageMaintenanceLabel(
+          item
+        )}: ${formatEquipmentUsage(
+          item.current_usage,
+          item.usage_type
+        )} із ${formatEquipmentUsage(
+          item.next_maintenance_usage,
+          item.usage_type
+        )}`
+      : null;
+    const reasonDetails = [
+      dateDetail,
+      usageDetail,
+    ].filter(
+      (value): value is string =>
+        Boolean(value)
+    );
+    const message = isOverdue
+      ? `Планове ТО техніки «${item.name}» прострочене за датою${usageDue ? " і вже потрібне за напрацюванням" : ""}.`
+      : isDueToday
+        ? `Техніка «${item.name}» потребує планового ТО сьогодні${usageDue ? " також за напрацюванням" : ""}.`
+        : `Техніка «${item.name}» досягла порогу планового ТО за напрацюванням.`;
 
     items.push({
       key: `equipment-maintenance:${item.id}`,
-      type: isOverdue
-        ? "equipment_maintenance_overdue"
-        : "equipment_maintenance_today",
+      type: notificationType,
       category: "equipment",
-      severity: isOverdue
+      severity: isOverdue || usageDue
         ? "critical"
         : "warning",
       timing: isOverdue
         ? "overdue"
-        : "today",
+        : isDueToday
+          ? "today"
+          : "current",
       title: isOverdue
         ? "ТО техніки прострочено"
-        : "ТО техніки сьогодні",
-      message: isOverdue
-        ? `Планове ТО техніки «${item.name}» прострочено на ${state.overdueDays} ${getDayWord(
-            state.overdueDays
-          )}.`
-        : `Техніка «${item.name}» потребує планового ТО сьогодні.`,
-      detail: isOverdue
-        ? `Прострочено на ${state.overdueDays} ${getDayWord(
-            state.overdueDays
-          )}`
-        : "ТО сьогодні",
+        : isDueToday
+          ? "ТО техніки сьогодні"
+          : "ТО потрібне за напрацюванням",
+      message,
+      detail:
+        reasonDetails.join(" · ") || null,
       contextLabel:
         item.inventory_number ||
         item.category,
       href: "/equipment",
       date:
-        item.next_service_date,
+        evaluation.dateDue
+          ? item.next_service_date
+          : null,
       overdueDays: isOverdue
-        ? state.overdueDays
+        ? evaluation.dateState.overdueDays
         : null,
       equipmentId: item.id,
+      equipmentUsageType:
+        item.usage_type === "hours" ||
+        item.usage_type === "km"
+          ? item.usage_type
+          : undefined,
+      equipmentMaintenanceUsage:
+        item.next_maintenance_usage ??
+        undefined,
+      equipmentMaintenanceDate:
+        item.maintenance_interval_days &&
+        item.next_service_date
+          ? item.next_service_date
+          : undefined,
     });
   }
 

@@ -270,6 +270,9 @@ const detailRegistry: Partial<
   "equipment.maintenance_schedule_updated": [
     { kind: "change", label: "Періодичність ТО", previousKey: "previous_maintenance_interval_days", newKey: "new_maintenance_interval_days", format: "days" },
     { kind: "change", label: "Наступне ТО", previousKey: "previous_next_service_date", newKey: "new_next_service_date", format: "date" },
+    { kind: "change", label: "Тип напрацювання", previousKey: "previous_usage_type", newKey: "new_usage_type" },
+    { kind: "change", label: "Інтервал за напрацюванням", previousKey: "previous_maintenance_interval_usage", newKey: "new_maintenance_interval_usage", format: "number" },
+    { kind: "change", label: "Наступний поріг ТО", previousKey: "previous_next_maintenance_usage", newKey: "new_next_maintenance_usage", format: "number" },
   ],
   "equipment.maintenance_rescheduled": [
     { kind: "change", label: "Дата ТО", previousKey: "previous_next_service_date", newKey: "new_next_service_date", format: "date" },
@@ -278,6 +281,35 @@ const detailRegistry: Partial<
     { kind: "change", label: "Останнє ТО", previousKey: "previous_last_maintenance_date", newKey: "new_last_maintenance_date", format: "date" },
     { kind: "change", label: "Наступне ТО", previousKey: "previous_next_service_date", newKey: "new_next_service_date", format: "date" },
     { kind: "value", label: "Періодичність", key: "maintenance_interval_days", format: "days" },
+    { kind: "value", label: "Тип напрацювання", key: "usage_type" },
+    { kind: "change", label: "Показник", previousKey: "previous_current_usage", newKey: "new_current_usage", format: "number" },
+    { kind: "change", label: "Напрацювання останнього ТО", previousKey: "previous_last_maintenance_usage", newKey: "new_last_maintenance_usage", format: "number" },
+    { kind: "change", label: "Наступний поріг ТО", previousKey: "previous_next_maintenance_usage", newKey: "new_next_maintenance_usage", format: "number" },
+    { kind: "value", label: "Інтервал за напрацюванням", key: "maintenance_interval_usage", format: "number" },
+  ],
+  "equipment.usage_recorded": [
+    { kind: "value", label: "Дата показника", key: "reading_date", format: "date" },
+    { kind: "value", label: "Тип напрацювання", key: "usage_type" },
+    { kind: "change", label: "Показник", previousKey: "previous_current_usage", newKey: "new_current_usage", format: "number" },
+  ],
+  "equipment.usage_corrected": [
+    { kind: "value", label: "Дата корекції", key: "reading_date", format: "date" },
+    { kind: "value", label: "Тип напрацювання", key: "usage_type" },
+    { kind: "change", label: "Показник", previousKey: "previous_current_usage", newKey: "new_current_usage", format: "number" },
+  ],
+  "equipment.service_record_created": [
+    { kind: "value", label: "Тип сервісу", key: "service_type" },
+    { kind: "value", label: "Дата", key: "service_date", format: "date" },
+    { kind: "value", label: "Вартість", key: "cost", format: "money" },
+    { kind: "value", label: "Хто виконав", key: "performed_by" },
+    { kind: "value", label: "Тип напрацювання", key: "usage_type" },
+    { kind: "value", label: "Показник", key: "usage_reading", format: "number" },
+  ],
+  "equipment.service_record_voided": [
+    { kind: "value", label: "Тип сервісу", key: "service_type" },
+    { kind: "value", label: "Дата", key: "service_date", format: "date" },
+    { kind: "value", label: "Вартість", key: "cost", format: "money" },
+    { kind: "value", label: "Причина анулювання", key: "void_reason" },
   ],
 };
 

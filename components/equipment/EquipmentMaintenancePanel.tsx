@@ -12,8 +12,13 @@ import {
   completeEquipmentMaintenance,
 } from "@/app/actions/equipmentServiceActions";
 import {
-  getEquipmentMaintenanceLabel,
-  getEquipmentMaintenanceState,
+  evaluateEquipmentMaintenance,
+  formatEquipmentUsage,
+  getEquipmentDateMaintenanceLabel,
+  getEquipmentMaintenanceOverallKind,
+  getEquipmentMaintenanceOverallLabel,
+  getEquipmentUsageMaintenanceLabel,
+  getEquipmentUsageUnit,
 } from "@/lib/equipmentMaintenance";
 import {
   formatDateValue,
@@ -35,14 +40,15 @@ type Props = {
 
 function getStateClasses(
   kind: ReturnType<
-    typeof getEquipmentMaintenanceState
-  >["kind"]
+    typeof getEquipmentMaintenanceOverallKind
+  >
 ) {
   switch (kind) {
     case "today":
       return "bg-orange-50 text-orange-700";
 
     case "overdue":
+    case "due":
       return "bg-red-50 text-red-700";
 
     case "scheduled":
@@ -58,23 +64,26 @@ function getStateRank(
   today: string
 ) {
   const state =
-    getEquipmentMaintenanceState(
-      equipment.maintenance_interval_days,
-      equipment.next_service_date,
+    evaluateEquipmentMaintenance(
+      equipment,
       today
     );
+  const kind =
+    getEquipmentMaintenanceOverallKind(
+      state
+    );
 
-  switch (state.kind) {
+  switch (kind) {
     case "overdue":
       return 0;
 
-    case "today":
+    case "due":
       return 1;
 
-    case "scheduled":
+    case "today":
       return 2;
 
-    case "unscheduled":
+    case "scheduled":
       return 3;
 
     case "unconfigured":
@@ -236,10 +245,13 @@ export default function EquipmentMaintenancePanel({
           {sortedEquipment.map(
             (item) => {
               const state =
-                getEquipmentMaintenanceState(
-                  item.maintenance_interval_days,
-                  item.next_service_date,
+                evaluateEquipmentMaintenance(
+                  item,
                   today
+                );
+              const overallKind =
+                getEquipmentMaintenanceOverallKind(
+                  state
                 );
               const formOpen =
                 activeId === item.id;
@@ -248,9 +260,10 @@ export default function EquipmentMaintenancePanel({
                 <article
                   key={item.id}
                   className={`min-w-0 rounded-xl border p-4 ${
-                    state.kind === "overdue"
+                    overallKind === "overdue" ||
+                    overallKind === "due"
                       ? "border-red-200"
-                      : state.kind === "today"
+                      : overallKind === "today"
                         ? "border-orange-200"
                         : "border-gray-200"
                   }`}
@@ -270,24 +283,36 @@ export default function EquipmentMaintenancePanel({
 
                     <span
                       className={`w-fit shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${getStateClasses(
-                        state.kind
+                        overallKind
                       )}`}
                     >
-                      {getEquipmentMaintenanceLabel(
+                      {getEquipmentMaintenanceOverallLabel(
                         state
                       )}
                     </span>
                   </div>
 
-                  <dl className="mt-4 grid grid-cols-1 gap-3 border-t pt-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+                  <dl className="mt-4 grid grid-cols-1 gap-3 border-t pt-4 sm:grid-cols-2">
                     <div className="min-w-0">
                       <dt className="text-xs text-gray-500">
-                        Періодичність
+                        ТО за датою
                       </dt>
                       <dd className="mt-1 break-words text-sm font-medium text-gray-800">
-                        {item.maintenance_interval_days
-                          ? `Кожні ${item.maintenance_interval_days} днів`
-                          : "Не налаштовано"}
+                        {getEquipmentDateMaintenanceLabel(
+                          item,
+                          today
+                        )}
+                      </dd>
+                    </div>
+
+                    <div className="min-w-0">
+                      <dt className="text-xs text-gray-500">
+                        ТО за напрацюванням
+                      </dt>
+                      <dd className="mt-1 break-words text-sm font-medium text-gray-800">
+                        {getEquipmentUsageMaintenanceLabel(
+                          item
+                        )}
                       </dd>
                     </div>
 
@@ -295,27 +320,48 @@ export default function EquipmentMaintenancePanel({
                       <dt className="text-xs text-gray-500">
                         Останнє ТО
                       </dt>
-                      <dd className="mt-1 text-sm font-medium text-gray-800">
-                        {formatDateValue(
-                          item.last_maintenance_date
-                        ) || "Не виконувалось"}
+                      <dd className="mt-1 space-y-1 text-sm font-medium text-gray-800">
+                        <p>
+                          {formatDateValue(
+                            item.last_maintenance_date
+                          ) || "Дата не зафіксована"}
+                        </p>
+                        {item.usage_type !== "none" && (
+                          <p className="break-words text-xs text-gray-500">
+                            {formatEquipmentUsage(
+                              item.last_maintenance_usage,
+                              item.usage_type
+                            )}
+                          </p>
+                        )}
                       </dd>
                     </div>
 
                     <div className="min-w-0">
                       <dt className="text-xs text-gray-500">
-                        Наступне ТО
+                        Наступний цикл
                       </dt>
-                      <dd className="mt-1 text-sm font-medium text-gray-800">
-                        {formatDateValue(
-                          item.next_service_date
-                        ) || "Не заплановано"}
+                      <dd className="mt-1 space-y-1 text-sm font-medium text-gray-800">
+                        <p>
+                          {formatDateValue(
+                            item.next_service_date
+                          ) || "Без дати"}
+                        </p>
+                        {item.usage_type !== "none" && (
+                          <p className="break-words text-xs text-gray-500">
+                            {formatEquipmentUsage(
+                              item.next_maintenance_usage,
+                              item.usage_type
+                            )}
+                          </p>
+                        )}
                       </dd>
                     </div>
                   </dl>
 
                   {canManage &&
-                    item.maintenance_interval_days && (
+                    (item.maintenance_interval_days ||
+                      item.maintenance_interval_usage) && (
                     <div className="mt-4 border-t pt-4">
                       <button
                         type="button"
@@ -335,7 +381,8 @@ export default function EquipmentMaintenancePanel({
                   )}
 
                   {canManage &&
-                    !item.maintenance_interval_days && (
+                    !item.maintenance_interval_days &&
+                    !item.maintenance_interval_usage && (
                     <p className="mt-4 border-t pt-4 text-xs leading-5 text-gray-500">
                       Спочатку вкажіть періодичність у формі редагування техніки.
                     </p>
@@ -357,6 +404,27 @@ export default function EquipmentMaintenancePanel({
                           today
                         )}
                       </p>
+
+                      {item.usage_type !== "none" && (
+                        <label className="block min-w-0 text-sm font-medium text-gray-700">
+                          Поточний показник, {getEquipmentUsageUnit(item.usage_type)}
+
+                          <input
+                            type="number"
+                            name="usage_reading"
+                            inputMode="decimal"
+                            min="0"
+                            step="0.001"
+                            defaultValue={item.current_usage ?? ""}
+                            placeholder="Необов’язково"
+                            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none transition focus:border-green-600"
+                          />
+
+                          <span className="mt-1 block text-xs font-normal leading-5 text-gray-500">
+                            Якщо показник змінився, він буде доданий до історії разом із ТО.
+                          </span>
+                        </label>
+                      )}
 
                       <label className="block min-w-0 text-sm font-medium text-gray-700">
                         Вартість, {currency}

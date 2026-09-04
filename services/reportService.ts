@@ -36,6 +36,8 @@ import type { WorkLog } from "@/types/workLog";
 import type {
   ReportEmployeeOption,
   ReportEmployeeWork,
+  ReportEquipmentCost,
+  ReportEquipmentServiceDetail,
   ReportExpenseCategory,
   ReportExpenseDetail,
   ReportExpenseHighlight,
@@ -417,6 +419,37 @@ type ReportLifetimePaymentRow = {
   id: number;
   object_id: number;
   amount: number;
+};
+
+type ReportEquipmentServiceRow = {
+  id: number;
+  equipment_id: number;
+  service_type:
+    ReportEquipmentServiceDetail["serviceType"];
+  service_date: string;
+  cost: number;
+  performed_by: string | null;
+  description: string | null;
+  usage_reading: number | null;
+  usage_type_snapshot:
+    ReportEquipmentServiceDetail["usageType"];
+  voided_at: string | null;
+  void_reason: string | null;
+  equipment: {
+    id: number;
+    name: string;
+    inventory_number: string | null;
+  } | null;
+};
+
+type InternalEquipmentCost = {
+  equipmentId: number;
+  equipmentName: string;
+  inventoryNumber: string | null;
+  periodPlannedInCents: number;
+  periodOtherInCents: number;
+  lifetimePlannedInCents: number;
+  lifetimeOtherInCents: number;
 };
 
 type LifetimeObjectCost = {
@@ -1108,6 +1141,43 @@ export async function getReportsData(
           >()
     );
 
+  const loadEquipmentServiceRecords = () =>
+    fetchAllReportRows<
+      ReportEquipmentServiceRow
+    >(
+      "Не вдалося завантажити витрати на техніку для звіту",
+      async (from, to) =>
+        await supabase
+          .from(
+            "equipment_service_records"
+          )
+          .select(`
+            id,
+            equipment_id,
+            service_type,
+            service_date,
+            cost,
+            performed_by,
+            description,
+            usage_reading,
+            usage_type_snapshot,
+            voided_at,
+            void_reason,
+            equipment:equipment (
+              id,
+              name,
+              inventory_number
+            )
+          `)
+          .order("id", {
+            ascending: true,
+          })
+          .range(from, to)
+          .overrideTypes<
+            ReportEquipmentServiceRow[]
+          >()
+    );
+
   const loadLifetimeWorkLogs = (
     objectIds: number[]
   ) =>
@@ -1225,6 +1295,7 @@ export async function getReportsData(
     purchasedPurchases,
     materialLedger,
     warehousePlanningPurchases,
+    equipmentServiceRows,
   ] = await Promise.all([
     loadObjects(),
     loadEmployees(),
@@ -1286,6 +1357,7 @@ export async function getReportsData(
           materialLedgerCutover
         ),
     loadWarehousePlanningPurchases(),
+    loadEquipmentServiceRecords(),
   ]);
 
   const objectNames =
@@ -2642,6 +2714,235 @@ export async function getReportsData(
       overdueScheduleAmount,
   };
 
+  const equipmentServiceHistory:
+    ReportEquipmentServiceDetail[] =
+    equipmentServiceRows.map(
+      (record) => ({
+        id: Number(record.id),
+        equipmentId: Number(
+          record.equipment_id
+        ),
+        equipmentName:
+          record.equipment?.name ||
+          `Техніка #${record.equipment_id}`,
+        inventoryNumber:
+          record.equipment
+            ?.inventory_number || null,
+        serviceDate:
+          record.service_date,
+        serviceType:
+          record.service_type,
+        cost: toSafeNumber(
+          record.cost
+        ),
+        usageReading:
+          record.usage_reading === null
+            ? null
+            : toSafeNumber(
+                record.usage_reading
+              ),
+        usageType:
+          record.usage_type_snapshot,
+        performedBy:
+          record.performed_by,
+        description:
+          record.description,
+        status: record.voided_at
+          ? "voided"
+          : "active",
+        voidReason:
+          record.void_reason,
+      })
+    );
+  const equipmentServiceDetails =
+    equipmentServiceHistory.filter(
+      (record) =>
+        record.serviceDate >=
+          filters.dateFrom &&
+        record.serviceDate <=
+          filters.dateTo
+    );
+  const equipmentCostMap =
+    new Map<
+      number,
+      InternalEquipmentCost
+    >();
+
+  for (const record of equipmentServiceHistory) {
+    if (record.status === "voided") {
+      continue;
+    }
+
+    const current =
+      equipmentCostMap.get(
+        record.equipmentId
+      ) || {
+        equipmentId:
+          record.equipmentId,
+        equipmentName:
+          record.equipmentName,
+        inventoryNumber:
+          record.inventoryNumber,
+        periodPlannedInCents: 0,
+        periodOtherInCents: 0,
+        lifetimePlannedInCents: 0,
+        lifetimeOtherInCents: 0,
+      };
+    const costInCents =
+      Math.max(
+        toMoneyInCents(
+          record.cost
+        ),
+        0
+      );
+    const planned =
+      record.serviceType ===
+      "Планове обслуговування";
+
+    if (planned) {
+      current.lifetimePlannedInCents +=
+        costInCents;
+    } else {
+      current.lifetimeOtherInCents +=
+        costInCents;
+    }
+
+    if (
+      record.serviceDate >=
+        filters.dateFrom &&
+      record.serviceDate <=
+        filters.dateTo
+    ) {
+      if (planned) {
+        current.periodPlannedInCents +=
+          costInCents;
+      } else {
+        current.periodOtherInCents +=
+          costInCents;
+      }
+    }
+
+    equipmentCostMap.set(
+      record.equipmentId,
+      current
+    );
+  }
+
+  const equipmentCosts:
+    ReportEquipmentCost[] =
+    Array.from(
+      equipmentCostMap.values()
+    )
+      .map((cost) => ({
+        equipmentId:
+          cost.equipmentId,
+        equipmentName:
+          cost.equipmentName,
+        inventoryNumber:
+          cost.inventoryNumber,
+        periodPlannedMaintenanceCost:
+          fromMoneyInCents(
+            cost.periodPlannedInCents
+          ),
+        periodOtherServiceCost:
+          fromMoneyInCents(
+            cost.periodOtherInCents
+          ),
+        periodTotalCost:
+          fromMoneyInCents(
+            cost.periodPlannedInCents +
+              cost.periodOtherInCents
+          ),
+        lifetimePlannedMaintenanceCost:
+          fromMoneyInCents(
+            cost.lifetimePlannedInCents
+          ),
+        lifetimeOtherServiceCost:
+          fromMoneyInCents(
+            cost.lifetimeOtherInCents
+          ),
+        lifetimeTotalCost:
+          fromMoneyInCents(
+            cost.lifetimePlannedInCents +
+              cost.lifetimeOtherInCents
+          ),
+      }))
+      .sort((first, second) =>
+        second.periodTotalCost -
+          first.periodTotalCost ||
+        first.equipmentName.localeCompare(
+          second.equipmentName,
+          "uk"
+        )
+      );
+  const equipmentCostSummary =
+    equipmentCosts.reduce(
+      (summary, cost) => ({
+        periodPlannedMaintenanceCost:
+          fromMoneyInCents(
+            toMoneyInCents(
+              summary.periodPlannedMaintenanceCost
+            ) +
+              toMoneyInCents(
+                cost.periodPlannedMaintenanceCost
+              )
+          ),
+        periodOtherServiceCost:
+          fromMoneyInCents(
+            toMoneyInCents(
+              summary.periodOtherServiceCost
+            ) +
+              toMoneyInCents(
+                cost.periodOtherServiceCost
+              )
+          ),
+        periodTotalCost:
+          fromMoneyInCents(
+            toMoneyInCents(
+              summary.periodTotalCost
+            ) +
+              toMoneyInCents(
+                cost.periodTotalCost
+              )
+          ),
+        lifetimePlannedMaintenanceCost:
+          fromMoneyInCents(
+            toMoneyInCents(
+              summary.lifetimePlannedMaintenanceCost
+            ) +
+              toMoneyInCents(
+                cost.lifetimePlannedMaintenanceCost
+              )
+          ),
+        lifetimeOtherServiceCost:
+          fromMoneyInCents(
+            toMoneyInCents(
+              summary.lifetimeOtherServiceCost
+            ) +
+              toMoneyInCents(
+                cost.lifetimeOtherServiceCost
+              )
+          ),
+        lifetimeTotalCost:
+          fromMoneyInCents(
+            toMoneyInCents(
+              summary.lifetimeTotalCost
+            ) +
+              toMoneyInCents(
+                cost.lifetimeTotalCost
+              )
+          ),
+      }),
+      {
+        periodPlannedMaintenanceCost: 0,
+        periodOtherServiceCost: 0,
+        periodTotalCost: 0,
+        lifetimePlannedMaintenanceCost: 0,
+        lifetimeOtherServiceCost: 0,
+        lifetimeTotalCost: 0,
+      }
+    );
+
   const exactFromDate =
     materialLedgerCutover
       ? getKyivDateValue(
@@ -2745,5 +3046,9 @@ export async function getReportsData(
           )
           .slice(0, 5),
     },
+    equipmentCosts,
+    equipmentServiceDetails,
+    equipmentServiceHistory,
+    equipmentCostSummary,
   };
 }

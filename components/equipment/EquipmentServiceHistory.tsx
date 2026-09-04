@@ -1,6 +1,10 @@
 "use client";
 
-import { deleteEquipmentServiceRecord } from "@/app/actions/equipmentServiceActions";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+import { voidEquipmentServiceRecord } from "@/app/actions/equipmentServiceActions";
+import { formatEquipmentUsage } from "@/lib/equipmentMaintenance";
 
 import type { AppCurrency } from "@/types/appSettings";
 import type { EquipmentServiceRecord } from "@/types/equipmentServiceRecord";
@@ -105,6 +109,99 @@ function getTypeClasses(
   }
 }
 
+function VoidRecordAction({
+  recordId,
+}: {
+  recordId: number;
+}) {
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(
+    formData: FormData
+  ) {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      await voidEquipmentServiceRecord(
+        recordId,
+        String(
+          formData.get("void_reason") ?? ""
+        )
+      );
+      setIsOpen(false);
+      router.refresh();
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Не вдалося анулювати запис."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (!isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="min-h-10 w-full rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 sm:w-auto"
+      >
+        Анулювати
+      </button>
+    );
+  }
+
+  return (
+    <form
+      action={handleSubmit}
+      className="min-w-0 space-y-2"
+    >
+      <label className="block min-w-0 text-xs font-medium text-gray-700">
+        Причина анулювання
+        <textarea
+          name="void_reason"
+          rows={2}
+          required
+          maxLength={1000}
+          className="mt-1 w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-red-500"
+        />
+      </label>
+      {error && (
+        <p role="alert" className="text-xs text-red-600">
+          {error}
+        </p>
+      )}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="min-h-10 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+        >
+          {isSubmitting ? "Збереження…" : "Підтвердити"}
+        </button>
+        <button
+          type="button"
+          disabled={isSubmitting}
+          onClick={() => setIsOpen(false)}
+          className="min-h-10 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700"
+        >
+          Скасувати
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export default function EquipmentServiceHistory({
   records,
   currency,
@@ -118,10 +215,9 @@ export default function EquipmentServiceHistory({
   const totalCost =
     safeRecords.reduce(
       (sum, record) =>
-        sum +
-        Number(
-          record.cost || 0
-        ),
+        record.voided_at
+          ? sum
+          : sum + Number(record.cost || 0),
       0
     );
 
@@ -218,6 +314,15 @@ export default function EquipmentServiceHistory({
                     </span>
                   </div>
 
+                  {record.voided_at && (
+                    <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                      <p className="font-semibold">Анульовано</p>
+                      <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5">
+                        {record.void_reason || "Причину не вказано"}
+                      </p>
+                    </div>
+                  )}
+
                   {/* DATE + COST */}
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <div className="rounded-lg bg-gray-50 p-3">
@@ -261,6 +366,20 @@ export default function EquipmentServiceHistory({
                       </p>
                     </div>
 
+                    {record.usage_type_snapshot && (
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500">
+                          Показник напрацювання
+                        </p>
+                        <p className="mt-1 break-words text-sm font-medium text-gray-800">
+                          {formatEquipmentUsage(
+                            record.usage_reading,
+                            record.usage_type_snapshot
+                          )}
+                        </p>
+                      </div>
+                    )}
+
                     <div className="min-w-0">
                       <p className="text-xs text-gray-500">
                         Опис робіт
@@ -285,36 +404,11 @@ export default function EquipmentServiceHistory({
                     </div>
                   </div>
 
-                  {/* DELETE */}
-                  {canManage && (
-                    <form
-                      action={deleteEquipmentServiceRecord.bind(
-                        null,
-                        record.id
-                      )}
-                      onSubmit={(
-                        event
-                      ) => {
-                        const confirmed =
-                          window.confirm(
-                            "Видалити цей запис обслуговування?"
-                          );
-
-                        if (
-                          !confirmed
-                        ) {
-                          event.preventDefault();
-                        }
-                      }}
-                      className="mt-4 border-t pt-4"
-                    >
-                      <button
-                        type="submit"
-                        className="min-h-10 w-full rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-                      >
-                        Видалити запис
-                      </button>
-                    </form>
+                  {/* VOID */}
+                  {canManage && !record.voided_at && (
+                    <div className="mt-4 border-t pt-4">
+                      <VoidRecordAction recordId={record.id} />
+                    </div>
                   )}
                 </article>
               )
@@ -358,6 +452,14 @@ export default function EquipmentServiceHistory({
 
                   <th className="p-4">
                     Наступний сервіс
+                  </th>
+
+                  <th className="p-4">
+                    Напрацювання
+                  </th>
+
+                  <th className="p-4">
+                    Стан
                   </th>
 
                   {canManage && (
@@ -443,35 +545,33 @@ export default function EquipmentServiceHistory({
                         )}
                       </td>
 
+                      <td className="whitespace-nowrap p-4 text-gray-600">
+                        {record.usage_type_snapshot
+                          ? formatEquipmentUsage(
+                              record.usage_reading,
+                              record.usage_type_snapshot
+                            )
+                          : "—"}
+                      </td>
+
+                      <td className="p-4">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${record.voided_at ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}>
+                          {record.voided_at ? "Анульовано" : "Активний"}
+                        </span>
+                        {record.voided_at && record.void_reason && (
+                          <p className="mt-2 max-w-xs whitespace-pre-wrap break-words text-xs text-gray-500">
+                            {record.void_reason}
+                          </p>
+                        )}
+                      </td>
+
                       {canManage && (
                         <td className="p-4">
-                          <form
-                            action={deleteEquipmentServiceRecord.bind(
-                              null,
-                              record.id
-                            )}
-                            onSubmit={(
-                              event
-                            ) => {
-                              const confirmed =
-                                window.confirm(
-                                  "Видалити цей запис обслуговування?"
-                                );
-
-                              if (
-                                !confirmed
-                              ) {
-                                event.preventDefault();
-                              }
-                            }}
-                          >
-                            <button
-                              type="submit"
-                              className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-                            >
-                              Видалити
-                            </button>
-                          </form>
+                          {!record.voided_at ? (
+                            <VoidRecordAction recordId={record.id} />
+                          ) : (
+                            <span className="text-xs text-gray-400">Без дій</span>
+                          )}
                         </td>
                       )}
                     </tr>
