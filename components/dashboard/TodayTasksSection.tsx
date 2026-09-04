@@ -7,6 +7,7 @@ import { useState } from "react";
 import { completeDashboardTask } from "@/app/actions/dashboardTaskActions";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
 import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
+import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
   EQUIPMENT_MAINTENANCE_TASK_SOURCE,
@@ -278,6 +279,12 @@ export default function TodayTasksSection({
                     {task.task_source === SUPERVISION_TASK_SOURCE && (
                       <div className="mt-2">
                         <SupervisionTaskBadge compact />
+                      </div>
+                    )}
+
+                    {task.task_template_id !== null && (
+                      <div className="mt-2">
+                        <RecurringTaskBadge compact />
                       </div>
                     )}
 

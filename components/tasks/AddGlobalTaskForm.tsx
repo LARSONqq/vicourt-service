@@ -4,10 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { createObjectTask } from "@/app/actions/taskActions";
+import TaskRecurrenceFields from "@/components/tasks/TaskRecurrenceFields";
 
 import type { Employee } from "@/types/employee";
 import type { Equipment } from "@/types/equipment";
 import type { ObjectItem } from "@/types/object";
+import type {
+  TaskRecurrenceType,
+} from "@/types/taskTemplate";
 
 type Props = {
   objects: ObjectItem[];
@@ -17,6 +21,7 @@ type Props = {
   defaultOpen?: boolean;
   hideToggleButton?: boolean;
   buttonLabel?: string;
+  canManageRecurrence?: boolean;
   onClose?: () => void;
 };
 
@@ -28,6 +33,7 @@ export default function AddGlobalTaskForm({
   defaultOpen = false,
   hideToggleButton = false,
   buttonLabel = "+ Додати завдання",
+  canManageRecurrence = false,
   onClose,
 }: Props) {
   const router =
@@ -52,10 +58,16 @@ export default function AddGlobalTaskForm({
 
   const [targetType, setTargetType] =
     useState<"object" | "equipment">("object");
+  const [recurrenceType, setRecurrenceType] =
+    useState<TaskRecurrenceType>("none");
+  const [customInterval, setCustomInterval] =
+    useState("14");
 
   function closeForm() {
     setIsOpen(false);
     setErrorMessage("");
+    setRecurrenceType("none");
+    setCustomInterval("14");
 
     onClose?.();
   }
@@ -258,6 +270,10 @@ export default function AddGlobalTaskForm({
                 defaultValue={
                   initialDueDate
                 }
+                required={
+                  recurrenceType !==
+                  "none"
+                }
                 className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
               />
             </div>
@@ -349,10 +365,21 @@ export default function AddGlobalTaskForm({
                 Статус
               </label>
 
+              {recurrenceType !== "none" && (
+                <input
+                  type="hidden"
+                  name="status"
+                  value="Заплановано"
+                />
+              )}
+
               <select
                 name="status"
                 defaultValue="Заплановано"
-                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                disabled={
+                  recurrenceType !== "none"
+                }
+                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
               >
                 <option value="Заплановано">
                   Заплановано
@@ -368,6 +395,18 @@ export default function AddGlobalTaskForm({
               </select>
             </div>
           </div>
+
+          {canManageRecurrence && (
+            <TaskRecurrenceFields
+              idPrefix="global-task"
+              value={recurrenceType}
+              customInterval={customInterval}
+              onChange={setRecurrenceType}
+              onCustomIntervalChange={
+                setCustomInterval
+              }
+            />
+          )}
 
           {/* ACTIONS */}
           <div className="grid grid-cols-1 gap-2 border-t pt-5 sm:flex sm:flex-wrap sm:gap-3">

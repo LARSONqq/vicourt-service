@@ -31,6 +31,7 @@ type DetailFormat =
   | "days"
   | "documentCategory"
   | "documentAccess"
+  | "recurrence"
   | "boolean";
 
 type ValueDetailDefinition = {
@@ -116,17 +117,17 @@ const detailRegistry: Partial<
     { kind: "value", label: "Пріоритет", key: "priority" },
   ],
   "task_template.created": [
-    { kind: "value", label: "Повторення", key: "recurrence_type" },
+    { kind: "value", label: "Повторення", key: "recurrence_type", format: "recurrence" },
     { kind: "value", label: "Інтервал", key: "recurrence_interval", format: "number" },
     { kind: "value", label: "Опорна дата", key: "anchor_due_date", format: "date" },
   ],
   "task_template.updated": [
-    { kind: "value", label: "Повторення", key: "recurrence_type" },
+    { kind: "value", label: "Повторення", key: "recurrence_type", format: "recurrence" },
     { kind: "value", label: "Інтервал", key: "recurrence_interval", format: "number" },
     { kind: "value", label: "Опорна дата", key: "anchor_due_date", format: "date" },
   ],
   "task_template.disabled": [
-    { kind: "value", label: "Повторення", key: "recurrence_type" },
+    { kind: "value", label: "Повторення", key: "recurrence_type", format: "recurrence" },
     { kind: "value", label: "Активна серія", key: "is_active", format: "boolean" },
   ],
   "material.added_from_warehouse": [
@@ -395,6 +396,24 @@ function formatMetadataValue(
 
   if (format === "boolean") {
     return value === true ? "Так" : "Ні";
+  }
+
+  if (
+    format === "recurrence" &&
+    typeof value === "string"
+  ) {
+    switch (value) {
+      case "daily":
+        return "Щодня";
+      case "weekly":
+        return "Щотижня";
+      case "monthly":
+        return "Щомісяця";
+      case "custom":
+        return "Власний інтервал у днях";
+      default:
+        return "Не повторюється";
+    }
   }
 
   if (

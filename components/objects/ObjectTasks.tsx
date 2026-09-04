@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import { deleteObjectTask } from "@/app/actions/taskActions";
+import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
   SUPERVISION_TASK_MANAGED_MESSAGE,
@@ -22,6 +23,7 @@ type Props = {
   tasks: ObjectTask[];
   objectId: number;
   employees: Employee[];
+  canManageRecurrence?: boolean;
 };
 
 function formatDate(
@@ -58,6 +60,7 @@ export default function ObjectTasks({
   tasks,
   objectId,
   employees,
+  canManageRecurrence = false,
 }: Props) {
   const [
     showForm,
@@ -115,6 +118,9 @@ export default function ObjectTasks({
             employees={
               employees
             }
+            canManageRecurrence={
+              canManageRecurrence
+            }
           />
         </div>
       )}
@@ -159,6 +165,12 @@ export default function ObjectTasks({
                       {isSupervisionTask && (
                         <div className="mt-2">
                           <SupervisionTaskBadge />
+                        </div>
+                      )}
+
+                      {task.task_template_id !== null && (
+                        <div className="mt-2">
+                          <RecurringTaskBadge />
                         </div>
                       )}
 
@@ -242,34 +254,38 @@ export default function ObjectTasks({
                         : "Редагувати"}
                     </button>
 
-                    <form
-                      action={deleteObjectTask.bind(
-                        null,
-                        task.id
-                      )}
-                      onSubmit={(
-                        event
-                      ) => {
-                        const confirmed =
-                          window.confirm(
-                            `Видалити завдання «${task.title}»?`
-                          );
+                    {task.task_template_id === null ? (
+                      <form
+                        action={deleteObjectTask.bind(
+                          null,
+                          task.id
+                        )}
+                        onSubmit={(
+                          event
+                        ) => {
+                          const confirmed =
+                            window.confirm(
+                              `Видалити завдання «${task.title}»?`
+                            );
 
-                        if (
-                          !confirmed
-                        ) {
-                          event.preventDefault();
-                        }
-                      }}
-                      className="w-full sm:w-auto"
-                    >
-                      <button
-                        type="submit"
-                        className="min-h-10 w-full rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 sm:w-auto"
+                          if (!confirmed) {
+                            event.preventDefault();
+                          }
+                        }}
+                        className="w-full sm:w-auto"
                       >
-                        Видалити
-                      </button>
-                    </form>
+                        <button
+                          type="submit"
+                          className="min-h-10 w-full rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 sm:w-auto"
+                        >
+                          Видалити
+                        </button>
+                      </form>
+                    ) : (
+                      <p className="col-span-2 text-xs leading-5 text-gray-500 sm:max-w-xs sm:text-right">
+                        Щоб припинити серію, відкрий «Шаблони» на сторінці завдань.
+                      </p>
+                    )}
                   </div>
                   )}
                 </article>
@@ -288,6 +304,9 @@ export default function ObjectTasks({
                       }
                       employees={
                         employees
+                      }
+                      canManageRecurrence={
+                        canManageRecurrence
                       }
                       onCancel={() =>
                         setEditingId(

@@ -50,6 +50,7 @@ import {
 } from "@/services/profileService";
 import {
   canManageObjects,
+  canManageTasks,
   canViewActivityLog,
   canViewWarehouseLedger,
 } from "@/lib/auth/permissions";
@@ -130,6 +131,10 @@ export default async function ObjectPage({
       ? canViewActivityLog(
           profile.role
         )
+      : false;
+  const canManageRecurrence =
+    profile
+      ? canManageTasks(profile.role)
       : false;
   const canViewLedger =
     profile
@@ -576,6 +581,9 @@ export default async function ObjectPage({
             }
             employees={
               employeeList
+            }
+            canManageRecurrence={
+              canManageRecurrence
             }
           />
         }

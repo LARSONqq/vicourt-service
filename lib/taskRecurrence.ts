@@ -203,3 +203,21 @@ export function getNextTaskRecurrence(
     "Не вдалося розрахувати наступне повторення завдання."
   );
 }
+
+export function getTaskRecurrenceLabel(
+  recurrenceType: TaskRecurrenceType,
+  recurrenceInterval: number | null
+) {
+  switch (recurrenceType) {
+    case "daily":
+      return "Щодня";
+    case "weekly":
+      return "Щотижня";
+    case "monthly":
+      return "Щомісяця";
+    case "custom":
+      return `Кожні ${recurrenceInterval ?? "—"} днів`;
+    default:
+      return "Не повторюється";
+  }
+}

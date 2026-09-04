@@ -22,6 +22,7 @@ import EditTaskForm from "@/components/objects/EditTaskForm";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
 import AddGlobalTaskForm from "@/components/tasks/AddGlobalTaskForm";
 import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
+import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
   EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE,
@@ -438,6 +439,9 @@ function TaskCard({
         )}
         {isMaintenanceTask && (
           <EquipmentMaintenanceTaskBadge compact />
+        )}
+        {task.task_template_id !== null && (
+          <RecurringTaskBadge compact />
         )}
 
         <span
@@ -1356,14 +1360,12 @@ export default function WeeklyTaskCalendar({
       );
 
       if (
-        task.task_source ===
-          SUPERVISION_TASK_SOURCE &&
-        nextStatus ===
-          "Виконано" ||
-        task.task_source ===
-          EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
-        nextStatus ===
-          "Виконано"
+        nextStatus === "Виконано" &&
+        (task.task_source ===
+          SUPERVISION_TASK_SOURCE ||
+          task.task_source ===
+            EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
+          task.task_template_id !== null)
       ) {
         router.refresh();
       }
@@ -1935,7 +1937,9 @@ export default function WeeklyTaskCalendar({
                             (task.task_source !==
                               EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
                               (canManageEquipment &&
-                                task.status !== "Виконано"))
+                                task.status !== "Виконано")) &&
+                            (task.task_template_id === null ||
+                              task.status !== "Виконано")
                           }
                           canUseQuickAction={
                             (task.task_source !==
@@ -1945,7 +1949,9 @@ export default function WeeklyTaskCalendar({
                             (task.task_source !==
                               EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
                               (canManageEquipment &&
-                                task.status !== "Виконано"))
+                                task.status !== "Виконано")) &&
+                            (task.task_template_id === null ||
+                              task.status !== "Виконано")
                           }
                           onOpen={() =>
                             handleTaskClick(
@@ -2090,7 +2096,9 @@ export default function WeeklyTaskCalendar({
                     (task.task_source !==
                       EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
                       (canManageEquipment &&
-                        task.status !== "Виконано"))
+                        task.status !== "Виконано")) &&
+                    (task.task_template_id === null ||
+                      task.status !== "Виконано")
                   }
                   canUseQuickAction={
                     (task.task_source !==
@@ -2100,7 +2108,9 @@ export default function WeeklyTaskCalendar({
                     (task.task_source !==
                       EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
                       (canManageEquipment &&
-                        task.status !== "Виконано"))
+                        task.status !== "Виконано")) &&
+                    (task.task_template_id === null ||
+                      task.status !== "Виконано")
                   }
                   onOpen={() =>
                     handleTaskClick(
@@ -2199,6 +2209,9 @@ export default function WeeklyTaskCalendar({
                 }
                 defaultOpen
                 hideToggleButton
+                canManageRecurrence={
+                  canManageSupervision
+                }
                 onClose={() =>
                   setSelectedTaskDate(
                     null
@@ -2351,6 +2364,9 @@ export default function WeeklyTaskCalendar({
                   equipment={equipment}
                   employees={
                     employees
+                  }
+                  canManageRecurrence={
+                    canManageSupervision
                   }
                   onCancel={
                     closeEditForm

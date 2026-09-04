@@ -20,6 +20,7 @@ import EditTaskForm from "@/components/objects/EditTaskForm";
 import CompleteTaskButton from "@/components/dashboard/CompleteTaskButton";
 import RescheduleTaskButton from "@/components/dashboard/RescheduleTaskButton";
 import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
+import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import {
   EQUIPMENT_MAINTENANCE_TASK_MANAGED_MESSAGE,
@@ -29,6 +30,12 @@ import {
 } from "@/constants/taskSource";
 import { getTaskTarget } from "@/lib/taskTarget";
 import {
+  getKyivDateValue,
+} from "@/lib/kyivDate";
+import {
+  getTaskRecurrenceLabel,
+} from "@/lib/taskRecurrence";
+import {
   useMediaQuery,
 } from "@/lib/useMediaQuery";
 
@@ -36,6 +43,9 @@ import type { Employee } from "@/types/employee";
 import type { Equipment } from "@/types/equipment";
 import type { ObjectItem } from "@/types/object";
 import type { TaskWithObject } from "@/types/taskWithObject";
+import type {
+  TaskTemplate,
+} from "@/types/taskTemplate";
 
 type Props = {
   tasks: TaskWithObject[];
@@ -44,6 +54,7 @@ type Props = {
   equipment?: Equipment[];
   canManageSupervision: boolean;
   canManageEquipment: boolean;
+  taskTemplates?: TaskTemplate[];
 };
 
 type TaskStatus =
@@ -132,24 +143,6 @@ function formatDate(
   ] = date.split("-");
 
   return `${day}.${month}.${year}`;
-}
-
-function getTodayValue() {
-  const today =
-    new Date();
-
-  const year =
-    today.getFullYear();
-
-  const month = String(
-    today.getMonth() + 1
-  ).padStart(2, "0");
-
-  const day = String(
-    today.getDate()
-  ).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
 }
 
 function getStatusStyle(
@@ -249,7 +242,7 @@ function isTaskOverdue(
   return Boolean(
     task.due_date &&
       task.due_date <
-        getTodayValue() &&
+        getKyivDateValue() &&
       task.status !==
         "Виконано"
   );
@@ -372,6 +365,7 @@ export default function TasksList({
   equipment = [],
   canManageSupervision,
   canManageEquipment,
+  taskTemplates = [],
 }: Props) {
   const router =
     useRouter();
@@ -428,6 +422,12 @@ export default function TasksList({
     setEmployeeFilter,
   ] = useState("Усі");
   const [targetFilter, setTargetFilter] =
+    useState("Усі");
+  const [recurrenceFilter, setRecurrenceFilter] =
+    useState("Усі");
+  const [sourceFilter, setSourceFilter] =
+    useState("Усі");
+  const [dueFilter, setDueFilter] =
     useState("Усі");
 
   const [
@@ -517,6 +517,18 @@ export default function TasksList({
       );
     }, [employees]);
 
+  const taskTemplatesById =
+    useMemo(() => {
+      return new Map(
+        taskTemplates.map(
+          (template) => [
+            template.id,
+            template,
+          ]
+        )
+      );
+    }, [taskTemplates]);
+
   function getEmployeeName(
     task: TaskWithObject
   ) {
@@ -573,6 +585,8 @@ export default function TasksList({
         search
           .trim()
           .toLowerCase();
+      const today =
+        getKyivDateValue();
 
       return localTasks
         .filter(
@@ -605,8 +619,24 @@ export default function TasksList({
                       Boolean
                     )
                     .join(" ");
-              }
+                }
             }
+
+            const recurringTemplate =
+              task.task_template_id === null
+                ? null
+                : taskTemplatesById.get(
+                    task.task_template_id
+                  ) || null;
+            const recurrenceLabel =
+              recurringTemplate
+                ? getTaskRecurrenceLabel(
+                    recurringTemplate.recurrence_type,
+                    recurringTemplate.recurrence_interval
+                  )
+                : task.task_template_id !== null
+                  ? "Повторюване"
+                  : null;
 
             const searchableText =
               [
@@ -619,6 +649,7 @@ export default function TasksList({
                 task.equipment?.inventory_number,
                 priority,
                 task.status,
+                recurrenceLabel,
               ]
                 .filter(Boolean)
                 .join(" ")
@@ -660,12 +691,48 @@ export default function TasksList({
               (targetFilter === "Техніка" &&
                 task.equipment_id !== null);
 
+            const matchesRecurrence =
+              recurrenceFilter === "Усі" ||
+              (recurrenceFilter === "Разові" &&
+                task.task_template_id === null) ||
+              (recurrenceFilter === "Повторювані" &&
+                task.task_template_id !== null);
+
+            const matchesSource =
+              sourceFilter === "Усі" ||
+              task.task_source === sourceFilter;
+
+            const isActive =
+              task.status !== "Виконано";
+            const matchesDue =
+              dueFilter === "Усі" ||
+              (dueFilter === "Прострочені" &&
+                isActive &&
+                Boolean(
+                  task.due_date &&
+                    task.due_date < today
+                )) ||
+              (dueFilter === "Сьогодні" &&
+                isActive &&
+                task.due_date === today) ||
+              (dueFilter === "Майбутні" &&
+                isActive &&
+                Boolean(
+                  task.due_date &&
+                    task.due_date > today
+                )) ||
+              (dueFilter === "Без дати" &&
+                !task.due_date);
+
             return (
               matchesSearch &&
               matchesStatus &&
               matchesPriority &&
               matchesEmployee &&
-              matchesTarget
+              matchesTarget &&
+              matchesRecurrence &&
+              matchesSource &&
+              matchesDue
             );
           }
         )
@@ -679,7 +746,11 @@ export default function TasksList({
       priorityFilter,
       employeeFilter,
       targetFilter,
+      recurrenceFilter,
+      sourceFilter,
+      dueFilter,
       employeesById,
+      taskTemplatesById,
     ]);
 
   const tasksByStatus =
@@ -819,14 +890,12 @@ export default function TasksList({
       );
 
       if (
-        task.task_source ===
-          SUPERVISION_TASK_SOURCE &&
-        newStatus ===
-          "Виконано" ||
-        task.task_source ===
-          EQUIPMENT_MAINTENANCE_TASK_SOURCE &&
-        newStatus ===
-          "Виконано"
+        newStatus === "Виконано" &&
+        (task.task_source ===
+          SUPERVISION_TASK_SOURCE ||
+          task.task_source ===
+            EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
+          task.task_template_id !== null)
       ) {
         router.refresh();
       }
@@ -1133,6 +1202,9 @@ export default function TasksList({
       "Усі"
     );
     setTargetFilter("Усі");
+    setRecurrenceFilter("Усі");
+    setSourceFilter("Усі");
+    setDueFilter("Усі");
   }
 
   function closeEditForm() {
@@ -1167,6 +1239,13 @@ export default function TasksList({
       task.task_source ===
       EQUIPMENT_MAINTENANCE_TASK_SOURCE;
 
+    const recurringTemplate =
+      task.task_template_id === null
+        ? null
+        : taskTemplatesById.get(
+            task.task_template_id
+          ) || null;
+
     const target = getTaskTarget(task);
 
     const canChangeSupervisionTask =
@@ -1175,7 +1254,11 @@ export default function TasksList({
         !completed);
     const canChangeAutomaticTask =
       canChangeSupervisionTask &&
-      !isMaintenanceTask;
+      !isMaintenanceTask &&
+      !(
+        task.task_template_id !== null &&
+        completed
+      );
 
     const isUpdating =
       updatingId ===
@@ -1259,6 +1342,19 @@ export default function TasksList({
                 {isMaintenanceTask && (
                   <div className="mt-2">
                     <EquipmentMaintenanceTaskBadge compact />
+                  </div>
+                )}
+                {task.task_template_id !== null && (
+                  <div className="mt-2">
+                    <RecurringTaskBadge
+                      compact
+                      recurrenceType={
+                        recurringTemplate?.recurrence_type
+                      }
+                      recurrenceInterval={
+                        recurringTemplate?.recurrence_interval
+                      }
+                    />
                   </div>
                 )}
               </div>
@@ -1478,7 +1574,8 @@ export default function TasksList({
             type="button"
             disabled={
               isUpdating ||
-              isDeleting
+              isDeleting ||
+              task.task_template_id !== null
             }
             onClick={() =>
               setEditingTask(
@@ -1505,7 +1602,9 @@ export default function TasksList({
           >
             {isDeleting
               ? "..."
-              : "Видалити"}
+              : task.task_template_id !== null
+                ? "Зупини через шаблони"
+                : "Видалити"}
           </button>
         </div>
         )}
@@ -1629,7 +1728,7 @@ export default function TasksList({
           </div>
         </div>
 
-        <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_160px_160px_180px_220px]">
+        <div className="mt-4 grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           <input
             type="search"
             value={search}
@@ -1718,6 +1817,54 @@ export default function TasksList({
             <option value="Усі">Усі типи</option>
             <option value="Об’єкти">Об’єкти</option>
             <option value="Техніка">Техніка</option>
+          </select>
+
+          <select
+            value={recurrenceFilter}
+            onChange={(event) =>
+              setRecurrenceFilter(
+                event.target.value
+              )
+            }
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            aria-label="Повторюваність"
+          >
+            <option value="Усі">Усі повторення</option>
+            <option value="Разові">Разові</option>
+            <option value="Повторювані">Повторювані</option>
+          </select>
+
+          <select
+            value={sourceFilter}
+            onChange={(event) =>
+              setSourceFilter(
+                event.target.value
+              )
+            }
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            aria-label="Джерело завдання"
+          >
+            <option value="Усі">Усі джерела</option>
+            <option value="manual">Ручні</option>
+            <option value="supervision">Огляди</option>
+            <option value="equipment_maintenance">ТО техніки</option>
+          </select>
+
+          <select
+            value={dueFilter}
+            onChange={(event) =>
+              setDueFilter(
+                event.target.value
+              )
+            }
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            aria-label="Термін виконання"
+          >
+            <option value="Усі">Усі терміни</option>
+            <option value="Прострочені">Прострочені</option>
+            <option value="Сьогодні">Сьогодні</option>
+            <option value="Майбутні">Майбутні</option>
+            <option value="Без дати">Без дати</option>
           </select>
 
           <select
@@ -1918,6 +2065,13 @@ export default function TasksList({
                 task.task_source ===
                 EQUIPMENT_MAINTENANCE_TASK_SOURCE;
 
+              const recurringTemplate =
+                task.task_template_id === null
+                  ? null
+                  : taskTemplatesById.get(
+                      task.task_template_id
+                    ) || null;
+
               const target = getTaskTarget(task);
 
               const canChangeSupervisionTask =
@@ -1926,7 +2080,11 @@ export default function TasksList({
                   !completed);
               const canChangeAutomaticTask =
                 canChangeSupervisionTask &&
-                !isMaintenanceTask;
+                !isMaintenanceTask &&
+                !(
+                  task.task_template_id !== null &&
+                  completed
+                );
 
               const priority =
                 task.priority ||
@@ -1989,6 +2147,18 @@ export default function TasksList({
                       {isMaintenanceTask && (
                         <div className="mt-2">
                           <EquipmentMaintenanceTaskBadge />
+                        </div>
+                      )}
+                      {task.task_template_id !== null && (
+                        <div className="mt-2">
+                          <RecurringTaskBadge
+                            recurrenceType={
+                              recurringTemplate?.recurrence_type
+                            }
+                            recurrenceInterval={
+                              recurringTemplate?.recurrence_interval
+                            }
+                          />
                         </div>
                       )}
 
@@ -2210,7 +2380,8 @@ export default function TasksList({
                       type="button"
                       disabled={
                         isUpdating ||
-                        isDeleting
+                        isDeleting ||
+                        task.task_template_id !== null
                       }
                       onClick={() =>
                         setEditingTask(
@@ -2237,7 +2408,9 @@ export default function TasksList({
                     >
                       {isDeleting
                         ? "..."
-                        : "Видалити"}
+                        : task.task_template_id !== null
+                          ? "Зупини через шаблони"
+                          : "Видалити"}
                     </button>
                   </div>
                   )}
@@ -2306,6 +2479,9 @@ export default function TasksList({
                 equipment={equipment}
                 employees={
                   employees
+                }
+                canManageRecurrence={
+                  canManageSupervision
                 }
                 onCancel={
                   closeEditForm

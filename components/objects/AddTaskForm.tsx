@@ -3,23 +3,33 @@
 import { useState } from "react";
 
 import { createObjectTask } from "@/app/actions/taskActions";
+import TaskRecurrenceFields from "@/components/tasks/TaskRecurrenceFields";
 
 import type { Employee } from "@/types/employee";
+import type {
+  TaskRecurrenceType,
+} from "@/types/taskTemplate";
 
 type Props = {
   objectId: number;
   employees: Employee[];
+  canManageRecurrence?: boolean;
 };
 
 export default function AddTaskForm({
   objectId,
   employees,
+  canManageRecurrence = false,
 }: Props) {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
   const [errorMessage, setErrorMessage] =
     useState("");
+  const [recurrenceType, setRecurrenceType] =
+    useState<TaskRecurrenceType>("none");
+  const [customInterval, setCustomInterval] =
+    useState("14");
 
   async function handleSubmit(
     formData: FormData
@@ -106,6 +116,9 @@ export default function AddTaskForm({
           <input
             type="date"
             name="due_date"
+            required={
+              recurrenceType !== "none"
+            }
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           />
         </div>
@@ -158,10 +171,21 @@ export default function AddTaskForm({
             Статус
           </label>
 
+          {recurrenceType !== "none" && (
+            <input
+              type="hidden"
+              name="status"
+              value="Заплановано"
+            />
+          )}
+
           <select
             name="status"
             defaultValue="Заплановано"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            disabled={
+              recurrenceType !== "none"
+            }
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
           >
             <option value="Заплановано">
               Заплановано
@@ -177,6 +201,18 @@ export default function AddTaskForm({
           </select>
         </div>
       </div>
+
+      {canManageRecurrence && (
+        <TaskRecurrenceFields
+          idPrefix={`object-${objectId}-task`}
+          value={recurrenceType}
+          customInterval={customInterval}
+          onChange={setRecurrenceType}
+          onCustomIntervalChange={
+            setCustomInterval
+          }
+        />
+      )}
 
       <div className="border-t pt-4">
         <button

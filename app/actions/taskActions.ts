@@ -24,12 +24,21 @@ import {
 import {
   completeManualRecurringTask,
 } from "@/services/taskTemplateService";
+import {
+  createTaskTemplateAction,
+} from "@/app/actions/taskTemplateActions";
+import {
+  canManageTasks,
+} from "@/lib/auth/permissions";
 
 import type {
   TaskPriority,
   TaskSource,
   TaskTargetType,
 } from "@/types/objectTask";
+import type {
+  TaskRecurrenceType,
+} from "@/types/taskTemplate";
 
 const allowedStatuses = ["Заплановано", "В роботі", "Виконано"];
 const allowedPriorities: TaskPriority[] = [
@@ -144,6 +153,66 @@ function validateDueDate(dueDate: string) {
   ) {
     throw new Error("Вказано неправильну дату завдання.");
   }
+}
+
+function parseTaskRecurrence(
+  formData: FormData
+) {
+  const recurrenceType =
+    (getText(
+      formData,
+      "recurrence_type"
+    ) || "none") as TaskRecurrenceType;
+
+  if (
+    ![
+      "none",
+      "daily",
+      "weekly",
+      "monthly",
+      "custom",
+    ].includes(recurrenceType)
+  ) {
+    throw new Error(
+      "Вибрано неправильну періодичність завдання."
+    );
+  }
+
+  if (recurrenceType === "none") {
+    return {
+      recurrenceType,
+      recurrenceInterval: null,
+    };
+  }
+
+  if (recurrenceType !== "custom") {
+    return {
+      recurrenceType,
+      recurrenceInterval: 1,
+    };
+  }
+
+  const recurrenceInterval = Number(
+    getText(
+      formData,
+      "recurrence_interval"
+    )
+  );
+
+  if (
+    !Number.isInteger(
+      recurrenceInterval
+    ) || recurrenceInterval <= 0
+  ) {
+    throw new Error(
+      "Вкажи додатну кількість днів для повторення."
+    );
+  }
+
+  return {
+    recurrenceType,
+    recurrenceInterval,
+  };
 }
 
 function parsePositiveId(value: string) {
@@ -407,7 +476,8 @@ async function completeRecurringTaskWithActivity(
 }
 
 export async function createObjectTask(formData: FormData) {
-  await requireAuthenticatedUser();
+  const profile =
+    await requireAuthenticatedUser();
   const target = parseTaskTarget(formData);
   await ensureTaskTargetExists(target);
 
@@ -418,6 +488,8 @@ export async function createObjectTask(formData: FormData) {
   const oldAssigneeValue = getText(formData, "assignee");
   const status = getText(formData, "status") || "Заплановано";
   const priority = getText(formData, "priority") || "Середній";
+  const recurrence =
+    parseTaskRecurrence(formData);
 
   if (!title) throw new Error("Введи назву завдання.");
   validateDueDate(dueDate);
@@ -428,6 +500,49 @@ export async function createObjectTask(formData: FormData) {
     employeeValue,
     oldAssigneeValue
   );
+
+  if (
+    recurrence.recurrenceType !==
+    "none"
+  ) {
+    if (!canManageTasks(profile.role)) {
+      throw new Error(
+        "Повторювані завдання можуть створювати лише адміністратор або керівник об’єкта."
+      );
+    }
+    if (!dueDate) {
+      throw new Error(
+        "Для повторюваного завдання вкажи опорну дату."
+      );
+    }
+    if (status !== "Заплановано") {
+      throw new Error(
+        "Нова серія повинна починатися зі статусу «Заплановано»."
+      );
+    }
+
+    await createTaskTemplateAction({
+      title,
+      description:
+        description || null,
+      targetType: target.type,
+      objectId: target.objectId,
+      equipmentId:
+        target.equipmentId,
+      priority,
+      assignedEmployeeId:
+        assignment.employeeId,
+      recurrenceType:
+        recurrence.recurrenceType,
+      recurrenceInterval:
+        recurrence.recurrenceInterval,
+      anchorDueDate: dueDate,
+      isActive: true,
+    });
+
+    return;
+  }
+
   const supabase = await createClient();
   const { data: createdTask, error } = await supabase
     .from("object_tasks")

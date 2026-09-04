@@ -5,6 +5,7 @@ import { useState } from "react";
 import { updateObjectTask } from "@/app/actions/taskActions";
 
 import TaskChecklist from "@/components/tasks/TaskChecklist";
+import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
 
 import type { Employee } from "@/types/employee";
 import type { Equipment } from "@/types/equipment";
@@ -21,6 +22,7 @@ type Props = {
   objects?: ObjectItem[];
   equipment?: Equipment[];
   employees: Employee[];
+  canManageRecurrence?: boolean;
   onCancel: () => void;
 };
 
@@ -37,6 +39,7 @@ export default function EditTaskForm({
   objects,
   equipment,
   employees,
+  canManageRecurrence = false,
   onCancel,
 }: Props) {
   const [isSubmitting, setIsSubmitting] =
@@ -124,6 +127,17 @@ export default function EditTaskForm({
       {errorMessage && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
           {errorMessage}
+        </div>
+      )}
+
+      {task.task_template_id !== null && (
+        <div className="rounded-lg border border-teal-100 bg-teal-50 p-3 text-sm text-teal-800">
+          <RecurringTaskBadge />
+          <p className="mt-2 leading-5">
+            {canManageRecurrence
+              ? "Періодичність і опорну дату серії редагуйте у блоці «Шаблони» на сторінці завдань."
+              : "Після виконання цього завдання наступне повторення створиться автоматично."}
+          </p>
         </div>
       )}
 
@@ -313,10 +327,23 @@ export default function EditTaskForm({
             Статус
           </label>
 
+          {task.task_template_id !== null &&
+            task.status === "Виконано" && (
+            <input
+              type="hidden"
+              name="status"
+              value={task.status}
+            />
+          )}
+
           <select
             name="status"
             defaultValue={task.status}
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            disabled={
+              task.task_template_id !== null &&
+              task.status === "Виконано"
+            }
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
           >
             <option value="Заплановано">
               Заплановано

@@ -1,4 +1,5 @@
 import AddGlobalTaskForm from "@/components/tasks/AddGlobalTaskForm";
+import TaskTemplatesPanel from "@/components/tasks/TaskTemplatesPanel";
 import TasksList from "@/components/tasks/TasksList";
 
 import { getEmployees } from "@/services/employeeService";
@@ -7,23 +8,36 @@ import { getObjects } from "@/services/objectService";
 import { getCurrentUserProfile } from "@/services/profileService";
 import { getAllTasks } from "@/services/taskService";
 import {
+  getTaskTemplates,
+} from "@/services/taskTemplateService";
+import {
   canManageEquipment,
   canManageObjects,
+  canManageTasks,
 } from "@/lib/auth/permissions";
 
 export default async function TasksPage() {
+  const profile =
+    await getCurrentUserProfile();
+  const canManageTaskTemplates =
+    profile
+      ? canManageTasks(profile.role)
+      : false;
+
   const [
     tasks,
     objects,
     employees,
     equipment,
-    profile,
+    templates,
   ] = await Promise.all([
     getAllTasks(),
     getObjects(),
     getEmployees(),
     getEquipment(),
-    getCurrentUserProfile(),
+    canManageTaskTemplates
+      ? getTaskTemplates()
+      : Promise.resolve([]),
   ]);
 
   const canManageSupervision =
@@ -57,8 +71,20 @@ export default async function TasksPage() {
           objects={objects}
           equipment={equipment}
           employees={employees}
+          canManageRecurrence={
+            canManageTaskTemplates
+          }
         />
       </div>
+
+      {canManageTaskTemplates && (
+        <TaskTemplatesPanel
+          templates={templates}
+          objects={objects}
+          equipment={equipment}
+          employees={employees}
+        />
+      )}
 
       {/* TASK LIST */}
       <div className="min-w-0">
@@ -73,6 +99,7 @@ export default async function TasksPage() {
           canManageEquipment={
             canManageMaintenance
           }
+          taskTemplates={templates}
         />
       </div>
     </div>
