@@ -30,6 +30,7 @@ type Props = {
   currency: AppCurrency;
   canCreatePurchase: boolean;
   canViewPurchaseHistory: boolean;
+  canViewCosts: boolean;
 };
 
 function formatMoney(
@@ -68,6 +69,7 @@ export default function WarehouseItemPlanningPanel({
   currency,
   canCreatePurchase,
   canViewPurchaseHistory,
+  canViewCosts,
 }: Props) {
   const [
     history,
@@ -268,6 +270,7 @@ export default function WarehouseItemPlanningPanel({
         )}
       </div>
 
+      {canViewCosts && (
       <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-lg border bg-white p-3">
           <p className="text-xs text-gray-500">
@@ -336,6 +339,7 @@ export default function WarehouseItemPlanningPanel({
           </p>
         </div>
       </div>
+      )}
 
       {canViewPurchaseHistory && (
         <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">

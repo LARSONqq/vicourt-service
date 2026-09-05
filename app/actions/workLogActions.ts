@@ -13,6 +13,28 @@ import {
   type WorkLogAttachmentMetadata,
 } from "@/constants/workLogAttachments";
 
+type ManagementEmployeeSnapshot = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  hourly_rate: number;
+};
+
+type ManagementWorkLogSnapshot = {
+  id: number;
+  object_id: number;
+  employee_id: number | null;
+  work_date: string;
+  description: string;
+  workers: string | null;
+  hours: number;
+  hourly_rate: number;
+  attachment_path: string | null;
+  attachment_name: string | null;
+  attachment_type: string | null;
+  attachment_size: number | null;
+};
+
 function getText(
   formData: FormData,
   field: string
@@ -173,18 +195,18 @@ async function getEmployeeAssignment(
     data: employee,
     error,
   } = await supabase
-    .from("employees")
-    .select(`
-      id,
-      first_name,
-      last_name,
-      hourly_rate
-    `)
+    .rpc(
+      "get_management_employees"
+    )
     .eq(
       "id",
       employeeId
     )
-    .maybeSingle();
+    .maybeSingle()
+    .overrideTypes<
+      ManagementEmployeeSnapshot | null,
+      { merge: false }
+    >();
 
   if (error) {
     throw new Error(
@@ -591,20 +613,9 @@ export async function updateWorkLog(
     data: previousWorkLog,
     error: previousWorkLogError,
   } = await supabase
-    .from("work_logs")
-    .select(`
-      id,
-      employee_id,
-      hourly_rate,
-      work_date,
-      description,
-      workers,
-      hours,
-      attachment_path,
-      attachment_name,
-      attachment_type,
-      attachment_size
-    `)
+    .rpc(
+      "get_management_work_logs"
+    )
     .eq(
       "id",
       workLogId
@@ -613,7 +624,11 @@ export async function updateWorkLog(
       "object_id",
       objectId
     )
-    .maybeSingle();
+    .maybeSingle()
+    .overrideTypes<
+      ManagementWorkLogSnapshot | null,
+      { merge: false }
+    >();
 
   if (
     previousWorkLogError

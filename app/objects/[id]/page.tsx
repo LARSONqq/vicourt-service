@@ -17,10 +17,16 @@ import ObjectSupervisionCard from "@/components/objects/ObjectSupervisionCard";
 import ObjectTasks from "@/components/objects/ObjectTasks";
 import ObjectWorkLogs from "@/components/objects/ObjectWorkLogs";
 
-import { getEmployees } from "@/services/employeeService";
+import {
+  getEmployees,
+  getManagementEmployees,
+} from "@/services/employeeService";
 
 import {
   getMaterials,
+  getManagementMaterials,
+  getManagementObject,
+  getManagementWorkLogs,
   getObject,
   getObjectPhotos,
   getObjectTasks,
@@ -42,6 +48,7 @@ import {
 
 import {
   getObjectMaterialMovements,
+  getManagementWarehouseItems,
   getWarehouseItems,
 } from "@/services/warehouseService";
 import { getAppSettings } from "@/services/settingsService";
@@ -159,14 +166,34 @@ export default async function ObjectPage({
     materialMovements,
     settings,
   ] = await Promise.all([
-    getObject(objectId),
+    canViewPayments
+      ? getManagementObject(
+          objectId
+        )
+      : getObject(objectId),
     getObjectTasks(objectId),
-    getMaterials(objectId),
-    getWorkLogs(objectId),
+    canViewPayments
+      ? getManagementMaterials(
+          objectId
+        )
+      : getMaterials(objectId),
+    canViewPayments
+      ? getManagementWorkLogs(
+          objectId
+        )
+      : getWorkLogs(objectId),
     getObjectPhotos(objectId),
-    getEmployees(),
-    getWarehouseItems(),
-    getObjectExpenses(objectId),
+    canViewPayments
+      ? getManagementEmployees()
+      : getEmployees(),
+    canViewPayments
+      ? getManagementWarehouseItems()
+      : getWarehouseItems(),
+    canViewPayments
+      ? getObjectExpenses(
+          objectId
+        )
+      : Promise.resolve([]),
     canViewPayments
       ? getObjectPayments(
           objectId
@@ -411,7 +438,8 @@ export default async function ObjectPage({
   const paymentSummary =
     canViewPayments
       ? calculateObjectPaymentSummary(
-          object.client_price,
+          object.client_price ??
+            null,
           paymentList.map(
             (payment) =>
               Number(
@@ -514,23 +542,22 @@ export default async function ObjectPage({
         photosCount={
           photoList.length
         }
-        materialsCost={
-          materialsCost
-        }
-        laborCost={
-          laborCost
-        }
-        otherExpensesCost={
-          otherExpensesCost
-        }
-        costBudget={
-          object.cost_budget
-        }
-        clientPrice={
-          object.client_price
-        }
-        paymentSummary={
+        finance={
+          canViewPayments &&
           paymentSummary
+            ? {
+                materialsCost,
+                laborCost,
+                otherExpensesCost,
+                costBudget:
+                  object.cost_budget ??
+                  null,
+                clientPrice:
+                  object.client_price ??
+                  null,
+                paymentSummary,
+              }
+            : undefined
         }
       />
 
@@ -539,7 +566,8 @@ export default async function ObjectPage({
           <ObjectPaymentSchedule
             objectId={object.id}
             clientPrice={
-              object.client_price
+              object.client_price ??
+              null
             }
             lifetimeTotalPaid={
               paymentSummary
@@ -568,6 +596,9 @@ export default async function ObjectPage({
             }
             employees={
               employeeList
+            }
+            canManage={
+              canManageObject
             }
           />
         }
@@ -623,9 +654,12 @@ export default async function ObjectPage({
             employees={
               employeeList
             }
+            canManage={
+              canManageObject
+            }
           />
         }
-        expenses={
+        expenses={canViewPayments ? (
           <ObjectExpenses
             expenses={
               expenseList
@@ -634,7 +668,7 @@ export default async function ObjectPage({
               object.id
             }
           />
-        }
+        ) : undefined}
         documents={
           <ObjectDocuments
             objectId={

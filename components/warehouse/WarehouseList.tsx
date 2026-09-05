@@ -40,6 +40,7 @@ type Props = {
   canManage?: boolean;
   canCreatePurchases?: boolean;
   canViewPurchaseHistory?: boolean;
+  canViewCosts?: boolean;
   purchaseInsights?: WarehousePurchaseInsights;
   focusedItemId?: number;
 };
@@ -97,6 +98,7 @@ export default function WarehouseList({
   canManage = false,
   canCreatePurchases = false,
   canViewPurchaseHistory = false,
+  canViewCosts = false,
   purchaseInsights = {},
   focusedItemId,
 }: Props) {
@@ -341,7 +343,7 @@ export default function WarehouseList({
   }
 
   const columnCount =
-    8;
+    canViewCosts ? 8 : 6;
 
   return (
     <div className="min-w-0 space-y-5">
@@ -638,31 +640,35 @@ export default function WarehouseList({
                         </p>
                       </div>
 
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">
-                          Ціна
-                        </p>
+                      {canViewCosts && (
+                        <>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500">
+                              Ціна
+                            </p>
 
-                        <p className="mt-1 break-words text-sm font-medium text-gray-800">
-                          {formatMoney(
-                            purchasePrice,
-                            currency
-                          )}
-                        </p>
-                      </div>
+                            <p className="mt-1 break-words text-sm font-medium text-gray-800">
+                              {formatMoney(
+                                purchasePrice,
+                                currency
+                              )}
+                            </p>
+                          </div>
 
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">
-                          Вартість
-                        </p>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500">
+                              Вартість
+                            </p>
 
-                        <p className="mt-1 break-words text-sm font-semibold text-green-700">
-                          {formatMoney(
-                            totalValue,
-                            currency
-                          )}
-                        </p>
-                      </div>
+                            <p className="mt-1 break-words text-sm font-semibold text-green-700">
+                              {formatMoney(
+                                totalValue,
+                                currency
+                              )}
+                            </p>
+                          </div>
+                        </>
+                      )}
 
                       <div className="min-w-0">
                         <p className="text-xs text-gray-500">
@@ -688,7 +694,9 @@ export default function WarehouseList({
                       >
                         {isDetailsOpen
                           ? "Сховати деталі"
-                          : "Запас і ціни"}
+                          : canViewCosts
+                            ? "Запас і ціни"
+                            : "Деталі запасу"}
                       </button>
 
                       {canCreatePurchases &&
@@ -878,6 +886,9 @@ export default function WarehouseList({
                           canViewPurchaseHistory={
                             canViewPurchaseHistory
                           }
+                          canViewCosts={
+                            canViewCosts
+                          }
                         />
                       </div>
                     )}
@@ -914,13 +925,17 @@ export default function WarehouseList({
                     Мінімум
                   </th>
 
-                  <th className="p-4">
-                    Ціна
-                  </th>
+                  {canViewCosts && (
+                    <>
+                      <th className="p-4">
+                        Ціна
+                      </th>
 
-                  <th className="p-4">
-                    Вартість
-                  </th>
+                      <th className="p-4">
+                        Вартість
+                      </th>
+                    </>
+                  )}
 
                   <th className="p-4">
                     Постачальник
@@ -1058,20 +1073,24 @@ export default function WarehouseList({
                             </p>
                           </td>
 
-                          <td className="p-4">
-                            {formatMoney(
-                              purchasePrice,
-                              currency
-                            )}
-                          </td>
+                          {canViewCosts && (
+                            <>
+                              <td className="p-4">
+                                {formatMoney(
+                                  purchasePrice,
+                                  currency
+                                )}
+                              </td>
 
-                          <td className="p-4 font-medium">
-                            {formatMoney(
-                              quantity *
-                                purchasePrice,
-                              currency
-                            )}
-                          </td>
+                              <td className="p-4 font-medium">
+                                {formatMoney(
+                                  quantity *
+                                    purchasePrice,
+                                  currency
+                                )}
+                              </td>
+                            </>
+                          )}
 
                           <td className="p-4 text-gray-600">
                             {item.supplier ||
@@ -1091,7 +1110,9 @@ export default function WarehouseList({
                               >
                                 {isDetailsOpen
                                   ? "Сховати"
-                                  : "Запас і ціни"}
+                                  : canViewCosts
+                                    ? "Запас і ціни"
+                                    : "Деталі"}
                               </button>
 
                               {canCreatePurchases &&
@@ -1313,6 +1334,9 @@ export default function WarehouseList({
                                 }
                                 canViewPurchaseHistory={
                                   canViewPurchaseHistory
+                                }
+                                canViewCosts={
+                                  canViewCosts
                                 }
                               />
                             </td>

@@ -7,6 +7,16 @@ import { canManageObjects } from "@/lib/auth/permissions";
 import { getCurrentUserProfile } from "@/services/profileService";
 import { recordActivity } from "@/services/activityLogService";
 
+type ManagementMaterialSnapshot = {
+  id: number;
+  object_id: number;
+  warehouse_item_id: number | null;
+  name: string;
+  quantity: number;
+  unit: string;
+  price: number;
+};
+
 function getText(
   formData: FormData,
   field: string
@@ -436,17 +446,9 @@ export async function updateMaterial(
     error: materialError,
   } =
     await supabase
-      .from(
-        "materials"
+      .rpc(
+        "get_management_materials"
       )
-      .select(`
-        id,
-        warehouse_item_id,
-        name,
-        quantity,
-        unit,
-        price
-      `)
       .eq(
         "id",
         materialId
@@ -455,7 +457,11 @@ export async function updateMaterial(
         "object_id",
         objectId
       )
-      .maybeSingle();
+      .maybeSingle()
+      .overrideTypes<
+        ManagementMaterialSnapshot | null,
+        { merge: false }
+      >();
 
   if (
     materialError
@@ -640,15 +646,9 @@ export async function deleteMaterial(
     data: material,
     error: materialError,
   } = await supabase
-    .from("materials")
-    .select(`
-      id,
-      warehouse_item_id,
-      name,
-      quantity,
-      unit,
-      price
-    `)
+    .rpc(
+      "get_management_materials"
+    )
     .eq(
       "id",
       materialId
@@ -657,7 +657,11 @@ export async function deleteMaterial(
       "object_id",
       objectId
     )
-    .maybeSingle();
+    .maybeSingle()
+    .overrideTypes<
+      ManagementMaterialSnapshot | null,
+      { merge: false }
+    >();
 
   if (materialError) {
     throw new Error(

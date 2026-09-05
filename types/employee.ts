@@ -30,7 +30,12 @@ export interface Employee {
 
   notes: string | null;
 
-  hourly_rate: number;
+  hourly_rate?: number;
 
   created_at: string;
 }
+
+export type ManagementEmployee =
+  Employee & {
+    hourly_rate: number;
+  };

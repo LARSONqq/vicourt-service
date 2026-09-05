@@ -4,7 +4,7 @@ import EmployeeList from "@/components/employees/EmployeeList";
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
 import { canManageEmployees } from "@/lib/auth/permissions";
 
-import { getEmployees } from "@/services/employeeService";
+import { getManagementEmployees } from "@/services/employeeService";
 
 export default async function EmployeesPage() {
   const currentProfile =
@@ -18,7 +18,7 @@ export default async function EmployeesPage() {
     );
 
   const employees =
-    await getEmployees();
+    await getManagementEmployees();
 
   const activeCount =
     employees.filter(

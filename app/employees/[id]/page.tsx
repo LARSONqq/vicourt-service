@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
 
-import { getEmployees } from "@/services/employeeService";
+import { getManagementEmployees } from "@/services/employeeService";
 import { getEquipment } from "@/services/equipmentService";
 
 import {
@@ -114,7 +114,7 @@ export default async function EmployeePage({
     equipment,
     workLogs,
   ] = await Promise.all([
-    getEmployees(),
+    getManagementEmployees(),
     getAllTasks(),
     getObjects(),
     getEquipment(),

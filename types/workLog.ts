@@ -13,7 +13,7 @@ export interface WorkLog {
 
   hours: number;
 
-  hourly_rate: number;
+  hourly_rate?: number;
 
   attachment_path: string | null;
 
@@ -27,3 +27,8 @@ export interface WorkLog {
 
   created_at: string;
 }
+
+export type ManagementWorkLog =
+  WorkLog & {
+    hourly_rate: number;
+  };

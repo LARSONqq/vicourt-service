@@ -14,13 +14,15 @@ type Props = {
   materialsCount: number;
   totalHours: number;
   photosCount: number;
-  materialsCost: number;
-  laborCost: number;
-  otherExpensesCost: number;
-  costBudget: number | null;
-  clientPrice: number | null;
-  paymentSummary?:
-    ObjectPaymentSummary;
+  finance?: {
+    materialsCost: number;
+    laborCost: number;
+    otherExpensesCost: number;
+    costBudget: number | null;
+    clientPrice: number | null;
+    paymentSummary:
+      ObjectPaymentSummary;
+  };
 };
 
 function formatMoney(
@@ -75,13 +77,20 @@ export default function ObjectSummary({
   materialsCount,
   totalHours,
   photosCount,
-  materialsCost,
-  laborCost,
-  otherExpensesCost,
-  costBudget,
-  clientPrice,
-  paymentSummary,
+  finance,
 }: Props) {
+  const materialsCost =
+    finance?.materialsCost ?? 0;
+  const laborCost =
+    finance?.laborCost ?? 0;
+  const otherExpensesCost =
+    finance?.otherExpensesCost ?? 0;
+  const costBudget =
+    finance?.costBudget ?? null;
+  const clientPrice =
+    finance?.clientPrice ?? null;
+  const paymentSummary =
+    finance?.paymentSummary;
   const financials =
     calculateObjectFinancials({
       materialsCost,
@@ -177,6 +186,7 @@ export default function ObjectSummary({
       </div>
 
       {/* FINANCIAL SUMMARY */}
+      {finance && (
       <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
         <div className="border-b p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -576,6 +586,7 @@ export default function ObjectSummary({
           </div>
         </div>
       </section>
+      )}
     </div>
   );
 }

@@ -21,6 +21,16 @@ import type {
   ActivityMetadata,
 } from "@/types/activityLog";
 
+type ManagementObjectSnapshot = {
+  id: number;
+  name: string;
+  status: string;
+  cost_budget: number | null;
+  client_price: number | null;
+  supervision_interval_days: number | null;
+  next_supervision_date: string | null;
+};
+
 function getText(
   formData: FormData,
   field: string
@@ -572,21 +582,18 @@ export async function updateObject(
     data: previousObject,
     error: previousObjectError,
   } = await supabase
-    .from("objects")
-    .select(`
-      id,
-      name,
-      status,
-      cost_budget,
-      client_price,
-      supervision_interval_days,
-      next_supervision_date
-    `)
+    .rpc(
+      "get_management_objects"
+    )
     .eq(
       "id",
       objectId
     )
-    .maybeSingle();
+    .maybeSingle()
+    .overrideTypes<
+      ManagementObjectSnapshot | null,
+      { merge: false }
+    >();
 
   if (previousObjectError) {
     throw new Error(

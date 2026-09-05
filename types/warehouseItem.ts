@@ -6,7 +6,12 @@ export interface WarehouseItem {
   unit: string;
   min_quantity: number;
   target_quantity: number | null;
-  purchase_price: number;
+  purchase_price?: number;
   supplier: string | null;
   created_at: string;
 }
+
+export type ManagementWarehouseItem =
+  WarehouseItem & {
+    purchase_price: number;
+  };

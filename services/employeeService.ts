@@ -1,6 +1,23 @@
 import { createClient } from "@/lib/supabase/server";
 
-import type { Employee } from "@/types/employee";
+import type {
+  Employee,
+  ManagementEmployee,
+} from "@/types/employee";
+
+const EMPLOYEE_OPERATIONAL_SELECT = `
+  id,
+  first_name,
+  last_name,
+  phone,
+  email,
+  position,
+  employment_type,
+  status,
+  hire_date,
+  notes,
+  created_at
+`;
 
 export async function getEmployees(): Promise<Employee[]> {
   const supabase =
@@ -11,7 +28,9 @@ export async function getEmployees(): Promise<Employee[]> {
     error,
   } = await supabase
     .from("employees")
-    .select("*")
+    .select(
+      EMPLOYEE_OPERATIONAL_SELECT
+    )
     .order(
       "last_name",
       {
@@ -36,4 +55,36 @@ export async function getEmployees(): Promise<Employee[]> {
       ? data
       : []
   ) as Employee[];
+}
+
+export async function getManagementEmployees(): Promise<
+  ManagementEmployee[]
+> {
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase
+      .rpc(
+        "get_management_employees"
+      )
+      .order("last_name", {
+        ascending: true,
+      })
+      .order("first_name", {
+        ascending: true,
+      })
+      .overrideTypes<
+        ManagementEmployee[],
+        { merge: false }
+      >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити ставки працівників: ${error.message}`
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
 }

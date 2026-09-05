@@ -354,21 +354,14 @@ export async function updateWarehouseItem(
     data: previousItem,
     error: previousItemError,
   } = await supabase
-    .from("warehouse_items")
-    .select(`
-      id,
-      name,
-      quantity,
-      unit,
-      purchase_price,
-      min_quantity,
-      target_quantity,
-      supplier
-    `)
+    .rpc(
+      "get_management_warehouse_items"
+    )
     .eq("id", itemId)
     .maybeSingle()
     .overrideTypes<
-      WarehouseItemSnapshot | null
+      WarehouseItemSnapshot | null,
+      { merge: false }
     >();
 
   if (previousItemError) {
@@ -486,21 +479,14 @@ export async function deleteWarehouseItem(
     data: previousItem,
     error: previousItemError,
   } = await supabase
-    .from("warehouse_items")
-    .select(`
-      id,
-      name,
-      quantity,
-      unit,
-      purchase_price,
-      min_quantity,
-      target_quantity,
-      supplier
-    `)
+    .rpc(
+      "get_management_warehouse_items"
+    )
     .eq("id", itemId)
     .maybeSingle()
     .overrideTypes<
-      WarehouseItemSnapshot | null
+      WarehouseItemSnapshot | null,
+      { merge: false }
     >();
 
   if (previousItemError) {

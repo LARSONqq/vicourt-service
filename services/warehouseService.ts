@@ -12,7 +12,10 @@ import {
 } from "@/lib/kyivDate";
 import { createClient } from "@/lib/supabase/server";
 
-import type { WarehouseItem } from "@/types/warehouseItem";
+import type {
+  ManagementWarehouseItem,
+  WarehouseItem,
+} from "@/types/warehouseItem";
 import type {
   WarehouseMovement,
   WarehouseMovementPage,
@@ -26,6 +29,18 @@ const WAREHOUSE_LEDGER_SEARCH_COLUMNS = [
   "performed_by_name",
   "note",
 ] as const;
+
+const WAREHOUSE_ITEM_OPERATIONAL_SELECT = `
+  id,
+  name,
+  category,
+  quantity,
+  unit,
+  min_quantity,
+  target_quantity,
+  supplier,
+  created_at
+`;
 
 const WAREHOUSE_MOVEMENT_SELECT = `
   id,
@@ -74,7 +89,9 @@ async function loadWarehouseItems(): Promise<WarehouseItem[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("warehouse_items")
-    .select("*")
+    .select(
+      WAREHOUSE_ITEM_OPERATIONAL_SELECT
+    )
     .order("name", { ascending: true });
 
   if (error) {
@@ -87,6 +104,40 @@ async function loadWarehouseItems(): Promise<WarehouseItem[]> {
 }
 
 export const getWarehouseItems = cache(loadWarehouseItems);
+
+async function loadManagementWarehouseItems(): Promise<
+  ManagementWarehouseItem[]
+> {
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase
+      .rpc(
+        "get_management_warehouse_items"
+      )
+      .order("name", {
+        ascending: true,
+      })
+      .overrideTypes<
+        ManagementWarehouseItem[],
+        { merge: false }
+      >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити облікову вартість складу: ${error.message}`
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
+}
+
+export const getManagementWarehouseItems =
+  cache(
+    loadManagementWarehouseItems
+  );
 
 function normalizePositiveInteger(value: number | undefined) {
   return Number.isInteger(value) && Number(value) > 0

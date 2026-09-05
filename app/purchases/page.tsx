@@ -5,7 +5,7 @@ import { requireSectionAccess } from "@/lib/auth/requireAccess";
 
 import { getAppSettings } from "@/services/settingsService";
 import { getWarehousePurchases } from "@/services/purchaseService";
-import { getWarehouseItems } from "@/services/warehouseService";
+import { getManagementWarehouseItems } from "@/services/warehouseService";
 import {
   buildWarehousePurchaseInsights,
 } from "@/lib/warehousePlanning";
@@ -83,7 +83,7 @@ export default async function PurchasesPage({
     purchases,
     settings,
   ] = await Promise.all([
-    getWarehouseItems(),
+    getManagementWarehouseItems(),
     getWarehousePurchases(),
     getAppSettings(),
   ]);

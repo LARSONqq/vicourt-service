@@ -16,6 +16,7 @@ import {
 } from "@/services/purchaseService";
 
 import {
+  getManagementWarehouseItems,
   getWarehouseItems,
   getWarehouseMovementPage,
 } from "@/services/warehouseService";
@@ -139,7 +140,9 @@ export default async function WarehousePage({
     settings,
     purchaseInsights,
   ] = await Promise.all([
-    getWarehouseItems(),
+    canViewLedger
+      ? getManagementWarehouseItems()
+      : getWarehouseItems(),
     canViewLedger
       ? getWarehouseMovementPage({
           search:
@@ -305,18 +308,20 @@ export default async function WarehousePage({
           </p>
         </div>
 
-        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
-          <p className="text-xs text-gray-500 sm:text-sm">
-            Вартість залишків
-          </p>
+        {canViewLedger && (
+          <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+            <p className="text-xs text-gray-500 sm:text-sm">
+              Вартість залишків
+            </p>
 
-          <p className="mt-2 break-words text-lg font-bold text-green-700 sm:text-2xl">
-            {formatMoney(
-              totalValue,
-              settings.currency
-            )}
-          </p>
-        </div>
+            <p className="mt-2 break-words text-lg font-bold text-green-700 sm:text-2xl">
+              {formatMoney(
+                totalValue,
+                settings.currency
+              )}
+            </p>
+          </div>
+        )}
 
         <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
           <p className="text-xs text-gray-500 sm:text-sm">
@@ -346,6 +351,9 @@ export default async function WarehousePage({
           }
           canViewPurchaseHistory={
             canCreatePurchases
+          }
+          canViewCosts={
+            canViewLedger
           }
           purchaseInsights={
             purchaseInsights

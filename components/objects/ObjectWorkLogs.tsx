@@ -25,6 +25,7 @@ type Props = {
   workLogs: WorkLogWithEmployee[];
   objectId: number;
   employees?: Employee[];
+  canManage?: boolean;
 };
 
 function formatDate(
@@ -73,6 +74,7 @@ export default function ObjectWorkLogs({
   workLogs,
   objectId,
   employees = [],
+  canManage = false,
 }: Props) {
   const [
     showForm,
@@ -118,6 +120,7 @@ export default function ObjectWorkLogs({
           </p>
         </div>
 
+        {canManage && (
         <button
           type="button"
           onClick={() =>
@@ -136,10 +139,11 @@ export default function ObjectWorkLogs({
             ? "Закрити форму"
             : "+ Додати запис"}
         </button>
+        )}
       </div>
 
       {/* ADD FORM */}
-      {showForm && (
+      {showForm && canManage && (
         <div className="mb-5 min-w-0 rounded-xl border bg-gray-50 p-3 sm:mb-6 sm:p-4">
           <AddWorkLogForm
             objectId={
@@ -304,6 +308,7 @@ export default function ObjectWorkLogs({
                     </div>
 
                     {/* ACTIONS */}
+                    {canManage && (
                     <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:flex sm:justify-end">
                       <button
                         type="button"
@@ -358,10 +363,12 @@ export default function ObjectWorkLogs({
                         </button>
                       </form>
                     </div>
+                    )}
                   </article>
 
                   {/* EDIT FORM */}
-                  {editingId ===
+                  {canManage &&
+                    editingId ===
                     workLog.id && (
                     <div className="min-w-0 rounded-xl border border-blue-100 bg-blue-50/40 p-3 sm:p-4">
                       <EditWorkLogForm

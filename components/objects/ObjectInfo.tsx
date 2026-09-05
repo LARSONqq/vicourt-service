@@ -17,6 +17,7 @@ import type { ObjectItem } from "@/types/object";
 type Props = {
   object: ObjectItem;
   employees?: Employee[];
+  canManage?: boolean;
 };
 
 const standardStatuses = [
@@ -31,6 +32,7 @@ const standardStatuses = [
 export default function ObjectInfo({
   object,
   employees = [],
+  canManage = false,
 }: Props) {
   const router = useRouter();
 
@@ -449,6 +451,7 @@ export default function ObjectInfo({
           </p>
         </div>
 
+        {canManage && (
         <button
           type="button"
           onClick={() => {
@@ -468,6 +471,7 @@ export default function ObjectInfo({
         >
           Редагувати
         </button>
+        )}
       </div>
 
       <div className="divide-y md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-6 md:divide-y-0">

@@ -9,8 +9,8 @@ export interface ObjectItem {
   manager: string | null;
   responsible_employee_id: number | null;
 
-  cost_budget: number | null;
-  client_price: number | null;
+  cost_budget?: number | null;
+  client_price?: number | null;
 
   supervision_interval_days:
     | number
@@ -24,3 +24,9 @@ export interface ObjectItem {
 
   created_at: string;
 }
+
+export type ManagementObjectItem =
+  ObjectItem & {
+    cost_budget: number | null;
+    client_price: number | null;
+  };

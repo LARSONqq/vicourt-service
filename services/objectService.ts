@@ -4,11 +4,60 @@ import {
   WORK_LOG_ATTACHMENTS_BUCKET,
 } from "@/constants/workLogAttachments";
 
-import type { Material } from "@/types/material";
-import type { ObjectItem } from "@/types/object";
+import type {
+  ManagementMaterial,
+  Material,
+} from "@/types/material";
+import type {
+  ManagementObjectItem,
+  ObjectItem,
+} from "@/types/object";
 import type { ObjectPhoto } from "@/types/objectPhoto";
 import type { ObjectTask } from "@/types/objectTask";
-import type { WorkLog } from "@/types/workLog";
+import type {
+  ManagementWorkLog,
+  WorkLog,
+} from "@/types/workLog";
+
+const OBJECT_OPERATIONAL_SELECT = `
+  id,
+  name,
+  customer,
+  phone,
+  address,
+  status,
+  manager,
+  responsible_employee_id,
+  supervision_interval_days,
+  last_supervision_date,
+  next_supervision_date,
+  created_at
+`;
+
+const MATERIAL_OPERATIONAL_SELECT = `
+  id,
+  object_id,
+  warehouse_item_id,
+  name,
+  quantity,
+  unit,
+  created_at
+`;
+
+const WORK_LOG_OPERATIONAL_SELECT = `
+  id,
+  object_id,
+  employee_id,
+  work_date,
+  description,
+  workers,
+  hours,
+  attachment_path,
+  attachment_name,
+  attachment_type,
+  attachment_size,
+  created_at
+`;
 
 type SupabaseError = {
   message?: string;
@@ -63,7 +112,9 @@ export async function getObjects(
 
   let query = supabase
     .from("objects")
-    .select("*");
+    .select(
+      OBJECT_OPERATIONAL_SELECT
+    );
 
   if (filters.status) {
     query = query.eq(
@@ -134,6 +185,78 @@ export async function getObjects(
   ) as ObjectItem[];
 }
 
+export async function getManagementObjects(
+  filters: ObjectQueryFilters = {}
+): Promise<ManagementObjectItem[]> {
+  const supabase =
+    await createClient();
+  let query = supabase.rpc(
+    "get_management_objects"
+  );
+
+  if (filters.status) {
+    query = query.eq(
+      "status",
+      filters.status
+    );
+  } else if (
+    filters.statuses &&
+    filters.statuses.length > 0
+  ) {
+    query = query.in(
+      "status",
+      filters.statuses
+    );
+  }
+
+  if (
+    filters.nextSupervisionDateTo
+  ) {
+    query = query
+      .not(
+        "next_supervision_date",
+        "is",
+        null
+      )
+      .lte(
+        "next_supervision_date",
+        filters.nextSupervisionDateTo
+      );
+  }
+
+  query = query.order(
+    "created_at",
+    { ascending: false }
+  );
+
+  if (
+    filters.limit !== undefined &&
+    Number.isInteger(filters.limit) &&
+    filters.limit > 0
+  ) {
+    query = query.limit(
+      filters.limit
+    );
+  }
+
+  const { data, error } =
+    await query.overrideTypes<
+      ManagementObjectItem[],
+      { merge: false }
+    >();
+
+  if (error) {
+    throw createReadableError(
+      error,
+      "Не вдалося завантажити фінансові дані об’єктів"
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
+}
+
 export async function getObject(
   id: number
 ): Promise<ObjectItem | null> {
@@ -145,7 +268,9 @@ export async function getObject(
     error,
   } = await supabase
     .from("objects")
-    .select("*")
+    .select(
+      OBJECT_OPERATIONAL_SELECT
+    )
     .eq("id", id)
     .maybeSingle();
 
@@ -159,6 +284,33 @@ export async function getObject(
   return data as ObjectItem | null;
 }
 
+export async function getManagementObject(
+  id: number
+): Promise<ManagementObjectItem | null> {
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase
+      .rpc(
+        "get_management_objects"
+      )
+      .eq("id", id)
+      .maybeSingle()
+      .overrideTypes<
+        ManagementObjectItem | null,
+        { merge: false }
+      >();
+
+  if (error) {
+    throw createReadableError(
+      error,
+      "Не вдалося завантажити фінансові дані об’єкта"
+    );
+  }
+
+  return data || null;
+}
+
 export async function getMaterials(
   objectId: number
 ): Promise<Material[]> {
@@ -170,7 +322,9 @@ export async function getMaterials(
     error,
   } = await supabase
     .from("materials")
-    .select("*")
+    .select(
+      MATERIAL_OPERATIONAL_SELECT
+    )
     .eq(
       "object_id",
       objectId
@@ -193,6 +347,40 @@ export async function getMaterials(
   ) as Material[];
 }
 
+export async function getManagementMaterials(
+  objectId: number
+): Promise<ManagementMaterial[]> {
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase
+      .rpc(
+        "get_management_materials"
+      )
+      .eq(
+        "object_id",
+        objectId
+      )
+      .order("created_at", {
+        ascending: true,
+      })
+      .overrideTypes<
+        ManagementMaterial[],
+        { merge: false }
+      >();
+
+  if (error) {
+    throw createReadableError(
+      error,
+      "Не вдалося завантажити вартість матеріалів"
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
+}
+
 export async function getWorkLogs(
   objectId: number
 ): Promise<WorkLog[]> {
@@ -204,7 +392,9 @@ export async function getWorkLogs(
     error,
   } = await supabase
     .from("work_logs")
-    .select("*")
+    .select(
+      WORK_LOG_OPERATIONAL_SELECT
+    )
     .eq(
       "object_id",
       objectId
@@ -279,6 +469,80 @@ export async function getWorkLogs(
         };
       }
     )
+  );
+}
+
+export async function getManagementWorkLogs(
+  objectId: number
+): Promise<ManagementWorkLog[]> {
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase
+      .rpc(
+        "get_management_work_logs"
+      )
+      .eq(
+        "object_id",
+        objectId
+      )
+      .order("work_date", {
+        ascending: false,
+      })
+      .order("created_at", {
+        ascending: false,
+      })
+      .overrideTypes<
+        ManagementWorkLog[],
+        { merge: false }
+      >();
+
+  if (error) {
+    throw createReadableError(
+      error,
+      "Не вдалося завантажити вартість робіт"
+    );
+  }
+
+  return await Promise.all(
+    (Array.isArray(data)
+      ? data
+      : []
+    ).map(async (workLog) => {
+      if (!workLog.attachment_path) {
+        return {
+          ...workLog,
+          attachment_url: null,
+        };
+      }
+
+      const {
+        data: signedUrlData,
+        error: signedUrlError,
+      } = await supabase.storage
+        .from(
+          WORK_LOG_ATTACHMENTS_BUCKET
+        )
+        .createSignedUrl(
+          workLog.attachment_path,
+          60 * 60
+        );
+
+      if (
+        signedUrlError ||
+        !signedUrlData?.signedUrl
+      ) {
+        throw new Error(
+          `Не вдалося створити посилання для файла журналу робіт: ${signedUrlError?.message || "посилання відсутнє"}`
+        );
+      }
+
+      return {
+        ...workLog,
+        attachment_url:
+          signedUrlData.signedUrl,
+      };
+    })
   );
 }
 
@@ -481,7 +745,9 @@ export async function createObject(
   } = await supabase
     .from("objects")
     .insert(object)
-    .select()
+    .select(
+      OBJECT_OPERATIONAL_SELECT
+    )
     .single();
 
   if (error) {

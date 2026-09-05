@@ -134,40 +134,74 @@ export async function getReportMaterials(): Promise<
   const supabase =
     await createClient();
 
-  const {
-    data,
-    error,
-  } = await supabase
-    .from("materials")
-    .select(`
-      id,
-      object_id,
-      warehouse_item_id,
-      name,
-      quantity,
-      unit,
-      price,
-      created_at,
-      object:objects (
-        id,
-        name
+  const [
+    materialsResult,
+    objectsResult,
+  ] = await Promise.all([
+    supabase
+      .rpc(
+        "get_management_materials"
       )
-    `)
-    .order("created_at", {
-      ascending: false,
-    });
+      .order("created_at", {
+        ascending: false,
+      })
+      .overrideTypes<
+        Omit<
+          ReportMaterial,
+          "object"
+        >[],
+        { merge: false }
+      >(),
+    supabase
+      .from("objects")
+      .select("id, name"),
+  ]);
 
-  if (error) {
+  if (materialsResult.error) {
     throw new Error(
-      `Не вдалося завантажити звіт по матеріалах: ${error.message}`
+      `Не вдалося завантажити звіт по матеріалах: ${materialsResult.error.message}`
     );
   }
 
+  if (objectsResult.error) {
+    throw new Error(
+      `Не вдалося завантажити назви об’єктів для звіту: ${objectsResult.error.message}`
+    );
+  }
+
+  const objectNames = new Map(
+    (objectsResult.data || []).map(
+      (object) => [
+        Number(object.id),
+        String(object.name || ""),
+      ]
+    )
+  );
+
   return (
-    Array.isArray(data)
-      ? data
+    Array.isArray(
+      materialsResult.data
+    )
+      ? materialsResult.data
       : []
-  ) as unknown as ReportMaterial[];
+  ).map((material) => ({
+    ...material,
+    object: objectNames.has(
+      Number(material.object_id)
+    )
+      ? {
+          id: Number(
+            material.object_id
+          ),
+          name:
+            objectNames.get(
+              Number(
+                material.object_id
+              )
+            ) || "",
+        }
+      : null,
+  })) as unknown as ReportMaterial[];
 }
 
 export async function getObjectReportSummaries(): Promise<
@@ -304,6 +338,27 @@ type ReportQueryPage<T> = {
     | ReportQueryError
     | null;
 };
+
+async function loadManagementReportPage<
+  T
+>(
+  request: PromiseLike<{
+    data: unknown;
+    error:
+      | ReportQueryError
+      | null;
+  }>
+): Promise<ReportQueryPage<T>> {
+  const { data, error } =
+    await request;
+
+  return {
+    data: Array.isArray(data)
+      ? (data as T[])
+      : null,
+    error,
+  };
+}
 
 type ReportObjectRow = {
   id: number;
@@ -677,21 +732,18 @@ export async function getReportsData(
         from,
         to
       ) =>
-        await supabase
-          .from("objects")
-          .select(`
-            id,
-            name,
-            cost_budget,
-            client_price
-          `)
+        loadManagementReportPage<
+          ReportObjectRow
+        >(
+        supabase
+          .rpc(
+            "get_management_objects"
+          )
           .order("id", {
             ascending: true,
           })
           .range(from, to)
-          .overrideTypes<
-            ReportObjectRow[]
-          >()
+        )
     );
 
   const loadEmployees = () =>
@@ -728,28 +780,18 @@ export async function getReportsData(
         from,
         to
       ) =>
-        await supabase
-          .from(
-            "warehouse_items"
+        loadManagementReportPage<
+          ReportWarehouseItemRow
+        >(
+        supabase
+          .rpc(
+            "get_management_warehouse_items"
           )
-          .select(`
-            id,
-            name,
-            category,
-            quantity,
-            unit,
-            min_quantity,
-            target_quantity,
-            purchase_price,
-            supplier
-          `)
           .order("id", {
             ascending: true,
           })
           .range(from, to)
-          .overrideTypes<
-            ReportWarehouseItemRow[]
-          >()
+        )
     );
 
   const loadWorkLogs = () =>
@@ -763,16 +805,9 @@ export async function getReportsData(
       ) => {
         let query =
           supabase
-            .from("work_logs")
-            .select(`
-              id,
-              object_id,
-              employee_id,
-              work_date,
-              workers,
-              hours,
-              hourly_rate
-            `)
+            .rpc(
+              "get_management_work_logs"
+            )
             .gte(
               "work_date",
               filters.dateFrom
@@ -796,14 +831,15 @@ export async function getReportsData(
           );
         }
 
-        return await query
-          .order("id", {
-            ascending: true,
-          })
-          .range(from, to)
-          .overrideTypes<
-            ReportWorkLogRow[]
-          >();
+        return loadManagementReportPage<
+          ReportWorkLogRow
+        >(
+          query
+            .order("id", {
+              ascending: true,
+            })
+            .range(from, to)
+        );
       }
     );
 
@@ -818,14 +854,9 @@ export async function getReportsData(
       ) => {
         let query =
           supabase
-            .from("materials")
-            .select(`
-              id,
-              object_id,
-              quantity,
-              price,
-              created_at
-            `)
+            .rpc(
+              "get_management_materials"
+            )
             .gte(
               "created_at",
               timestampFrom
@@ -842,14 +873,15 @@ export async function getReportsData(
           );
         }
 
-        return await query
-          .order("id", {
-            ascending: true,
-          })
-          .range(from, to)
-          .overrideTypes<
-            ReportMaterialRow[]
-          >();
+        return loadManagementReportPage<
+          ReportMaterialRow
+        >(
+          query
+            .order("id", {
+              ascending: true,
+            })
+            .range(from, to)
+        );
       }
     );
 
@@ -1189,14 +1221,13 @@ export async function getReportsData(
         from,
         to
       ) =>
-        await supabase
-          .from("work_logs")
-          .select(`
-            id,
-            object_id,
-            hours,
-            hourly_rate
-          `)
+        loadManagementReportPage<
+          ReportLifetimeWorkLogRow
+        >(
+        supabase
+          .rpc(
+            "get_management_work_logs"
+          )
           .in(
             "object_id",
             objectIds
@@ -1205,9 +1236,7 @@ export async function getReportsData(
             ascending: true,
           })
           .range(from, to)
-          .overrideTypes<
-            ReportLifetimeWorkLogRow[]
-          >()
+        )
     );
 
   const loadLifetimeMaterials = (
@@ -1221,14 +1250,13 @@ export async function getReportsData(
         from,
         to
       ) =>
-        await supabase
-          .from("materials")
-          .select(`
-            id,
-            object_id,
-            quantity,
-            price
-          `)
+        loadManagementReportPage<
+          ReportLifetimeMaterialRow
+        >(
+        supabase
+          .rpc(
+            "get_management_materials"
+          )
           .in(
             "object_id",
             objectIds
@@ -1237,9 +1265,7 @@ export async function getReportsData(
             ascending: true,
           })
           .range(from, to)
-          .overrideTypes<
-            ReportLifetimeMaterialRow[]
-          >()
+        )
     );
 
   const loadLifetimeExpenses = (

@@ -5,6 +5,11 @@ export interface Material {
   name: string;
   quantity: number;
   unit: string;
-  price: number;
+  price?: number;
   created_at: string;
 }
+
+export type ManagementMaterial =
+  Material & {
+    price: number;
+  };

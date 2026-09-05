@@ -13,14 +13,14 @@ import {
 } from "@/lib/reportExportParams";
 
 import {
-  getEmployees,
+  getManagementEmployees,
 } from "@/services/employeeService";
 import {
   getEquipment,
   getEquipmentServiceHistoryRecords,
 } from "@/services/equipmentService";
 import {
-  getObjects,
+  getManagementObjects,
 } from "@/services/objectService";
 import {
   getCurrentUserProfile,
@@ -30,7 +30,7 @@ import {
   normalizeReportsFilters,
 } from "@/services/reportService";
 import {
-  getWarehouseItems,
+  getManagementWarehouseItems,
 } from "@/services/warehouseService";
 import {
   getWarehousePurchaseInsights,
@@ -552,7 +552,7 @@ async function getSnapshotCsv(
   switch (type) {
     case "objects": {
       const objects =
-        await getObjects();
+        await getManagementObjects();
 
       return {
         filename: `vicourt-objects-${currentDate}.csv`,
@@ -589,7 +589,7 @@ async function getSnapshotCsv(
         items,
         purchaseInsights,
       ] = await Promise.all([
-        getWarehouseItems(),
+        getManagementWarehouseItems(),
         getWarehousePurchaseInsights(),
       ]);
 
@@ -754,7 +754,7 @@ async function getSnapshotCsv(
 
     case "employees": {
       const employees =
-        await getEmployees();
+        await getManagementEmployees();
 
       return {
         filename: `vicourt-employees-${currentDate}.csv`,

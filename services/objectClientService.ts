@@ -13,7 +13,20 @@ export async function getObjectsClient(): Promise<
     error,
   } = await supabase
     .from("objects")
-    .select("*")
+    .select(`
+      id,
+      name,
+      customer,
+      phone,
+      address,
+      status,
+      manager,
+      responsible_employee_id,
+      supervision_interval_days,
+      last_supervision_date,
+      next_supervision_date,
+      created_at
+    `)
     .order("created_at", {
       ascending: false,
     });
