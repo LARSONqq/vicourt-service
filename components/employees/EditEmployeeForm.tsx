@@ -17,11 +17,13 @@ import type {
 type Props = {
   employee: ManagementEmployee;
   onCancel: () => void;
+  onSaved?: () => void;
 };
 
 export function EditEmployeeForm({
   employee,
   onCancel,
+  onSaved,
 }: Props) {
   const [
     isSubmitting,
@@ -48,6 +50,7 @@ export function EditEmployeeForm({
         formData
       );
 
+      onSaved?.();
       onCancel();
     } catch (error) {
       setErrorMessage(
