@@ -326,6 +326,31 @@ const detailRegistry: Partial<
     { kind: "value", label: "Вартість", key: "cost", format: "money" },
     { kind: "value", label: "Причина анулювання", key: "void_reason" },
   ],
+  "employee.created": [
+    { kind: "value", label: "Посада", key: "position" },
+    { kind: "value", label: "Тип роботи", key: "employment_type" },
+    { kind: "value", label: "Статус", key: "status" },
+    { kind: "value", label: "Дата прийняття", key: "hire_date", format: "date" },
+    { kind: "value", label: "Погодинна ставка", key: "hourly_rate", format: "money" },
+  ],
+  "employee.updated": [
+    { kind: "change", label: "ПІБ", previousKey: "previous_name", newKey: "new_name" },
+    { kind: "change", label: "Посада", previousKey: "previous_position", newKey: "new_position" },
+    { kind: "change", label: "Тип роботи", previousKey: "previous_employment_type", newKey: "new_employment_type" },
+    { kind: "change", label: "Статус", previousKey: "previous_status", newKey: "new_status" },
+    { kind: "change", label: "Дата прийняття", previousKey: "previous_hire_date", newKey: "new_hire_date", format: "date" },
+    { kind: "change", label: "Погодинна ставка", previousKey: "previous_hourly_rate", newKey: "new_hourly_rate", format: "money" },
+    { kind: "value", label: "Змінено телефон", key: "phone_changed", format: "boolean" },
+    { kind: "value", label: "Змінено email", key: "email_changed", format: "boolean" },
+    { kind: "value", label: "Змінено примітки", key: "notes_changed", format: "boolean" },
+  ],
+  "employee.deleted": [
+    { kind: "value", label: "Посада", key: "position" },
+    { kind: "value", label: "Тип роботи", key: "employment_type" },
+    { kind: "value", label: "Останній статус", key: "status" },
+    { kind: "value", label: "Дата прийняття", key: "hire_date", format: "date" },
+    { kind: "value", label: "Погодинна ставка", key: "hourly_rate", format: "money" },
+  ],
 };
 
 const moneyFormatter = new Intl.NumberFormat(

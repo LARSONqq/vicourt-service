@@ -3,15 +3,14 @@ import { notFound } from "next/navigation";
 
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
 
-import { getManagementEmployees } from "@/services/employeeService";
-import { getEquipment } from "@/services/equipmentService";
-
 import {
-  getEmployeeWorkLogs,
-  getObjects,
-} from "@/services/objectService";
-
-import { getAllTasks } from "@/services/taskService";
+  getEmployeeEquipmentPage,
+  getEmployeeObjectsPage,
+  getEmployeeProfile,
+  getEmployeeProfileKpis,
+  getEmployeeTasksPage,
+  getEmployeeWorkLogsPage,
+} from "@/services/employeeDetailService";
 
 type Props = {
   params: Promise<{
@@ -59,7 +58,7 @@ function getEmployeeStatusClasses(
     case "На лікарняному":
       return "bg-orange-50 text-orange-700";
 
-    case "Звільнений":
+    case "Неактивний":
       return "bg-red-50 text-red-700";
 
     default:
@@ -108,79 +107,50 @@ export default async function EmployeePage({
   }
 
   const [
-    employees,
-    tasks,
-    objects,
-    equipment,
-    workLogs,
+    employee,
+    kpis,
+    activeTasksPage,
+    objectsPage,
+    equipmentPage,
+    workLogsPage,
   ] = await Promise.all([
-    getManagementEmployees(),
-    getAllTasks(),
-    getObjects(),
-    getEquipment(),
-    getEmployeeWorkLogs(
+    getEmployeeProfile(
+      employeeId
+    ),
+    getEmployeeProfileKpis(
+      employeeId
+    ),
+    getEmployeeTasksPage(
+      employeeId,
+      1,
+      "active"
+    ),
+    getEmployeeObjectsPage(
+      employeeId
+    ),
+    getEmployeeEquipmentPage(
+      employeeId
+    ),
+    getEmployeeWorkLogsPage(
       employeeId
     ),
   ]);
 
-  const employee =
-    employees.find(
-      (item) =>
-        Number(item.id) ===
-        employeeId
-    );
-
-  if (!employee) {
+  if (!employee || !kpis) {
     notFound();
   }
 
-  const employeeTasks =
-    tasks.filter(
-      (task) =>
-        Number(
-          task.assigned_employee_id
-        ) === employeeId
-    );
-
   const activeTasks =
-    employeeTasks.filter(
-      (task) =>
-        task.status !==
-        "Виконано"
-    );
-
-  const completedTasks =
-    employeeTasks.filter(
-      (task) =>
-        task.status ===
-        "Виконано"
-    );
+    activeTasksPage.items;
 
   const employeeObjects =
-    objects.filter(
-      (object) =>
-        Number(
-          object.responsible_employee_id
-        ) === employeeId
-    );
+    objectsPage.items;
 
   const employeeEquipment =
-    equipment.filter(
-      (item) =>
-        Number(
-          item.responsible_employee_id
-        ) === employeeId
-    );
+    equipmentPage.items;
 
-  const totalHours =
-    workLogs.reduce(
-      (sum, workLog) =>
-        sum +
-        Number(
-          workLog.hours || 0
-        ),
-      0
-    );
+  const workLogs =
+    workLogsPage.items;
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -231,7 +201,7 @@ export default async function EmployeePage({
 
           <p className="mt-2 text-2xl font-bold text-blue-700 sm:text-3xl">
             {
-              activeTasks.length
+              kpis.activeTasks
             }
           </p>
         </div>
@@ -243,7 +213,7 @@ export default async function EmployeePage({
 
           <p className="mt-2 text-2xl font-bold text-green-700 sm:text-3xl">
             {
-              completedTasks.length
+              kpis.completedTasks
             }
           </p>
         </div>
@@ -255,7 +225,7 @@ export default async function EmployeePage({
 
           <p className="mt-2 text-2xl font-bold text-purple-700 sm:text-3xl">
             {formatHours(
-              totalHours
+              kpis.lifetimeHours
             )}
           </p>
         </div>
@@ -266,7 +236,7 @@ export default async function EmployeePage({
           </p>
 
           <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
-            {workLogs.length}
+            {kpis.workLogs}
           </p>
         </div>
 
@@ -277,7 +247,7 @@ export default async function EmployeePage({
 
           <p className="mt-2 text-2xl font-bold text-gray-900 sm:text-3xl">
             {
-              employeeObjects.length
+              kpis.objects
             }
           </p>
         </div>
@@ -289,7 +259,7 @@ export default async function EmployeePage({
 
           <p className="mt-2 text-2xl font-bold text-orange-600 sm:text-3xl">
             {
-              employeeEquipment.length
+              kpis.equipment
             }
           </p>
         </div>

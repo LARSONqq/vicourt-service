@@ -10,10 +10,12 @@ import {
   employeePositions,
 } from "@/constants/employees";
 
-import type { Employee } from "@/types/employee";
+import type {
+  ManagementEmployee,
+} from "@/types/employee";
 
 type Props = {
-  employee: Employee;
+  employee: ManagementEmployee;
   onCancel: () => void;
 };
 

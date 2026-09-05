@@ -16,26 +16,28 @@ export interface Employee {
 
   last_name: string;
 
+  position: string | null;
+
+  status: EmployeeStatus;
+}
+
+export interface EmployeeDetails
+  extends Employee {
+
   phone: string | null;
 
   email: string | null;
 
-  position: string | null;
-
   employment_type: EmploymentType;
-
-  status: EmployeeStatus;
 
   hire_date: string | null;
 
   notes: string | null;
 
-  hourly_rate?: number;
-
   created_at: string;
 }
 
 export type ManagementEmployee =
-  Employee & {
+  EmployeeDetails & {
     hourly_rate: number;
   };

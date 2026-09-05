@@ -3,26 +3,24 @@
 import Link from "next/link";
 
 import {
-  useEffect,
   useMemo,
   useState,
 } from "react";
 
 import { deleteEmployee } from "@/app/actions/employeeActions";
 
-import { getEquipmentClient } from "@/services/equipmentClientService";
-import { getObjectsClient } from "@/services/objectClientService";
-import { getAllTasksClient } from "@/services/taskClientService";
-
-import type { Employee } from "@/types/employee";
-import type { Equipment } from "@/types/equipment";
-import type { ObjectItem } from "@/types/object";
-import type { TaskWithObject } from "@/types/taskWithObject";
+import type {
+  ManagementEmployee,
+} from "@/types/employee";
+import type {
+  EmployeeDirectoryWorkload,
+} from "@/types/employeeProfile";
 
 import { EditEmployeeForm } from "./EditEmployeeForm";
 
 type Props = {
-  employees: Employee[];
+  employees: ManagementEmployee[];
+  workloads: EmployeeDirectoryWorkload[];
   canManage?: boolean;
 };
 
@@ -49,7 +47,7 @@ function formatDate(
 }
 
 function getInitials(
-  employee: Employee
+  employee: ManagementEmployee
 ) {
   const firstNameLetter =
     employee.first_name?.charAt(
@@ -78,9 +76,6 @@ function getStatusClasses(
       return "bg-orange-50 text-orange-700";
 
     case "Неактивний":
-      return "bg-gray-100 text-gray-700";
-
-    case "Звільнений":
       return "bg-red-50 text-red-700";
 
     default:
@@ -90,12 +85,17 @@ function getStatusClasses(
 
 export default function EmployeeList({
   employees,
+  workloads,
   canManage = false,
 }: Props) {
   const safeEmployees =
-    Array.isArray(employees)
-      ? employees
-      : [];
+    useMemo(
+      () =>
+        Array.isArray(employees)
+          ? employees
+          : [],
+      [employees]
+    );
 
   const [
     search,
@@ -118,111 +118,6 @@ export default function EmployeeList({
   ] = useState<number | null>(
     null
   );
-
-  const [
-    tasks,
-    setTasks,
-  ] = useState<
-    TaskWithObject[]
-  >([]);
-
-  const [
-    objects,
-    setObjects,
-  ] = useState<
-    ObjectItem[]
-  >([]);
-
-  const [
-    equipment,
-    setEquipment,
-  ] = useState<
-    Equipment[]
-  >([]);
-
-  const [
-    isLoadingWorkload,
-    setIsLoadingWorkload,
-  ] = useState(true);
-
-  const [
-    workloadError,
-    setWorkloadError,
-  ] = useState("");
-
-  useEffect(() => {
-    let isActive = true;
-
-    async function loadWorkload() {
-      setIsLoadingWorkload(
-        true
-      );
-
-      setWorkloadError("");
-
-      try {
-        const [
-          loadedTasks,
-          loadedObjects,
-          loadedEquipment,
-        ] = await Promise.all([
-          getAllTasksClient(),
-          getObjectsClient(),
-          getEquipmentClient(),
-        ]);
-
-        if (!isActive) {
-          return;
-        }
-
-        setTasks(
-          Array.isArray(
-            loadedTasks
-          )
-            ? loadedTasks
-            : []
-        );
-
-        setObjects(
-          Array.isArray(
-            loadedObjects
-          )
-            ? loadedObjects
-            : []
-        );
-
-        setEquipment(
-          Array.isArray(
-            loadedEquipment
-          )
-            ? loadedEquipment
-            : []
-        );
-      } catch (error) {
-        if (!isActive) {
-          return;
-        }
-
-        setWorkloadError(
-          error instanceof Error
-            ? error.message
-            : "Не вдалося завантажити навантаження."
-        );
-      } finally {
-        if (isActive) {
-          setIsLoadingWorkload(
-            false
-          );
-        }
-      }
-    }
-
-    loadWorkload();
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
 
   const statuses =
     useMemo(() => {
@@ -262,11 +157,10 @@ export default function EmployeeList({
 
   const workloadByEmployee =
     useMemo(() => {
-      const result =
-        new Map<
-          number,
-          EmployeeWorkload
-        >();
+      const result = new Map<
+        number,
+        EmployeeWorkload
+      >();
 
       safeEmployees.forEach(
         (employee) => {
@@ -281,79 +175,24 @@ export default function EmployeeList({
         }
       );
 
-      tasks.forEach(
-        (task) => {
+      workloads.forEach(
+        (workload) => {
           if (
-            !task.assigned_employee_id ||
-            task.status ===
-              "Виконано"
+            result.has(
+              workload.employeeId
+            )
           ) {
-            return;
-          }
-
-          const employeeId =
-            Number(
-              task.assigned_employee_id
+            result.set(
+              workload.employeeId,
+              {
+                activeTasks:
+                  workload.activeTasks,
+                objects:
+                  workload.objects,
+                equipment:
+                  workload.equipment,
+              }
             );
-
-          const workload =
-            result.get(
-              employeeId
-            );
-
-          if (workload) {
-            workload.activeTasks +=
-              1;
-          }
-        }
-      );
-
-      objects.forEach(
-        (object) => {
-          if (
-            !object.responsible_employee_id
-          ) {
-            return;
-          }
-
-          const employeeId =
-            Number(
-              object.responsible_employee_id
-            );
-
-          const workload =
-            result.get(
-              employeeId
-            );
-
-          if (workload) {
-            workload.objects +=
-              1;
-          }
-        }
-      );
-
-      equipment.forEach(
-        (item) => {
-          if (
-            !item.responsible_employee_id
-          ) {
-            return;
-          }
-
-          const employeeId =
-            Number(
-              item.responsible_employee_id
-            );
-
-          const workload =
-            result.get(
-              employeeId
-            );
-
-          if (workload) {
-            workload.equipment +=
-              1;
           }
         }
       );
@@ -361,9 +200,7 @@ export default function EmployeeList({
       return result;
     }, [
       safeEmployees,
-      tasks,
-      objects,
-      equipment,
+      workloads,
     ]);
 
   const filteredEmployees =
@@ -421,14 +258,6 @@ export default function EmployeeList({
 
   return (
     <div className="min-w-0 space-y-5">
-      {workloadError && (
-        <div className="rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm leading-5 text-orange-700 sm:p-4">
-          Працівники завантажилися,
-          але дані про навантаження
-          поки недоступні.
-        </div>
-      )}
-
       <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_210px_210px]">
         <input
           type="search"
@@ -716,19 +545,7 @@ export default function EmployeeList({
                             Навантаження
                           </p>
 
-                          {isLoadingWorkload ? (
-                            <div className="grid grid-cols-3 gap-2">
-                              {[0, 1, 2].map(
-                                (item) => (
-                                  <div
-                                    key={item}
-                                    className="h-[66px] animate-pulse rounded-lg bg-gray-100"
-                                  />
-                                )
-                              )}
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-3 gap-2">
                               <div className="min-w-0 rounded-lg bg-blue-50 p-2 text-center sm:p-3">
                                 <p className="text-lg font-semibold text-blue-700">
                                   {
@@ -765,7 +582,6 @@ export default function EmployeeList({
                                 </p>
                               </div>
                             </div>
-                          )}
                         </div>
 
                         {employee.notes && (

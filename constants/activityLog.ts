@@ -79,6 +79,9 @@ export const activityEventRegistry = {
   "equipment.usage_corrected": { label: "Скориговано напрацювання техніки", category: "equipment", icon: "🧭" },
   "equipment.service_record_created": { label: "Додано сервісний запис", category: "equipment", icon: "🧰" },
   "equipment.service_record_voided": { label: "Анульовано сервісний запис", category: "equipment", icon: "🚫" },
+  "employee.created": { label: "Створено працівника", category: "employees", icon: "👤" },
+  "employee.updated": { label: "Оновлено працівника", category: "employees", icon: "✏️" },
+  "employee.deleted": { label: "Видалено працівника", category: "employees", icon: "🗑️" },
 } satisfies Record<string, ActivityEventDefinition>;
 
 export type ActivityEventName = keyof typeof activityEventRegistry;

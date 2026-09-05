@@ -521,15 +521,9 @@ async function searchEmployees(
 ) {
   const { data, error } =
     await supabase
-      .from("employees")
-      .select(`
-        id,
-        first_name,
-        last_name,
-        phone,
-        position,
-        status
-      `)
+      .rpc(
+        "get_management_employees"
+      )
       .or(
         buildSafeOrIlikeFilter(
           EMPLOYEE_SEARCH_COLUMNS,

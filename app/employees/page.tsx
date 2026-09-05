@@ -5,6 +5,9 @@ import { requireSectionAccess } from "@/lib/auth/requireAccess";
 import { canManageEmployees } from "@/lib/auth/permissions";
 
 import { getManagementEmployees } from "@/services/employeeService";
+import {
+  getEmployeeDirectoryWorkloads,
+} from "@/services/employeeDetailService";
 
 export default async function EmployeesPage() {
   const currentProfile =
@@ -17,8 +20,13 @@ export default async function EmployeesPage() {
       currentProfile.role
     );
 
-  const employees =
-    await getManagementEmployees();
+  const [
+    employees,
+    workloads,
+  ] = await Promise.all([
+    getManagementEmployees(),
+    getEmployeeDirectoryWorkloads(),
+  ]);
 
   const activeCount =
     employees.filter(
@@ -152,6 +160,9 @@ export default async function EmployeesPage() {
         <EmployeeList
           employees={
             employees
+          }
+          workloads={
+            workloads
           }
           canManage={
             canManage

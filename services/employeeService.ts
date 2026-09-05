@@ -9,14 +9,8 @@ const EMPLOYEE_OPERATIONAL_SELECT = `
   id,
   first_name,
   last_name,
-  phone,
-  email,
   position,
-  employment_type,
-  status,
-  hire_date,
-  notes,
-  created_at
+  status
 `;
 
 export async function getEmployees(): Promise<Employee[]> {
