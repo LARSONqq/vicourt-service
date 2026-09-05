@@ -24,6 +24,7 @@ type Props = {
   tasks: ObjectTask[];
   objectId: number;
   employees: Employee[];
+  canManage?: boolean;
   canManageRecurrence?: boolean;
 };
 
@@ -61,6 +62,7 @@ export default function ObjectTasks({
   tasks,
   objectId,
   employees,
+  canManage = false,
   canManageRecurrence = false,
 }: Props) {
   const [
@@ -89,6 +91,7 @@ export default function ObjectTasks({
           </p>
         </div>
 
+        {canManage && (
         <button
           type="button"
           onClick={() =>
@@ -107,10 +110,11 @@ export default function ObjectTasks({
             ? "Закрити форму"
             : "+ Додати завдання"}
         </button>
+        )}
       </div>
 
       {/* ADD FORM */}
-      {showForm && (
+      {showForm && canManage && (
         <div className="mb-5 min-w-0 rounded-xl border bg-gray-50 p-3 sm:mb-6 sm:p-4">
           <AddTaskForm
             objectId={
@@ -138,7 +142,9 @@ export default function ObjectTasks({
           </p>
 
           <p className="mt-1 text-sm text-gray-500">
-            Додай перше завдання для цього об’єкта.
+            {canManage
+              ? "Додай перше завдання для цього об’єкта."
+              : "Для цього об’єкта завдань немає."}
           </p>
         </div>
       ) : (
@@ -230,7 +236,7 @@ export default function ObjectTasks({
                         SUPERVISION_TASK_MANAGED_MESSAGE
                       }
                     </p>
-                  ) : (
+                  ) : canManage ? (
                   <div className="mt-4 grid grid-cols-2 gap-2 border-t pt-4 sm:flex sm:justify-end">
                     <button
                       type="button"
@@ -297,11 +303,12 @@ export default function ObjectTasks({
                       </p>
                     )}
                   </div>
-                  )}
+                  ) : null}
                 </article>
 
                 {/* EDIT FORM */}
-                {!isSupervisionTask &&
+                {canManage &&
+                  !isSupervisionTask &&
                   editingId ===
                     task.id && (
                   <div className="min-w-0 rounded-xl border border-blue-100 bg-blue-50/40 p-3 sm:p-4">

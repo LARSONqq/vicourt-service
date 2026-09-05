@@ -169,8 +169,9 @@ export default function ObjectWorkLogs({
           </p>
 
           <p className="mt-1 text-sm text-gray-500">
-            Додай перший запис про
-            виконані роботи.
+            {canManage
+              ? "Додай перший запис про виконані роботи."
+              : "Для цього об’єкта записів робіт немає."}
           </p>
         </div>
       ) : (

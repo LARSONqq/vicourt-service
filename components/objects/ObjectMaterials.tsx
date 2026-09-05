@@ -191,8 +191,9 @@ export default function ObjectMaterials({
           </p>
 
           <p className="mt-1 text-sm text-gray-500">
-            Додай матеріали, використані
-            на цьому об’єкті.
+            {canManage
+              ? "Додай матеріали, використані на цьому об’єкті."
+              : "Для цього об’єкта матеріалів немає."}
           </p>
         </div>
       ) : (

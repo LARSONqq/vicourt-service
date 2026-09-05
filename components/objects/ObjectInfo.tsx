@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { updateObject } from "@/app/actions/objectActions";
+import DeleteObjectButton from "./DeleteObjectButton";
 import {
   formatDateValue,
 } from "@/lib/kyivDate";
@@ -29,7 +30,28 @@ const standardStatuses = [
   "Завершено",
 ];
 
-export default function ObjectInfo({
+function getStatusStyle(
+  status: string | null
+) {
+  switch (status) {
+    case "Новий":
+      return "bg-blue-100 text-blue-700";
+    case "В роботі":
+      return "bg-green-100 text-green-700";
+    case "На постійному обслуговуванні":
+      return "bg-purple-100 text-purple-700";
+    case "Під періодичним наглядом":
+      return "bg-rose-100 text-rose-700";
+    case "Призупинено":
+      return "bg-yellow-100 text-yellow-700";
+    case "Завершено":
+      return "bg-gray-100 text-gray-700";
+    default:
+      return "bg-gray-100 text-gray-600";
+  }
+}
+
+export default function ObjectPassportHeader({
   object,
   employees = [],
   canManage = false,
@@ -439,94 +461,131 @@ export default function ObjectInfo({
   }
 
   return (
-    <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold sm:text-xl">
-            Інформація
-          </h2>
+    <section className="min-w-0 rounded-2xl border bg-white shadow-sm">
+      <div className="min-w-0 p-4 sm:p-6">
+        <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
+              Паспорт об’єкта
+            </p>
 
-          <p className="mt-1 hidden text-sm text-gray-500 sm:block">
-            Основні дані об’єкта
-          </p>
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
+              <h1 className="min-w-0 break-words text-2xl font-bold text-gray-900 sm:text-3xl">
+                {object.name}
+              </h1>
+
+              <span
+                className={
+                  "w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium " +
+                  getStatusStyle(
+                    object.status
+                  )
+                }
+              >
+                {object.status ||
+                  "Без статусу"}
+              </span>
+            </div>
+
+            <p className="mt-2 break-words text-sm text-gray-500 sm:text-base">
+              {object.address ||
+                "Адресу не вказано"}
+            </p>
+          </div>
+
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+            {object.phone && (
+              <a
+                href={
+                  "tel:" +
+                  object.phone
+                }
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium text-green-700 transition hover:bg-green-50"
+              >
+                Зателефонувати
+              </a>
+            )}
+
+            {canManage ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(
+                      true
+                    );
+                    setErrorMessage(
+                      ""
+                    );
+                    setEditingStatus(
+                      currentStatus
+                    );
+                  }}
+                  className="min-h-11 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700"
+                >
+                  Редагувати
+                </button>
+
+                <details className="relative col-span-2 sm:col-span-1">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                    Ще
+                  </summary>
+
+                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border bg-white p-2 shadow-lg">
+                    <p className="px-2 pb-2 text-xs text-gray-500">
+                      Небезпечні дії
+                    </p>
+                    <DeleteObjectButton
+                      objectId={
+                        object.id
+                      }
+                      objectName={
+                        object.name
+                      }
+                    />
+                  </div>
+                </details>
+              </>
+            ) : (
+              <span className="col-span-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-600 sm:col-span-1">
+                Тільки перегляд
+              </span>
+            )}
+          </div>
         </div>
-
-        {canManage && (
-        <button
-          type="button"
-          onClick={() => {
-            setIsEditing(
-              true
-            );
-
-            setErrorMessage(
-              ""
-            );
-
-            setEditingStatus(
-              currentStatus
-            );
-          }}
-          className="shrink-0 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:px-4"
-        >
-          Редагувати
-        </button>
-        )}
       </div>
 
-      <div className="divide-y md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-6 md:divide-y-0">
-        <div className="py-3 first:pt-0 md:py-0">
-          <p className="text-xs text-gray-400 sm:text-sm">
+      <dl className="grid min-w-0 grid-cols-1 divide-y border-t bg-gray-50/60 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
+        <div className="min-w-0 py-4 sm:pr-5">
+          <dt className="text-xs text-gray-500">
             Замовник
-          </p>
-
-          <p className="mt-1 break-words font-medium text-gray-800">
+          </dt>
+          <dd className="mt-1 break-words font-medium text-gray-900">
             {object.customer ||
               "Не вказано"}
-          </p>
+          </dd>
         </div>
 
-        <div className="py-3 md:py-0">
-          <p className="text-xs text-gray-400 sm:text-sm">
+        <div className="min-w-0 py-4 sm:px-5">
+          <dt className="text-xs text-gray-500">
             Телефон
-          </p>
-
-          {object.phone ? (
-            <a
-              href={`tel:${object.phone}`}
-              className="mt-1 inline-block break-all font-medium text-green-700 hover:underline"
-            >
-              {object.phone}
-            </a>
-          ) : (
-            <p className="mt-1 font-medium text-gray-800">
-              Не вказано
-            </p>
-          )}
+          </dt>
+          <dd className="mt-1 break-all font-medium text-gray-900">
+            {object.phone ||
+              "Не вказано"}
+          </dd>
         </div>
 
-        <div className="py-3 md:py-0">
-          <p className="text-xs text-gray-400 sm:text-sm">
+        <div className="min-w-0 py-4 sm:pl-5">
+          <dt className="text-xs text-gray-500">
             Відповідальний
-          </p>
-
-          <p className="mt-1 break-words font-medium text-gray-800">
+          </dt>
+          <dd className="mt-1 break-words font-medium text-gray-900">
             {object.manager ||
               "Не призначено"}
-          </p>
+          </dd>
         </div>
-
-        <div className="py-3 pb-0 md:py-0">
-          <p className="text-xs text-gray-400 sm:text-sm">
-            Адреса
-          </p>
-
-          <p className="mt-1 break-words font-medium text-gray-800">
-            {object.address ||
-              "Не вказано"}
-          </p>
-        </div>
-      </div>
+      </dl>
     </section>
   );
 }

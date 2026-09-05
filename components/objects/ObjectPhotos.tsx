@@ -11,11 +11,13 @@ import AddPhotoForm from "./AddPhotoForm";
 type Props = {
   photos: ObjectPhoto[];
   objectId: number;
+  canManage?: boolean;
 };
 
 export default function ObjectPhotos({
   photos,
   objectId,
+  canManage = false,
 }: Props) {
   const [
     showForm,
@@ -40,6 +42,7 @@ export default function ObjectPhotos({
           </p>
         </div>
 
+        {canManage && (
         <button
           type="button"
           onClick={() =>
@@ -58,10 +61,11 @@ export default function ObjectPhotos({
             ? "Закрити форму"
             : "+ Додати фото"}
         </button>
+        )}
       </div>
 
       {/* ADD PHOTO */}
-      {showForm && (
+      {showForm && canManage && (
         <div className="mb-5 min-w-0 rounded-xl border bg-gray-50 p-3 sm:mb-6 sm:p-4">
           <AddPhotoForm
             objectId={objectId}
@@ -84,8 +88,9 @@ export default function ObjectPhotos({
           </p>
 
           <p className="mt-1 text-sm text-gray-500">
-            Додай фотографії виконаних
-            робіт або стану об’єкта.
+            {canManage
+              ? "Додай фотографії виконаних робіт або стану об’єкта."
+              : "Для цього об’єкта фотографій немає."}
           </p>
         </div>
       ) : (
@@ -133,6 +138,7 @@ export default function ObjectPhotos({
                     </p>
                   )}
 
+                  {canManage && (
                   <div className="mt-3 border-t pt-3">
                     <form
                       action={deleteObjectPhoto.bind(
@@ -163,6 +169,7 @@ export default function ObjectPhotos({
                       </button>
                     </form>
                   </div>
+                  )}
                 </div>
               </article>
             )

@@ -10,11 +10,7 @@ import type {
 } from "@/types/objectPayment";
 
 type Props = {
-  activeTasks: number;
-  materialsCount: number;
-  totalHours: number;
-  photosCount: number;
-  finance?: {
+  finance: {
     materialsCost: number;
     laborCost: number;
     otherExpensesCost: number;
@@ -44,22 +40,6 @@ function formatMoney(
   ).format(safeValue);
 }
 
-function formatHours(
-  value: number
-) {
-  const safeValue =
-    Number.isFinite(value)
-      ? value
-      : 0;
-
-  return new Intl.NumberFormat(
-    "uk-UA",
-    {
-      maximumFractionDigits: 2,
-    }
-  ).format(safeValue);
-}
-
 function formatPercent(
   value: number
 ) {
@@ -73,24 +53,20 @@ function formatPercent(
 }
 
 export default function ObjectSummary({
-  activeTasks,
-  materialsCount,
-  totalHours,
-  photosCount,
   finance,
 }: Props) {
   const materialsCost =
-    finance?.materialsCost ?? 0;
+    finance.materialsCost;
   const laborCost =
-    finance?.laborCost ?? 0;
+    finance.laborCost;
   const otherExpensesCost =
-    finance?.otherExpensesCost ?? 0;
+    finance.otherExpensesCost;
   const costBudget =
-    finance?.costBudget ?? null;
+    finance.costBudget;
   const clientPrice =
-    finance?.clientPrice ?? null;
+    finance.clientPrice;
   const paymentSummary =
-    finance?.paymentSummary;
+    finance.paymentSummary;
   const financials =
     calculateObjectFinancials({
       materialsCost,
@@ -139,55 +115,7 @@ export default function ObjectSummary({
         );
 
   return (
-    <div className="min-w-0 space-y-4">
-      {/* GENERAL SUMMARY */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
-          <p className="text-xs text-gray-500 sm:text-sm">
-            Активні завдання
-          </p>
-
-          <p className="mt-2 text-2xl font-bold text-yellow-600">
-            {activeTasks}
-          </p>
-        </div>
-
-        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
-          <p className="text-xs text-gray-500 sm:text-sm">
-            Матеріали
-          </p>
-
-          <p className="mt-2 text-2xl font-bold text-gray-900">
-            {materialsCount}
-          </p>
-        </div>
-
-        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
-          <p className="text-xs text-gray-500 sm:text-sm">
-            Відпрацьовано годин
-          </p>
-
-          <p className="mt-2 break-words text-2xl font-bold text-green-600">
-            {formatHours(
-              totalHours
-            )}
-          </p>
-        </div>
-
-        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
-          <p className="text-xs text-gray-500 sm:text-sm">
-            Фотографії
-          </p>
-
-          <p className="mt-2 text-2xl font-bold text-gray-900">
-            {photosCount}
-          </p>
-        </div>
-      </div>
-
-      {/* FINANCIAL SUMMARY */}
-      {finance && (
-      <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
         <div className="border-b p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-gray-900">
             Фінансовий підсумок
@@ -585,8 +513,6 @@ export default function ObjectSummary({
             )}
           </div>
         </div>
-      </section>
-      )}
-    </div>
+    </section>
   );
 }

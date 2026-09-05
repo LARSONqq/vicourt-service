@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import ObjectTabs from "@/components/ObjectTabs";
 import ObjectActivityTimeline from "@/components/activity/ObjectActivityTimeline";
 
-import DeleteObjectButton from "@/components/objects/DeleteObjectButton";
 import ObjectDocuments from "@/components/objects/ObjectDocuments";
 import ObjectExpenses from "@/components/objects/ObjectExpenses";
-import ObjectInfo from "@/components/objects/ObjectInfo";
+import ObjectPassportHeader from "@/components/objects/ObjectInfo";
 import ObjectMaterials from "@/components/objects/ObjectMaterials";
+import ObjectOverview from "@/components/objects/ObjectOverview";
 import ObjectPayments from "@/components/objects/ObjectPayments";
 import ObjectPaymentSchedule from "@/components/objects/ObjectPaymentSchedule";
 import ObjectPhotos from "@/components/objects/ObjectPhotos";
@@ -73,39 +73,15 @@ import {
 import {
   calculateObjectPaymentSummary,
 } from "@/lib/objectPayments";
+import {
+  calculateObjectPaymentSchedule,
+} from "@/lib/objectPaymentSchedule";
 
 type Props = {
   params: Promise<{
     id: string;
   }>;
 };
-
-function getStatusStyle(
-  status: string | null
-) {
-  switch (status) {
-    case "Новий":
-      return "bg-blue-100 text-blue-700";
-
-    case "В роботі":
-      return "bg-green-100 text-green-700";
-
-    case "На постійному обслуговуванні":
-      return "bg-purple-100 text-purple-700";
-
-    case "Під періодичним наглядом":
-      return "bg-rose-100 text-rose-700";
-
-    case "Призупинено":
-      return "bg-yellow-100 text-yellow-700";
-
-    case "Завершено":
-      return "bg-gray-100 text-gray-700";
-
-    default:
-      return "bg-gray-100 text-gray-600";
-  }
-}
 
 export default async function ObjectPage({
   params,
@@ -294,12 +270,50 @@ export default async function ObjectPage({
       ? documents
       : [];
 
-  const activeTasks =
-    taskList.filter(
+  const activeTaskList =
+    taskList
+      .filter(
       (task) =>
         task.status !==
         "Виконано"
-    ).length;
+      )
+      .sort(
+        (first, second) => {
+          const firstDue =
+            first.due_date ||
+            "9999-12-31";
+          const secondDue =
+            second.due_date ||
+            "9999-12-31";
+
+          return (
+            firstDue.localeCompare(
+              secondDue
+            ) ||
+            first.created_at.localeCompare(
+              second.created_at
+            ) ||
+            first.id -
+              second.id
+          );
+        }
+      );
+  const upcomingTasks =
+    activeTaskList.slice(0, 5);
+  const recentWorkLogs = [
+    ...workLogList,
+  ]
+    .sort(
+      (first, second) =>
+        second.work_date.localeCompare(
+          first.work_date
+        ) ||
+        second.created_at.localeCompare(
+          first.created_at
+        ) ||
+        second.id - first.id
+    )
+    .slice(0, 3);
 
   const totalHours =
     workLogList.reduce(
@@ -450,6 +464,35 @@ export default async function ObjectPage({
       : undefined;
   const today =
     getKyivDateValue();
+  const paymentScheduleSummary =
+    canViewPayments &&
+    paymentSummary
+      ? calculateObjectPaymentSchedule(
+          paymentScheduleList,
+          paymentSummary.totalPaid,
+          object.client_price ??
+            null,
+          today
+        )
+      : undefined;
+  const financeData =
+    canViewPayments &&
+    paymentSummary &&
+    paymentScheduleSummary
+      ? {
+          materialsCost,
+          laborCost,
+          otherExpensesCost,
+          costBudget:
+            object.cost_budget ??
+            null,
+          clientPrice:
+            object.client_price ??
+            null,
+          paymentSummary,
+          paymentScheduleSummary,
+        }
+      : undefined;
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-8">
@@ -461,144 +504,69 @@ export default async function ObjectPage({
         ← До об’єктів
       </Link>
 
-      {/* HEADER */}
-      <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="min-w-0 break-words text-2xl font-bold text-gray-900 sm:text-3xl">
-              {object.name}
-            </h1>
-
-            <span
-              className={`w-fit shrink-0 rounded-full px-3 py-1 text-xs font-medium sm:hidden ${getStatusStyle(
-                object.status
-              )}`}
-            >
-              {object.status ||
-                "Без статусу"}
-            </span>
-          </div>
-
-          <p className="mt-2 break-words text-sm text-gray-500 sm:text-base">
-            {object.address ||
-              "Адресу не вказано"}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <span
-            className={`hidden rounded-full px-4 py-2 text-sm font-medium sm:inline-flex ${getStatusStyle(
-              object.status
-            )}`}
-          >
-            {object.status ||
-              "Без статусу"}
-          </span>
-
-          <DeleteObjectButton
-            objectId={
-              object.id
-            }
-            objectName={
-              object.name
-            }
-          />
-        </div>
-      </div>
-
-      {object.status ===
-        PERIODIC_SUPERVISION_STATUS && (
-        <ObjectSupervisionCard
-          objectId={object.id}
-          intervalDays={
-            object.supervision_interval_days
-          }
-          lastDate={
-            object.last_supervision_date
-          }
-          nextDate={
-            object.next_supervision_date
-          }
-          today={
-            today
-          }
-          canManage={
-            canManageObject
-          }
-        />
-      )}
-
-      {/* SUMMARY */}
-      <ObjectSummary
-        activeTasks={
-          activeTasks
+      <ObjectPassportHeader
+        object={object}
+        employees={
+          canManageObject
+            ? employeeList
+            : []
         }
-        materialsCount={
-          materialList.length
-        }
-        totalHours={
-          totalHours
-        }
-        photosCount={
-          photoList.length
-        }
-        finance={
-          canViewPayments &&
-          paymentSummary
-            ? {
-                materialsCost,
-                laborCost,
-                otherExpensesCost,
-                costBudget:
-                  object.cost_budget ??
-                  null,
-                clientPrice:
-                  object.client_price ??
-                  null,
-                paymentSummary,
-              }
-            : undefined
+        canManage={
+          canManageObject
         }
       />
 
-      {canViewPayments && (
-        <>
-          <ObjectPaymentSchedule
-            objectId={object.id}
-            clientPrice={
-              object.client_price ??
-              null
-            }
-            lifetimeTotalPaid={
-              paymentSummary
-                ?.totalPaid ?? 0
-            }
-            scheduleItems={
-              paymentScheduleList
-            }
-            today={today}
-          />
-
-          <ObjectPayments
-            objectId={object.id}
-            payments={paymentList}
-            today={today}
-          />
-        </>
-      )}
-
       {/* CONTENT */}
       <ObjectTabs
-        info={
-          <ObjectInfo
-            object={
-              object
+        overview={
+          <ObjectOverview
+            activeTasks={
+              upcomingTasks
+            }
+            materialsCount={
+              materialList.length
+            }
+            totalHours={
+              totalHours
+            }
+            documentsCount={
+              documentList.length
+            }
+            photosCount={
+              photoList.length
+            }
+            recentWorkLogs={
+              recentWorkLogs
             }
             employees={
               employeeList
             }
-            canManage={
-              canManageObject
+            today={today}
+            supervision={
+              object.status ===
+              PERIODIC_SUPERVISION_STATUS ? (
+                <ObjectSupervisionCard
+                  objectId={
+                    object.id
+                  }
+                  intervalDays={
+                    object.supervision_interval_days
+                  }
+                  lastDate={
+                    object.last_supervision_date
+                  }
+                  nextDate={
+                    object.next_supervision_date
+                  }
+                  today={today}
+                  canManage={
+                    canManageObject
+                  }
+                />
+              ) : undefined
+            }
+            finance={
+              financeData
             }
           />
         }
@@ -612,6 +580,9 @@ export default async function ObjectPage({
             }
             employees={
               employeeList
+            }
+            canManage={
+              canManageObject
             }
             canManageRecurrence={
               canManageRecurrence
@@ -643,7 +614,7 @@ export default async function ObjectPage({
             }
           />
         }
-        journal={
+        work={
           <ObjectWorkLogs
             workLogs={
               workLogList
@@ -659,16 +630,52 @@ export default async function ObjectPage({
             }
           />
         }
-        expenses={canViewPayments ? (
-          <ObjectExpenses
-            expenses={
-              expenseList
-            }
-            objectId={
-              object.id
-            }
-          />
-        ) : undefined}
+        finance={
+          financeData ? (
+            <div className="min-w-0 space-y-4 sm:space-y-5">
+              <ObjectSummary
+                finance={
+                  financeData
+                }
+              />
+
+              <ObjectPaymentSchedule
+                objectId={
+                  object.id
+                }
+                clientPrice={
+                  financeData.clientPrice
+                }
+                lifetimeTotalPaid={
+                  financeData.paymentSummary.totalPaid
+                }
+                scheduleItems={
+                  paymentScheduleList
+                }
+                today={today}
+              />
+
+              <ObjectPayments
+                objectId={
+                  object.id
+                }
+                payments={
+                  paymentList
+                }
+                today={today}
+              />
+
+              <ObjectExpenses
+                expenses={
+                  expenseList
+                }
+                objectId={
+                  object.id
+                }
+              />
+            </div>
+          ) : undefined
+        }
         documents={
           <ObjectDocuments
             objectId={
@@ -689,6 +696,9 @@ export default async function ObjectPage({
             }
             objectId={
               object.id
+            }
+            canManage={
+              canManageObject
             }
           />
         }

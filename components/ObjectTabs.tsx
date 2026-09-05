@@ -7,21 +7,21 @@ import {
 } from "react";
 
 type TabId =
-  | "info"
-  | "tasks"
+  | "overview"
   | "materials"
-  | "journal"
-  | "expenses"
+  | "work"
+  | "tasks"
+  | "finance"
   | "documents"
   | "photos"
   | "history";
 
 type Props = {
-  info: ReactNode;
-  tasks: ReactNode;
+  overview: ReactNode;
   materials: ReactNode;
-  journal: ReactNode;
-  expenses?: ReactNode;
+  work: ReactNode;
+  tasks: ReactNode;
+  finance?: ReactNode;
   documents: ReactNode;
   photos: ReactNode;
   history?: ReactNode;
@@ -33,14 +33,9 @@ const baseTabs: Array<{
   icon: string;
 }> = [
   {
-    id: "info",
-    label: "Інформація",
-    icon: "📋",
-  },
-  {
-    id: "tasks",
-    label: "Завдання",
-    icon: "✓",
+    id: "overview",
+    label: "Огляд",
+    icon: "◉",
   },
   {
     id: "materials",
@@ -48,13 +43,18 @@ const baseTabs: Array<{
     icon: "📦",
   },
   {
-    id: "journal",
+    id: "work",
     label: "Роботи",
     icon: "📝",
   },
   {
-    id: "expenses",
-    label: "Витрати",
+    id: "tasks",
+    label: "Завдання",
+    icon: "✓",
+  },
+  {
+    id: "finance",
+    label: "Фінанси",
     icon: "💰",
   },
   {
@@ -75,17 +75,17 @@ const baseTabs: Array<{
 ];
 
 export default function ObjectTabs({
-  info,
-  tasks,
+  overview,
   materials,
-  journal,
-  expenses,
+  work,
+  tasks,
+  finance,
   documents,
   photos,
   history,
 }: Props) {
   const [tab, setTab] =
-    useState<TabId>("info");
+    useState<TabId>("overview");
 
   const scrollContainerRef =
     useRef<HTMLDivElement | null>(
@@ -96,8 +96,8 @@ export default function ObjectTabs({
     baseTabs.filter(
       (item) =>
         item.id !==
-          "expenses" ||
-        expenses !==
+          "finance" ||
+        finance !==
           undefined
     ).filter(
       (item) =>
@@ -170,23 +170,22 @@ export default function ObjectTabs({
 
       {/* TAB CONTENT */}
       <div className="min-w-0">
-        {tab === "info" &&
-          info}
-
-        {tab === "tasks" &&
-          tasks}
+        {tab === "overview" &&
+          overview}
 
         {tab ===
           "materials" &&
           materials}
 
         {tab ===
-          "journal" &&
-          journal}
+          "work" &&
+          work}
 
-        {tab ===
-          "expenses" &&
-          expenses}
+        {tab === "tasks" &&
+          tasks}
+
+        {tab === "finance" &&
+          finance}
 
         {tab ===
           "documents" &&
