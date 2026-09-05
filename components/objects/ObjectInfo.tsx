@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { updateObject } from "@/app/actions/objectActions";
+import {
+  getObjectEditorEmployees,
+  updateObject,
+} from "@/app/actions/objectActions";
 import DeleteObjectButton from "./DeleteObjectButton";
 import {
   formatDateValue,
@@ -15,9 +18,18 @@ import {
 import type { Employee } from "@/types/employee";
 import type { ObjectItem } from "@/types/object";
 
+type ObjectEditorEmployee = Pick<
+  Employee,
+  | "id"
+  | "first_name"
+  | "last_name"
+  | "position"
+  | "status"
+>;
+
 type Props = {
   object: ObjectItem;
-  employees?: Employee[];
+  employees?: ObjectEditorEmployee[];
   canManage?: boolean;
 };
 
@@ -64,6 +76,14 @@ export default function ObjectPassportHeader({
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
+  const [editorEmployees, setEditorEmployees] =
+    useState(employees);
+
+  const [hasLoadedEditorEmployees, setHasLoadedEditorEmployees] =
+    useState(
+      employees.length > 0
+    );
+
   const [errorMessage, setErrorMessage] =
     useState("");
 
@@ -87,6 +107,34 @@ export default function ObjectPassportHeader({
       ...standardStatuses,
     ];
   }, [currentStatus]);
+
+  async function handleStartEditing() {
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      if (!hasLoadedEditorEmployees) {
+        const loadedEmployees =
+          await getObjectEditorEmployees();
+
+        setEditorEmployees(
+          loadedEmployees
+        );
+        setHasLoadedEditorEmployees(
+          true
+        );
+      }
+      setIsEditing(true);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Не вдалося завантажити форму редагування."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   async function handleSubmit(
     formData: FormData
@@ -209,7 +257,7 @@ export default function ObjectPassportHeader({
                   Не призначати
                 </option>
 
-                {employees.map(
+                {editorEmployees.map(
                   (employee) => (
                     <option
                       key={
@@ -237,7 +285,7 @@ export default function ObjectPassportHeader({
                 )}
               </select>
 
-              {employees.length ===
+              {editorEmployees.length ===
                 0 && (
                 <p className="mt-2 text-xs text-gray-500">
                   Працівників ще не
@@ -510,20 +558,17 @@ export default function ObjectPassportHeader({
               <>
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsEditing(
-                      true
-                    );
-                    setErrorMessage(
-                      ""
-                    );
-                    setEditingStatus(
-                      currentStatus
-                    );
-                  }}
+                  onClick={
+                    handleStartEditing
+                  }
+                  disabled={
+                    isSubmitting
+                  }
                   className="min-h-11 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700"
                 >
-                  Редагувати
+                  {isSubmitting
+                    ? "Завантаження…"
+                    : "Редагувати"}
                 </button>
 
                 <details className="relative col-span-2 sm:col-span-1">
@@ -553,6 +598,15 @@ export default function ObjectPassportHeader({
             )}
           </div>
         </div>
+
+        {errorMessage && (
+          <p
+            role="alert"
+            className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          >
+            {errorMessage}
+          </p>
+        )}
       </div>
 
       <dl className="grid min-w-0 grid-cols-1 divide-y border-t bg-gray-50/60 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">

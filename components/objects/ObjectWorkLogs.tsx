@@ -26,6 +26,7 @@ type Props = {
   objectId: number;
   employees?: Employee[];
   canManage?: boolean;
+  totalCount?: number;
 };
 
 function formatDate(
@@ -75,6 +76,7 @@ export default function ObjectWorkLogs({
   objectId,
   employees = [],
   canManage = false,
+  totalCount,
 }: Props) {
   const [
     showForm,
@@ -116,7 +118,8 @@ export default function ObjectWorkLogs({
 
           <p className="mt-1 text-xs text-gray-400">
             Записів:{" "}
-            {workLogs.length}
+            {totalCount ??
+              workLogs.length}
           </p>
         </div>
 

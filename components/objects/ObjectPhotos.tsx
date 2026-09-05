@@ -12,12 +12,14 @@ type Props = {
   photos: ObjectPhoto[];
   objectId: number;
   canManage?: boolean;
+  totalCount?: number;
 };
 
 export default function ObjectPhotos({
   photos,
   objectId,
   canManage = false,
+  totalCount,
 }: Props) {
   const [
     showForm,
@@ -39,6 +41,11 @@ export default function ObjectPhotos({
 
           <p className="mt-1 text-xs text-gray-400">
             Завантажено: {photos.length}
+            {totalCount !== undefined &&
+            totalCount !==
+              photos.length
+              ? ` із ${totalCount}`
+              : ""}
           </p>
         </div>
 

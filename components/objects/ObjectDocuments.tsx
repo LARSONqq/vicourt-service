@@ -33,6 +33,7 @@ type Props = {
   objectId: number;
   documents: ObjectDocument[];
   canManage: boolean;
+  totalCount?: number;
 };
 
 function formatDocumentDate(
@@ -62,6 +63,7 @@ export default function ObjectDocuments({
   objectId,
   documents,
   canManage,
+  totalCount,
 }: Props) {
   const router =
     useRouter();
@@ -244,6 +246,11 @@ export default function ObjectDocuments({
           </p>
           <p className="mt-1 text-xs text-gray-400">
             Документів: {documents.length}
+            {totalCount !== undefined &&
+            totalCount !==
+              documents.length
+              ? ` із ${totalCount}`
+              : ""}
           </p>
         </div>
 

@@ -7,6 +7,12 @@ import {
 import type {
   ObjectDocument,
 } from "@/types/objectDocument";
+import type {
+  ObjectListPage,
+} from "@/services/objectDetailService";
+
+const OBJECT_DOCUMENT_PAGE_SIZE =
+  20;
 
 type ObjectDocumentActionRow =
   ObjectDocument & {
@@ -88,6 +94,100 @@ export async function getObjectDocuments(
   return Array.isArray(data)
     ? data
     : [];
+}
+
+export async function getObjectDocumentsPage(
+  objectId: number,
+  requestedPage: number
+): Promise<
+  ObjectListPage<ObjectDocument>
+> {
+  validatePositiveId(
+    objectId,
+    "Не вдалося визначити об’єкт."
+  );
+
+  const supabase =
+    await createClient();
+  const { count, error: countError } =
+    await supabase
+      .from("object_documents")
+      .select("id", {
+        count: "exact",
+        head: true,
+      })
+      .eq("object_id", objectId)
+      .eq("is_ready", true);
+
+  if (countError) {
+    throw new Error(
+      "Не вдалося завантажити документи об’єкта."
+    );
+  }
+
+  const total = count || 0;
+  const normalizedPage =
+    Number.isInteger(requestedPage) &&
+    requestedPage > 0
+      ? requestedPage
+      : 1;
+  const lastPage = Math.max(
+    1,
+    Math.ceil(
+      total /
+        OBJECT_DOCUMENT_PAGE_SIZE
+    )
+  );
+  const page = Math.min(
+    normalizedPage,
+    lastPage
+  );
+  const from =
+    (page - 1) *
+    OBJECT_DOCUMENT_PAGE_SIZE;
+  const to =
+    from +
+    OBJECT_DOCUMENT_PAGE_SIZE -
+    1;
+  const { data, error } =
+    await supabase
+      .from("object_documents")
+      .select(
+        OBJECT_DOCUMENT_SELECT
+      )
+      .eq("object_id", objectId)
+      .eq("is_ready", true)
+      .order("created_at", {
+        ascending: false,
+      })
+      .order("id", {
+        ascending: false,
+      })
+      .range(from, to)
+      .overrideTypes<
+        ObjectDocument[]
+      >();
+
+  if (error) {
+    throw new Error(
+      "Не вдалося завантажити документи об’єкта."
+    );
+  }
+
+  return {
+    items: Array.isArray(data)
+      ? data
+      : [],
+    total,
+    page,
+    pageSize:
+      OBJECT_DOCUMENT_PAGE_SIZE,
+    hasPreviousPage: page > 1,
+    hasNextPage:
+      page *
+        OBJECT_DOCUMENT_PAGE_SIZE <
+      total,
+  };
 }
 
 export async function getObjectDocumentForAction(

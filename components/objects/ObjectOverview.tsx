@@ -30,6 +30,7 @@ type FinanceOverview = {
 
 type Props = {
   activeTasks: ObjectTask[];
+  activeTasksCount?: number;
   materialsCount: number;
   totalHours: number;
   documentsCount: number;
@@ -171,6 +172,8 @@ function KpiCard({
 
 export default function ObjectOverview({
   activeTasks,
+  activeTasksCount =
+    activeTasks.length,
   materialsCount,
   totalHours,
   documentsCount,
@@ -276,7 +279,7 @@ export default function ObjectOverview({
           <KpiCard
             label="Активні завдання"
             value={String(
-              activeTasks.length
+              activeTasksCount
             )}
           />
           <KpiCard

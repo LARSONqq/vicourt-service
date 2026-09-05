@@ -189,6 +189,39 @@ async function requireObjectManagementAccess() {
   return profile;
 }
 
+export async function getObjectEditorEmployees() {
+  await requireObjectManagementAccess();
+
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase
+      .from("employees")
+      .select(`
+        id,
+        first_name,
+        last_name,
+        position,
+        status
+      `)
+      .order("last_name", {
+        ascending: true,
+      })
+      .order("first_name", {
+        ascending: true,
+      });
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити працівників: ${error.message}`
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
+}
+
 async function getResponsibleEmployee(
   employeeValue: string
 ): Promise<{

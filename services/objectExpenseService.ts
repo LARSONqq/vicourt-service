@@ -71,3 +71,45 @@ export async function getObjectExpenses(
     ? data
     : [];
 }
+
+export async function getObjectExpenseTotal(
+  objectId: number
+): Promise<number> {
+  if (
+    !Number.isInteger(objectId) ||
+    objectId <= 0
+  ) {
+    return 0;
+  }
+
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase
+      .from("object_expenses")
+      .select("amount")
+      .eq("object_id", objectId);
+
+  if (error) {
+    throw new Error(
+      `Не вдалося розрахувати витрати об’єкта: ${error.message}`
+    );
+  }
+
+  return (
+    Array.isArray(data)
+      ? data
+      : []
+  ).reduce((sum, expense) => {
+    const amount = Number(
+      expense.amount
+    );
+
+    return (
+      sum +
+      (Number.isFinite(amount)
+        ? amount
+        : 0)
+    );
+  }, 0);
+}

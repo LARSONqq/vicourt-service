@@ -26,6 +26,7 @@ type Props = {
   currency: AppCurrency;
   canViewLedger?: boolean;
   canManage?: boolean;
+  totalCount?: number;
 };
 
 export default function ObjectMaterials({
@@ -36,6 +37,7 @@ export default function ObjectMaterials({
   currency,
   canViewLedger = false,
   canManage = false,
+  totalCount,
 }: Props) {
   const [
     showForm,
@@ -135,7 +137,8 @@ export default function ObjectMaterials({
 
           <p className="mt-1 text-xs text-gray-400">
             Додано:{" "}
-            {safeMaterials.length}
+            {totalCount ??
+              safeMaterials.length}
           </p>
         </div>
 

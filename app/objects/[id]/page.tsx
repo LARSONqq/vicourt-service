@@ -1,7 +1,13 @@
+import {
+  Suspense,
+} from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import ObjectTabs from "@/components/ObjectTabs";
+import ObjectTabs, {
+  OBJECT_TAB_IDS,
+  type ObjectTabId,
+} from "@/components/ObjectTabs";
 import ObjectActivityTimeline from "@/components/activity/ObjectActivityTimeline";
 
 import ObjectDocuments from "@/components/objects/ObjectDocuments";
@@ -14,26 +20,31 @@ import ObjectPaymentSchedule from "@/components/objects/ObjectPaymentSchedule";
 import ObjectPhotos from "@/components/objects/ObjectPhotos";
 import ObjectSummary from "@/components/objects/ObjectSummary";
 import ObjectSupervisionCard from "@/components/objects/ObjectSupervisionCard";
+import ObjectTabErrorBoundary from "@/components/objects/ObjectTabErrorBoundary";
+import ObjectTabPagination from "@/components/objects/ObjectTabPagination";
 import ObjectTasks from "@/components/objects/ObjectTasks";
 import ObjectWorkLogs from "@/components/objects/ObjectWorkLogs";
 
 import {
   getEmployees,
-  getManagementEmployees,
 } from "@/services/employeeService";
-
 import {
-  getMaterials,
-  getManagementMaterials,
   getManagementObject,
-  getManagementWorkLogs,
   getObject,
-  getObjectPhotos,
   getObjectTasks,
-  getWorkLogs,
 } from "@/services/objectService";
-
 import {
+  getManagementObjectCostSummary,
+  getManagementObjectMaterialsPage,
+  getManagementObjectWorkLogsPage,
+  getObjectMaterialsPage,
+  getObjectOverviewPreview,
+  getObjectPhotosPage,
+  getObjectWorkLogsPage,
+  type ObjectCostSummary,
+} from "@/services/objectDetailService";
+import {
+  getObjectExpenseTotal,
   getObjectExpenses,
 } from "@/services/objectExpenseService";
 import {
@@ -41,15 +52,14 @@ import {
 } from "@/services/objectPaymentService";
 import {
   getObjectPaymentSchedule,
+  getObjectPaymentTotals,
 } from "@/services/objectPaymentScheduleService";
 import {
-  getObjectDocuments,
+  getObjectDocumentsPage,
 } from "@/services/objectDocumentService";
-
 import {
   getObjectMaterialMovements,
   getManagementWarehouseItems,
-  getWarehouseItems,
 } from "@/services/warehouseService";
 import { getAppSettings } from "@/services/settingsService";
 import {
@@ -77,25 +87,592 @@ import {
   calculateObjectPaymentSchedule,
 } from "@/lib/objectPaymentSchedule";
 
+import type {
+  ObjectItem,
+} from "@/types/object";
+import type {
+  ObjectPaymentScheduleItem,
+} from "@/types/objectPaymentSchedule";
+
+type SearchParams = {
+  tab?: string | string[];
+  page?: string | string[];
+};
+
 type Props = {
   params: Promise<{
     id: string;
   }>;
+  searchParams: Promise<SearchParams>;
 };
+
+type TabContentProps = {
+  activeTab: ObjectTabId;
+  page: number;
+  object: ObjectItem;
+  canManageObject: boolean;
+  canManageRecurrence: boolean;
+  canViewActivity: boolean;
+  canViewLedger: boolean;
+};
+
+function getSingleSearchValue(
+  value: string | string[] | undefined
+) {
+  return Array.isArray(value)
+    ? value[0]
+    : value;
+}
+
+function resolveObjectTab(
+  value: string | undefined,
+  canViewFinance: boolean,
+  canViewHistory: boolean
+): ObjectTabId {
+  if (
+    !value ||
+    !OBJECT_TAB_IDS.includes(
+      value as ObjectTabId
+    )
+  ) {
+    return "overview";
+  }
+
+  if (
+    (value === "finance" &&
+      !canViewFinance) ||
+    (value === "history" &&
+      !canViewHistory)
+  ) {
+    return "overview";
+  }
+
+  return value as ObjectTabId;
+}
+
+function resolvePage(
+  value: string | undefined
+) {
+  if (!value || !/^\d+$/u.test(value)) {
+    return 1;
+  }
+
+  const page = Number(value);
+
+  return Number.isSafeInteger(page) &&
+    page > 0
+    ? page
+    : 1;
+}
+
+function sumFiniteValues(
+  values: unknown[]
+) {
+  return values.reduce<number>(
+    (sum, value) => {
+      const numberValue =
+        Number(value);
+
+      return (
+        sum +
+        (Number.isFinite(
+          numberValue
+        )
+          ? numberValue
+          : 0)
+      );
+    },
+    0
+  );
+}
+
+function buildFinanceData(
+  object: ObjectItem,
+  costs: ObjectCostSummary,
+  otherExpensesCost: number,
+  paymentAmounts: number[],
+  paymentSchedule: ObjectPaymentScheduleItem[],
+  today: string
+) {
+  const paymentSummary =
+    calculateObjectPaymentSummary(
+      object.client_price ?? null,
+      paymentAmounts
+    );
+  const paymentScheduleSummary =
+    calculateObjectPaymentSchedule(
+      paymentSchedule,
+      paymentSummary.totalPaid,
+      object.client_price ?? null,
+      today
+    );
+
+  return {
+    materialsCost:
+      costs.materialsCost,
+    laborCost: costs.laborCost,
+    otherExpensesCost,
+    costBudget:
+      object.cost_budget ?? null,
+    clientPrice:
+      object.client_price ?? null,
+    paymentSummary,
+    paymentScheduleSummary,
+  };
+}
+
+function ObjectTabLoading() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="min-w-0 animate-pulse space-y-4"
+    >
+      <span className="sr-only">
+        Завантаження розділу…
+      </span>
+      <div className="h-28 rounded-xl border bg-gray-50" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="h-36 rounded-xl border bg-gray-50" />
+        <div className="h-36 rounded-xl border bg-gray-50" />
+      </div>
+    </div>
+  );
+}
+
+async function ObjectTabContent({
+  activeTab,
+  page,
+  object,
+  canManageObject,
+  canManageRecurrence,
+  canViewActivity,
+  canViewLedger,
+}: TabContentProps) {
+  const objectId = object.id;
+  const today = getKyivDateValue();
+
+  if (activeTab === "overview") {
+    const [preview, finance] =
+      await Promise.all([
+        getObjectOverviewPreview(
+          objectId
+        ),
+        canManageObject
+          ? Promise.all([
+              getManagementObjectCostSummary(
+                objectId
+              ),
+              getObjectExpenseTotal(
+                objectId
+              ),
+              getObjectPaymentTotals([
+                objectId,
+              ]),
+              getObjectPaymentSchedule(
+                objectId
+              ),
+            ]).then(
+              ([
+                costs,
+                otherExpensesCost,
+                paymentTotals,
+                paymentSchedule,
+              ]) =>
+                buildFinanceData(
+                  object,
+                  costs,
+                  otherExpensesCost,
+                  [
+                    paymentTotals.get(
+                      objectId
+                    ) || 0,
+                  ],
+                  paymentSchedule,
+                  today
+                )
+            )
+          : Promise.resolve(
+              undefined
+            ),
+      ]);
+
+    return (
+      <ObjectOverview
+        activeTasks={
+          preview.activeTasks
+        }
+        activeTasksCount={
+          preview.activeTasksCount
+        }
+        materialsCount={
+          preview.materialsCount
+        }
+        totalHours={
+          preview.totalHours
+        }
+        documentsCount={
+          preview.documentsCount
+        }
+        photosCount={
+          preview.photosCount
+        }
+        recentWorkLogs={
+          preview.recentWorkLogs
+        }
+        employees={[]}
+        today={today}
+        supervision={
+          object.status ===
+          PERIODIC_SUPERVISION_STATUS ? (
+            <ObjectSupervisionCard
+              objectId={object.id}
+              intervalDays={
+                object.supervision_interval_days
+              }
+              lastDate={
+                object.last_supervision_date
+              }
+              nextDate={
+                object.next_supervision_date
+              }
+              today={today}
+              canManage={
+                canManageObject
+              }
+            />
+          ) : undefined
+        }
+        finance={finance}
+      />
+    );
+  }
+
+  if (activeTab === "materials") {
+    const [
+      materialsPage,
+      warehouseItems,
+      movements,
+      settings,
+    ] = await Promise.all([
+      canManageObject
+        ? getManagementObjectMaterialsPage(
+            objectId,
+            page
+          )
+        : getObjectMaterialsPage(
+            objectId,
+            page
+          ),
+      canManageObject
+        ? getManagementWarehouseItems()
+        : Promise.resolve([]),
+      canViewLedger
+        ? getObjectMaterialMovements(
+            objectId
+          )
+        : Promise.resolve([]),
+      getAppSettings(),
+    ]);
+
+    return (
+      <>
+        <ObjectMaterials
+          materials={
+            materialsPage.items
+          }
+          totalCount={
+            materialsPage.total
+          }
+          warehouseItems={
+            warehouseItems
+          }
+          objectId={objectId}
+          movements={movements}
+          currency={
+            settings.currency
+          }
+          canViewLedger={
+            canViewLedger
+          }
+          canManage={
+            canManageObject
+          }
+        />
+        <ObjectTabPagination
+          objectId={objectId}
+          tab="materials"
+          page={materialsPage.page}
+          pageSize={
+            materialsPage.pageSize
+          }
+          total={materialsPage.total}
+          hasPreviousPage={
+            materialsPage.hasPreviousPage
+          }
+          hasNextPage={
+            materialsPage.hasNextPage
+          }
+        />
+      </>
+    );
+  }
+
+  if (activeTab === "work") {
+    const [workLogsPage, employees] =
+      await Promise.all([
+        canManageObject
+          ? getManagementObjectWorkLogsPage(
+              objectId,
+              page
+            )
+          : getObjectWorkLogsPage(
+              objectId,
+              page
+            ),
+        getEmployees(),
+      ]);
+
+    return (
+      <>
+        <ObjectWorkLogs
+          workLogs={
+            workLogsPage.items
+          }
+          totalCount={
+            workLogsPage.total
+          }
+          objectId={objectId}
+          employees={employees}
+          canManage={
+            canManageObject
+          }
+        />
+        <ObjectTabPagination
+          objectId={objectId}
+          tab="work"
+          page={workLogsPage.page}
+          pageSize={
+            workLogsPage.pageSize
+          }
+          total={workLogsPage.total}
+          hasPreviousPage={
+            workLogsPage.hasPreviousPage
+          }
+          hasNextPage={
+            workLogsPage.hasNextPage
+          }
+        />
+      </>
+    );
+  }
+
+  if (activeTab === "tasks") {
+    const [tasks, employees] =
+      await Promise.all([
+        getObjectTasks(objectId),
+        getEmployees(),
+      ]);
+
+    return (
+      <ObjectTasks
+        tasks={tasks}
+        objectId={objectId}
+        employees={employees}
+        canManage={
+          canManageObject
+        }
+        canManageRecurrence={
+          canManageRecurrence
+        }
+      />
+    );
+  }
+
+  if (
+    activeTab === "finance" &&
+    canManageObject
+  ) {
+    const [
+      costs,
+      expenses,
+      payments,
+      paymentSchedule,
+    ] = await Promise.all([
+      getManagementObjectCostSummary(
+        objectId
+      ),
+      getObjectExpenses(objectId),
+      getObjectPayments(objectId),
+      getObjectPaymentSchedule(
+        objectId
+      ),
+    ]);
+    const otherExpensesCost =
+      sumFiniteValues(
+        expenses.map(
+          (expense) =>
+            expense.amount
+        )
+      );
+    const finance = buildFinanceData(
+      object,
+      costs,
+      otherExpensesCost,
+      payments.map(
+        (payment) =>
+          Number(payment.amount)
+      ),
+      paymentSchedule,
+      today
+    );
+
+    return (
+      <div className="min-w-0 space-y-4 sm:space-y-5">
+        <ObjectSummary
+          finance={finance}
+        />
+
+        <ObjectPaymentSchedule
+          objectId={objectId}
+          clientPrice={
+            finance.clientPrice
+          }
+          lifetimeTotalPaid={
+            finance.paymentSummary.totalPaid
+          }
+          scheduleItems={
+            paymentSchedule
+          }
+          today={today}
+        />
+
+        <ObjectPayments
+          objectId={objectId}
+          payments={payments}
+          today={today}
+        />
+
+        <ObjectExpenses
+          expenses={expenses}
+          objectId={objectId}
+        />
+      </div>
+    );
+  }
+
+  if (activeTab === "documents") {
+    const documentsPage =
+      await getObjectDocumentsPage(
+        objectId,
+        page
+      );
+
+    return (
+      <>
+        <ObjectDocuments
+          objectId={objectId}
+          documents={
+            documentsPage.items
+          }
+          totalCount={
+            documentsPage.total
+          }
+          canManage={
+            canManageObject
+          }
+        />
+        <ObjectTabPagination
+          objectId={objectId}
+          tab="documents"
+          page={documentsPage.page}
+          pageSize={
+            documentsPage.pageSize
+          }
+          total={documentsPage.total}
+          hasPreviousPage={
+            documentsPage.hasPreviousPage
+          }
+          hasNextPage={
+            documentsPage.hasNextPage
+          }
+        />
+      </>
+    );
+  }
+
+  if (activeTab === "photos") {
+    const photosPage =
+      await getObjectPhotosPage(
+        objectId,
+        page
+      );
+
+    return (
+      <>
+        <ObjectPhotos
+          photos={photosPage.items}
+          totalCount={
+            photosPage.total
+          }
+          objectId={objectId}
+          canManage={
+            canManageObject
+          }
+        />
+        <ObjectTabPagination
+          objectId={objectId}
+          tab="photos"
+          page={photosPage.page}
+          pageSize={
+            photosPage.pageSize
+          }
+          total={photosPage.total}
+          hasPreviousPage={
+            photosPage.hasPreviousPage
+          }
+          hasNextPage={
+            photosPage.hasNextPage
+          }
+        />
+      </>
+    );
+  }
+
+  if (
+    activeTab === "history" &&
+    canViewActivity
+  ) {
+    const activityPage =
+      await getObjectActivityLogs(
+        objectId
+      );
+
+    return (
+      <ObjectActivityTimeline
+        key={objectId}
+        objectId={objectId}
+        initialPage={activityPage}
+      />
+    );
+  }
+
+  return null;
+}
 
 export default async function ObjectPage({
   params,
+  searchParams,
 }: Props) {
-  const { id } =
-    await params;
-
-  const objectId =
-    Number(id);
+  const [{ id }, query] =
+    await Promise.all([
+      params,
+      searchParams,
+    ]);
+  const objectId = Number(id);
 
   if (
-    !Number.isInteger(
-      objectId
-    ) ||
+    !Number.isInteger(objectId) ||
     objectId <= 0
   ) {
     notFound();
@@ -103,400 +680,44 @@ export default async function ObjectPage({
 
   const profile =
     await getCurrentUserProfile();
-  const canViewPayments =
-    profile
-      ? canManageObjects(
-          profile.role
-        )
-      : false;
-  const canViewActivity =
-    profile
-      ? canViewActivityLog(
-          profile.role
-        )
-      : false;
-  const canManageRecurrence =
-    profile
-      ? canManageTasks(profile.role)
-      : false;
-  const canViewLedger =
-    profile
-      ? canViewWarehouseLedger(
-          profile.role
-        )
-      : false;
-
-  const [
-    object,
-    tasks,
-    materials,
-    workLogs,
-    photos,
-    employees,
-    warehouseItems,
-    expenses,
-    payments,
-    paymentSchedule,
-    documents,
-    activityPage,
-    materialMovements,
-    settings,
-  ] = await Promise.all([
-    canViewPayments
-      ? getManagementObject(
-          objectId
-        )
-      : getObject(objectId),
-    getObjectTasks(objectId),
-    canViewPayments
-      ? getManagementMaterials(
-          objectId
-        )
-      : getMaterials(objectId),
-    canViewPayments
-      ? getManagementWorkLogs(
-          objectId
-        )
-      : getWorkLogs(objectId),
-    getObjectPhotos(objectId),
-    canViewPayments
-      ? getManagementEmployees()
-      : getEmployees(),
-    canViewPayments
-      ? getManagementWarehouseItems()
-      : getWarehouseItems(),
-    canViewPayments
-      ? getObjectExpenses(
-          objectId
-        )
-      : Promise.resolve([]),
-    canViewPayments
-      ? getObjectPayments(
-          objectId
-        )
-      : Promise.resolve([]),
-    canViewPayments
-      ? getObjectPaymentSchedule(
-          objectId
-        )
-      : Promise.resolve([]),
-    getObjectDocuments(
-      objectId
-    ),
+  const canManageObject = profile
+    ? canManageObjects(profile.role)
+    : false;
+  const canViewFinance =
+    canManageObject;
+  const canViewActivity = profile
+    ? canViewActivityLog(
+        profile.role
+      )
+    : false;
+  const canManageRecurrence = profile
+    ? canManageTasks(profile.role)
+    : false;
+  const canViewLedger = profile
+    ? canViewWarehouseLedger(
+        profile.role
+      )
+    : false;
+  const activeTab = resolveObjectTab(
+    getSingleSearchValue(query.tab),
+    canViewFinance,
     canViewActivity
-      ? getObjectActivityLogs(
-          objectId
-        )
-      : Promise.resolve({
-          logs: [],
-          nextCursor: null,
-        }),
-    canViewLedger
-      ? getObjectMaterialMovements(
-          objectId
-        )
-      : Promise.resolve([]),
-    getAppSettings(),
-  ]);
+  );
+  const page = resolvePage(
+    getSingleSearchValue(query.page)
+  );
+  const object = canViewFinance
+    ? await getManagementObject(
+        objectId
+      )
+    : await getObject(objectId);
 
   if (!object) {
     notFound();
   }
 
-  const employeeList =
-    Array.isArray(
-      employees
-    )
-      ? employees
-      : [];
-
-  const taskList =
-    Array.isArray(
-      tasks
-    )
-      ? tasks
-      : [];
-
-  const materialList =
-    Array.isArray(
-      materials
-    )
-      ? materials
-      : [];
-
-  const workLogList =
-    Array.isArray(
-      workLogs
-    )
-      ? workLogs
-      : [];
-
-  const photoList =
-    Array.isArray(
-      photos
-    )
-      ? photos
-      : [];
-
-  const warehouseItemList =
-    Array.isArray(
-      warehouseItems
-    )
-      ? warehouseItems
-      : [];
-
-  const expenseList =
-    Array.isArray(
-      expenses
-    )
-      ? expenses
-      : [];
-  const paymentList =
-    Array.isArray(
-      payments
-    )
-      ? payments
-      : [];
-  const paymentScheduleList =
-    Array.isArray(
-      paymentSchedule
-    )
-      ? paymentSchedule
-      : [];
-  const documentList =
-    Array.isArray(
-      documents
-    )
-      ? documents
-      : [];
-
-  const activeTaskList =
-    taskList
-      .filter(
-      (task) =>
-        task.status !==
-        "Виконано"
-      )
-      .sort(
-        (first, second) => {
-          const firstDue =
-            first.due_date ||
-            "9999-12-31";
-          const secondDue =
-            second.due_date ||
-            "9999-12-31";
-
-          return (
-            firstDue.localeCompare(
-              secondDue
-            ) ||
-            first.created_at.localeCompare(
-              second.created_at
-            ) ||
-            first.id -
-              second.id
-          );
-        }
-      );
-  const upcomingTasks =
-    activeTaskList.slice(0, 5);
-  const recentWorkLogs = [
-    ...workLogList,
-  ]
-    .sort(
-      (first, second) =>
-        second.work_date.localeCompare(
-          first.work_date
-        ) ||
-        second.created_at.localeCompare(
-          first.created_at
-        ) ||
-        second.id - first.id
-    )
-    .slice(0, 3);
-
-  const totalHours =
-    workLogList.reduce(
-      (
-        sum,
-        workLog
-      ) => {
-        const hours =
-          Number(
-            workLog.hours ||
-              0
-          );
-
-        return (
-          sum +
-          (
-            Number.isFinite(
-              hours
-            )
-              ? hours
-              : 0
-          )
-        );
-      },
-      0
-    );
-
-  const materialsCost =
-    materialList.reduce(
-      (
-        sum,
-        material
-      ) => {
-        const quantity =
-          Number(
-            material.quantity ||
-              0
-          );
-
-        const price =
-          Number(
-            material.price ||
-              0
-          );
-
-        if (
-          !Number.isFinite(
-            quantity
-          ) ||
-          !Number.isFinite(
-            price
-          )
-        ) {
-          return sum;
-        }
-
-        return (
-          sum +
-          quantity *
-            price
-        );
-      },
-      0
-    );
-
-  const laborCost =
-    workLogList.reduce(
-      (
-        sum,
-        workLog
-      ) => {
-        const hours =
-          Number(
-            workLog.hours ||
-              0
-          );
-
-        const hourlyRate =
-          Number(
-            workLog.hourly_rate ||
-              0
-          );
-
-        if (
-          !Number.isFinite(
-            hours
-          ) ||
-          !Number.isFinite(
-            hourlyRate
-          )
-        ) {
-          return sum;
-        }
-
-        return (
-          sum +
-          hours *
-            hourlyRate
-        );
-      },
-      0
-    );
-
-  const otherExpensesCost =
-    expenseList.reduce(
-      (
-        sum,
-        expense
-      ) => {
-        const amount =
-          Number(
-            expense.amount ||
-              0
-          );
-
-        return (
-          sum +
-          (
-            Number.isFinite(
-              amount
-            )
-              ? amount
-              : 0
-          )
-        );
-      },
-      0
-    );
-
-  const canManageObject =
-    profile
-      ? canManageObjects(
-          profile.role
-        )
-      : false;
-  const paymentSummary =
-    canViewPayments
-      ? calculateObjectPaymentSummary(
-          object.client_price ??
-            null,
-          paymentList.map(
-            (payment) =>
-              Number(
-                payment.amount
-              )
-          )
-        )
-      : undefined;
-  const today =
-    getKyivDateValue();
-  const paymentScheduleSummary =
-    canViewPayments &&
-    paymentSummary
-      ? calculateObjectPaymentSchedule(
-          paymentScheduleList,
-          paymentSummary.totalPaid,
-          object.client_price ??
-            null,
-          today
-        )
-      : undefined;
-  const financeData =
-    canViewPayments &&
-    paymentSummary &&
-    paymentScheduleSummary
-      ? {
-          materialsCost,
-          laborCost,
-          otherExpensesCost,
-          costBudget:
-            object.cost_budget ??
-            null,
-          clientPrice:
-            object.client_price ??
-            null,
-          paymentSummary,
-          paymentScheduleSummary,
-        }
-      : undefined;
-
   return (
     <div className="min-w-0 space-y-5 sm:space-y-8">
-      {/* BACK */}
       <Link
         href="/objects"
         className="inline-flex items-center gap-1 text-sm font-medium text-gray-500 transition hover:text-green-700"
@@ -506,216 +727,48 @@ export default async function ObjectPage({
 
       <ObjectPassportHeader
         object={object}
-        employees={
-          canManageObject
-            ? employeeList
-            : []
-        }
-        canManage={
-          canManageObject
-        }
+        employees={[]}
+        canManage={canManageObject}
       />
 
-      {/* CONTENT */}
       <ObjectTabs
-        overview={
-          <ObjectOverview
-            activeTasks={
-              upcomingTasks
-            }
-            materialsCount={
-              materialList.length
-            }
-            totalHours={
-              totalHours
-            }
-            documentsCount={
-              documentList.length
-            }
-            photosCount={
-              photoList.length
-            }
-            recentWorkLogs={
-              recentWorkLogs
-            }
-            employees={
-              employeeList
-            }
-            today={today}
-            supervision={
-              object.status ===
-              PERIODIC_SUPERVISION_STATUS ? (
-                <ObjectSupervisionCard
-                  objectId={
-                    object.id
-                  }
-                  intervalDays={
-                    object.supervision_interval_days
-                  }
-                  lastDate={
-                    object.last_supervision_date
-                  }
-                  nextDate={
-                    object.next_supervision_date
-                  }
-                  today={today}
-                  canManage={
-                    canManageObject
-                  }
-                />
-              ) : undefined
-            }
-            finance={
-              financeData
-            }
-          />
+        objectId={objectId}
+        activeTab={activeTab}
+        canViewFinance={
+          canViewFinance
         }
-        tasks={
-          <ObjectTasks
-            tasks={
-              taskList
-            }
-            objectId={
-              object.id
-            }
-            employees={
-              employeeList
-            }
-            canManage={
-              canManageObject
-            }
-            canManageRecurrence={
-              canManageRecurrence
-            }
-          />
+        canViewHistory={
+          canViewActivity
         }
-        materials={
-          <ObjectMaterials
-            materials={
-              materialList
+      >
+        <ObjectTabErrorBoundary
+          key={`${activeTab}:${page}`}
+        >
+          <Suspense
+            fallback={
+              <ObjectTabLoading />
             }
-            warehouseItems={
-              warehouseItemList
-            }
-            objectId={
-              object.id
-            }
-            movements={
-              materialMovements
-            }
-            currency={
-              settings.currency
-            }
-            canViewLedger={
-              canViewLedger
-            }
-            canManage={
-              canManageObject
-            }
-          />
-        }
-        work={
-          <ObjectWorkLogs
-            workLogs={
-              workLogList
-            }
-            objectId={
-              object.id
-            }
-            employees={
-              employeeList
-            }
-            canManage={
-              canManageObject
-            }
-          />
-        }
-        finance={
-          financeData ? (
-            <div className="min-w-0 space-y-4 sm:space-y-5">
-              <ObjectSummary
-                finance={
-                  financeData
-                }
-              />
-
-              <ObjectPaymentSchedule
-                objectId={
-                  object.id
-                }
-                clientPrice={
-                  financeData.clientPrice
-                }
-                lifetimeTotalPaid={
-                  financeData.paymentSummary.totalPaid
-                }
-                scheduleItems={
-                  paymentScheduleList
-                }
-                today={today}
-              />
-
-              <ObjectPayments
-                objectId={
-                  object.id
-                }
-                payments={
-                  paymentList
-                }
-                today={today}
-              />
-
-              <ObjectExpenses
-                expenses={
-                  expenseList
-                }
-                objectId={
-                  object.id
-                }
-              />
-            </div>
-          ) : undefined
-        }
-        documents={
-          <ObjectDocuments
-            objectId={
-              object.id
-            }
-            documents={
-              documentList
-            }
-            canManage={
-              canManageObject
-            }
-          />
-        }
-        photos={
-          <ObjectPhotos
-            photos={
-              photoList
-            }
-            objectId={
-              object.id
-            }
-            canManage={
-              canManageObject
-            }
-          />
-        }
-        history={
-          canViewActivity ? (
-            <ObjectActivityTimeline
-              key={object.id}
-              objectId={
-                object.id
+          >
+            <ObjectTabContent
+              activeTab={activeTab}
+              page={page}
+              object={object}
+              canManageObject={
+                canManageObject
               }
-              initialPage={
-                activityPage
+              canManageRecurrence={
+                canManageRecurrence
+              }
+              canViewActivity={
+                canViewActivity
+              }
+              canViewLedger={
+                canViewLedger
               }
             />
-          ) : undefined
-        }
-      />
+          </Suspense>
+        </ObjectTabErrorBoundary>
+      </ObjectTabs>
     </div>
   );
 }
