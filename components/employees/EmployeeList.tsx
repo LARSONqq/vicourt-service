@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import {
+  useRouter,
+} from "next/navigation";
 
 import {
   useMemo,
@@ -10,17 +13,17 @@ import {
 import { deleteEmployee } from "@/app/actions/employeeActions";
 
 import type {
-  ManagementEmployee,
-} from "@/types/employee";
-import type {
+  EmployeeDirectoryItem,
   EmployeeDirectoryWorkload,
 } from "@/types/employeeProfile";
 
 import { EditEmployeeForm } from "./EditEmployeeForm";
 
 type Props = {
-  employees: ManagementEmployee[];
+  employees: EmployeeDirectoryItem[];
   workloads: EmployeeDirectoryWorkload[];
+  total: number;
+  hasFilters: boolean;
   canManage?: boolean;
 };
 
@@ -47,7 +50,7 @@ function formatDate(
 }
 
 function getInitials(
-  employee: ManagementEmployee
+  employee: EmployeeDirectoryItem
 ) {
   const firstNameLetter =
     employee.first_name?.charAt(
@@ -86,8 +89,11 @@ function getStatusClasses(
 export default function EmployeeList({
   employees,
   workloads,
+  total,
+  hasFilters,
   canManage = false,
 }: Props) {
+  const router = useRouter();
   const safeEmployees =
     useMemo(
       () =>
@@ -98,62 +104,11 @@ export default function EmployeeList({
     );
 
   const [
-    search,
-    setSearch,
-  ] = useState("");
-
-  const [
-    status,
-    setStatus,
-  ] = useState("Усі");
-
-  const [
-    employmentType,
-    setEmploymentType,
-  ] = useState("Усі");
-
-  const [
     editingId,
     setEditingId,
   ] = useState<number | null>(
     null
   );
-
-  const statuses =
-    useMemo(() => {
-      const values =
-        safeEmployees
-          .map(
-            (employee) =>
-              employee.status
-          )
-          .filter(Boolean);
-
-      return [
-        "Усі",
-        ...Array.from(
-          new Set(values)
-        ),
-      ];
-    }, [safeEmployees]);
-
-  const employmentTypes =
-    useMemo(() => {
-      const values =
-        safeEmployees
-          .map(
-            (employee) =>
-              employee.employment_type
-          )
-          .filter(Boolean);
-
-      return [
-        "Усі",
-        ...Array.from(
-          new Set(values)
-        ),
-      ];
-    }, [safeEmployees]);
 
   const workloadByEmployee =
     useMemo(() => {
@@ -203,128 +158,13 @@ export default function EmployeeList({
       workloads,
     ]);
 
-  const filteredEmployees =
-    useMemo(() => {
-      const normalizedSearch =
-        search
-          .trim()
-          .toLowerCase();
-
-      return safeEmployees.filter(
-        (employee) => {
-          const searchableText =
-            [
-              employee.first_name,
-              employee.last_name,
-              employee.phone,
-              employee.email,
-              employee.position,
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
-
-          const matchesSearch =
-            !normalizedSearch ||
-            searchableText.includes(
-              normalizedSearch
-            );
-
-          const matchesStatus =
-            status ===
-              "Усі" ||
-            employee.status ===
-              status;
-
-          const matchesEmploymentType =
-            employmentType ===
-              "Усі" ||
-            employee.employment_type ===
-              employmentType;
-
-          return (
-            matchesSearch &&
-            matchesStatus &&
-            matchesEmploymentType
-          );
-        }
-      );
-    }, [
-      safeEmployees,
-      search,
-      status,
-      employmentType,
-    ]);
-
   return (
     <div className="min-w-0 space-y-5">
-      <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_210px_210px]">
-        <input
-          type="search"
-          value={search}
-          onChange={(event) =>
-            setSearch(
-              event.target.value
-            )
-          }
-          placeholder="Пошук працівника"
-          className="min-h-11 w-full min-w-0 rounded-lg border px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
-        />
-
-        <select
-          value={status}
-          onChange={(event) =>
-            setStatus(
-              event.target.value
-            )
-          }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-        >
-          {statuses.map(
-            (item) => (
-              <option
-                key={item}
-                value={item}
-              >
-                {item === "Усі"
-                  ? "Усі статуси"
-                  : item}
-              </option>
-            )
-          )}
-        </select>
-
-        <select
-          value={employmentType}
-          onChange={(event) =>
-            setEmploymentType(
-              event.target.value
-            )
-          }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-        >
-          {employmentTypes.map(
-            (item) => (
-              <option
-                key={item}
-                value={item}
-              >
-                {item === "Усі"
-                  ? "Усі типи роботи"
-                  : item}
-              </option>
-            )
-          )}
-        </select>
-      </div>
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500">
           Знайдено працівників:{" "}
           <span className="font-semibold text-gray-800">
-            {
-              filteredEmployees.length
-            }
+            {total}
           </span>
         </p>
 
@@ -335,7 +175,7 @@ export default function EmployeeList({
         )}
       </div>
 
-      {filteredEmployees.length ===
+      {safeEmployees.length ===
       0 ? (
         <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
@@ -347,13 +187,14 @@ export default function EmployeeList({
           </p>
 
           <p className="mt-1 text-sm text-gray-500">
-            Спробуй змінити пошук,
-            статус або тип роботи.
+            {hasFilters
+              ? "Спробуй змінити пошук, статус або тип роботи."
+              : "Додай першого працівника, щоб сформувати команду."}
           </p>
         </div>
       ) : (
         <div className="grid min-w-0 grid-cols-1 gap-3 sm:gap-5 xl:grid-cols-2 2xl:grid-cols-3">
-          {filteredEmployees.map(
+          {safeEmployees.map(
             (employee) => {
               const workload =
                 workloadByEmployee.get(
@@ -423,7 +264,15 @@ export default function EmployeeList({
 
                       <EditEmployeeForm
                         employee={
-                          employee
+                          {
+                            ...employee,
+                            hourly_rate:
+                              employee.hourly_rate ??
+                              0,
+                          }
+                        }
+                        onSaved={() =>
+                          router.refresh()
                         }
                         onCancel={() =>
                           setEditingId(

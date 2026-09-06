@@ -286,16 +286,47 @@ export async function getEmployeeProfileKpis(
   };
 }
 
-export async function getEmployeeDirectoryWorkloads(): Promise<
+export async function getEmployeeDirectoryWorkloads(
+  employeeIds?: number[]
+): Promise<
   EmployeeDirectoryWorkload[]
 > {
+  const normalizedIds =
+    employeeIds
+      ?.filter(
+        (employeeId) =>
+          Number.isInteger(
+            employeeId
+          ) && employeeId > 0
+      )
+      .filter(
+        (employeeId, index, ids) =>
+          ids.indexOf(employeeId) ===
+          index
+      );
+
+  if (
+    normalizedIds &&
+    normalizedIds.length === 0
+  ) {
+    return [];
+  }
+
   const supabase =
     await createClient();
+  let query = supabase.rpc(
+    "get_employee_directory_workloads"
+  );
+
+  if (normalizedIds) {
+    query = query.in(
+      "employee_id",
+      normalizedIds
+    );
+  }
+
   const { data, error } =
-    await supabase
-      .rpc(
-        "get_employee_directory_workloads"
-      )
+    await query
       .overrideTypes<
         EmployeeDirectoryWorkloadRpcRow[]
       >();
@@ -740,7 +771,9 @@ export async function getEmployeeActors(
 async function loadEmployeeActivityPage(
   employeeId: number,
   page: number,
-  mode: "changes" | "actor"
+  mode: "changes" | "actor",
+  pageSize = EMPLOYEE_TAB_PAGE_SIZE,
+  knownActors?: EmployeeActor[]
 ): Promise<EmployeeActivityPage> {
   const normalizedEmployeeId =
     normalizeEmployeeId(employeeId);
@@ -748,10 +781,10 @@ async function loadEmployeeActivityPage(
     normalizePage(page);
   const from =
     (normalizedPage - 1) *
-    EMPLOYEE_TAB_PAGE_SIZE;
+    pageSize;
   const to =
     from +
-    EMPLOYEE_TAB_PAGE_SIZE -
+    pageSize -
     1;
   const supabase =
     await createClient();
@@ -775,9 +808,10 @@ async function loadEmployeeActivityPage(
       );
   } else {
     const actors =
-      await getEmployeeActors(
+      knownActors ??
+      (await getEmployeeActors(
         normalizedEmployeeId
-      );
+      ));
     const actorIds =
       actors.map(
         (actor) =>
@@ -789,7 +823,7 @@ async function loadEmployeeActivityPage(
         [],
         0,
         normalizedPage,
-        EMPLOYEE_TAB_PAGE_SIZE
+        pageSize
       );
     }
 
@@ -828,7 +862,7 @@ async function loadEmployeeActivityPage(
     data || [],
     Number(count) || 0,
     normalizedPage,
-    EMPLOYEE_TAB_PAGE_SIZE
+    pageSize
   );
 }
 
@@ -845,11 +879,63 @@ export async function getEmployeeChangesPage(
 
 export async function getEmployeeActorHistoryPage(
   employeeId: number,
-  page = 1
+  page = 1,
+  knownActors?: EmployeeActor[]
 ) {
   return loadEmployeeActivityPage(
     employeeId,
     page,
-    "actor"
+    "actor",
+    EMPLOYEE_TAB_PAGE_SIZE,
+    knownActors
   );
+}
+
+export async function getEmployeeRecentActivityPreview(
+  employeeId: number
+) {
+  const actors =
+    await getEmployeeActors(
+      employeeId
+    );
+  const [changes, actions] =
+    await Promise.all([
+      loadEmployeeActivityPage(
+        employeeId,
+        1,
+        "changes",
+        3
+      ),
+      loadEmployeeActivityPage(
+        employeeId,
+        1,
+        "actor",
+        3,
+        actors
+      ),
+    ]);
+  const logsById = new Map(
+    [
+      ...changes.items,
+      ...actions.items,
+    ].map((log) => [
+      log.id,
+      log,
+    ])
+  );
+
+  return Array.from(
+    logsById.values()
+  )
+    .sort((first, second) => {
+      const timestampOrder =
+        second.created_at.localeCompare(
+          first.created_at
+        );
+
+      return timestampOrder !== 0
+        ? timestampOrder
+        : second.id - first.id;
+    })
+    .slice(0, 3);
 }

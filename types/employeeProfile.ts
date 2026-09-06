@@ -1,5 +1,10 @@
 import type { Equipment } from "@/types/equipment";
 import type { ActivityLog } from "@/types/activityLog";
+import type {
+  EmployeeDetails,
+  EmployeeStatus,
+  EmploymentType,
+} from "@/types/employee";
 import type { ObjectItem } from "@/types/object";
 import type { TaskWithObject } from "@/types/taskWithObject";
 import type { WorkLog } from "@/types/workLog";
@@ -9,6 +14,24 @@ export type EmployeeDirectoryWorkload = {
   activeTasks: number;
   objects: number;
   equipment: number;
+};
+
+export type EmployeeDirectoryFilters = {
+  search?: string;
+  status?: EmployeeStatus;
+  employmentType?: EmploymentType;
+};
+
+export type EmployeeDirectoryItem =
+  EmployeeDetails & {
+    hourly_rate?: number;
+  };
+
+export type EmployeeDirectoryStats = {
+  total: number;
+  active: number;
+  unavailable: number;
+  contractors: number;
 };
 
 export type EmployeeProfileKpis = {
@@ -32,6 +55,9 @@ export type EmployeeScopedPage<T> = {
   hasPreviousPage: boolean;
   hasNextPage: boolean;
 };
+
+export type EmployeeDirectoryPage =
+  EmployeeScopedPage<EmployeeDirectoryItem>;
 
 export type EmployeeTaskFilter =
   | "all"
