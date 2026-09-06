@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
+import {
+  equipmentOperationalSelect,
+} from "@/constants/equipment";
 
 import type { Equipment } from "@/types/equipment";
 
@@ -13,7 +16,9 @@ export async function getEquipmentClient(): Promise<
     error,
   } = await supabase
     .from("equipment")
-    .select("*")
+    .select(
+      equipmentOperationalSelect
+    )
     .order("name", {
       ascending: true,
     });

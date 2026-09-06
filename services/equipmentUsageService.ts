@@ -157,6 +157,9 @@ export async function getEquipmentUsageLogs(): Promise<
       .order("reading_date", {
         ascending: false,
       })
+      .order("created_at", {
+        ascending: false,
+      })
       .order("id", {
         ascending: false,
       })
@@ -217,6 +220,9 @@ export async function getEquipmentUsageLogsByEquipmentId(
         equipmentId
       )
       .order("reading_date", {
+        ascending: false,
+      })
+      .order("created_at", {
         ascending: false,
       })
       .order("id", {

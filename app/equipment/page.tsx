@@ -1,3 +1,7 @@
+import {
+  Suspense,
+} from "react";
+
 import EquipmentActions from "@/components/equipment/EquipmentActions";
 import EquipmentList from "@/components/equipment/EquipmentList";
 import EquipmentMaintenancePanel from "@/components/equipment/EquipmentMaintenancePanel";
@@ -5,7 +9,10 @@ import EquipmentServiceHistory from "@/components/equipment/EquipmentServiceHist
 import EquipmentUsagePanel from "@/components/equipment/EquipmentUsagePanel";
 
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
-import { canManageEquipment } from "@/lib/auth/permissions";
+import {
+  canManageEquipment,
+  canViewReports,
+} from "@/lib/auth/permissions";
 import { evaluateEquipmentMaintenance } from "@/lib/equipmentMaintenance";
 import {
   getKyivDateValue,
@@ -21,6 +28,72 @@ import { getEquipmentUsageLogs } from "@/services/equipmentUsageService";
 
 import { getAppSettings } from "@/services/settingsService";
 
+import type {
+  AppCurrency,
+} from "@/types/appSettings";
+import type {
+  Equipment,
+} from "@/types/equipment";
+
+function HistoryLoading({
+  label,
+}: {
+  label: string;
+}) {
+  return (
+    <div className="min-h-40 animate-pulse rounded-xl border bg-white p-5">
+      <div className="h-5 w-52 rounded bg-gray-200" />
+      <p className="mt-4 text-sm text-gray-500">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+async function EquipmentUsageSection({
+  equipment,
+  canManage,
+  today,
+}: {
+  equipment: Equipment[];
+  canManage: boolean;
+  today: string;
+}) {
+  const logs =
+    await getEquipmentUsageLogs();
+
+  return (
+    <EquipmentUsagePanel
+      equipment={equipment}
+      logs={logs}
+      canManage={canManage}
+      today={today}
+    />
+  );
+}
+
+async function EquipmentServiceSection({
+  currency,
+  canManage,
+  showCost,
+}: {
+  currency: AppCurrency;
+  canManage: boolean;
+  showCost: boolean;
+}) {
+  const records =
+    await getEquipmentServiceHistoryRecords();
+
+  return (
+    <EquipmentServiceHistory
+      records={records}
+      currency={currency}
+      canManage={canManage}
+      showCost={showCost}
+    />
+  );
+}
+
 export default async function EquipmentPage() {
   const currentProfile =
     await requireSectionAccess(
@@ -34,15 +107,13 @@ export default async function EquipmentPage() {
 
   const [
     equipment,
-    serviceRecords,
-    usageLogs,
     employees,
     settings,
   ] = await Promise.all([
     getEquipment(),
-    getEquipmentServiceHistoryRecords(),
-    getEquipmentUsageLogs(),
-    getEmployees(),
+    canManage
+      ? getEmployees()
+      : Promise.resolve([]),
     getAppSettings(),
   ]);
 
@@ -229,26 +300,39 @@ export default async function EquipmentPage() {
         today={today}
       />
 
-      <EquipmentUsagePanel
-        equipment={equipment}
-        logs={usageLogs}
-        canManage={canManage}
-        today={today}
-      />
+      <Suspense
+        fallback={
+          <HistoryLoading label="Завантажуємо історію напрацювання…" />
+        }
+      >
+        <EquipmentUsageSection
+          equipment={equipment}
+          canManage={canManage}
+          today={today}
+        />
+      </Suspense>
 
       {/* SERVICE HISTORY */}
       <div className="min-w-0">
-        <EquipmentServiceHistory
-          records={
-            serviceRecords
+        <Suspense
+          fallback={
+            <HistoryLoading label="Завантажуємо історію обслуговування…" />
           }
-          currency={
-            settings.currency
-          }
-          canManage={
-            canManage
-          }
-        />
+        >
+          <EquipmentServiceSection
+            currency={
+              settings.currency
+            }
+            canManage={
+              canManage
+            }
+            showCost={
+              canViewReports(
+                currentProfile.role
+              )
+            }
+          />
+        </Suspense>
       </div>
     </div>
   );

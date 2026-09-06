@@ -26,6 +26,28 @@ import {
   equipmentStatuses,
 } from "@/constants/equipment";
 
+import type {
+  ActivityMetadata,
+  ActivityMetadataValue,
+} from "@/types/activityLog";
+
+function addActivityChange(
+  metadata: ActivityMetadata,
+  key: string,
+  previousValue: ActivityMetadataValue,
+  newValue: ActivityMetadataValue
+) {
+  if (previousValue === newValue) {
+    return false;
+  }
+
+  metadata[`previous_${key}`] =
+    previousValue;
+  metadata[`new_${key}`] =
+    newValue;
+  return true;
+}
+
 async function requireEquipmentManagement() {
   const profile =
     await getCurrentUserProfile();
@@ -350,6 +372,31 @@ export async function createEquipment(
     );
   }
 
+  await recordActivity({
+    action: "equipment.created",
+    entityType: "equipment",
+    entityId:
+      Number(createdEquipment.id),
+    entityName: name,
+    description: `Створено техніку «${name}».`,
+    metadata: {
+      category,
+      inventory_number:
+        inventoryNumber || null,
+      status,
+      responsible:
+        responsibleEmployee.fullName,
+      location:
+        location || null,
+      purchase_date:
+        purchaseDate || null,
+      maintenance_interval_days:
+        maintenanceIntervalDays,
+      next_service_date:
+        nextServiceDate || null,
+    },
+  });
+
   await syncEquipmentMaintenanceTask(
     Number(createdEquipment.id)
   );
@@ -485,6 +532,15 @@ export async function updateEquipment(
   } = await supabase
     .from("equipment")
     .select(`
+      name,
+      category,
+      inventory_number,
+      status,
+      responsible,
+      responsible_employee_id,
+      location,
+      purchase_date,
+      notes,
       maintenance_interval_days,
       next_service_date
     `)
@@ -562,6 +618,87 @@ export async function updateEquipment(
     previousEquipment.next_service_date !==
       (nextServiceDate || null);
 
+  const updateMetadata: ActivityMetadata = {};
+  let equipmentChanged = false;
+
+  equipmentChanged =
+    addActivityChange(
+      updateMetadata,
+      "name",
+      previousEquipment.name,
+      name
+    ) || equipmentChanged;
+  equipmentChanged =
+    addActivityChange(
+      updateMetadata,
+      "category",
+      previousEquipment.category,
+      category
+    ) || equipmentChanged;
+  equipmentChanged =
+    addActivityChange(
+      updateMetadata,
+      "inventory_number",
+      previousEquipment.inventory_number,
+      inventoryNumber
+    ) || equipmentChanged;
+  equipmentChanged =
+    addActivityChange(
+      updateMetadata,
+      "status",
+      previousEquipment.status,
+      status
+    ) || equipmentChanged;
+  equipmentChanged =
+    addActivityChange(
+      updateMetadata,
+      "responsible",
+      previousEquipment.responsible,
+      responsibleEmployee.fullName
+    ) || equipmentChanged;
+  if (
+    previousEquipment.responsible_employee_id !==
+    responsibleEmployee.id
+  ) {
+    updateMetadata.responsible_changed =
+      true;
+    equipmentChanged = true;
+  }
+  equipmentChanged =
+    addActivityChange(
+      updateMetadata,
+      "location",
+      previousEquipment.location,
+      location || null
+    ) || equipmentChanged;
+  equipmentChanged =
+    addActivityChange(
+      updateMetadata,
+      "purchase_date",
+      previousEquipment.purchase_date,
+      purchaseDate || null
+    ) || equipmentChanged;
+
+  if (
+    previousEquipment.notes !==
+    (notes || null)
+  ) {
+    updateMetadata.notes_changed = true;
+    equipmentChanged = true;
+  }
+
+  if (equipmentChanged) {
+    await recordActivity({
+      action: "equipment.updated",
+      entityType: "equipment",
+      entityId: equipmentId,
+      entityName: name,
+      description: `Оновлено техніку «${name}».`,
+      metadata:
+        updateMetadata,
+    });
+  }
+
   if (scheduleChanged) {
     await recordActivity({
       action:
@@ -628,6 +765,35 @@ export async function deleteEquipment(
     );
   }
 
+  const {
+    data: equipment,
+    error: equipmentError,
+  } = await supabase
+    .from("equipment")
+    .select(`
+      id,
+      name,
+      category,
+      inventory_number,
+      status,
+      responsible,
+      location
+    `)
+    .eq("id", equipmentId)
+    .maybeSingle();
+
+  if (equipmentError) {
+    throw new Error(
+      `Не вдалося завантажити техніку перед видаленням: ${equipmentError.message}`
+    );
+  }
+
+  if (!equipment) {
+    throw new Error(
+      "Техніку не знайдено."
+    );
+  }
+
   const { error } =
     await supabase
       .from("equipment")
@@ -642,6 +808,27 @@ export async function deleteEquipment(
       `Не вдалося видалити техніку: ${error.message}`
     );
   }
+
+  await recordActivity({
+    action: "equipment.deleted",
+    entityType: "equipment",
+    entityId: equipmentId,
+    entityName:
+      equipment.name,
+    description: `Видалено техніку «${equipment.name}».`,
+    metadata: {
+      category:
+        equipment.category,
+      inventory_number:
+        equipment.inventory_number,
+      status:
+        equipment.status,
+      responsible:
+        equipment.responsible,
+      location:
+        equipment.location,
+    },
+  });
 
   revalidatePath("/");
   revalidatePath(

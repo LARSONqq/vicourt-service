@@ -9,6 +9,9 @@ import {
   MANUAL_TASK_SOURCE,
 } from "@/constants/taskSource";
 import {
+  equipmentOperationalSelect,
+} from "@/constants/equipment";
+import {
   canAccessSection,
 } from "@/lib/auth/permissions";
 import {
@@ -1013,7 +1016,9 @@ export async function runAutomaticPushDelivery(): Promise<AutomaticPushRunStats>
           const { data, error } =
             await supabase
               .from("equipment")
-              .select("*")
+              .select(
+                equipmentOperationalSelect
+              )
               .order("id")
               .range(from, to)
               .overrideTypes<

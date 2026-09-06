@@ -38,6 +38,15 @@ export interface EquipmentServiceRecord {
   } | null;
 }
 
+export type EquipmentServiceRecordOperational = Omit<
+  EquipmentServiceRecord,
+  "cost" | "created_by" | "voided_by"
+>;
+
+export type EquipmentServiceRecordView =
+  | EquipmentServiceRecord
+  | EquipmentServiceRecordOperational;
+
 export interface EquipmentServiceCreationResult {
   service_history_id: number;
   equipment_id: number;

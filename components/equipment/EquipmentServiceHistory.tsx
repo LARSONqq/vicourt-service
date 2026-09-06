@@ -7,12 +7,13 @@ import { voidEquipmentServiceRecord } from "@/app/actions/equipmentServiceAction
 import { formatEquipmentUsage } from "@/lib/equipmentMaintenance";
 
 import type { AppCurrency } from "@/types/appSettings";
-import type { EquipmentServiceRecord } from "@/types/equipmentServiceRecord";
+import type { EquipmentServiceRecordView } from "@/types/equipmentServiceRecord";
 
 type Props = {
-  records: EquipmentServiceRecord[];
+  records: EquipmentServiceRecordView[];
   currency: AppCurrency;
   canManage?: boolean;
+  showCost?: boolean;
 };
 
 function formatDate(
@@ -206,6 +207,7 @@ export default function EquipmentServiceHistory({
   records,
   currency,
   canManage = false,
+  showCost = false,
 }: Props) {
   const safeRecords =
     Array.isArray(records)
@@ -215,7 +217,8 @@ export default function EquipmentServiceHistory({
   const totalCost =
     safeRecords.reduce(
       (sum, record) =>
-        record.voided_at
+        record.voided_at ||
+        !("cost" in record)
           ? sum
           : sum + Number(record.cost || 0),
       0
@@ -236,18 +239,20 @@ export default function EquipmentServiceHistory({
           </p>
         </div>
 
-        <div className="min-w-0 rounded-lg bg-green-50 px-3 py-2 md:bg-transparent md:p-0 md:text-right">
-          <p className="text-xs text-gray-500 sm:text-sm">
-            Загальні витрати
-          </p>
+        {showCost && (
+          <div className="min-w-0 rounded-lg bg-green-50 px-3 py-2 md:bg-transparent md:p-0 md:text-right">
+            <p className="text-xs text-gray-500 sm:text-sm">
+              Загальні витрати
+            </p>
 
-          <p className="mt-1 break-words font-semibold text-green-700">
-            {formatMoney(
-              totalCost,
-              currency
-            )}
-          </p>
-        </div>
+            <p className="mt-1 break-words font-semibold text-green-700">
+              {formatMoney(
+                totalCost,
+                currency
+              )}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* EMPTY */}
@@ -324,7 +329,7 @@ export default function EquipmentServiceHistory({
                   )}
 
                   {/* DATE + COST */}
-                  <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className={`mt-4 grid gap-3 ${showCost ? "grid-cols-2" : "grid-cols-1"}`}>
                     <div className="rounded-lg bg-gray-50 p-3">
                       <p className="text-xs text-gray-500">
                         Дата
@@ -337,20 +342,24 @@ export default function EquipmentServiceHistory({
                       </p>
                     </div>
 
-                    <div className="rounded-lg bg-green-50 p-3">
-                      <p className="text-xs text-gray-500">
-                        Вартість
-                      </p>
+                    {showCost && (
+                      <div className="rounded-lg bg-green-50 p-3">
+                        <p className="text-xs text-gray-500">
+                          Вартість
+                        </p>
 
-                      <p className="mt-1 break-words text-sm font-semibold text-green-700">
-                        {formatMoney(
-                          Number(
-                            record.cost
-                          ),
-                          currency
-                        )}
-                      </p>
-                    </div>
+                        <p className="mt-1 break-words text-sm font-semibold text-green-700">
+                          {"cost" in record
+                            ? formatMoney(
+                                Number(
+                                  record.cost
+                                ),
+                                currency
+                              )
+                            : "—"}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* DETAILS */}
@@ -438,9 +447,11 @@ export default function EquipmentServiceHistory({
                     Тип
                   </th>
 
-                  <th className="p-4">
-                    Вартість
-                  </th>
+                  {showCost && (
+                    <th className="p-4">
+                      Вартість
+                    </th>
+                  )}
 
                   <th className="p-4">
                     Хто виконав
@@ -518,14 +529,18 @@ export default function EquipmentServiceHistory({
                         </span>
                       </td>
 
-                      <td className="p-4 font-medium">
-                        {formatMoney(
-                          Number(
-                            record.cost
-                          ),
-                          currency
-                        )}
-                      </td>
+                      {showCost && (
+                        <td className="p-4 font-medium">
+                          {"cost" in record
+                            ? formatMoney(
+                                Number(
+                                  record.cost
+                                ),
+                                currency
+                              )
+                            : "—"}
+                        </td>
+                      )}
 
                       <td className="p-4 text-gray-600">
                         {record.performed_by ||

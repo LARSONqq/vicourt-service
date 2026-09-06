@@ -17,7 +17,7 @@ import {
 } from "@/services/employeeService";
 import {
   getEquipment,
-  getEquipmentServiceHistoryRecords,
+  getManagementEquipmentServiceHistoryRecords,
 } from "@/services/equipmentService";
 import {
   getManagementObjects,
@@ -703,7 +703,7 @@ async function getSnapshotCsv(
 
     case "equipment-service": {
       const records =
-        await getEquipmentServiceHistoryRecords();
+        await getManagementEquipmentServiceHistoryRecords();
 
       return {
         filename: `vicourt-equipment-service-${currentDate}.csv`,

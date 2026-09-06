@@ -30,6 +30,9 @@ import {
   getMaterialLedgerReport,
   getReportMaterialPeriodMode,
 } from "@/services/reportMaterialLedgerService";
+import {
+  getManagementEquipmentServiceRecordsRange,
+} from "@/services/equipmentService";
 
 import type { WorkLog } from "@/types/workLog";
 
@@ -490,11 +493,8 @@ type ReportEquipmentServiceRow = {
     ReportEquipmentServiceDetail["usageType"];
   voided_at: string | null;
   void_reason: string | null;
-  equipment: {
-    id: number;
-    name: string;
-    inventory_number: string | null;
-  } | null;
+  equipment_name: string | null;
+  equipment_inventory_number: string | null;
 };
 
 type InternalEquipmentCost = {
@@ -1178,36 +1178,48 @@ export async function getReportsData(
       ReportEquipmentServiceRow
     >(
       "Не вдалося завантажити витрати на техніку для звіту",
-      async (from, to) =>
-        await supabase
-          .from(
-            "equipment_service_records"
-          )
-          .select(`
-            id,
-            equipment_id,
-            service_type,
-            service_date,
-            cost,
-            performed_by,
-            description,
-            usage_reading,
-            usage_type_snapshot,
-            voided_at,
-            void_reason,
-            equipment:equipment (
-              id,
-              name,
-              inventory_number
-            )
-          `)
-          .order("id", {
-            ascending: true,
-          })
-          .range(from, to)
-          .overrideTypes<
-            ReportEquipmentServiceRow[]
-          >()
+      async (from, to) => {
+        const records =
+          await getManagementEquipmentServiceRecordsRange(
+            from,
+            to
+          );
+
+        return {
+          data: records.map(
+            (record) => ({
+              id: record.id,
+              equipment_id:
+                record.equipment_id,
+              service_type:
+                record.service_type,
+              service_date:
+                record.service_date,
+              cost: record.cost,
+              performed_by:
+                record.performed_by,
+              description:
+                record.description,
+              usage_reading:
+                record.usage_reading,
+              usage_type_snapshot:
+                record.usage_type_snapshot,
+              voided_at:
+                record.voided_at,
+              void_reason:
+                record.void_reason,
+              equipment_name:
+                record.equipment?.name ||
+                null,
+              equipment_inventory_number:
+                record.equipment
+                  ?.inventory_number ||
+                null,
+            })
+          ) as ReportEquipmentServiceRow[],
+          error: null,
+        };
+      }
     );
 
   const loadLifetimeWorkLogs = (
@@ -2749,11 +2761,11 @@ export async function getReportsData(
           record.equipment_id
         ),
         equipmentName:
-          record.equipment?.name ||
+          record.equipment_name ||
           `Техніка #${record.equipment_id}`,
         inventoryNumber:
-          record.equipment
-            ?.inventory_number || null,
+          record.equipment_inventory_number ||
+          null,
         serviceDate:
           record.service_date,
         serviceType:

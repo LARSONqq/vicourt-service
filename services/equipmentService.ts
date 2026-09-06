@@ -8,7 +8,11 @@ import {
   equipmentServiceTypes,
 } from "@/constants/equipmentService";
 import {
+  equipmentOperationalSelect,
+} from "@/constants/equipment";
+import {
   canManageEquipment,
+  canViewReports,
 } from "@/lib/auth/permissions";
 import {
   getKyivDateValue,
@@ -24,9 +28,56 @@ import type {
   CreateEquipmentServiceRecordInput,
   EquipmentServiceCreationResult,
   EquipmentServiceRecord,
+  EquipmentServiceRecordOperational,
+  EquipmentServiceRecordView,
   EquipmentServiceVoidResult,
   VoidEquipmentServiceRecordInput,
 } from "@/types/equipmentServiceRecord";
+
+const SERVICE_READ_PAGE_SIZE = 500;
+
+const SERVICE_OPERATIONAL_SELECT = `
+  id,
+  equipment_id,
+  service_type,
+  service_date,
+  performed_by,
+  description,
+  next_service_date,
+  usage_reading,
+  usage_type_snapshot,
+  usage_log_id,
+  created_by_name,
+  voided_at,
+  void_reason,
+  created_at,
+  equipment:equipment (
+    id,
+    name,
+    inventory_number
+  )
+`;
+
+type ManagementServiceRpcRow = Omit<
+  EquipmentServiceRecord,
+  "equipment"
+> & {
+  equipment_name: string | null;
+  equipment_inventory_number: string | null;
+};
+
+type ServiceReadOptions = {
+  equipmentId?: number;
+  includeVoided: boolean;
+  from?: number;
+  to?: number;
+};
+
+type ServiceReadResult = {
+  records: EquipmentServiceRecordView[];
+  total: number;
+  includesCost: boolean;
+};
 
 function isRecord(
   value: unknown
@@ -110,7 +161,9 @@ async function loadEquipment(): Promise<Equipment[]> {
     error,
   } = await supabase
     .from("equipment")
-    .select("*")
+    .select(
+      equipmentOperationalSelect
+    )
     .order("name", {
       ascending: true,
     });
@@ -131,62 +184,194 @@ async function loadEquipment(): Promise<Equipment[]> {
 export const getEquipment =
   cache(loadEquipment);
 
-export async function getEquipmentServiceRecords(): Promise<
-  EquipmentServiceRecord[]
-> {
+function normalizeEquipmentId(
+  equipmentId: number
+) {
+  if (
+    !Number.isInteger(equipmentId) ||
+    equipmentId <= 0
+  ) {
+    throw new Error(
+      "Не вдалося визначити техніку."
+    );
+  }
+
+  return equipmentId;
+}
+
+function mapManagementServiceRecord(
+  row: ManagementServiceRpcRow
+): EquipmentServiceRecord {
+  const {
+    equipment_name: equipmentName,
+    equipment_inventory_number:
+      inventoryNumber,
+    ...record
+  } = row;
+
+  return {
+    ...record,
+    equipment:
+      equipmentName
+        ? {
+            id: Number(
+              row.equipment_id
+            ),
+            name:
+              equipmentName,
+            inventory_number:
+              inventoryNumber,
+          }
+        : null,
+  };
+}
+
+const canReadEquipmentServiceCost = cache(async () => {
+  const profile =
+    await getCurrentUserProfile();
+
+  if (!profile) {
+    throw new Error(
+      "Для перегляду історії обслуговування потрібно увійти в систему."
+    );
+  }
+
+  return canViewReports(
+    profile.role
+  );
+});
+
+async function loadManagementServiceRecords(
+  options: ServiceReadOptions
+): Promise<ServiceReadResult> {
   const supabase =
     await createClient();
+  let query = supabase
+    .rpc(
+      "get_management_equipment_service_records",
+      options.equipmentId
+        ? {
+            p_equipment_id:
+              options.equipmentId,
+          }
+        : undefined,
+      { count: "exact" }
+    );
+
+  if (!options.includeVoided) {
+    query = query.is(
+      "voided_at",
+      null
+    );
+  }
+
+  query = query
+    .order("service_date", {
+      ascending: false,
+    })
+    .order("created_at", {
+      ascending: false,
+    })
+    .order("id", {
+      ascending: false,
+    });
+
+  if (
+    options.from !== undefined &&
+    options.to !== undefined
+  ) {
+    query = query.range(
+      options.from,
+      options.to
+    );
+  }
 
   const {
     data,
     error,
-  } = await supabase
+    count,
+  } = await query.overrideTypes<
+    ManagementServiceRpcRow[],
+    { merge: false }
+  >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити управлінську історію обслуговування: ${error.message}`
+    );
+  }
+
+  const rows = Array.isArray(data)
+    ? data
+    : [];
+
+  return {
+    records: rows.map(
+      mapManagementServiceRecord
+    ),
+    total:
+      Number(count) || 0,
+    includesCost: true,
+  };
+}
+
+async function loadOperationalServiceRecords(
+  options: ServiceReadOptions
+): Promise<ServiceReadResult> {
+  const supabase =
+    await createClient();
+  let query = supabase
     .from(
       "equipment_service_records"
     )
-    .select(`
-      id,
-      equipment_id,
-      service_type,
-      service_date,
-      cost,
-      performed_by,
-      description,
-      next_service_date,
-      usage_reading,
-      usage_type_snapshot,
-      usage_log_id,
-      created_by,
-      created_by_name,
-      voided_at,
-      voided_by,
-      void_reason,
-      created_at,
-      equipment:equipment (
-        id,
-        name,
-        inventory_number
-      )
-    `)
-    .is(
+    .select(
+      SERVICE_OPERATIONAL_SELECT,
+      { count: "exact" }
+    );
+
+  if (options.equipmentId) {
+    query = query.eq(
+      "equipment_id",
+      options.equipmentId
+    );
+  }
+
+  if (!options.includeVoided) {
+    query = query.is(
       "voided_at",
       null
-    )
-    .order(
-      "service_date",
-      {
-        ascending: false,
-      }
-    )
-    .order(
-      "created_at",
-      {
-        ascending: false,
-      }
-    )
-    .overrideTypes<
-      EquipmentServiceRecord[]
-    >();
+    );
+  }
+
+  query = query
+    .order("service_date", {
+      ascending: false,
+    })
+    .order("created_at", {
+      ascending: false,
+    })
+    .order("id", {
+      ascending: false,
+    });
+
+  if (
+    options.from !== undefined &&
+    options.to !== undefined
+  ) {
+    query = query.range(
+      options.from,
+      options.to
+    );
+  }
+
+  const {
+    data,
+    error,
+    count,
+  } = await query.overrideTypes<
+    EquipmentServiceRecordOperational[],
+    { merge: false }
+  >();
 
   if (error) {
     throw new Error(
@@ -194,134 +379,186 @@ export async function getEquipmentServiceRecords(): Promise<
     );
   }
 
-  return Array.isArray(data)
-    ? data
-    : [];
+  return {
+    records: Array.isArray(data)
+      ? data
+      : [],
+    total:
+      Number(count) || 0,
+    includesCost: false,
+  };
 }
 
-export async function getEquipmentServiceHistoryRecords(): Promise<
-  EquipmentServiceRecord[]
-> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("equipment_service_records")
-    .select(`
-      id,
-      equipment_id,
-      service_type,
-      service_date,
-      cost,
-      performed_by,
-      description,
-      next_service_date,
-      usage_reading,
-      usage_type_snapshot,
-      usage_log_id,
-      created_by,
-      created_by_name,
-      voided_at,
-      voided_by,
-      void_reason,
-      created_at,
-      equipment:equipment (
-        id,
-        name,
-        inventory_number
-      )
-    `)
-    .order("service_date", {
-      ascending: false,
-    })
-    .order("created_at", {
-      ascending: false,
-    })
-    .overrideTypes<
-      EquipmentServiceRecord[]
-    >();
-
-  if (error) {
-    throw new Error(
-      `Не вдалося завантажити повну історію обслуговування: ${error.message}`
+export async function getEquipmentServiceRecordsPage(
+  options: ServiceReadOptions
+): Promise<ServiceReadResult> {
+  if (options.equipmentId) {
+    normalizeEquipmentId(
+      options.equipmentId
     );
   }
 
-  return Array.isArray(data)
-    ? data
-    : [];
+  return (await canReadEquipmentServiceCost())
+    ? loadManagementServiceRecords(
+        options
+      )
+    : loadOperationalServiceRecords(
+        options
+      );
+}
+
+async function loadAllServiceRecords(
+  includeVoided: boolean,
+  managementOnly = false
+) {
+  const records: EquipmentServiceRecordView[] = [];
+  let includesCost = false;
+
+  for (
+    let from = 0;
+    ;
+    from += SERVICE_READ_PAGE_SIZE
+  ) {
+    const result = managementOnly
+      ? await loadManagementServiceRecords({
+          includeVoided,
+          from,
+          to:
+            from +
+            SERVICE_READ_PAGE_SIZE -
+            1,
+        })
+      : await getEquipmentServiceRecordsPage({
+          includeVoided,
+          from,
+          to:
+            from +
+            SERVICE_READ_PAGE_SIZE -
+            1,
+        });
+
+    includesCost =
+      result.includesCost;
+    records.push(...result.records);
+
+    if (
+      result.records.length <
+      SERVICE_READ_PAGE_SIZE
+    ) {
+      break;
+    }
+  }
+
+  return {
+    records,
+    includesCost,
+  };
+}
+
+export async function getEquipmentServiceRecords(): Promise<
+  EquipmentServiceRecord[]
+> {
+  const result =
+    await loadAllServiceRecords(
+      false,
+      true
+    );
+
+  return result.records as EquipmentServiceRecord[];
+}
+
+export async function getEquipmentServiceHistoryRecords(): Promise<
+  EquipmentServiceRecordView[]
+> {
+  const result =
+    await loadAllServiceRecords(
+      true
+    );
+
+  return result.records;
+}
+
+export async function getManagementEquipmentServiceHistoryRecords(): Promise<
+  EquipmentServiceRecord[]
+> {
+  if (
+    !(await canReadEquipmentServiceCost())
+  ) {
+    throw new Error(
+      "Недостатньо прав для перегляду вартості обслуговування техніки."
+    );
+  }
+
+  const result =
+    await loadAllServiceRecords(
+      true,
+      true
+    );
+
+  return result.records as EquipmentServiceRecord[];
+}
+
+export async function getManagementEquipmentServiceRecordsRange(
+  from: number,
+  to: number
+): Promise<EquipmentServiceRecord[]> {
+  if (
+    !(await canReadEquipmentServiceCost())
+  ) {
+    throw new Error(
+      "Недостатньо прав для перегляду вартості обслуговування техніки."
+    );
+  }
+
+  const result =
+    await loadManagementServiceRecords({
+      includeVoided: true,
+      from,
+      to,
+    });
+
+  return result.records as EquipmentServiceRecord[];
 }
 
 export async function getEquipmentServiceRecordsByEquipmentId(
   equipmentId: number
 ): Promise<
-  EquipmentServiceRecord[]
+  EquipmentServiceRecordView[]
 > {
-  const supabase =
-    await createClient();
-
-  const {
-    data,
-    error,
-  } = await supabase
-    .from(
-      "equipment_service_records"
-    )
-    .select(`
-      id,
-      equipment_id,
-      service_type,
-      service_date,
-      cost,
-      performed_by,
-      description,
-      next_service_date,
-      usage_reading,
-      usage_type_snapshot,
-      usage_log_id,
-      created_by,
-      created_by_name,
-      voided_at,
-      voided_by,
-      void_reason,
-      created_at,
-      equipment:equipment (
-        id,
-        name,
-        inventory_number
-      )
-    `)
-    .eq(
-      "equipment_id",
+  const normalizedEquipmentId =
+    normalizeEquipmentId(
       equipmentId
-    )
-    .is(
-      "voided_at",
-      null
-    )
-    .order(
-      "service_date",
-      {
-        ascending: false,
-      }
-    )
-    .order(
-      "created_at",
-      {
-        ascending: false,
-      }
-    )
-    .overrideTypes<
-      EquipmentServiceRecord[]
-    >();
-
-  if (error) {
-    throw new Error(
-      `Не вдалося завантажити обслуговування техніки: ${error.message}`
     );
+  const records: EquipmentServiceRecordView[] = [];
+
+  for (
+    let from = 0;
+    ;
+    from += SERVICE_READ_PAGE_SIZE
+  ) {
+    const result =
+      await getEquipmentServiceRecordsPage({
+        equipmentId:
+          normalizedEquipmentId,
+        includeVoided: false,
+        from,
+        to:
+          from +
+          SERVICE_READ_PAGE_SIZE -
+          1,
+      });
+
+    records.push(...result.records);
+
+    if (
+      result.records.length <
+      SERVICE_READ_PAGE_SIZE
+    ) {
+      break;
+    }
   }
 
-  return Array.isArray(data)
-    ? data
-    : [];
+  return records;
 }
 
 export async function createEquipmentServiceRecordV2(
