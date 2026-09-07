@@ -1,0 +1,245 @@
+"use client";
+
+import Link from "next/link";
+import {
+  useRouter,
+} from "next/navigation";
+import {
+  useState,
+} from "react";
+
+import {
+  EditEquipmentForm,
+} from "@/components/equipment/EditEquipmentForm";
+import {
+  formatEquipmentUsage,
+} from "@/lib/equipmentMaintenance";
+import {
+  formatDateValue,
+} from "@/lib/kyivDate";
+
+import type {
+  Employee,
+} from "@/types/employee";
+import type {
+  Equipment,
+} from "@/types/equipment";
+import type {
+  EquipmentMaintenanceOverallKind,
+} from "@/lib/equipmentMaintenance";
+
+type Props = {
+  equipment: Equipment;
+  employees: Employee[];
+  canManage: boolean;
+  maintenanceKind: EquipmentMaintenanceOverallKind;
+  maintenanceLabel: string;
+};
+
+function getStatusClasses(
+  status: string
+) {
+  switch (status) {
+    case "Справна":
+      return "bg-green-50 text-green-700";
+    case "В роботі":
+      return "bg-blue-50 text-blue-700";
+    case "Потребує ремонту":
+      return "bg-red-50 text-red-700";
+    case "На ремонті":
+      return "bg-orange-50 text-orange-700";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+}
+
+function getMaintenanceClasses(
+  kind: EquipmentMaintenanceOverallKind
+) {
+  switch (kind) {
+    case "overdue":
+    case "due":
+      return "bg-red-50 text-red-700";
+    case "today":
+      return "bg-orange-50 text-orange-700";
+    case "scheduled":
+      return "bg-green-50 text-green-700";
+    case "unconfigured":
+      return "bg-gray-100 text-gray-600";
+  }
+}
+
+function Detail({
+  label,
+  value,
+  breakAll = false,
+}: {
+  label: string;
+  value: string;
+  breakAll?: boolean;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs font-medium text-gray-400">
+        {label}
+      </dt>
+      <dd
+        className={`mt-1 text-sm font-medium text-gray-800 ${
+          breakAll
+            ? "break-all"
+            : "break-words"
+        }`}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+export default function EquipmentPassportHeader({
+  equipment,
+  employees,
+  canManage,
+  maintenanceKind,
+  maintenanceLabel,
+}: Props) {
+  const router = useRouter();
+  const [isEditing, setIsEditing] =
+    useState(false);
+  const nextMaintenance = [
+    equipment.next_service_date
+      ? `Дата: ${
+          formatDateValue(
+            equipment.next_service_date
+          ) || "Не вказано"
+        }`
+      : null,
+    equipment.usage_type !== "none" &&
+    equipment.next_maintenance_usage !== null
+      ? `Поріг: ${formatEquipmentUsage(
+          equipment.next_maintenance_usage,
+          equipment.usage_type
+        )}`
+      : null,
+  ].filter(Boolean).join(" · ");
+
+  return (
+    <div className="min-w-0 space-y-5">
+      <Link
+        href="/equipment"
+        className="inline-flex min-h-10 items-center text-sm font-medium text-green-700 hover:underline"
+      >
+        ← Назад до техніки
+      </Link>
+
+      <header className="min-w-0 rounded-2xl border bg-white p-4 sm:p-6">
+        <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+            <div
+              aria-hidden="true"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-green-100 text-2xl sm:h-16 sm:w-16"
+            >
+              🛠️
+            </div>
+
+            <div className="min-w-0">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <h1 className="break-words text-2xl font-bold text-gray-900 sm:text-3xl">
+                  {equipment.name}
+                </h1>
+                <span
+                  className={`w-fit rounded-full px-3 py-1 text-xs font-medium sm:text-sm ${getStatusClasses(
+                    equipment.status
+                  )}`}
+                >
+                  {equipment.status}
+                </span>
+              </div>
+
+              <p className="mt-1 break-words text-sm text-gray-500 sm:text-base">
+                {equipment.category ||
+                  "Без категорії"}
+              </p>
+            </div>
+          </div>
+
+          {canManage && (
+            <button
+              type="button"
+              onClick={() =>
+                setIsEditing(
+                  (current) =>
+                    !current
+                )
+              }
+              className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 sm:w-auto"
+            >
+              {isEditing
+                ? "Закрити"
+                : "Редагувати"}
+            </button>
+          )}
+        </div>
+
+        <dl className="mt-5 grid min-w-0 grid-cols-1 gap-4 border-t pt-5 sm:grid-cols-2 xl:grid-cols-4">
+          <Detail
+            label="Інвентарний номер"
+            value={
+              equipment.inventory_number ||
+              "Не вказано"
+            }
+            breakAll
+          />
+          <Detail
+            label="Відповідальний"
+            value={
+              equipment.responsible ||
+              "Не призначено"
+            }
+          />
+          <Detail
+            label="Локація"
+            value={
+              equipment.location ||
+              "Не вказано"
+            }
+          />
+          <div className="min-w-0">
+            <dt className="text-xs font-medium text-gray-400">
+              Планове ТО
+            </dt>
+            <dd className="mt-1">
+              <span
+                className={`inline-flex max-w-full rounded-full px-2.5 py-1 text-xs font-medium ${getMaintenanceClasses(
+                  maintenanceKind
+                )}`}
+              >
+                <span className="truncate">
+                  {maintenanceLabel}
+                </span>
+              </span>
+              {nextMaintenance && (
+                <p className="mt-1.5 break-words text-xs leading-5 text-gray-500">
+                  {nextMaintenance}
+                </p>
+              )}
+            </dd>
+          </div>
+        </dl>
+      </header>
+
+      {canManage && isEditing && (
+        <section className="min-w-0 rounded-2xl border bg-white p-3 sm:p-5">
+          <EditEquipmentForm
+            equipment={equipment}
+            employees={employees}
+            onCancel={() => {
+              setIsEditing(false);
+              router.refresh();
+            }}
+          />
+        </section>
+      )}
+    </div>
+  );
+}

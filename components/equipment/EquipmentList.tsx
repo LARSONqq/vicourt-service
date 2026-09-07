@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Fragment,
   useMemo,
@@ -417,10 +418,13 @@ export default function EquipmentList({
                     {/* TOP */}
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h3 className="break-words font-semibold text-gray-900">
-                          {
-                            item.name
-                          }
+                        <h3 className="break-words font-semibold">
+                          <Link
+                            href={`/equipment/${item.id}`}
+                            className="text-gray-900 transition hover:text-green-700 hover:underline"
+                          >
+                            {item.name}
+                          </Link>
                         </h3>
 
                         <p className="mt-1 break-words text-xs text-gray-500">
@@ -680,9 +684,12 @@ export default function EquipmentList({
                         <tr className="border-t">
                           <td className="p-4">
                             <p className="font-medium">
-                              {
-                                item.name
-                              }
+                              <Link
+                                href={`/equipment/${item.id}`}
+                                className="text-gray-900 transition hover:text-green-700 hover:underline"
+                              >
+                                {item.name}
+                              </Link>
                             </p>
 
                             {item.notes && (
