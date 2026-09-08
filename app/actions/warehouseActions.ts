@@ -219,6 +219,18 @@ export async function createWarehouseItem(
   );
 
   if (error) {
+    console.error(
+      "[Warehouse] Не вдалося створити позицію складу через RPC.",
+      {
+        code: error.code,
+        message:
+          error.message,
+        details:
+          error.details,
+        hint: error.hint,
+      }
+    );
+
     throw new Error(
       "Не вдалося створити позицію складу. Спробуй ще раз."
     );

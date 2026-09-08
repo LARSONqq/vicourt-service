@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  useState,
+} from "react";
+
 import { createWarehouseItem } from "@/app/actions/warehouseActions";
 import { warehouseCategories } from "@/constants/warehouseCategories";
 
@@ -10,14 +14,36 @@ type Props = {
 export default function AddWarehouseItemForm({
   onCreated,
 }: Props) {
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+  const [error, setError] =
+    useState("");
+
   async function handleSubmit(
     formData: FormData
   ) {
-    await createWarehouseItem(
-      formData
-    );
+    if (isSubmitting) {
+      return;
+    }
 
-    onCreated();
+    setIsSubmitting(true);
+    setError("");
+
+    try {
+      await createWarehouseItem(
+        formData
+      );
+
+      onCreated();
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Не вдалося створити позицію складу. Спробуй ще раз."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -228,11 +254,23 @@ export default function AddWarehouseItemForm({
 
       {/* SAVE */}
       <div className="border-t pt-4">
+        {error && (
+          <p
+            role="alert"
+            className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          >
+            {error}
+          </p>
+        )}
+
         <button
           type="submit"
+          disabled={isSubmitting}
           className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 sm:w-fit"
         >
-          Зберегти позицію
+          {isSubmitting
+            ? "Збереження…"
+            : "Зберегти позицію"}
         </button>
       </div>
     </form>

@@ -200,9 +200,8 @@ for select
 to authenticated
 using (
   private.is_active_user()
-  and (
-    private.has_role('admin')
-    or private.has_role('object_manager')
+  and private.has_role(
+    array['admin', 'object_manager']::text[]
   )
 );
 
