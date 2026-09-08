@@ -14,6 +14,8 @@ type Props = {
   currency: AppCurrency;
   canManage?: boolean;
   showCost?: boolean;
+  singleEquipment?: boolean;
+  totalCostOverride?: number;
 };
 
 function formatDate(
@@ -208,6 +210,8 @@ export default function EquipmentServiceHistory({
   currency,
   canManage = false,
   showCost = false,
+  singleEquipment = false,
+  totalCostOverride,
 }: Props) {
   const safeRecords =
     Array.isArray(records)
@@ -215,6 +219,7 @@ export default function EquipmentServiceHistory({
       : [];
 
   const totalCost =
+    totalCostOverride ??
     safeRecords.reduce(
       (sum, record) =>
         record.voided_at ||
@@ -286,8 +291,9 @@ export default function EquipmentServiceHistory({
                   className="min-w-0 rounded-xl border bg-white p-4"
                 >
                   {/* TOP */}
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="min-w-0">
+                  <div className={`flex min-w-0 items-start gap-3 ${singleEquipment ? "justify-end" : "justify-between"}`}>
+                    {!singleEquipment && (
+                      <div className="min-w-0">
                       <p className="break-words font-semibold text-gray-900">
                         {record
                           .equipment
@@ -306,7 +312,8 @@ export default function EquipmentServiceHistory({
                           }
                         </p>
                       )}
-                    </div>
+                      </div>
+                    )}
 
                     <span
                       className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${getTypeClasses(
@@ -429,8 +436,12 @@ export default function EquipmentServiceHistory({
             <table
               className={`w-full ${
                 canManage
-                  ? "min-w-[1150px]"
-                  : "min-w-[1000px]"
+                  ? singleEquipment
+                    ? "min-w-[1000px]"
+                    : "min-w-[1150px]"
+                  : singleEquipment
+                    ? "min-w-[850px]"
+                    : "min-w-[1000px]"
               }`}
             >
               <thead className="bg-gray-50 text-left">
@@ -439,9 +450,11 @@ export default function EquipmentServiceHistory({
                     Дата
                   </th>
 
-                  <th className="p-4">
-                    Техніка
-                  </th>
+                  {!singleEquipment && (
+                    <th className="p-4">
+                      Техніка
+                    </th>
+                  )}
 
                   <th className="p-4">
                     Тип
@@ -496,7 +509,8 @@ export default function EquipmentServiceHistory({
                         )}
                       </td>
 
-                      <td className="p-4">
+                      {!singleEquipment && (
+                        <td className="p-4">
                         <p className="font-medium">
                           {record
                             .equipment
@@ -515,7 +529,8 @@ export default function EquipmentServiceHistory({
                             }
                           </p>
                         )}
-                      </td>
+                        </td>
+                      )}
 
                       <td className="p-4">
                         <span

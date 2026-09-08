@@ -35,6 +35,7 @@ type Props = {
   logs: EquipmentUsageLog[];
   canManage: boolean;
   today: string;
+  singleEquipment?: boolean;
 };
 
 function getOptionalNumber(
@@ -102,6 +103,7 @@ export default function EquipmentUsagePanel({
   logs,
   canManage,
   today,
+  singleEquipment = false,
 }: Props) {
   const router = useRouter();
   const [selectedId, setSelectedId] =
@@ -272,7 +274,8 @@ export default function EquipmentUsagePanel({
             </p>
           </div>
 
-          {equipment.length > 0 && (
+          {equipment.length > 0 &&
+            !singleEquipment && (
             <label className="min-w-0 text-sm font-medium text-gray-700 lg:w-80">
               Техніка
               <select

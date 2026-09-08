@@ -14,6 +14,7 @@ type Props = {
   currency: AppCurrency;
   today: string;
   onCreated: () => void;
+  fixedEquipmentId?: number;
 };
 
 export default function AddEquipmentServiceForm({
@@ -21,6 +22,7 @@ export default function AddEquipmentServiceForm({
   currency,
   today,
   onCreated,
+  fixedEquipmentId,
 }: Props) {
   const [
     isSubmitting,
@@ -32,7 +34,11 @@ export default function AddEquipmentServiceForm({
     setErrorMessage,
   ] = useState("");
   const [selectedEquipmentId, setSelectedEquipmentId] =
-    useState("");
+    useState(
+      fixedEquipmentId
+        ? String(fixedEquipmentId)
+        : ""
+    );
   const selectedEquipment = equipment.find(
     (item) =>
       String(item.id) === selectedEquipmentId
@@ -103,43 +109,51 @@ export default function AddEquipmentServiceForm({
       )}
 
       {/* EQUIPMENT */}
-      <div className="min-w-0">
-        <label className="mb-2 block text-sm font-medium text-gray-700">
-          Техніка
-        </label>
-
-        <select
+      {fixedEquipmentId ? (
+        <input
+          type="hidden"
           name="equipment_id"
-          value={selectedEquipmentId}
-          onChange={(event) =>
-            setSelectedEquipmentId(
-              event.target.value
-            )
-          }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-          required
-        >
-          <option
-            value=""
-            disabled
-          >
-            Обери техніку
-          </option>
+          value={fixedEquipmentId}
+        />
+      ) : (
+        <div className="min-w-0">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Техніка
+          </label>
 
-          {equipment.map(
-            (item) => (
-              <option
-                key={item.id}
-                value={item.id}
-              >
-                {item.name} —{" "}
-                {item.inventory_number ||
-                  "без номера"}
-              </option>
-            )
-          )}
-        </select>
-      </div>
+          <select
+            name="equipment_id"
+            value={selectedEquipmentId}
+            onChange={(event) =>
+              setSelectedEquipmentId(
+                event.target.value
+              )
+            }
+            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            required
+          >
+            <option
+              value=""
+              disabled
+            >
+              Обери техніку
+            </option>
+
+            {equipment.map(
+              (item) => (
+                <option
+                  key={item.id}
+                  value={item.id}
+                >
+                  {item.name} —{" "}
+                  {item.inventory_number ||
+                    "без номера"}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+      )}
 
       {/* TYPE + DATE */}
       <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">

@@ -4,6 +4,9 @@ import {
 
 import EquipmentOverview from "@/components/equipment/EquipmentOverview";
 import EquipmentPassportHeader from "@/components/equipment/EquipmentPassportHeader";
+import EquipmentPassportSections from "@/components/equipment/EquipmentPassportSections";
+import EquipmentPassportServiceSection from "@/components/equipment/EquipmentPassportServiceSection";
+import EquipmentUsagePanel from "@/components/equipment/EquipmentUsagePanel";
 import {
   canManageEquipment,
 } from "@/lib/auth/permissions";
@@ -20,7 +23,12 @@ import {
 import {
   getEquipmentOverviewPreview,
   getEquipmentProfile,
+  getEquipmentServiceHistoryPage,
+  getEquipmentUsageHistoryPage,
 } from "@/services/equipmentDetailService";
+import {
+  getAppSettings,
+} from "@/services/settingsService";
 
 type Props = {
   params: Promise<{
@@ -72,7 +80,13 @@ export default async function EquipmentPassportPage({
     canManageEquipment(
       currentProfile.role
     );
-  const [overview, employees] =
+  const [
+    overview,
+    employees,
+    serviceHistory,
+    usageHistory,
+    settings,
+  ] =
     await Promise.all([
       getEquipmentOverviewPreview(
         equipmentId
@@ -80,6 +94,13 @@ export default async function EquipmentPassportPage({
       canManage
         ? getEmployees()
         : Promise.resolve([]),
+      getEquipmentServiceHistoryPage(
+        equipmentId
+      ),
+      getEquipmentUsageHistoryPage(
+        equipmentId
+      ),
+      getAppSettings(),
     ]);
 
   if (!overview) {
@@ -103,8 +124,49 @@ export default async function EquipmentPassportPage({
         )}
       />
 
-      <EquipmentOverview
-        overview={overview}
+      <EquipmentPassportSections
+        overview={
+          <EquipmentOverview
+            overview={overview}
+          />
+        }
+        service={
+          <EquipmentPassportServiceSection
+            equipment={equipment}
+            records={
+              serviceHistory.items
+            }
+            currency={
+              settings.currency
+            }
+            today={
+              overview.maintenance.today
+            }
+            canManage={canManage}
+            showCost={
+              serviceHistory.includesCost
+            }
+            totalCost={
+              overview.kpis
+                .serviceCosts?.total
+            }
+          />
+        }
+        usage={
+          <EquipmentUsagePanel
+            equipment={[
+              equipment,
+            ]}
+            logs={
+              usageHistory.items
+            }
+            canManage={canManage}
+            today={
+              overview.maintenance.today
+            }
+            singleEquipment
+          />
+        }
       />
     </div>
   );
