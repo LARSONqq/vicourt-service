@@ -1,17 +1,25 @@
 import {
+  Suspense,
+} from "react";
+import {
   notFound,
 } from "next/navigation";
 
 import EquipmentActivitySection from "@/components/equipment/EquipmentActivitySection";
 import EquipmentOverview from "@/components/equipment/EquipmentOverview";
 import EquipmentPassportHeader from "@/components/equipment/EquipmentPassportHeader";
-import EquipmentPassportSections from "@/components/equipment/EquipmentPassportSections";
+import EquipmentPassportSections, {
+  EQUIPMENT_TAB_IDS,
+  type EquipmentTabId,
+} from "@/components/equipment/EquipmentPassportSections";
 import EquipmentPassportServiceSection from "@/components/equipment/EquipmentPassportServiceSection";
+import EquipmentTabErrorBoundary from "@/components/equipment/EquipmentTabErrorBoundary";
 import EquipmentTasksSection from "@/components/equipment/EquipmentTasksSection";
 import EquipmentUsagePanel from "@/components/equipment/EquipmentUsagePanel";
 import {
   canManageEquipment,
   canViewActivityLog,
+  canViewReports,
 } from "@/lib/auth/permissions";
 import {
   requireSectionAccess,
@@ -21,12 +29,17 @@ import {
   getEquipmentMaintenanceOverallLabel,
 } from "@/lib/equipmentMaintenance";
 import {
+  getKyivDateValue,
+} from "@/lib/kyivDate";
+import {
   getEmployees,
 } from "@/services/employeeService";
 import {
+  getEquipmentActivityHistoryPage,
+  getEquipmentMaintenanceOverview,
   getEquipmentOverviewPreview,
   getEquipmentProfile,
-  getEquipmentActivityHistoryPage,
+  getEquipmentServiceCostKpis,
   getEquipmentServiceHistoryPage,
   getEquipmentTasksPage,
   getEquipmentUsageHistoryPage,
@@ -35,11 +48,59 @@ import {
   getAppSettings,
 } from "@/services/settingsService";
 
+import type {
+  Equipment,
+} from "@/types/equipment";
+
+type SearchParams = {
+  tab?: string | string[];
+};
+
 type Props = {
   params: Promise<{
     id: string;
   }>;
+  searchParams: Promise<SearchParams>;
 };
+
+type TabContentProps = {
+  equipment: Equipment;
+  activeTab: EquipmentTabId;
+  canManage: boolean;
+  canViewHistory: boolean;
+  canViewServiceCost: boolean;
+};
+
+function getSingleSearchValue(
+  value: string | string[] | undefined
+) {
+  return Array.isArray(value)
+    ? value[0]
+    : value;
+}
+
+function resolveEquipmentTab(
+  value: string | undefined,
+  canViewHistory: boolean
+): EquipmentTabId {
+  if (
+    !value ||
+    !EQUIPMENT_TAB_IDS.includes(
+      value as EquipmentTabId
+    )
+  ) {
+    return "overview";
+  }
+
+  if (
+    value === "history" &&
+    !canViewHistory
+  ) {
+    return "overview";
+  }
+
+  return value as EquipmentTabId;
+}
 
 function parseEquipmentId(
   value: string
@@ -57,14 +118,163 @@ function parseEquipmentId(
     : null;
 }
 
+function EquipmentTabLoading() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="min-w-0 animate-pulse space-y-4"
+    >
+      <span className="sr-only">
+        Завантаження розділу…
+      </span>
+      <div className="h-28 rounded-xl border bg-gray-50" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="h-36 rounded-xl border bg-gray-50" />
+        <div className="h-36 rounded-xl border bg-gray-50" />
+      </div>
+    </div>
+  );
+}
+
+async function EquipmentTabContent({
+  equipment,
+  activeTab,
+  canManage,
+  canViewHistory,
+  canViewServiceCost,
+}: TabContentProps) {
+  const equipmentId =
+    equipment.id;
+  const today =
+    getKyivDateValue();
+
+  if (activeTab === "overview") {
+    const [overview, settings] =
+      await Promise.all([
+        getEquipmentOverviewPreview(
+          equipmentId
+        ),
+        getAppSettings(),
+      ]);
+
+    if (!overview) {
+      throw new Error(
+        "Не вдалося завантажити показники техніки."
+      );
+    }
+
+    return (
+      <EquipmentOverview
+        overview={overview}
+        currency={
+          settings.currency
+        }
+      />
+    );
+  }
+
+  if (activeTab === "service") {
+    const [
+      serviceHistory,
+      serviceCosts,
+      settings,
+    ] = await Promise.all([
+      getEquipmentServiceHistoryPage(
+        equipmentId
+      ),
+      canViewServiceCost
+        ? getEquipmentServiceCostKpis(
+            equipmentId
+          )
+        : Promise.resolve(null),
+      getAppSettings(),
+    ]);
+
+    return (
+      <EquipmentPassportServiceSection
+        equipment={equipment}
+        records={
+          serviceHistory.items
+        }
+        currency={
+          settings.currency
+        }
+        today={today}
+        canManage={canManage}
+        showCost={
+          serviceHistory.includesCost
+        }
+        totalCost={
+          serviceCosts?.total
+        }
+      />
+    );
+  }
+
+  if (activeTab === "usage") {
+    const usageHistory =
+      await getEquipmentUsageHistoryPage(
+        equipmentId
+      );
+
+    return (
+      <EquipmentUsagePanel
+        equipment={[equipment]}
+        logs={usageHistory.items}
+        canManage={canManage}
+        today={today}
+        singleEquipment
+      />
+    );
+  }
+
+  if (activeTab === "tasks") {
+    const tasks =
+      await getEquipmentTasksPage(
+        equipmentId
+      );
+
+    return (
+      <EquipmentTasksSection
+        page={tasks}
+        today={today}
+      />
+    );
+  }
+
+  if (
+    activeTab === "history" &&
+    canViewHistory
+  ) {
+    const activity =
+      await getEquipmentActivityHistoryPage(
+        equipmentId
+      );
+
+    return (
+      <EquipmentActivitySection
+        page={activity}
+      />
+    );
+  }
+
+  return null;
+}
+
 export default async function EquipmentPassportPage({
   params,
+  searchParams,
 }: Props) {
   const currentProfile =
     await requireSectionAccess(
       "equipment"
     );
-  const { id } = await params;
+  const [{ id }, query] =
+    await Promise.all([
+      params,
+      searchParams,
+    ]);
   const equipmentId =
     parseEquipmentId(id);
 
@@ -72,6 +282,25 @@ export default async function EquipmentPassportPage({
     notFound();
   }
 
+  const canManage =
+    canManageEquipment(
+      currentProfile.role
+    );
+  const canViewHistory =
+    canViewActivityLog(
+      currentProfile.role
+    );
+  const canViewServiceCost =
+    canViewReports(
+      currentProfile.role
+    );
+  const activeTab =
+    resolveEquipmentTab(
+      getSingleSearchValue(
+        query.tab
+      ),
+      canViewHistory
+    );
   const equipment =
     await getEquipmentProfile(
       equipmentId
@@ -81,55 +310,20 @@ export default async function EquipmentPassportPage({
     notFound();
   }
 
-  const canManage =
-    canManageEquipment(
-      currentProfile.role
-    );
-  const canViewActivity =
-    canViewActivityLog(
-      currentProfile.role
-    );
-  const [
-    overview,
-    employees,
-    serviceHistory,
-    usageHistory,
-    tasks,
-    activity,
-    settings,
-  ] =
+  const [maintenance, employees] =
     await Promise.all([
-      getEquipmentOverviewPreview(
-        equipmentId
+      getEquipmentMaintenanceOverview(
+        equipmentId,
+        equipment
       ),
       canManage
         ? getEmployees()
         : Promise.resolve([]),
-      getEquipmentServiceHistoryPage(
-        equipmentId
-      ),
-      getEquipmentUsageHistoryPage(
-        equipmentId
-      ),
-      getEquipmentTasksPage(
-        equipmentId
-      ),
-      canViewActivity
-        ? getEquipmentActivityHistoryPage(
-            equipmentId
-          )
-        : Promise.resolve(null),
-      getAppSettings(),
     ]);
 
-  if (!overview) {
+  if (!maintenance) {
     notFound();
   }
-
-  const maintenanceKind =
-    getEquipmentMaintenanceOverallKind(
-      overview.maintenance.evaluation
-    );
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -137,74 +331,43 @@ export default async function EquipmentPassportPage({
         equipment={equipment}
         employees={employees}
         canManage={canManage}
-        maintenanceKind={maintenanceKind}
+        maintenanceKind={getEquipmentMaintenanceOverallKind(
+          maintenance.evaluation
+        )}
         maintenanceLabel={getEquipmentMaintenanceOverallLabel(
-          overview.maintenance.evaluation
+          maintenance.evaluation
         )}
       />
 
       <EquipmentPassportSections
-        overview={
-          <EquipmentOverview
-            overview={overview}
-            currency={
-              settings.currency
-            }
-          />
+        equipmentId={equipmentId}
+        activeTab={activeTab}
+        canViewHistory={
+          canViewHistory
         }
-        service={
-          <EquipmentPassportServiceSection
-            equipment={equipment}
-            records={
-              serviceHistory.items
+      >
+        <EquipmentTabErrorBoundary
+          key={activeTab}
+        >
+          <Suspense
+            fallback={
+              <EquipmentTabLoading />
             }
-            currency={
-              settings.currency
-            }
-            today={
-              overview.maintenance.today
-            }
-            canManage={canManage}
-            showCost={
-              serviceHistory.includesCost
-            }
-            totalCost={
-              overview.kpis
-                .serviceCosts?.total
-            }
-          />
-        }
-        usage={
-          <EquipmentUsagePanel
-            equipment={[
-              equipment,
-            ]}
-            logs={
-              usageHistory.items
-            }
-            canManage={canManage}
-            today={
-              overview.maintenance.today
-            }
-            singleEquipment
-          />
-        }
-        tasks={
-          <EquipmentTasksSection
-            page={tasks}
-            today={
-              overview.maintenance.today
-            }
-          />
-        }
-        activity={
-          activity ? (
-            <EquipmentActivitySection
-              page={activity}
+          >
+            <EquipmentTabContent
+              equipment={equipment}
+              activeTab={activeTab}
+              canManage={canManage}
+              canViewHistory={
+                canViewHistory
+              }
+              canViewServiceCost={
+                canViewServiceCost
+              }
             />
-          ) : undefined
-        }
-      />
+          </Suspense>
+        </EquipmentTabErrorBoundary>
+      </EquipmentPassportSections>
     </div>
   );
 }

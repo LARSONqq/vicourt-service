@@ -1,30 +1,25 @@
-"use client";
-
-import {
-  useState,
-} from "react";
+import Link from "next/link";
 
 import type {
   ReactNode,
 } from "react";
 
-type SectionId =
+export type EquipmentTabId =
   | "overview"
   | "service"
   | "usage"
   | "tasks"
-  | "activity";
+  | "history";
 
 type Props = {
-  overview: ReactNode;
-  service: ReactNode;
-  usage: ReactNode;
-  tasks: ReactNode;
-  activity?: ReactNode;
+  equipmentId: number;
+  activeTab: EquipmentTabId;
+  canViewHistory: boolean;
+  children: ReactNode;
 };
 
-const sections: Array<{
-  id: SectionId;
+const equipmentTabs: Array<{
+  id: EquipmentTabId;
   label: string;
   icon: string;
 }> = [
@@ -49,101 +44,69 @@ const sections: Array<{
     icon: "✓",
   },
   {
-    id: "activity",
+    id: "history",
     label: "Історія",
     icon: "↻",
   },
 ];
 
+export const EQUIPMENT_TAB_IDS =
+  equipmentTabs.map(
+    (tab) => tab.id
+  );
+
 export default function EquipmentPassportSections({
-  overview,
-  service,
-  usage,
-  tasks,
-  activity,
+  equipmentId,
+  activeTab,
+  canViewHistory,
+  children,
 }: Props) {
-  const [activeSection, setActiveSection] =
-    useState<SectionId>(
-      "overview"
+  const visibleTabs =
+    equipmentTabs.filter(
+      (tab) =>
+        tab.id !== "history" ||
+        canViewHistory
     );
-  const contentBySection: Record<
-    SectionId,
-    ReactNode
-  > = {
-    overview,
-    service,
-    usage,
-    tasks,
-    activity: activity ?? null,
-  };
-  const content =
-    contentBySection[
-      activeSection
-    ];
-  const visibleSections =
-    activity === undefined
-      ? sections.filter(
-          (section) =>
-            section.id !==
-            "activity"
-        )
-      : sections;
 
   return (
-    <div className="min-w-0 space-y-5">
+    <div className="min-w-0">
       <nav
         aria-label="Розділи паспорта техніки"
-        className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0"
+        className="-mx-4 mb-5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mb-6 sm:px-0"
       >
-        <div
-          role="tablist"
-          className="flex min-w-max gap-2"
-        >
-          {visibleSections.map(
-            (section) => {
-              const isActive =
-                activeSection ===
-                section.id;
+        <div className="flex min-w-max gap-2">
+          {visibleTabs.map((tab) => {
+            const isActive =
+              activeTab === tab.id;
 
-              return (
-                <button
-                  key={section.id}
-                  type="button"
-                  role="tab"
-                  id={`equipment-tab-${section.id}`}
-                  aria-selected={
-                    isActive
-                  }
-                  aria-controls={`equipment-panel-${section.id}`}
-                  onClick={() =>
-                    setActiveSection(
-                      section.id
-                    )
-                  }
-                  className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition sm:px-4 ${
-                    isActive
-                      ? "border-green-200 bg-green-50 text-green-700"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                >
-                  <span aria-hidden="true">
-                    {section.icon}
-                  </span>
-                  {section.label}
-                </button>
-              );
-            }
-          )}
+            return (
+              <Link
+                key={tab.id}
+                href={`/equipment/${equipmentId}?tab=${tab.id}`}
+                scroll={false}
+                aria-current={
+                  isActive
+                    ? "page"
+                    : undefined
+                }
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition sm:px-4 ${
+                  isActive
+                    ? "border-green-200 bg-green-50 text-green-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+              >
+                <span aria-hidden="true">
+                  {tab.icon}
+                </span>
+                {tab.label}
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
-      <div
-        role="tabpanel"
-        id={`equipment-panel-${activeSection}`}
-        aria-labelledby={`equipment-tab-${activeSection}`}
-        className="min-w-0"
-      >
-        {content}
+      <div className="min-w-0">
+        {children}
       </div>
     </div>
   );

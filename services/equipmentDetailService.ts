@@ -330,6 +330,35 @@ async function getManagementServiceCostKpis(
   };
 }
 
+export async function getEquipmentServiceCostKpis(
+  equipmentId: number
+): Promise<EquipmentServiceCostKpis | null> {
+  const normalizedEquipmentId =
+    normalizeEquipmentId(
+      equipmentId
+    );
+  const profile =
+    await getCurrentUserProfile();
+
+  if (!profile) {
+    throw new Error(
+      "Для перегляду витрат на техніку потрібно увійти в систему."
+    );
+  }
+
+  if (
+    !canViewReports(
+      profile.role
+    )
+  ) {
+    return null;
+  }
+
+  return getManagementServiceCostKpis(
+    normalizedEquipmentId
+  );
+}
+
 export async function getEquipmentProfileKpis(
   equipmentId: number,
   knownEquipment?: Equipment,
@@ -829,38 +858,17 @@ export async function getEquipmentOverviewPreview(
     return null;
   }
 
-  const [
-    maintenance,
-    recentServicePage,
-    recentUsage,
-    recentTasks,
-  ] = await Promise.all([
-    getEquipmentMaintenanceOverview(
-      equipment.id,
-      equipment
-    ),
-    getEquipmentServiceRecordsPage({
-      equipmentId:
+  const [maintenance, kpis] =
+    await Promise.all([
+      getEquipmentMaintenanceOverview(
         equipment.id,
-      includeVoided: false,
-      from: 0,
-      to:
-        SERVICE_PREVIEW_LIMIT - 1,
-    }),
-    getEquipmentRecentUsagePreview(
-      equipment.id
-    ),
-    getEquipmentRecentTasksPreview(
-      equipment.id
-    ),
-  ]);
-
-  const kpis =
-    await getEquipmentProfileKpis(
-      equipment.id,
-      equipment,
-      recentServicePage
-    );
+        equipment
+      ),
+      getEquipmentProfileKpis(
+        equipment.id,
+        equipment
+      ),
+    ]);
 
   if (!maintenance || !kpis) {
     return null;
@@ -870,9 +878,5 @@ export async function getEquipmentOverviewPreview(
     equipment,
     maintenance,
     kpis,
-    recentServices:
-      recentServicePage.records,
-    recentUsage,
-    recentTasks,
   };
 }

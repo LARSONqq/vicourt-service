@@ -13,9 +13,6 @@ import type {
   EquipmentServiceRecordView,
 } from "@/types/equipmentServiceRecord";
 import type {
-  EquipmentUsageLog,
-} from "@/types/equipmentUsage";
-import type {
   TaskWithObject,
 } from "@/types/taskWithObject";
 
@@ -65,9 +62,6 @@ export type EquipmentOverviewPreview = {
   equipment: Equipment;
   maintenance: EquipmentMaintenanceOverview;
   kpis: EquipmentProfileKpis;
-  recentServices: EquipmentServiceRecordView[];
-  recentUsage: EquipmentUsageLog[];
-  recentTasks: TaskWithObject[];
 };
 
 export type EquipmentActivityAssociation =
