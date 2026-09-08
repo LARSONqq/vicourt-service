@@ -182,12 +182,6 @@ export default function EquipmentTasksSection({
           })}
         </div>
       )}
-
-      {page.total > page.items.length && (
-        <p className="text-xs leading-5 text-gray-500">
-          Показано {page.items.length} із {page.total}. Повний список доступний у розділі завдань.
-        </p>
-      )}
     </section>
   );
 }

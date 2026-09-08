@@ -38,12 +38,6 @@ export default function EquipmentActivitySection({
           compact
         />
       )}
-
-      {page.total > page.items.length && (
-        <p className="text-xs leading-5 text-gray-500">
-          Показано останні {page.items.length} із {page.total} подій.
-        </p>
-      )}
     </section>
   );
 }

@@ -3,6 +3,7 @@ import {
 } from "react";
 import {
   notFound,
+  redirect,
 } from "next/navigation";
 
 import EquipmentActivitySection from "@/components/equipment/EquipmentActivitySection";
@@ -14,6 +15,7 @@ import EquipmentPassportSections, {
 } from "@/components/equipment/EquipmentPassportSections";
 import EquipmentPassportServiceSection from "@/components/equipment/EquipmentPassportServiceSection";
 import EquipmentTabErrorBoundary from "@/components/equipment/EquipmentTabErrorBoundary";
+import EquipmentTabPagination from "@/components/equipment/EquipmentTabPagination";
 import EquipmentTasksSection from "@/components/equipment/EquipmentTasksSection";
 import EquipmentUsagePanel from "@/components/equipment/EquipmentUsagePanel";
 import {
@@ -54,6 +56,7 @@ import type {
 
 type SearchParams = {
   tab?: string | string[];
+  page?: string | string[];
 };
 
 type Props = {
@@ -69,6 +72,7 @@ type TabContentProps = {
   canManage: boolean;
   canViewHistory: boolean;
   canViewServiceCost: boolean;
+  page: number;
 };
 
 function getSingleSearchValue(
@@ -118,6 +122,58 @@ function parseEquipmentId(
     : null;
 }
 
+function resolvePage(
+  value: string | undefined
+) {
+  if (!value || !/^\d+$/u.test(value)) {
+    return 1;
+  }
+
+  const page = Number(value);
+
+  return Number.isSafeInteger(page) &&
+    page > 0
+    ? page
+    : 1;
+}
+
+function redirectEmptyPage(
+  equipmentId: number,
+  tab: Exclude<
+    EquipmentTabId,
+    "overview"
+  >,
+  requestedPage: number,
+  itemsCount: number,
+  total: number,
+  pageSize: number
+) {
+  if (
+    requestedPage <= 1 ||
+    itemsCount > 0
+  ) {
+    return;
+  }
+
+  const lastPage = Math.max(
+    1,
+    Math.ceil(total / pageSize)
+  );
+  const params =
+    new URLSearchParams({ tab });
+
+  if (lastPage > 1) {
+    params.set(
+      "page",
+      String(lastPage)
+    );
+  }
+
+  redirect(
+    `/equipment/${equipmentId}?${params.toString()}`
+  );
+}
+
 function EquipmentTabLoading() {
   return (
     <div
@@ -143,6 +199,7 @@ async function EquipmentTabContent({
   canManage,
   canViewHistory,
   canViewServiceCost,
+  page,
 }: TabContentProps) {
   const equipmentId =
     equipment.id;
@@ -181,7 +238,8 @@ async function EquipmentTabContent({
       settings,
     ] = await Promise.all([
       getEquipmentServiceHistoryPage(
-        equipmentId
+        equipmentId,
+        page
       ),
       canViewServiceCost
         ? getEquipmentServiceCostKpis(
@@ -191,55 +249,133 @@ async function EquipmentTabContent({
       getAppSettings(),
     ]);
 
+    redirectEmptyPage(
+      equipmentId,
+      "service",
+      page,
+      serviceHistory.items.length,
+      serviceHistory.total,
+      serviceHistory.pageSize
+    );
+
     return (
-      <EquipmentPassportServiceSection
-        equipment={equipment}
-        records={
-          serviceHistory.items
-        }
-        currency={
-          settings.currency
-        }
-        today={today}
-        canManage={canManage}
-        showCost={
-          serviceHistory.includesCost
-        }
-        totalCost={
-          serviceCosts?.total
-        }
-      />
+      <>
+        <EquipmentPassportServiceSection
+          equipment={equipment}
+          records={
+            serviceHistory.items
+          }
+          currency={
+            settings.currency
+          }
+          today={today}
+          canManage={canManage}
+          showCost={
+            serviceHistory.includesCost
+          }
+          totalCost={
+            serviceCosts?.total
+          }
+        />
+        <EquipmentTabPagination
+          equipmentId={equipmentId}
+          tab="service"
+          page={serviceHistory.page}
+          pageSize={
+            serviceHistory.pageSize
+          }
+          total={serviceHistory.total}
+          hasPreviousPage={
+            serviceHistory.hasPreviousPage
+          }
+          hasNextPage={
+            serviceHistory.hasNextPage
+          }
+        />
+      </>
     );
   }
 
   if (activeTab === "usage") {
     const usageHistory =
       await getEquipmentUsageHistoryPage(
-        equipmentId
+        equipmentId,
+        page
       );
 
+    redirectEmptyPage(
+      equipmentId,
+      "usage",
+      page,
+      usageHistory.items.length,
+      usageHistory.total,
+      usageHistory.pageSize
+    );
+
     return (
-      <EquipmentUsagePanel
-        equipment={[equipment]}
-        logs={usageHistory.items}
-        canManage={canManage}
-        today={today}
-        singleEquipment
-      />
+      <>
+        <EquipmentUsagePanel
+          equipment={[equipment]}
+          logs={usageHistory.items}
+          canManage={canManage}
+          today={today}
+          singleEquipment
+        />
+        <EquipmentTabPagination
+          equipmentId={equipmentId}
+          tab="usage"
+          page={usageHistory.page}
+          pageSize={
+            usageHistory.pageSize
+          }
+          total={usageHistory.total}
+          hasPreviousPage={
+            usageHistory.hasPreviousPage
+          }
+          hasNextPage={
+            usageHistory.hasNextPage
+          }
+        />
+      </>
     );
   }
 
   if (activeTab === "tasks") {
     const tasks =
       await getEquipmentTasksPage(
-        equipmentId
+        equipmentId,
+        page
       );
 
+    redirectEmptyPage(
+      equipmentId,
+      "tasks",
+      page,
+      tasks.items.length,
+      tasks.total,
+      tasks.pageSize
+    );
+
     return (
-      <EquipmentTasksSection
-        page={tasks}
-        today={today}
-      />
+      <>
+        <EquipmentTasksSection
+          page={tasks}
+          today={today}
+        />
+        <EquipmentTabPagination
+          equipmentId={equipmentId}
+          tab="tasks"
+          page={tasks.page}
+          pageSize={tasks.pageSize}
+          total={tasks.total}
+          hasPreviousPage={
+            tasks.hasPreviousPage
+          }
+          hasNextPage={
+            tasks.hasNextPage
+          }
+        />
+      </>
     );
   }
 
@@ -249,13 +385,38 @@ async function EquipmentTabContent({
   ) {
     const activity =
       await getEquipmentActivityHistoryPage(
-        equipmentId
+        equipmentId,
+        page
       );
 
+    redirectEmptyPage(
+      equipmentId,
+      "history",
+      page,
+      activity.items.length,
+      activity.total,
+      activity.pageSize
+    );
+
     return (
-      <EquipmentActivitySection
-        page={activity}
-      />
+      <>
+        <EquipmentActivitySection
+          page={activity}
+        />
+        <EquipmentTabPagination
+          equipmentId={equipmentId}
+          tab="history"
+          page={activity.page}
+          pageSize={activity.pageSize}
+          total={activity.total}
+          hasPreviousPage={
+            activity.hasPreviousPage
+          }
+          hasNextPage={
+            activity.hasNextPage
+          }
+        />
+      </>
     );
   }
 
@@ -301,6 +462,11 @@ export default async function EquipmentPassportPage({
       ),
       canViewHistory
     );
+  const page = resolvePage(
+    getSingleSearchValue(
+      query.page
+    )
+  );
   const equipment =
     await getEquipmentProfile(
       equipmentId
@@ -347,7 +513,7 @@ export default async function EquipmentPassportPage({
         }
       >
         <EquipmentTabErrorBoundary
-          key={activeTab}
+          key={`${activeTab}:${page}`}
         >
           <Suspense
             fallback={
@@ -364,6 +530,7 @@ export default async function EquipmentPassportPage({
               canViewServiceCost={
                 canViewServiceCost
               }
+              page={page}
             />
           </Suspense>
         </EquipmentTabErrorBoundary>
