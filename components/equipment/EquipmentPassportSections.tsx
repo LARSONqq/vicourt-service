@@ -11,12 +11,16 @@ import type {
 type SectionId =
   | "overview"
   | "service"
-  | "usage";
+  | "usage"
+  | "tasks"
+  | "activity";
 
 type Props = {
   overview: ReactNode;
   service: ReactNode;
   usage: ReactNode;
+  tasks: ReactNode;
+  activity?: ReactNode;
 };
 
 const sections: Array<{
@@ -39,22 +43,51 @@ const sections: Array<{
     label: "Використання",
     icon: "⏱",
   },
+  {
+    id: "tasks",
+    label: "Завдання",
+    icon: "✓",
+  },
+  {
+    id: "activity",
+    label: "Історія",
+    icon: "↻",
+  },
 ];
 
 export default function EquipmentPassportSections({
   overview,
   service,
   usage,
+  tasks,
+  activity,
 }: Props) {
   const [activeSection, setActiveSection] =
     useState<SectionId>(
       "overview"
     );
-  const content = {
+  const contentBySection: Record<
+    SectionId,
+    ReactNode
+  > = {
     overview,
     service,
     usage,
-  }[activeSection];
+    tasks,
+    activity: activity ?? null,
+  };
+  const content =
+    contentBySection[
+      activeSection
+    ];
+  const visibleSections =
+    activity === undefined
+      ? sections.filter(
+          (section) =>
+            section.id !==
+            "activity"
+        )
+      : sections;
 
   return (
     <div className="min-w-0 space-y-5">
@@ -66,7 +99,7 @@ export default function EquipmentPassportSections({
           role="tablist"
           className="flex min-w-max gap-2"
         >
-          {sections.map(
+          {visibleSections.map(
             (section) => {
               const isActive =
                 activeSection ===

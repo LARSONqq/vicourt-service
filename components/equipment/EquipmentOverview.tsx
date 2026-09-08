@@ -13,6 +13,9 @@ import {
 } from "@/lib/kyivDate";
 
 import type {
+  AppCurrency,
+} from "@/types/appSettings";
+import type {
   EquipmentOverviewPreview,
 } from "@/types/equipmentProfile";
 import type {
@@ -21,7 +24,27 @@ import type {
 
 type Props = {
   overview: EquipmentOverviewPreview;
+  currency: AppCurrency;
 };
+
+function formatMoney(
+  value: number,
+  currency: AppCurrency
+) {
+  return new Intl.NumberFormat(
+    "uk-UA",
+    {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }
+  ).format(
+    Number.isFinite(value)
+      ? value
+      : 0
+  );
+}
 
 function formatDate(
   value: string | null
@@ -85,6 +108,7 @@ function KpiCard({
 
 export default function EquipmentOverview({
   overview,
+  currency,
 }: Props) {
   const {
     equipment,
@@ -227,6 +251,30 @@ export default function EquipmentOverview({
                 : "Активних сервісних записів немає"
             }
           />
+
+          {kpis.serviceCosts && (
+            <>
+              <KpiCard
+                label="Витрати на сервіс"
+                value={formatMoney(
+                  kpis.serviceCosts.total,
+                  currency
+                )}
+                detail="Неанульовані записи за весь час"
+              />
+              <KpiCard
+                label={`Витрати за ${kpis.serviceCosts.yearStart.slice(
+                  0,
+                  4
+                )} рік`}
+                value={formatMoney(
+                  kpis.serviceCosts.currentYear,
+                  currency
+                )}
+                detail="Неанульовані записи поточного року"
+              />
+            </>
+          )}
         </div>
       </section>
 

@@ -9,6 +9,9 @@ import {
 } from "react";
 
 import {
+  deleteEquipment,
+} from "@/app/actions/equipmentActions";
+import {
   EditEquipmentForm,
 } from "@/components/equipment/EditEquipmentForm";
 import {
@@ -106,6 +109,12 @@ export default function EquipmentPassportHeader({
   const router = useRouter();
   const [isEditing, setIsEditing] =
     useState(false);
+  const [showDelete, setShowDelete] =
+    useState(false);
+  const [isDeleting, setIsDeleting] =
+    useState(false);
+  const [deleteError, setDeleteError] =
+    useState("");
   const nextMaintenance = [
     equipment.next_service_date
       ? `Дата: ${
@@ -122,6 +131,30 @@ export default function EquipmentPassportHeader({
         )}`
       : null,
   ].filter(Boolean).join(" · ");
+
+  async function handleDelete() {
+    if (isDeleting) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError("");
+
+    try {
+      await deleteEquipment(
+        equipment.id
+      );
+      router.push("/equipment");
+      router.refresh();
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Не вдалося видалити техніку."
+      );
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <div className="min-w-0 space-y-5">
@@ -164,20 +197,40 @@ export default function EquipmentPassportHeader({
           </div>
 
           {canManage && (
-            <button
-              type="button"
-              onClick={() =>
-                setIsEditing(
-                  (current) =>
-                    !current
-                )
-              }
-              className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 sm:w-auto"
-            >
-              {isEditing
-                ? "Закрити"
-                : "Редагувати"}
-            </button>
+            <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap xl:justify-end">
+              <button
+                type="button"
+                onClick={() =>
+                  setIsEditing(
+                    (current) =>
+                      !current
+                  )
+                }
+                className="min-h-11 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+              >
+                {isEditing
+                  ? "Закрити"
+                  : "Редагувати"}
+              </button>
+
+              <details className="relative min-w-0">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
+                  Ще
+                </summary>
+                <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border bg-white p-2 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteError("");
+                      setShowDelete(true);
+                    }}
+                    className="min-h-10 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                  >
+                    Видалити техніку
+                  </button>
+                </div>
+              </details>
+            </div>
           )}
         </div>
 
@@ -239,6 +292,62 @@ export default function EquipmentPassportHeader({
             }}
           />
         </section>
+      )}
+
+      {canManage && showDelete && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-4"
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-equipment-title"
+            className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6"
+          >
+            <h2
+              id="delete-equipment-title"
+              className="text-lg font-semibold text-gray-900"
+            >
+              Видалити техніку?
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              Техніку «{equipment.name}» буде видалено. Якщо запис використовується в пов’язаних завданнях або історії, база даних може заборонити цю дію.
+            </p>
+
+            {deleteError && (
+              <p
+                role="alert"
+                className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              >
+                {deleteError}
+              </p>
+            )}
+
+            <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() =>
+                  setShowDelete(false)
+                }
+                className="min-h-11 rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+              >
+                Скасувати
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDelete}
+                className="min-h-11 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeleting
+                  ? "Видалення…"
+                  : "Видалити"}
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

@@ -2,13 +2,16 @@ import {
   notFound,
 } from "next/navigation";
 
+import EquipmentActivitySection from "@/components/equipment/EquipmentActivitySection";
 import EquipmentOverview from "@/components/equipment/EquipmentOverview";
 import EquipmentPassportHeader from "@/components/equipment/EquipmentPassportHeader";
 import EquipmentPassportSections from "@/components/equipment/EquipmentPassportSections";
 import EquipmentPassportServiceSection from "@/components/equipment/EquipmentPassportServiceSection";
+import EquipmentTasksSection from "@/components/equipment/EquipmentTasksSection";
 import EquipmentUsagePanel from "@/components/equipment/EquipmentUsagePanel";
 import {
   canManageEquipment,
+  canViewActivityLog,
 } from "@/lib/auth/permissions";
 import {
   requireSectionAccess,
@@ -23,7 +26,9 @@ import {
 import {
   getEquipmentOverviewPreview,
   getEquipmentProfile,
+  getEquipmentActivityHistoryPage,
   getEquipmentServiceHistoryPage,
+  getEquipmentTasksPage,
   getEquipmentUsageHistoryPage,
 } from "@/services/equipmentDetailService";
 import {
@@ -80,11 +85,17 @@ export default async function EquipmentPassportPage({
     canManageEquipment(
       currentProfile.role
     );
+  const canViewActivity =
+    canViewActivityLog(
+      currentProfile.role
+    );
   const [
     overview,
     employees,
     serviceHistory,
     usageHistory,
+    tasks,
+    activity,
     settings,
   ] =
     await Promise.all([
@@ -100,6 +111,14 @@ export default async function EquipmentPassportPage({
       getEquipmentUsageHistoryPage(
         equipmentId
       ),
+      getEquipmentTasksPage(
+        equipmentId
+      ),
+      canViewActivity
+        ? getEquipmentActivityHistoryPage(
+            equipmentId
+          )
+        : Promise.resolve(null),
       getAppSettings(),
     ]);
 
@@ -128,6 +147,9 @@ export default async function EquipmentPassportPage({
         overview={
           <EquipmentOverview
             overview={overview}
+            currency={
+              settings.currency
+            }
           />
         }
         service={
@@ -166,6 +188,21 @@ export default async function EquipmentPassportPage({
             }
             singleEquipment
           />
+        }
+        tasks={
+          <EquipmentTasksSection
+            page={tasks}
+            today={
+              overview.maintenance.today
+            }
+          />
+        }
+        activity={
+          activity ? (
+            <EquipmentActivitySection
+              page={activity}
+            />
+          ) : undefined
         }
       />
     </div>
