@@ -27,6 +27,15 @@ export interface Equipment {
   created_at: string;
 }
 
+export type EquipmentServiceFormOption = Pick<
+  Equipment,
+  | "id"
+  | "name"
+  | "inventory_number"
+  | "usage_type"
+  | "current_usage"
+>;
+
 export type EquipmentMaintenanceCompletionResult = {
   service_history_id: number;
   equipment_name: string;

@@ -25,6 +25,22 @@ export type EquipmentScopedPage<T> = {
   hasNextPage: boolean;
 };
 
+export type EquipmentDirectoryFilters = {
+  search?: string;
+  status?: string;
+  category?: string;
+};
+
+export type EquipmentDirectoryPage =
+  EquipmentScopedPage<Equipment>;
+
+export type EquipmentDirectoryStats = {
+  total: number;
+  working: number;
+  repair: number;
+  maintenanceAttention: number;
+};
+
 export type EquipmentServiceHistoryPage =
   EquipmentScopedPage<EquipmentServiceRecordView> & {
     includesCost: boolean;

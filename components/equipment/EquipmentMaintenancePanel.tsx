@@ -214,7 +214,7 @@ export default function EquipmentMaintenancePanel({
         </div>
 
         <span className="w-fit rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-          Одиниць: {equipment.length}
+          На сторінці: {equipment.length}
         </span>
       </div>
 

@@ -2,15 +2,20 @@
 
 import { useState } from "react";
 
+import {
+  getEquipmentServiceFormOptions,
+} from "@/app/actions/equipmentActions";
+
 import type { AppCurrency } from "@/types/appSettings";
 import type { Employee } from "@/types/employee";
-import type { Equipment } from "@/types/equipment";
+import type {
+  EquipmentServiceFormOption,
+} from "@/types/equipment";
 
 import AddEquipmentForm from "./AddEquipmentForm";
 import AddEquipmentServiceForm from "./AddEquipmentServiceForm";
 
 type Props = {
-  equipment: Equipment[];
   employees: Employee[];
   currency: AppCurrency;
   today: string;
@@ -22,7 +27,6 @@ type ActiveForm =
   | null;
 
 export default function EquipmentActions({
-  equipment,
   employees,
   currency,
   today,
@@ -33,16 +37,69 @@ export default function EquipmentActions({
   ] = useState<ActiveForm>(
     null
   );
+  const [
+    serviceEquipment,
+    setServiceEquipment,
+  ] = useState<
+    EquipmentServiceFormOption[]
+  >([]);
+  const [
+    hasLoadedServiceEquipment,
+    setHasLoadedServiceEquipment,
+  ] = useState(false);
+  const [
+    isLoadingServiceEquipment,
+    setIsLoadingServiceEquipment,
+  ] = useState(false);
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] = useState("");
 
-  function toggleForm(
+  async function toggleForm(
     form: ActiveForm
   ) {
-    setActiveForm(
-      (current) =>
-        current === form
-          ? null
-          : form
-    );
+    if (activeForm === form) {
+      setActiveForm(null);
+      setErrorMessage("");
+      return;
+    }
+
+    setErrorMessage("");
+
+    if (
+      form === "service" &&
+      !hasLoadedServiceEquipment
+    ) {
+      setIsLoadingServiceEquipment(
+        true
+      );
+
+      try {
+        const options =
+          await getEquipmentServiceFormOptions();
+
+        setServiceEquipment(
+          options
+        );
+        setHasLoadedServiceEquipment(
+          true
+        );
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Не вдалося завантажити форму обслуговування."
+        );
+        return;
+      } finally {
+        setIsLoadingServiceEquipment(
+          false
+        );
+      }
+    }
+
+    setActiveForm(form);
   }
 
   return (
@@ -52,11 +109,14 @@ export default function EquipmentActions({
         <button
           type="button"
           onClick={() =>
-            toggleForm(
+            void toggleForm(
               "equipment"
             )
           }
-          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium transition sm:w-auto ${
+          disabled={
+            isLoadingServiceEquipment
+          }
+          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
             activeForm ===
             "equipment"
               ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
@@ -72,11 +132,14 @@ export default function EquipmentActions({
         <button
           type="button"
           onClick={() =>
-            toggleForm(
+            void toggleForm(
               "service"
             )
           }
-          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium transition sm:w-auto ${
+          disabled={
+            isLoadingServiceEquipment
+          }
+          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
             activeForm ===
             "service"
               ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
@@ -86,9 +149,20 @@ export default function EquipmentActions({
           {activeForm ===
           "service"
             ? "Закрити форму"
-            : "+ Додати обслуговування"}
+            : isLoadingServiceEquipment
+              ? "Завантаження…"
+              : "+ Додати обслуговування"}
         </button>
       </div>
+
+      {errorMessage && (
+        <p
+          role="alert"
+          className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+        >
+          {errorMessage}
+        </p>
+      )}
 
       {/* ADD EQUIPMENT */}
       {activeForm ===
@@ -110,11 +184,17 @@ export default function EquipmentActions({
             employees={
               employees
             }
-            onCreated={() =>
+            onCreated={() => {
               setActiveForm(
                 null
-              )
-            }
+              );
+              setServiceEquipment(
+                []
+              );
+              setHasLoadedServiceEquipment(
+                false
+              );
+            }}
           />
         </div>
       )}
@@ -139,7 +219,7 @@ export default function EquipmentActions({
 
           <AddEquipmentServiceForm
             equipment={
-              equipment
+              serviceEquipment
             }
             currency={
               currency

@@ -15,6 +15,9 @@ import {
   canViewReports,
 } from "@/lib/auth/permissions";
 import {
+  evaluateEquipmentMaintenance,
+} from "@/lib/equipmentMaintenance";
+import {
   getKyivDateValue,
   isValidDateValue,
 } from "@/lib/kyivDate";
@@ -24,6 +27,11 @@ import {
 } from "@/services/profileService";
 
 import type { Equipment } from "@/types/equipment";
+import type {
+  EquipmentDirectoryFilters,
+  EquipmentDirectoryPage,
+  EquipmentDirectoryStats,
+} from "@/types/equipmentProfile";
 import type {
   CreateEquipmentServiceRecordInput,
   EquipmentServiceCreationResult,
@@ -35,6 +43,21 @@ import type {
 } from "@/types/equipmentServiceRecord";
 
 const SERVICE_READ_PAGE_SIZE = 500;
+export const EQUIPMENT_DIRECTORY_PAGE_SIZE =
+  20;
+const EQUIPMENT_DIRECTORY_STATS_PAGE_SIZE =
+  500;
+
+const EQUIPMENT_DIRECTORY_STATS_SELECT = `
+  id,
+  status,
+  maintenance_interval_days,
+  next_service_date,
+  usage_type,
+  current_usage,
+  maintenance_interval_usage,
+  next_maintenance_usage
+`;
 
 const SERVICE_OPERATIONAL_SELECT = `
   id,
@@ -183,6 +206,233 @@ async function loadEquipment(): Promise<Equipment[]> {
 
 export const getEquipment =
   cache(loadEquipment);
+
+function normalizeDirectoryPage(
+  page: number
+) {
+  return Number.isSafeInteger(page) &&
+    page > 0
+    ? page
+    : 1;
+}
+
+function quotePostgrestValue(
+  value: string
+) {
+  return `"${value
+    .replaceAll("\\", "\\\\")
+    .replaceAll('"', '\\"')}"`;
+}
+
+export async function getEquipmentDirectoryPage(
+  filters: EquipmentDirectoryFilters,
+  page = 1
+): Promise<EquipmentDirectoryPage> {
+  const normalizedPage =
+    normalizeDirectoryPage(page);
+  const from =
+    (normalizedPage - 1) *
+    EQUIPMENT_DIRECTORY_PAGE_SIZE;
+  const to =
+    from +
+    EQUIPMENT_DIRECTORY_PAGE_SIZE -
+    1;
+  const supabase =
+    await createClient();
+  let query = supabase
+    .from("equipment")
+    .select(
+      equipmentOperationalSelect,
+      { count: "exact" }
+    );
+
+  if (filters.search) {
+    const pattern =
+      quotePostgrestValue(
+        `%${filters.search}%`
+      );
+
+    query = query.or(
+      [
+        "name",
+        "inventory_number",
+      ]
+        .map(
+          (column) =>
+            `${column}.ilike.${pattern}`
+        )
+        .join(",")
+    );
+  }
+
+  if (filters.status) {
+    query = query.eq(
+      "status",
+      filters.status
+    );
+  }
+
+  if (filters.category) {
+    query = query.eq(
+      "category",
+      filters.category
+    );
+  }
+
+  const {
+    data,
+    error,
+    count,
+  } = await query
+    .order("name", {
+      ascending: true,
+    })
+    .order("id", {
+      ascending: true,
+    })
+    .range(from, to)
+    .overrideTypes<
+      Equipment[],
+      { merge: false }
+    >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити техніку: ${error.message}`
+    );
+  }
+
+  const items = Array.isArray(data)
+    ? data
+    : [];
+  const total = Number(count) || 0;
+
+  return {
+    items,
+    total,
+    page: normalizedPage,
+    pageSize:
+      EQUIPMENT_DIRECTORY_PAGE_SIZE,
+    hasPreviousPage:
+      normalizedPage > 1,
+    hasNextPage:
+      from + items.length < total,
+  };
+}
+
+export async function getEquipmentDirectoryStats(
+  today: string
+): Promise<EquipmentDirectoryStats> {
+  const supabase =
+    await createClient();
+  const rows: Array<
+    Pick<
+      Equipment,
+      | "id"
+      | "status"
+      | "maintenance_interval_days"
+      | "next_service_date"
+      | "usage_type"
+      | "current_usage"
+      | "maintenance_interval_usage"
+      | "next_maintenance_usage"
+    >
+  > = [];
+
+  for (
+    let from = 0;
+    ;
+    from +=
+      EQUIPMENT_DIRECTORY_STATS_PAGE_SIZE
+  ) {
+    const { data, error } =
+      await supabase
+        .from("equipment")
+        .select(
+          EQUIPMENT_DIRECTORY_STATS_SELECT
+        )
+        .order("id", {
+          ascending: true,
+        })
+        .range(
+          from,
+          from +
+            EQUIPMENT_DIRECTORY_STATS_PAGE_SIZE -
+            1
+        )
+        .overrideTypes<
+          Array<
+            Pick<
+              Equipment,
+              | "id"
+              | "status"
+              | "maintenance_interval_days"
+              | "next_service_date"
+              | "usage_type"
+              | "current_usage"
+              | "maintenance_interval_usage"
+              | "next_maintenance_usage"
+            >
+          >,
+          { merge: false }
+        >();
+
+    if (error) {
+      throw new Error(
+        `Не вдалося завантажити статистику техніки: ${error.message}`
+      );
+    }
+
+    const pageRows =
+      Array.isArray(data)
+        ? data
+        : [];
+
+    rows.push(...pageRows);
+
+    if (
+      pageRows.length <
+      EQUIPMENT_DIRECTORY_STATS_PAGE_SIZE
+    ) {
+      break;
+    }
+  }
+
+  return rows.reduce<EquipmentDirectoryStats>(
+    (stats, item) => ({
+      total:
+        stats.total + 1,
+      working:
+        stats.working +
+        (item.status === "Справна" ||
+        item.status === "В роботі"
+          ? 1
+          : 0),
+      repair:
+        stats.repair +
+        (item.status ===
+          "На ремонті" ||
+        item.status ===
+          "Потребує ремонту"
+          ? 1
+          : 0),
+      maintenanceAttention:
+        stats.maintenanceAttention +
+        (evaluateEquipmentMaintenance(
+          item,
+          today
+        ).isDue
+          ? 1
+          : 0),
+    }),
+    {
+      total: 0,
+      working: 0,
+      repair: 0,
+      maintenanceAttention: 0,
+    }
+  );
+}
 
 function normalizeEquipmentId(
   equipmentId: number

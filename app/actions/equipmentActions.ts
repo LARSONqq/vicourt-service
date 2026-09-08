@@ -30,6 +30,9 @@ import type {
   ActivityMetadata,
   ActivityMetadataValue,
 } from "@/types/activityLog";
+import type {
+  EquipmentServiceFormOption,
+} from "@/types/equipment";
 
 function addActivityChange(
   metadata: ActivityMetadata,
@@ -69,6 +72,45 @@ async function requireEquipmentManagement() {
   }
 
   return profile;
+}
+
+export async function getEquipmentServiceFormOptions(): Promise<
+  EquipmentServiceFormOption[]
+> {
+  await requireEquipmentManagement();
+
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase
+      .from("equipment")
+      .select(`
+        id,
+        name,
+        inventory_number,
+        usage_type,
+        current_usage
+      `)
+      .order("name", {
+        ascending: true,
+      })
+      .order("id", {
+        ascending: true,
+      })
+      .overrideTypes<
+        EquipmentServiceFormOption[],
+        { merge: false }
+      >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити техніку для форми: ${error.message}`
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
 }
 
 function getText(

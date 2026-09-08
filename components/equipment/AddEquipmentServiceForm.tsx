@@ -7,10 +7,12 @@ import { createEquipmentServiceRecord } from "@/app/actions/equipmentServiceActi
 import { equipmentServiceTypes } from "@/constants/equipmentService";
 
 import type { AppCurrency } from "@/types/appSettings";
-import type { Equipment } from "@/types/equipment";
+import type {
+  EquipmentServiceFormOption,
+} from "@/types/equipment";
 
 type Props = {
-  equipment: Equipment[];
+  equipment: EquipmentServiceFormOption[];
   currency: AppCurrency;
   today: string;
   onCreated: () => void;

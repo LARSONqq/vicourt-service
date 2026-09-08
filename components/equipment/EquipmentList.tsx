@@ -27,6 +27,8 @@ import { EditEquipmentForm } from "./EditEquipmentForm";
 type Props = {
   equipment: Equipment[];
   employees: Employee[];
+  total: number;
+  hasFilters: boolean;
   canManage?: boolean;
   today: string;
 };
@@ -58,6 +60,8 @@ function getStatusClasses(
 export default function EquipmentList({
   equipment,
   employees,
+  total,
+  hasFilters,
   canManage = false,
   today,
 }: Props) {
@@ -84,152 +88,11 @@ export default function EquipmentList({
     );
 
   const [
-    search,
-    setSearch,
-  ] = useState("");
-
-  const [
-    category,
-    setCategory,
-  ] = useState("Усі");
-
-  const [
-    status,
-    setStatus,
-  ] = useState("Усі");
-
-  const [
-    maintenanceFilter,
-    setMaintenanceFilter,
-  ] = useState("all");
-
-  const [
     editingId,
     setEditingId,
   ] = useState<
     number | null
   >(null);
-
-  const categories =
-    useMemo(() => {
-      const values =
-        safeEquipment
-          .map(
-            (item) =>
-              item.category
-          )
-          .filter(
-            (
-              value
-            ): value is string =>
-              Boolean(value)
-          );
-
-      return [
-        "Усі",
-        ...Array.from(
-          new Set(values)
-        ),
-      ];
-    }, [safeEquipment]);
-
-  const statuses =
-    useMemo(() => {
-      const values =
-        safeEquipment
-          .map(
-            (item) =>
-              item.status
-          )
-          .filter(Boolean);
-
-      return [
-        "Усі",
-        ...Array.from(
-          new Set(values)
-        ),
-      ];
-    }, [safeEquipment]);
-
-  const filteredEquipment =
-    useMemo(() => {
-      const normalizedSearch =
-        search
-          .trim()
-          .toLowerCase();
-
-      return safeEquipment.filter(
-        (item) => {
-          const searchableText =
-            [
-              item.name,
-              item.category,
-              item.inventory_number,
-              item.responsible,
-              item.location,
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
-
-          const matchesSearch =
-            !normalizedSearch ||
-            searchableText.includes(
-              normalizedSearch
-            );
-
-          const matchesCategory =
-            category ===
-              "Усі" ||
-            item.category ===
-              category;
-
-          const matchesStatus =
-            status ===
-              "Усі" ||
-            item.status ===
-              status;
-
-          const maintenanceState =
-            evaluateEquipmentMaintenance(
-              item,
-              today
-            );
-          const maintenanceKind =
-            getEquipmentMaintenanceOverallKind(
-              maintenanceState
-            );
-          const matchesMaintenance =
-            maintenanceFilter ===
-              "all" ||
-            (maintenanceFilter ===
-              "attention" &&
-              maintenanceState.isDue) ||
-            (maintenanceFilter ===
-              "scheduled" &&
-              maintenanceKind ===
-                "scheduled") ||
-            (maintenanceFilter ===
-              "unconfigured" &&
-              maintenanceKind ===
-                "unconfigured");
-
-          return (
-            matchesSearch &&
-            matchesCategory &&
-            matchesStatus &&
-            matchesMaintenance
-          );
-        }
-      );
-    }, [
-      safeEquipment,
-      search,
-      category,
-      status,
-      maintenanceFilter,
-      today,
-    ]);
 
   function toggleEdit(
     itemId: number
@@ -253,105 +116,13 @@ export default function EquipmentList({
 
   return (
     <div className="min-w-0 space-y-5">
-      {/* FILTERS */}
-      <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_190px_190px_210px]">
-        <input
-          type="search"
-          value={search}
-          onChange={(
-            event
-          ) =>
-            setSearch(
-              event.target.value
-            )
-          }
-          placeholder="Пошук за назвою, номером, відповідальним або локацією"
-          className="min-h-11 w-full min-w-0 rounded-lg border px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
-        />
-
-        <select
-          value={category}
-          onChange={(
-            event
-          ) =>
-            setCategory(
-              event.target.value
-            )
-          }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-        >
-          {categories.map(
-            (item) => (
-              <option
-                key={item}
-                value={item}
-              >
-                {item ===
-                "Усі"
-                  ? "Усі категорії"
-                  : item}
-              </option>
-            )
-          )}
-        </select>
-
-        <select
-          value={status}
-          onChange={(
-            event
-          ) =>
-            setStatus(
-              event.target.value
-            )
-          }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-        >
-          {statuses.map(
-            (item) => (
-              <option
-                key={item}
-                value={item}
-              >
-                {item ===
-                "Усі"
-                  ? "Усі статуси"
-                  : item}
-              </option>
-            )
-          )}
-        </select>
-
-        <select
-          value={maintenanceFilter}
-          onChange={(event) =>
-            setMaintenanceFilter(
-              event.target.value
-            )
-          }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-        >
-          <option value="all">
-            Уся техніка
-          </option>
-          <option value="attention">
-            Потребує ТО
-          </option>
-          <option value="scheduled">
-            ТО заплановано
-          </option>
-          <option value="unconfigured">
-            ТО не налаштовано
-          </option>
-        </select>
-      </div>
-
       {/* COUNT */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500">
           Знайдено одиниць техніки:{" "}
           <span className="font-semibold text-gray-800">
             {
-              filteredEquipment.length
+              total
             }
           </span>
         </p>
@@ -364,7 +135,7 @@ export default function EquipmentList({
       </div>
 
       {/* EMPTY */}
-      {filteredEquipment.length ===
+      {safeEquipment.length ===
       0 ? (
         <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
@@ -376,15 +147,16 @@ export default function EquipmentList({
           </p>
 
           <p className="mt-1 text-sm text-gray-500">
-            Спробуй змінити пошук,
-            категорію або статус.
+            {hasFilters
+              ? "Спробуй змінити пошук, категорію або статус."
+              : "Додай першу одиницю техніки, щоб вона з’явилася у списку."}
           </p>
         </div>
       ) : (
         <>
           {/* MOBILE CARDS */}
           <div className="space-y-3 md:hidden">
-            {filteredEquipment.map(
+            {safeEquipment.map(
               (item) => {
                 const maintenanceState =
                   evaluateEquipmentMaintenance(
@@ -655,7 +427,7 @@ export default function EquipmentList({
               </thead>
 
               <tbody>
-                {filteredEquipment.map(
+                {safeEquipment.map(
                   (item) => {
                     const maintenanceState =
                       evaluateEquipmentMaintenance(
