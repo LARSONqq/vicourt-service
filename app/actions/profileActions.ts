@@ -9,6 +9,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 import type {
+  UserProfile,
   UserRole,
 } from "@/types/userProfile";
 
@@ -179,7 +180,15 @@ function refreshUserPages() {
 
 export async function updateUserProfile(
   formData: FormData
-) {
+): Promise<
+  Pick<
+    UserProfile,
+    | "id"
+    | "role"
+    | "employee_id"
+    | "updated_at"
+  >
+> {
   const profileId =
     String(
       formData.get(
@@ -339,6 +348,7 @@ export async function updateUserProfile(
   }
 
   const {
+    data: updatedProfile,
     error: updateError,
   } = await supabase
     .from("profiles")
@@ -355,7 +365,24 @@ export async function updateUserProfile(
     .eq(
       "id",
       profileId
-    );
+    )
+    .select(`
+      id,
+      role,
+      employee_id,
+      updated_at
+    `)
+    .single()
+    .overrideTypes<
+      Pick<
+        UserProfile,
+        | "id"
+        | "role"
+        | "employee_id"
+        | "updated_at"
+      >,
+      { merge: false }
+    >();
 
   if (updateError) {
     if (
@@ -373,6 +400,8 @@ export async function updateUserProfile(
   }
 
   refreshUserPages();
+
+  return updatedProfile;
 }
 
 export async function setUserActiveStatus(

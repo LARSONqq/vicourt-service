@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useRef,
+  useState,
+} from "react";
 
 import { createEquipment } from "@/app/actions/equipmentActions";
 
@@ -24,6 +27,8 @@ export default function AddEquipmentForm({
     isSubmitting,
     setIsSubmitting,
   ] = useState(false);
+  const submissionLockRef =
+    useRef(false);
 
   const [
     errorMessage,
@@ -33,10 +38,14 @@ export default function AddEquipmentForm({
   async function handleSubmit(
     formData: FormData
   ) {
-    if (isSubmitting) {
+    if (
+      submissionLockRef.current
+    ) {
       return;
     }
 
+    submissionLockRef.current =
+      true;
     setIsSubmitting(true);
     setErrorMessage("");
 
@@ -53,6 +62,8 @@ export default function AddEquipmentForm({
           : "Не вдалося додати техніку."
       );
     } finally {
+      submissionLockRef.current =
+        false;
       setIsSubmitting(false);
     }
   }

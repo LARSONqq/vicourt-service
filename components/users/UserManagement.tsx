@@ -34,11 +34,21 @@ type Props = {
   currentUserId: string;
 };
 
+type UpdatedUserProfile =
+  Awaited<
+    ReturnType<
+      typeof updateUserProfile
+    >
+  >;
+
 type UserRowProps = {
   profile: UserProfile;
   employees: Employee[];
   profiles: UserProfile[];
   currentUserId: string;
+  onUpdated: (
+    profile: UpdatedUserProfile
+  ) => void;
 };
 
 function getEmployeeName(
@@ -57,6 +67,7 @@ function UserRow({
   employees,
   profiles,
   currentUserId,
+  onUpdated,
 }: UserRowProps) {
   const router =
     useRouter();
@@ -151,8 +162,24 @@ function UserRow({
     setSuccessMessage("");
 
     try {
-      await updateUserProfile(
-        formData
+      const updatedProfile =
+        await updateUserProfile(
+          formData
+        );
+
+      setRole(
+        updatedProfile.role
+      );
+      setEmployeeId(
+        updatedProfile.employee_id
+          ? String(
+              updatedProfile.employee_id
+            )
+          : ""
+      );
+
+      onUpdated(
+        updatedProfile
       );
 
       setSuccessMessage(
@@ -567,23 +594,85 @@ function UserRow({
 }
 
 export default function UserManagement({
-  profiles = [],
-  employees = [],
+  profiles,
+  employees,
   currentUserId,
 }: Props) {
-  const safeProfiles =
-    Array.isArray(
-      profiles
-    )
-      ? profiles
-      : [];
-
+  const serverProfiles =
+    useMemo(
+      () =>
+        Array.isArray(
+          profiles
+        )
+          ? profiles
+          : [],
+      [profiles]
+    );
   const safeEmployees =
-    Array.isArray(
-      employees
-    )
-      ? employees
-      : [];
+    useMemo(
+      () =>
+        Array.isArray(
+          employees
+        )
+          ? employees
+          : [],
+      [employees]
+    );
+  const [
+    profileOverrides,
+    setProfileOverrides,
+  ] = useState<
+    Record<
+      string,
+      UpdatedUserProfile
+    >
+  >({});
+
+  const safeProfiles =
+    useMemo(
+      () =>
+        serverProfiles.map(
+          (serverProfile) => {
+            const override =
+              profileOverrides[
+                serverProfile.id
+              ];
+
+            if (
+              !override ||
+              Date.parse(
+                override.updated_at
+              ) <=
+                Date.parse(
+                  serverProfile.updated_at
+                )
+            ) {
+              return serverProfile;
+            }
+
+            return {
+              ...serverProfile,
+              ...override,
+            };
+          }
+        ),
+      [
+        serverProfiles,
+        profileOverrides,
+      ]
+    );
+
+  function updateProfileRow(
+    updatedProfile: UpdatedUserProfile
+  ) {
+    setProfileOverrides(
+      (currentOverrides) => ({
+        ...currentOverrides,
+        [updatedProfile.id]:
+          updatedProfile,
+      })
+    );
+  }
 
   const [
     search,
@@ -915,6 +1004,9 @@ export default function UserManagement({
                   }
                   currentUserId={
                     currentUserId
+                  }
+                  onUpdated={
+                    updateProfileRow
                   }
                 />
               )
