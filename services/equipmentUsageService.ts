@@ -16,9 +16,14 @@ import {
 import type {
   EquipmentUsageRecordResult,
   EquipmentUsageScheduleResult,
+  EquipmentWorkSessionResult,
   RecordEquipmentUsageInput,
+  RecordEquipmentWorkSessionInput,
   ConfigureEquipmentUsageInput,
 } from "@/types/equipmentUsage";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isRecord(
   value: unknown
@@ -101,6 +106,47 @@ function isUsageScheduleResult(
     isNullableNumber(
       value.new_next_maintenance_usage
     )
+  );
+}
+
+function isEquipmentWorkSessionResult(
+  value: unknown
+): value is EquipmentWorkSessionResult {
+  return (
+    isRecord(value) &&
+    typeof value.usage_log_id ===
+      "number" &&
+    typeof value.equipment_id ===
+      "number" &&
+    typeof value.equipment_name ===
+      "string" &&
+    value.usage_type === "hours" &&
+    typeof value.previous_current_usage ===
+      "number" &&
+    typeof value.new_current_usage ===
+      "number" &&
+    typeof value.duration ===
+      "number" &&
+    typeof value.reading_date ===
+      "string" &&
+    value.entry_type ===
+      "work_session" &&
+    typeof value.object_id ===
+      "number" &&
+    typeof value.object_name ===
+      "string" &&
+    typeof value.employee_id ===
+      "number" &&
+    typeof value.employee_name ===
+      "string" &&
+    (typeof value.note ===
+      "string" ||
+      value.note === null) &&
+    typeof value.created_by_name ===
+      "string" &&
+    value.appended === true &&
+    typeof value.idempotent_replay ===
+      "boolean"
   );
 }
 
@@ -217,6 +263,125 @@ export async function recordEquipmentUsageEntry(
   ) {
     throw new Error(
       "Система отримала некоректний результат запису напрацювання."
+    );
+  }
+
+  return data;
+}
+
+export async function recordEquipmentWorkSessionEntry(
+  input: RecordEquipmentWorkSessionInput
+): Promise<EquipmentWorkSessionResult> {
+  await requireEquipmentUsageManagement();
+
+  if (
+    !Number.isInteger(
+      input.equipmentId
+    ) ||
+    input.equipmentId <= 0
+  ) {
+    throw new Error(
+      "Не вдалося визначити техніку."
+    );
+  }
+
+  if (
+    !Number.isFinite(
+      input.duration
+    ) ||
+    input.duration <= 0
+  ) {
+    throw new Error(
+      "Тривалість має бути додатним числом."
+    );
+  }
+
+  if (
+    !isValidDateValue(
+      input.readingDate
+    )
+  ) {
+    throw new Error(
+      "Вкажи коректну дату роботи."
+    );
+  }
+
+  for (const [value, message] of [
+    [
+      input.objectId,
+      "Не вдалося визначити об’єкт.",
+    ],
+    [
+      input.employeeId,
+      "Не вдалося визначити працівника.",
+    ],
+  ] as const) {
+    if (
+      !Number.isInteger(value) ||
+      value <= 0
+    ) {
+      throw new Error(message);
+    }
+  }
+
+  if (
+    !UUID_PATTERN.test(
+      input.idempotencyKey
+    )
+  ) {
+    throw new Error(
+      "Не вдалося визначити унікальний ключ запису роботи."
+    );
+  }
+
+  const note =
+    input.note?.trim() ||
+    null;
+
+  if (
+    note &&
+    note.length > 2000
+  ) {
+    throw new Error(
+      "Примітка не може перевищувати 2000 символів."
+    );
+  }
+
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase.rpc(
+      "record_equipment_work_session",
+      {
+        p_equipment_id:
+          input.equipmentId,
+        p_duration:
+          input.duration,
+        p_reading_date:
+          input.readingDate,
+        p_object_id:
+          input.objectId,
+        p_employee_id:
+          input.employeeId,
+        p_note: note,
+        p_idempotency_key:
+          input.idempotencyKey,
+      }
+    );
+
+  if (error) {
+    throw new Error(
+      `Не вдалося зберегти роботу техніки: ${error.message}`
+    );
+  }
+
+  if (
+    !isEquipmentWorkSessionResult(
+      data
+    )
+  ) {
+    throw new Error(
+      "Система отримала некоректний результат запису роботи техніки."
     );
   }
 

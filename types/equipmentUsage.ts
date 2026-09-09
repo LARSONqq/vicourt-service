@@ -9,6 +9,10 @@ export type EquipmentUsageEntryType =
   | "reading"
   | "correction";
 
+export type EquipmentUsageLogEntryType =
+  | EquipmentUsageEntryType
+  | "work_session";
+
 export interface EquipmentUsageLog {
   id: number;
   equipment_id: number | null;
@@ -19,7 +23,11 @@ export interface EquipmentUsageLog {
   previous_reading: number | null;
   delta: number | null;
   reading_date: string;
-  entry_type: EquipmentUsageEntryType;
+  entry_type: EquipmentUsageLogEntryType;
+  object_id: number | null;
+  object_name_snapshot: string | null;
+  employee_id: number | null;
+  employee_name_snapshot: string | null;
   note: string | null;
   created_by: string | null;
   created_by_name: string;
@@ -56,6 +64,36 @@ export type RecordEquipmentUsageInput = {
   entryType: EquipmentUsageEntryType;
   note?: string | null;
 };
+
+export type RecordEquipmentWorkSessionInput = {
+  equipmentId: number;
+  duration: number;
+  readingDate: string;
+  objectId: number;
+  employeeId: number;
+  note?: string | null;
+  idempotencyKey: string;
+};
+
+export interface EquipmentWorkSessionResult {
+  usage_log_id: number;
+  equipment_id: number;
+  equipment_name: string;
+  usage_type: "hours";
+  previous_current_usage: number;
+  new_current_usage: number;
+  duration: number;
+  reading_date: string;
+  entry_type: "work_session";
+  object_id: number;
+  object_name: string;
+  employee_id: number;
+  employee_name: string;
+  note: string | null;
+  created_by_name: string;
+  appended: true;
+  idempotent_replay: boolean;
+}
 
 export type ConfigureEquipmentUsageInput = {
   equipmentId: number;

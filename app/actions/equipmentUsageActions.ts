@@ -9,13 +9,16 @@ import {
 import {
   configureEquipmentUsageSchedule,
   recordEquipmentUsageEntry,
+  recordEquipmentWorkSessionEntry,
 } from "@/services/equipmentUsageService";
 
 import type {
   ConfigureEquipmentUsageInput,
   EquipmentUsageRecordResult,
   EquipmentUsageScheduleResult,
+  EquipmentWorkSessionResult,
   RecordEquipmentUsageInput,
+  RecordEquipmentWorkSessionInput,
 } from "@/types/equipmentUsage";
 
 function getUsageUnit(
@@ -53,6 +56,51 @@ export async function recordEquipmentUsage(
       new_current_usage: data.new_current_usage,
     },
   });
+
+  revalidateEquipmentMaintenancePages();
+  return data;
+}
+
+export async function recordEquipmentWorkSession(
+  input: RecordEquipmentWorkSessionInput
+): Promise<EquipmentWorkSessionResult> {
+  const data =
+    await recordEquipmentWorkSessionEntry(
+      input
+    );
+
+  if (!data.idempotent_replay) {
+    await recordActivity({
+      action:
+        "equipment.usage_recorded",
+      entityType: "equipment",
+      entityId: data.equipment_id,
+      entityName:
+        data.equipment_name,
+      objectId: data.object_id,
+      objectName: data.object_name,
+      description: `Зафіксовано роботу техніки «${data.equipment_name}»: +${data.duration} мотогод. на об’єкті «${data.object_name}» (${data.employee_name}).`,
+      metadata: {
+        usage_log_id:
+          data.usage_log_id,
+        usage_type:
+          data.usage_type,
+        entry_type:
+          data.entry_type,
+        duration: data.duration,
+        reading_date:
+          data.reading_date,
+        object_name:
+          data.object_name,
+        employee_name:
+          data.employee_name,
+        previous_current_usage:
+          data.previous_current_usage,
+        new_current_usage:
+          data.new_current_usage,
+      },
+    });
+  }
 
   revalidateEquipmentMaintenancePages();
   return data;
