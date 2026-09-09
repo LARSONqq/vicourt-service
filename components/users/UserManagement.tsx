@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -126,6 +127,24 @@ function UserRow({
     setSuccessMessage,
   ] = useState("");
 
+  useEffect(() => {
+    console.info(
+      "[ROLE_TRACE render]",
+      {
+        profileId:
+          profile.id,
+        profileRole:
+          profile.role,
+        localSelectRole:
+          role,
+      }
+    );
+  }, [
+    profile.id,
+    profile.role,
+    role,
+  ]);
+
   const linkedEmployee =
     employees.find(
       (employee) =>
@@ -157,6 +176,24 @@ function UserRow({
       return;
     }
 
+    console.info(
+      "[ROLE_TRACE submit]",
+      {
+        profileId:
+          profile.id,
+        renderedProfileRole:
+          profile.role,
+        localDraftRole:
+          role,
+        formDataRole:
+          String(
+            formData.get(
+              "role"
+            ) ?? ""
+          ),
+      }
+    );
+
     setIsSubmitting(true);
     setErrorMessage("");
     setSuccessMessage("");
@@ -166,6 +203,18 @@ function UserRow({
         await updateUserProfile(
           formData
         );
+
+      console.info(
+        "[ROLE_TRACE response]",
+        {
+          profileId:
+            updatedProfile.id,
+          updatedProfileRole:
+            updatedProfile.role,
+          updatedProfileEmployeeId:
+            updatedProfile.employee_id,
+        }
+      );
 
       setRole(
         updatedProfile.role
@@ -469,12 +518,27 @@ function UserRow({
               }
               onChange={(
                 event
-              ) =>
-                setRole(
+              ) => {
+                const nextRole =
                   event.target
-                    .value as UserRole
-                )
-              }
+                    .value as UserRole;
+
+                console.info(
+                  "[ROLE_TRACE draft]",
+                  {
+                    profileId:
+                      profile.id,
+                    oldRole:
+                      role,
+                    newRole:
+                      nextRole,
+                  }
+                );
+
+                setRole(
+                  nextRole
+                );
+              }}
               className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
             >
               <option value="admin">
@@ -633,6 +697,41 @@ export default function UserManagement({
     previousServerProfiles !==
     serverProfiles
   ) {
+    console.info(
+      "[ROLE_TRACE sync]",
+      {
+        source:
+          "new-server-profiles-prop",
+        roleChanges:
+          serverProfiles
+            .map(
+              (serverProfile) => {
+                const currentProfile =
+                  profileRows.find(
+                    (profile) =>
+                      profile.id ===
+                      serverProfile.id
+                  );
+
+                return {
+                  profileId:
+                    serverProfile.id,
+                  oldRole:
+                    currentProfile?.role ??
+                    null,
+                  newRole:
+                    serverProfile.role,
+                };
+              }
+            )
+            .filter(
+              (change) =>
+                change.oldRole !==
+                change.newRole
+            ),
+      }
+    );
+
     setPreviousServerProfiles(
       serverProfiles
     );
@@ -648,8 +747,38 @@ export default function UserManagement({
     updatedProfile: UpdatedUserProfile
   ) {
     setProfileRows(
-      (currentProfiles) =>
-        currentProfiles.map(
+      (currentProfiles) => {
+        const currentProfile =
+          currentProfiles.find(
+            (profile) =>
+              profile.id ===
+              updatedProfile.id
+          );
+        const mergedProfile =
+          currentProfile
+            ? {
+                ...currentProfile,
+                ...updatedProfile,
+              }
+            : null;
+
+        console.info(
+          "[ROLE_TRACE merge]",
+          {
+            profileId:
+              updatedProfile.id,
+            roleBeforeMerge:
+              currentProfile?.role ??
+              null,
+            updatedProfileRole:
+              updatedProfile.role,
+            roleAfterMerge:
+              mergedProfile?.role ??
+              null,
+          }
+        );
+
+        return currentProfiles.map(
           (profile) =>
             profile.id ===
             updatedProfile.id
@@ -658,7 +787,8 @@ export default function UserManagement({
                   ...updatedProfile,
                 }
               : profile
-        )
+        );
+      }
     );
   }
 
