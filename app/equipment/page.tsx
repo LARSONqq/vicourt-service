@@ -27,9 +27,6 @@ import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
 import {
-  getEmployees,
-} from "@/services/employeeService";
-import {
   getEquipmentDirectoryPage,
   getEquipmentDirectoryStats,
 } from "@/services/equipmentService";
@@ -40,9 +37,6 @@ import {
 import type {
   AppCurrency,
 } from "@/types/appSettings";
-import type {
-  Employee,
-} from "@/types/employee";
 import type {
   EquipmentDirectoryFilters as DirectoryFilters,
 } from "@/types/equipmentProfile";
@@ -151,14 +145,12 @@ async function EquipmentDirectoryContent({
   filters,
   page,
   canManage,
-  employees,
   currency,
   today,
 }: {
   filters: DirectoryFilters;
   page: number;
   canManage: boolean;
-  employees: Employee[];
   currency: AppCurrency;
   today: string;
 }) {
@@ -251,7 +243,6 @@ async function EquipmentDirectoryContent({
         equipment={
           equipmentPage.items
         }
-        employees={employees}
         total={equipmentPage.total}
         hasFilters={hasFilters}
         canManage={canManage}
@@ -299,13 +290,8 @@ export default async function EquipmentPage({
   );
   const today =
     getKyivDateValue();
-  const [employees, settings] =
-    await Promise.all([
-      canManage
-        ? getEmployees()
-        : Promise.resolve([]),
-      getAppSettings(),
-    ]);
+  const settings =
+    await getAppSettings();
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -324,7 +310,6 @@ export default async function EquipmentPage({
         {canManage && (
           <div className="min-w-0">
             <EquipmentActions
-              employees={employees}
               currency={
                 settings.currency
               }
@@ -368,7 +353,6 @@ export default async function EquipmentPage({
           filters={filters}
           page={page}
           canManage={canManage}
-          employees={employees}
           currency={
             settings.currency
           }

@@ -34,9 +34,6 @@ import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
 import {
-  getEmployees,
-} from "@/services/employeeService";
-import {
   getEquipmentActivityHistoryPage,
   getEquipmentMaintenanceOverview,
   getEquipmentOverviewPreview,
@@ -476,16 +473,11 @@ export default async function EquipmentPassportPage({
     notFound();
   }
 
-  const [maintenance, employees] =
-    await Promise.all([
-      getEquipmentMaintenanceOverview(
-        equipmentId,
-        equipment
-      ),
-      canManage
-        ? getEmployees()
-        : Promise.resolve([]),
-    ]);
+  const maintenance =
+    await getEquipmentMaintenanceOverview(
+      equipmentId,
+      equipment
+    );
 
   if (!maintenance) {
     notFound();
@@ -495,7 +487,6 @@ export default async function EquipmentPassportPage({
     <div className="min-w-0 space-y-5 sm:space-y-6">
       <EquipmentPassportHeader
         equipment={equipment}
-        employees={employees}
         canManage={canManage}
         maintenanceKind={getEquipmentMaintenanceOverallKind(
           maintenance.evaluation

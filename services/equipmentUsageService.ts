@@ -14,7 +14,6 @@ import {
 } from "@/services/profileService";
 
 import type {
-  EquipmentUsageLog,
   EquipmentUsageRecordResult,
   EquipmentUsageScheduleResult,
   RecordEquipmentUsageInput,
@@ -126,121 +125,6 @@ async function requireEquipmentUsageManagement() {
   }
 
   return profile;
-}
-
-export async function getEquipmentUsageLogs(): Promise<
-  EquipmentUsageLog[]
-> {
-  const supabase =
-    await createClient();
-  const { data, error } =
-    await supabase
-      .from(
-        "equipment_usage_logs"
-      )
-      .select(`
-        id,
-        equipment_id,
-        equipment_name_snapshot,
-        inventory_number_snapshot,
-        usage_type,
-        reading,
-        previous_reading,
-        delta,
-        reading_date,
-        entry_type,
-        note,
-        created_by,
-        created_by_name,
-        created_at
-      `)
-      .order("reading_date", {
-        ascending: false,
-      })
-      .order("created_at", {
-        ascending: false,
-      })
-      .order("id", {
-        ascending: false,
-      })
-      .overrideTypes<
-        EquipmentUsageLog[]
-      >();
-
-  if (error) {
-    throw new Error(
-      `Не вдалося завантажити історію напрацювання: ${error.message}`
-    );
-  }
-
-  return Array.isArray(data)
-    ? data
-    : [];
-}
-
-export async function getEquipmentUsageLogsByEquipmentId(
-  equipmentId: number
-): Promise<EquipmentUsageLog[]> {
-  if (
-    !Number.isInteger(
-      equipmentId
-    ) ||
-    equipmentId <= 0
-  ) {
-    throw new Error(
-      "Не вдалося визначити техніку."
-    );
-  }
-
-  const supabase =
-    await createClient();
-  const { data, error } =
-    await supabase
-      .from(
-        "equipment_usage_logs"
-      )
-      .select(`
-        id,
-        equipment_id,
-        equipment_name_snapshot,
-        inventory_number_snapshot,
-        usage_type,
-        reading,
-        previous_reading,
-        delta,
-        reading_date,
-        entry_type,
-        note,
-        created_by,
-        created_by_name,
-        created_at
-      `)
-      .eq(
-        "equipment_id",
-        equipmentId
-      )
-      .order("reading_date", {
-        ascending: false,
-      })
-      .order("created_at", {
-        ascending: false,
-      })
-      .order("id", {
-        ascending: false,
-      })
-      .overrideTypes<
-        EquipmentUsageLog[]
-      >();
-
-  if (error) {
-    throw new Error(
-      `Не вдалося завантажити напрацювання техніки: ${error.message}`
-    );
-  }
-
-  return Array.isArray(data)
-    ? data
-    : [];
 }
 
 export async function recordEquipmentUsageEntry(

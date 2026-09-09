@@ -7,7 +7,10 @@ import {
   useState,
 } from "react";
 
-import { deleteEquipment } from "@/app/actions/equipmentActions";
+import {
+  deleteEquipment,
+  getEquipmentEditorEmployees,
+} from "@/app/actions/equipmentActions";
 import {
   evaluateEquipmentMaintenance,
   formatEquipmentUsage,
@@ -26,7 +29,6 @@ import { EditEquipmentForm } from "./EditEquipmentForm";
 
 type Props = {
   equipment: Equipment[];
-  employees: Employee[];
   total: number;
   hasFilters: boolean;
   canManage?: boolean;
@@ -59,7 +61,6 @@ function getStatusClasses(
 
 export default function EquipmentList({
   equipment,
-  employees,
   total,
   hasFilters,
   canManage = false,
@@ -76,37 +77,65 @@ export default function EquipmentList({
       [equipment]
     );
 
-  const safeEmployees =
-    useMemo(
-      () =>
-        Array.isArray(
-          employees
-        )
-          ? employees
-          : [],
-      [employees]
-    );
-
   const [
     editingId,
     setEditingId,
   ] = useState<
     number | null
   >(null);
+  const [
+    employees,
+    setEmployees,
+  ] = useState<Employee[]>([]);
+  const [
+    hasLoadedEmployees,
+    setHasLoadedEmployees,
+  ] = useState(false);
+  const [
+    isLoadingEmployees,
+    setIsLoadingEmployees,
+  ] = useState(false);
+  const [
+    employeeLoadError,
+    setEmployeeLoadError,
+  ] = useState("");
 
-  function toggleEdit(
+  async function toggleEdit(
     itemId: number
   ) {
     if (!canManage) {
       return;
     }
 
-    setEditingId(
-      (current) =>
-        current === itemId
-          ? null
-          : itemId
-    );
+    if (editingId === itemId) {
+      setEditingId(null);
+      setEmployeeLoadError("");
+      return;
+    }
+
+    if (!hasLoadedEmployees) {
+      setIsLoadingEmployees(true);
+      setEmployeeLoadError("");
+
+      try {
+        const options =
+          await getEquipmentEditorEmployees();
+
+        setEmployees(options);
+        setHasLoadedEmployees(true);
+      } catch (error) {
+        setEmployeeLoadError(
+          error instanceof Error
+            ? error.message
+            : "Не вдалося завантажити форму редагування."
+        );
+        return;
+      } finally {
+        setIsLoadingEmployees(false);
+      }
+    }
+
+    setEditingId(itemId);
   }
 
   const columnCount =
@@ -133,6 +162,15 @@ export default function EquipmentList({
           </span>
         )}
       </div>
+
+      {employeeLoadError && (
+        <p
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+        >
+          {employeeLoadError}
+        </p>
+      )}
 
       {/* EMPTY */}
       {safeEquipment.length ===
@@ -313,15 +351,18 @@ export default function EquipmentList({
                         <button
                           type="button"
                           onClick={() =>
-                            toggleEdit(
+                            void toggleEdit(
                               item.id
                             )
                           }
+                          disabled={isLoadingEmployees}
                           className="min-h-10 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-100"
                         >
                           {isEditing
                             ? "Закрити"
-                            : "Редагувати"}
+                            : isLoadingEmployees
+                              ? "Завантаження…"
+                              : "Редагувати"}
                         </button>
 
                         <form
@@ -363,7 +404,7 @@ export default function EquipmentList({
                             item
                           }
                           employees={
-                            safeEmployees
+                            employees
                           }
                           onCancel={() =>
                             setEditingId(
@@ -546,15 +587,18 @@ export default function EquipmentList({
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    toggleEdit(
+                                    void toggleEdit(
                                       item.id
                                     )
                                   }
+                                  disabled={isLoadingEmployees}
                                   className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
                                 >
                                   {isEditing
                                     ? "Закрити"
-                                    : "Редагувати"}
+                                    : isLoadingEmployees
+                                      ? "Завантаження…"
+                                      : "Редагувати"}
                                 </button>
 
                                 <form
@@ -602,7 +646,7 @@ export default function EquipmentList({
                                   item
                                 }
                                 employees={
-                                  safeEmployees
+                                  employees
                                 }
                                 onCancel={() =>
                                   setEditingId(

@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import {
+  getEquipmentEditorEmployees,
   deleteEquipment,
 } from "@/app/actions/equipmentActions";
 import {
@@ -33,7 +34,6 @@ import type {
 
 type Props = {
   equipment: Equipment;
-  employees: Employee[];
   canManage: boolean;
   maintenanceKind: EquipmentMaintenanceOverallKind;
   maintenanceLabel: string;
@@ -101,7 +101,6 @@ function Detail({
 
 export default function EquipmentPassportHeader({
   equipment,
-  employees,
   canManage,
   maintenanceKind,
   maintenanceLabel,
@@ -109,6 +108,22 @@ export default function EquipmentPassportHeader({
   const router = useRouter();
   const [isEditing, setIsEditing] =
     useState(false);
+  const [
+    employees,
+    setEmployees,
+  ] = useState<Employee[]>([]);
+  const [
+    hasLoadedEmployees,
+    setHasLoadedEmployees,
+  ] = useState(false);
+  const [
+    isLoadingEmployees,
+    setIsLoadingEmployees,
+  ] = useState(false);
+  const [
+    editError,
+    setEditError,
+  ] = useState("");
   const [showDelete, setShowDelete] =
     useState(false);
   const [isDeleting, setIsDeleting] =
@@ -156,6 +171,38 @@ export default function EquipmentPassportHeader({
     }
   }
 
+  async function handleEditToggle() {
+    if (isEditing) {
+      setIsEditing(false);
+      setEditError("");
+      return;
+    }
+
+    if (!hasLoadedEmployees) {
+      setIsLoadingEmployees(true);
+      setEditError("");
+
+      try {
+        const options =
+          await getEquipmentEditorEmployees();
+
+        setEmployees(options);
+        setHasLoadedEmployees(true);
+      } catch (error) {
+        setEditError(
+          error instanceof Error
+            ? error.message
+            : "Не вдалося завантажити форму редагування."
+        );
+        return;
+      } finally {
+        setIsLoadingEmployees(false);
+      }
+    }
+
+    setIsEditing(true);
+  }
+
   return (
     <div className="min-w-0 space-y-5">
       <Link
@@ -201,16 +248,16 @@ export default function EquipmentPassportHeader({
               <button
                 type="button"
                 onClick={() =>
-                  setIsEditing(
-                    (current) =>
-                      !current
-                  )
+                  void handleEditToggle()
                 }
+                disabled={isLoadingEmployees}
                 className="min-h-11 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
               >
                 {isEditing
                   ? "Закрити"
-                  : "Редагувати"}
+                  : isLoadingEmployees
+                    ? "Завантаження…"
+                    : "Редагувати"}
               </button>
 
               <details className="relative min-w-0">
@@ -280,6 +327,15 @@ export default function EquipmentPassportHeader({
           </div>
         </dl>
       </header>
+
+      {editError && (
+        <p
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+        >
+          {editError}
+        </p>
+      )}
 
       {canManage && isEditing && (
         <section className="min-w-0 rounded-2xl border bg-white p-3 sm:p-5">

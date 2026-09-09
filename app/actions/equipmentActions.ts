@@ -31,6 +31,9 @@ import type {
   ActivityMetadataValue,
 } from "@/types/activityLog";
 import type {
+  Employee,
+} from "@/types/employee";
+import type {
   EquipmentServiceFormOption,
 } from "@/types/equipment";
 
@@ -105,6 +108,48 @@ export async function getEquipmentServiceFormOptions(): Promise<
   if (error) {
     throw new Error(
       `Не вдалося завантажити техніку для форми: ${error.message}`
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
+}
+
+export async function getEquipmentEditorEmployees(): Promise<
+  Employee[]
+> {
+  await requireEquipmentManagement();
+
+  const supabase =
+    await createClient();
+  const { data, error } =
+    await supabase
+      .from("employees")
+      .select(`
+        id,
+        first_name,
+        last_name,
+        position,
+        status
+      `)
+      .order("last_name", {
+        ascending: true,
+      })
+      .order("first_name", {
+        ascending: true,
+      })
+      .order("id", {
+        ascending: true,
+      })
+      .overrideTypes<
+        Employee[],
+        { merge: false }
+      >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити працівників для форми: ${error.message}`
     );
   }
 

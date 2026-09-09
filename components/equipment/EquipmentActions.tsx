@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import {
+  getEquipmentEditorEmployees,
   getEquipmentServiceFormOptions,
 } from "@/app/actions/equipmentActions";
 
@@ -16,7 +17,6 @@ import AddEquipmentForm from "./AddEquipmentForm";
 import AddEquipmentServiceForm from "./AddEquipmentServiceForm";
 
 type Props = {
-  employees: Employee[];
   currency: AppCurrency;
   today: string;
 };
@@ -27,7 +27,6 @@ type ActiveForm =
   | null;
 
 export default function EquipmentActions({
-  employees,
   currency,
   today,
 }: Props) {
@@ -37,6 +36,18 @@ export default function EquipmentActions({
   ] = useState<ActiveForm>(
     null
   );
+  const [
+    employees,
+    setEmployees,
+  ] = useState<Employee[]>([]);
+  const [
+    hasLoadedEmployees,
+    setHasLoadedEmployees,
+  ] = useState(false);
+  const [
+    isLoadingEmployees,
+    setIsLoadingEmployees,
+  ] = useState(false);
   const [
     serviceEquipment,
     setServiceEquipment,
@@ -66,6 +77,30 @@ export default function EquipmentActions({
     }
 
     setErrorMessage("");
+
+    if (
+      form === "equipment" &&
+      !hasLoadedEmployees
+    ) {
+      setIsLoadingEmployees(true);
+
+      try {
+        const options =
+          await getEquipmentEditorEmployees();
+
+        setEmployees(options);
+        setHasLoadedEmployees(true);
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Не вдалося завантажити форму техніки."
+        );
+        return;
+      } finally {
+        setIsLoadingEmployees(false);
+      }
+    }
 
     if (
       form === "service" &&
@@ -114,6 +149,7 @@ export default function EquipmentActions({
             )
           }
           disabled={
+            isLoadingEmployees ||
             isLoadingServiceEquipment
           }
           className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
@@ -126,7 +162,9 @@ export default function EquipmentActions({
           {activeForm ===
           "equipment"
             ? "Закрити форму"
-            : "+ Додати техніку"}
+            : isLoadingEmployees
+              ? "Завантаження…"
+              : "+ Додати техніку"}
         </button>
 
         <button
@@ -137,6 +175,7 @@ export default function EquipmentActions({
             )
           }
           disabled={
+            isLoadingEmployees ||
             isLoadingServiceEquipment
           }
           className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${

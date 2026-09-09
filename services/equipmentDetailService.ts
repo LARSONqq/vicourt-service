@@ -59,10 +59,6 @@ export const EQUIPMENT_TAB_PAGE_SIZE =
 export const EQUIPMENT_ACTIVITY_PAGE_SIZE =
   25;
 
-const SERVICE_PREVIEW_LIMIT = 3;
-const USAGE_PREVIEW_LIMIT = 3;
-const TASK_PREVIEW_LIMIT = 5;
-
 const TASK_SELECT = `
   id,
   object_id,
@@ -558,26 +554,6 @@ export async function getEquipmentServiceHistoryPage(
   };
 }
 
-export async function getEquipmentRecentServicePreview(
-  equipmentId: number
-) {
-  const normalizedEquipmentId =
-    normalizeEquipmentId(
-      equipmentId
-    );
-  const result =
-    await getEquipmentServiceRecordsPage({
-      equipmentId:
-        normalizedEquipmentId,
-      includeVoided: false,
-      from: 0,
-      to:
-        SERVICE_PREVIEW_LIMIT - 1,
-    });
-
-  return result.records;
-}
-
 async function loadEquipmentUsagePage(
   equipmentId: number,
   page: number,
@@ -652,24 +628,10 @@ export async function getEquipmentUsageHistoryPage(
   );
 }
 
-export async function getEquipmentRecentUsagePreview(
-  equipmentId: number
-) {
-  const page =
-    await loadEquipmentUsagePage(
-      equipmentId,
-      1,
-      USAGE_PREVIEW_LIMIT
-    );
-
-  return page.items;
-}
-
 async function loadEquipmentTasksPage(
   equipmentId: number,
   page: number,
-  pageSize: number,
-  activeOnly: boolean
+  pageSize: number
 ): Promise<
   EquipmentScopedPage<TaskWithObject>
 > {
@@ -684,7 +646,7 @@ async function loadEquipmentTasksPage(
     pageSize;
   const supabase =
     await createClient();
-  let query = supabase
+  const query = supabase
     .from("object_tasks")
     .select(TASK_SELECT, {
       count: "exact",
@@ -693,13 +655,6 @@ async function loadEquipmentTasksPage(
       "equipment_id",
       normalizedEquipmentId
     );
-
-  if (activeOnly) {
-    query = query.neq(
-      "status",
-      "Виконано"
-    );
-  }
 
   const {
     data,
@@ -746,23 +701,8 @@ export async function getEquipmentTasksPage(
   return loadEquipmentTasksPage(
     equipmentId,
     page,
-    EQUIPMENT_TAB_PAGE_SIZE,
-    false
+    EQUIPMENT_TAB_PAGE_SIZE
   );
-}
-
-export async function getEquipmentRecentTasksPreview(
-  equipmentId: number
-) {
-  const page =
-    await loadEquipmentTasksPage(
-      equipmentId,
-      1,
-      TASK_PREVIEW_LIMIT,
-      true
-    );
-
-  return page.items;
 }
 
 export async function getEquipmentActivityHistoryPage(

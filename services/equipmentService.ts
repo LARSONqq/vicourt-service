@@ -657,39 +657,29 @@ export async function getEquipmentServiceRecordsPage(
       );
 }
 
-async function loadAllServiceRecords(
-  includeVoided: boolean,
-  managementOnly = false
+async function loadAllManagementServiceRecords(
+  includeVoided: boolean
 ) {
-  const records: EquipmentServiceRecordView[] = [];
-  let includesCost = false;
+  const records: EquipmentServiceRecord[] = [];
 
   for (
     let from = 0;
     ;
     from += SERVICE_READ_PAGE_SIZE
   ) {
-    const result = managementOnly
-      ? await loadManagementServiceRecords({
-          includeVoided,
-          from,
-          to:
-            from +
-            SERVICE_READ_PAGE_SIZE -
-            1,
-        })
-      : await getEquipmentServiceRecordsPage({
-          includeVoided,
-          from,
-          to:
-            from +
-            SERVICE_READ_PAGE_SIZE -
-            1,
-        });
+    const result =
+      await loadManagementServiceRecords({
+        includeVoided,
+        from,
+        to:
+          from +
+          SERVICE_READ_PAGE_SIZE -
+          1,
+      });
 
-    includesCost =
-      result.includesCost;
-    records.push(...result.records);
+    records.push(
+      ...(result.records as EquipmentServiceRecord[])
+    );
 
     if (
       result.records.length <
@@ -699,33 +689,7 @@ async function loadAllServiceRecords(
     }
   }
 
-  return {
-    records,
-    includesCost,
-  };
-}
-
-export async function getEquipmentServiceRecords(): Promise<
-  EquipmentServiceRecord[]
-> {
-  const result =
-    await loadAllServiceRecords(
-      false,
-      true
-    );
-
-  return result.records as EquipmentServiceRecord[];
-}
-
-export async function getEquipmentServiceHistoryRecords(): Promise<
-  EquipmentServiceRecordView[]
-> {
-  const result =
-    await loadAllServiceRecords(
-      true
-    );
-
-  return result.records;
+  return records;
 }
 
 export async function getManagementEquipmentServiceHistoryRecords(): Promise<
@@ -739,13 +703,9 @@ export async function getManagementEquipmentServiceHistoryRecords(): Promise<
     );
   }
 
-  const result =
-    await loadAllServiceRecords(
-      true,
-      true
-    );
-
-  return result.records as EquipmentServiceRecord[];
+  return loadAllManagementServiceRecords(
+    true
+  );
 }
 
 export async function getManagementEquipmentServiceRecordsRange(
@@ -768,47 +728,6 @@ export async function getManagementEquipmentServiceRecordsRange(
     });
 
   return result.records as EquipmentServiceRecord[];
-}
-
-export async function getEquipmentServiceRecordsByEquipmentId(
-  equipmentId: number
-): Promise<
-  EquipmentServiceRecordView[]
-> {
-  const normalizedEquipmentId =
-    normalizeEquipmentId(
-      equipmentId
-    );
-  const records: EquipmentServiceRecordView[] = [];
-
-  for (
-    let from = 0;
-    ;
-    from += SERVICE_READ_PAGE_SIZE
-  ) {
-    const result =
-      await getEquipmentServiceRecordsPage({
-        equipmentId:
-          normalizedEquipmentId,
-        includeVoided: false,
-        from,
-        to:
-          from +
-          SERVICE_READ_PAGE_SIZE -
-          1,
-      });
-
-    records.push(...result.records);
-
-    if (
-      result.records.length <
-      SERVICE_READ_PAGE_SIZE
-    ) {
-      break;
-    }
-  }
-
-  return records;
 }
 
 export async function createEquipmentServiceRecordV2(
