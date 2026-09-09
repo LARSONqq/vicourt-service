@@ -638,15 +638,7 @@ export default function UserManagement({
                 serverProfile.id
               ];
 
-            if (
-              !override ||
-              Date.parse(
-                override.updated_at
-              ) <=
-                Date.parse(
-                  serverProfile.updated_at
-                )
-            ) {
+            if (!override) {
               return serverProfile;
             }
 
