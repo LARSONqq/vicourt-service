@@ -399,17 +399,6 @@ export async function updateUserProfile(
     );
   }
 
-  console.info(
-    "[ROLE_TRACE server]",
-    {
-      profileId,
-      requestedRole:
-        roleValue,
-      returnedRole:
-        updatedProfile.role,
-    }
-  );
-
   return updatedProfile;
 }
 

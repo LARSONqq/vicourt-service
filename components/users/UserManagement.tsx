@@ -1,9 +1,12 @@
 "use client";
 
 import {
-  useEffect,
   useMemo,
   useState,
+} from "react";
+
+import type {
+  FormEvent,
 } from "react";
 
 import {
@@ -127,24 +130,6 @@ function UserRow({
     setSuccessMessage,
   ] = useState("");
 
-  useEffect(() => {
-    console.info(
-      "[ROLE_TRACE render]",
-      {
-        profileId:
-          profile.id,
-        profileRole:
-          profile.role,
-        localSelectRole:
-          role,
-      }
-    );
-  }, [
-    profile.id,
-    profile.role,
-    role,
-  ]);
-
   const linkedEmployee =
     employees.find(
       (employee) =>
@@ -170,29 +155,18 @@ function UserRow({
     isDeleting;
 
   async function handleSubmit(
-    formData: FormData
+    event: FormEvent<HTMLFormElement>
   ) {
+    event.preventDefault();
+
     if (isBusy) {
       return;
     }
 
-    console.info(
-      "[ROLE_TRACE submit]",
-      {
-        profileId:
-          profile.id,
-        renderedProfileRole:
-          profile.role,
-        localDraftRole:
-          role,
-        formDataRole:
-          String(
-            formData.get(
-              "role"
-            ) ?? ""
-          ),
-      }
-    );
+    const formData =
+      new FormData(
+        event.currentTarget
+      );
 
     setIsSubmitting(true);
     setErrorMessage("");
@@ -203,18 +177,6 @@ function UserRow({
         await updateUserProfile(
           formData
         );
-
-      console.info(
-        "[ROLE_TRACE response]",
-        {
-          profileId:
-            updatedProfile.id,
-          updatedProfileRole:
-            updatedProfile.role,
-          updatedProfileEmployeeId:
-            updatedProfile.employee_id,
-        }
-      );
 
       setRole(
         updatedProfile.role
@@ -470,7 +432,7 @@ function UserRow({
 
       {/* EDIT FORM */}
       <form
-        action={handleSubmit}
+        onSubmit={handleSubmit}
         className="mt-5 min-w-0 border-t pt-5"
       >
         <input
@@ -518,27 +480,12 @@ function UserRow({
               }
               onChange={(
                 event
-              ) => {
-                const nextRole =
-                  event.target
-                    .value as UserRole;
-
-                console.info(
-                  "[ROLE_TRACE draft]",
-                  {
-                    profileId:
-                      profile.id,
-                    oldRole:
-                      role,
-                    newRole:
-                      nextRole,
-                  }
-                );
-
+              ) =>
                 setRole(
-                  nextRole
-                );
-              }}
+                  event.target
+                    .value as UserRole
+                )
+              }
               className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
             >
               <option value="admin">
@@ -697,41 +644,6 @@ export default function UserManagement({
     previousServerProfiles !==
     serverProfiles
   ) {
-    console.info(
-      "[ROLE_TRACE sync]",
-      {
-        source:
-          "new-server-profiles-prop",
-        roleChanges:
-          serverProfiles
-            .map(
-              (serverProfile) => {
-                const currentProfile =
-                  profileRows.find(
-                    (profile) =>
-                      profile.id ===
-                      serverProfile.id
-                  );
-
-                return {
-                  profileId:
-                    serverProfile.id,
-                  oldRole:
-                    currentProfile?.role ??
-                    null,
-                  newRole:
-                    serverProfile.role,
-                };
-              }
-            )
-            .filter(
-              (change) =>
-                change.oldRole !==
-                change.newRole
-            ),
-      }
-    );
-
     setPreviousServerProfiles(
       serverProfiles
     );
@@ -747,38 +659,8 @@ export default function UserManagement({
     updatedProfile: UpdatedUserProfile
   ) {
     setProfileRows(
-      (currentProfiles) => {
-        const currentProfile =
-          currentProfiles.find(
-            (profile) =>
-              profile.id ===
-              updatedProfile.id
-          );
-        const mergedProfile =
-          currentProfile
-            ? {
-                ...currentProfile,
-                ...updatedProfile,
-              }
-            : null;
-
-        console.info(
-          "[ROLE_TRACE merge]",
-          {
-            profileId:
-              updatedProfile.id,
-            roleBeforeMerge:
-              currentProfile?.role ??
-              null,
-            updatedProfileRole:
-              updatedProfile.role,
-            roleAfterMerge:
-              mergedProfile?.role ??
-              null,
-          }
-        );
-
-        return currentProfiles.map(
+      (currentProfiles) =>
+        currentProfiles.map(
           (profile) =>
             profile.id ===
             updatedProfile.id
@@ -787,8 +669,7 @@ export default function UserManagement({
                   ...updatedProfile,
                 }
               : profile
-        );
-      }
+        )
     );
   }
 
