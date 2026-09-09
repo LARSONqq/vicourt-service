@@ -16,6 +16,7 @@ import {
 import type {
   EquipmentUsageRecordResult,
   EquipmentUsageScheduleResult,
+  EquipmentWorkSessionFormOptions,
   EquipmentWorkSessionResult,
   RecordEquipmentUsageInput,
   RecordEquipmentWorkSessionInput,
@@ -386,6 +387,73 @@ export async function recordEquipmentWorkSessionEntry(
   }
 
   return data;
+}
+
+export async function loadEquipmentWorkSessionFormOptions(): Promise<EquipmentWorkSessionFormOptions> {
+  await requireEquipmentUsageManagement();
+
+  const supabase =
+    await createClient();
+  const [
+    objectsResult,
+    employeesResult,
+  ] = await Promise.all([
+    supabase
+      .from("objects")
+      .select(`
+        id,
+        name
+      `)
+      .order("name", {
+        ascending: true,
+      })
+      .order("id", {
+        ascending: true,
+      }),
+    supabase
+      .from("employees")
+      .select(`
+        id,
+        first_name,
+        last_name
+      `)
+      .order("last_name", {
+        ascending: true,
+      })
+      .order("first_name", {
+        ascending: true,
+      })
+      .order("id", {
+        ascending: true,
+      }),
+  ]);
+
+  if (objectsResult.error) {
+    throw new Error(
+      `Не вдалося завантажити об’єкти для форми: ${objectsResult.error.message}`
+    );
+  }
+
+  if (employeesResult.error) {
+    throw new Error(
+      `Не вдалося завантажити працівників для форми: ${employeesResult.error.message}`
+    );
+  }
+
+  return {
+    objects:
+      Array.isArray(
+        objectsResult.data
+      )
+        ? objectsResult.data
+        : [],
+    employees:
+      Array.isArray(
+        employeesResult.data
+      )
+        ? employeesResult.data
+        : [],
+  };
 }
 
 export async function configureEquipmentUsageSchedule(

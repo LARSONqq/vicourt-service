@@ -30,6 +30,8 @@ import type {
   EquipmentUsageLog,
 } from "@/types/equipmentUsage";
 
+import EquipmentWorkSessionForm from "./EquipmentWorkSessionForm";
+
 type Props = {
   equipment: Equipment[];
   logs: EquipmentUsageLog[];
@@ -96,6 +98,53 @@ function formatDelta(
   );
 
   return `${value > 0 ? "+" : value < 0 ? "−" : "±"}${formatted}`;
+}
+
+function getEntryTypeLabel(
+  entryType: EquipmentUsageLog["entry_type"]
+) {
+  switch (entryType) {
+    case "work_session":
+      return "Робота";
+
+    case "correction":
+      return "Корекція";
+
+    case "reading":
+      return "Показник";
+  }
+}
+
+function formatWorkSessionDuration(
+  value: number | null
+) {
+  if (
+    value === null ||
+    !Number.isFinite(value)
+  ) {
+    return "—";
+  }
+
+  return `+${new Intl.NumberFormat(
+    "uk-UA",
+    {
+      maximumFractionDigits: 3,
+    }
+  ).format(value)} год`;
+}
+
+function formatLogDelta(
+  log: EquipmentUsageLog
+) {
+  return log.entry_type ===
+    "work_session"
+    ? formatWorkSessionDuration(
+        log.delta
+      )
+    : formatDelta(
+        log.delta,
+        log.usage_type
+      );
 }
 
 export default function EquipmentUsagePanel({
@@ -378,6 +427,17 @@ export default function EquipmentUsagePanel({
             </p>
           )}
 
+          {canManage &&
+            selectedEquipment.usage_type ===
+              "hours" && (
+              <EquipmentWorkSessionForm
+                equipmentId={
+                  selectedEquipment.id
+                }
+                today={today}
+              />
+            )}
+
           {canManage && (
             <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
               <form
@@ -533,18 +593,56 @@ export default function EquipmentUsagePanel({
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-semibold text-gray-900">
-                            {formatEquipmentUsage(log.reading, log.usage_type)}
+                            {log.entry_type ===
+                            "work_session"
+                              ? formatLogDelta(
+                                  log
+                                )
+                              : formatEquipmentUsage(
+                                  log.reading,
+                                  log.usage_type
+                                )}
                           </p>
                           <p className="mt-1 text-xs text-gray-500">
-                            {formatDateValue(log.reading_date) || log.reading_date} · {formatDelta(log.delta, log.usage_type)}
+                            {formatDateValue(log.reading_date) || log.reading_date}
+                            {log.entry_type ===
+                            "work_session"
+                              ? ` · Після роботи: ${formatEquipmentUsage(
+                                  log.reading,
+                                  log.usage_type
+                                )}`
+                              : ` · ${formatLogDelta(
+                                  log
+                                )}`}
                           </p>
                         </div>
                         <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-600">
-                          {log.entry_type === "correction" ? "Корекція" : "Показник"}
+                          {getEntryTypeLabel(
+                            log.entry_type
+                          )}
                         </span>
                       </div>
+                      {log.entry_type ===
+                        "work_session" && (
+                        <div className="mt-3 space-y-1 rounded-lg bg-gray-50 p-3 text-sm text-gray-600">
+                          <p className="break-words">
+                            <span className="font-medium text-gray-700">
+                              Об’єкт:
+                            </span>{" "}
+                            {log.object_name_snapshot ||
+                              "Не вказано"}
+                          </p>
+                          <p className="break-words">
+                            <span className="font-medium text-gray-700">
+                              Працівник:
+                            </span>{" "}
+                            {log.employee_name_snapshot ||
+                              "Не вказано"}
+                          </p>
+                        </div>
+                      )}
                       <p className="mt-3 break-words text-sm text-gray-600">
-                        {log.created_by_name || "Система"}
+                        Вніс: {log.created_by_name || "Система"}
                         {log.note ? ` · ${log.note}` : ""}
                       </p>
                     </article>
@@ -558,6 +656,7 @@ export default function EquipmentUsagePanel({
                         <th className="p-3 font-medium">Показник</th>
                         <th className="p-3 font-medium">Зміна</th>
                         <th className="p-3 font-medium">Тип</th>
+                        <th className="p-3 font-medium">Об’єкт / працівник</th>
                         <th className="p-3 font-medium">Хто</th>
                         <th className="p-3 font-medium">Примітка</th>
                       </tr>
@@ -567,8 +666,16 @@ export default function EquipmentUsagePanel({
                         <tr key={log.id} className="border-t align-top">
                           <td className="whitespace-nowrap p-3">{formatDateValue(log.reading_date) || log.reading_date}</td>
                           <td className="whitespace-nowrap p-3 font-semibold">{formatEquipmentUsage(log.reading, log.usage_type)}</td>
-                          <td className="whitespace-nowrap p-3">{formatDelta(log.delta, log.usage_type)}</td>
-                          <td className="p-3">{log.entry_type === "correction" ? "Корекція" : "Показник"}</td>
+                          <td className="whitespace-nowrap p-3">{formatLogDelta(log)}</td>
+                          <td className="p-3">{getEntryTypeLabel(log.entry_type)}</td>
+                          <td className="max-w-xs p-3 text-gray-600">
+                            {log.entry_type === "work_session" ? (
+                              <div className="space-y-1">
+                                <p className="break-words">{log.object_name_snapshot || "Не вказано"}</p>
+                                <p className="break-words text-xs">{log.employee_name_snapshot || "Не вказано"}</p>
+                              </div>
+                            ) : "—"}
+                          </td>
                           <td className="p-3">{log.created_by_name || "Система"}</td>
                           <td className="max-w-sm whitespace-pre-wrap break-words p-3 text-gray-600">{log.note || "—"}</td>
                         </tr>

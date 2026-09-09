@@ -95,6 +95,22 @@ export interface EquipmentWorkSessionResult {
   idempotent_replay: boolean;
 }
 
+export type EquipmentWorkSessionObjectOption = {
+  id: number;
+  name: string;
+};
+
+export type EquipmentWorkSessionEmployeeOption = {
+  id: number;
+  first_name: string;
+  last_name: string;
+};
+
+export type EquipmentWorkSessionFormOptions = {
+  objects: EquipmentWorkSessionObjectOption[];
+  employees: EquipmentWorkSessionEmployeeOption[];
+};
+
 export type ConfigureEquipmentUsageInput = {
   equipmentId: number;
   usageType: EquipmentUsageType;

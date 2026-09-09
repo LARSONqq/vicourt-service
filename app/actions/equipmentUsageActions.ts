@@ -8,6 +8,7 @@ import {
 } from "@/services/activityLogService";
 import {
   configureEquipmentUsageSchedule,
+  loadEquipmentWorkSessionFormOptions,
   recordEquipmentUsageEntry,
   recordEquipmentWorkSessionEntry,
 } from "@/services/equipmentUsageService";
@@ -16,6 +17,7 @@ import type {
   ConfigureEquipmentUsageInput,
   EquipmentUsageRecordResult,
   EquipmentUsageScheduleResult,
+  EquipmentWorkSessionFormOptions,
   EquipmentWorkSessionResult,
   RecordEquipmentUsageInput,
   RecordEquipmentWorkSessionInput,
@@ -104,6 +106,10 @@ export async function recordEquipmentWorkSession(
 
   revalidateEquipmentMaintenancePages();
   return data;
+}
+
+export async function getEquipmentWorkSessionFormOptions(): Promise<EquipmentWorkSessionFormOptions> {
+  return loadEquipmentWorkSessionFormOptions();
 }
 
 export async function configureEquipmentUsage(
