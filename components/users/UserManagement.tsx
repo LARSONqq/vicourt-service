@@ -185,8 +185,6 @@ function UserRow({
       setSuccessMessage(
         "Зміни збережено."
       );
-
-      router.refresh();
     } catch (error) {
       setErrorMessage(
         error instanceof Error

@@ -399,8 +399,6 @@ export async function updateUserProfile(
     );
   }
 
-  refreshUserPages();
-
   return updatedProfile;
 }
 
