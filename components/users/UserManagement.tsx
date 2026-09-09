@@ -617,50 +617,48 @@ export default function UserManagement({
       [employees]
     );
   const [
-    profileOverrides,
-    setProfileOverrides,
-  ] = useState<
-    Record<
-      string,
-      UpdatedUserProfile
-    >
-  >({});
+    profileRows,
+    setProfileRows,
+  ] = useState<UserProfile[]>(
+    serverProfiles
+  );
+  const [
+    previousServerProfiles,
+    setPreviousServerProfiles,
+  ] = useState(
+    serverProfiles
+  );
+
+  if (
+    previousServerProfiles !==
+    serverProfiles
+  ) {
+    setPreviousServerProfiles(
+      serverProfiles
+    );
+    setProfileRows(
+      serverProfiles
+    );
+  }
 
   const safeProfiles =
-    useMemo(
-      () =>
-        serverProfiles.map(
-          (serverProfile) => {
-            const override =
-              profileOverrides[
-                serverProfile.id
-              ];
-
-            if (!override) {
-              return serverProfile;
-            }
-
-            return {
-              ...serverProfile,
-              ...override,
-            };
-          }
-        ),
-      [
-        serverProfiles,
-        profileOverrides,
-      ]
-    );
+    profileRows;
 
   function updateProfileRow(
     updatedProfile: UpdatedUserProfile
   ) {
-    setProfileOverrides(
-      (currentOverrides) => ({
-        ...currentOverrides,
-        [updatedProfile.id]:
-          updatedProfile,
-      })
+    setProfileRows(
+      (currentProfiles) =>
+        currentProfiles.map(
+          (profile) =>
+            profile.id ===
+            updatedProfile.id
+              ? {
+                  ...profile,
+                  ...updatedProfile,
+                }
+              : profile
+        )
     );
   }
 
