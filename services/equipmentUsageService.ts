@@ -272,7 +272,7 @@ export async function recordEquipmentUsageEntry(
       )
     ) {
       throw new EquipmentUsageDomainError(
-        "Новий показник не може бути меншим за поточний. Для зменшення використайте корекцію."
+        "Новий показник не може бути меншим за поточний. Для зменшення виберіть «Корекція»."
       );
     }
 

@@ -171,6 +171,8 @@ export default function EquipmentUsagePanel({
     useState(false);
   const [isSavingReading, setIsSavingReading] =
     useState(false);
+  const [readingEntryType, setReadingEntryType] =
+    useState<EquipmentUsageEntryType>("reading");
   const readingSubmissionLock =
     useRef(false);
   const [message, setMessage] = useState("");
@@ -211,6 +213,7 @@ export default function EquipmentUsagePanel({
     setUsageType(
       selected?.usage_type ?? "none"
     );
+    setReadingEntryType("reading");
     setMessage("");
     setError("");
   }
@@ -299,7 +302,7 @@ export default function EquipmentUsagePanel({
           selectedEquipment.current_usage
       ) {
         setError(
-          "Новий показник не може бути меншим за поточний. Для зменшення використайте корекцію."
+          "Новий показник не може бути меншим за поточний. Для зменшення виберіть «Корекція»."
         );
         return;
       }
@@ -609,15 +612,27 @@ export default function EquipmentUsagePanel({
                         />
                       </label>
                       <label className="min-w-0 text-sm font-medium text-gray-700">
-                        Тип
+                        Тип запису
                         <select
                           name="entry_type"
-                          defaultValue="reading"
+                          value={readingEntryType}
+                          onChange={(event) =>
+                            setReadingEntryType(
+                              event.target
+                                .value as EquipmentUsageEntryType
+                            )
+                          }
                           className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600"
                         >
-                          <option value="reading">Показник</option>
+                          <option value="reading">Звичайний показник</option>
                           <option value="correction">Корекція</option>
                         </select>
+                        {readingEntryType ===
+                          "correction" && (
+                          <span className="mt-2 block text-xs font-normal leading-5 text-amber-700">
+                            Використовуйте лише для виправлення помилково внесеного показника.
+                          </span>
+                        )}
                       </label>
                     </div>
                     <label className="block min-w-0 text-sm font-medium text-gray-700">
