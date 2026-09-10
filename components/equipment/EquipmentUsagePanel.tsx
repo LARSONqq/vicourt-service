@@ -2,7 +2,11 @@
 
 import {
   useMemo,
+  useRef,
   useState,
+} from "react";
+import type {
+  FormEvent,
 } from "react";
 import { useRouter } from "next/navigation";
 
@@ -167,6 +171,8 @@ export default function EquipmentUsagePanel({
     useState(false);
   const [isSavingReading, setIsSavingReading] =
     useState(false);
+  const readingSubmissionLock =
+    useRef(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -307,6 +313,40 @@ export default function EquipmentUsagePanel({
       );
     } finally {
       setIsSavingReading(false);
+    }
+  }
+
+  async function handleReadingSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    const submitter = (
+      event.nativeEvent as SubmitEvent
+    ).submitter;
+
+    if (
+      !(submitter instanceof
+        HTMLButtonElement) ||
+      submitter.dataset
+        .equipmentReadingSubmit !==
+        "true" ||
+      readingSubmissionLock.current
+    ) {
+      return;
+    }
+
+    readingSubmissionLock.current =
+      true;
+    const formData = new FormData(
+      event.currentTarget
+    );
+
+    try {
+      await saveReading(formData);
+    } finally {
+      readingSubmissionLock.current =
+        false;
     }
   }
 
@@ -503,7 +543,7 @@ export default function EquipmentUsagePanel({
 
               <form
                 key={`reading-${selectedEquipment.id}`}
-                action={saveReading}
+                onSubmit={handleReadingSubmit}
                 className="min-w-0 space-y-4 rounded-xl border bg-gray-50 p-4"
               >
                 <div>
@@ -564,6 +604,7 @@ export default function EquipmentUsagePanel({
                     </label>
                     <button
                       type="submit"
+                      data-equipment-reading-submit="true"
                       disabled={isSavingReading}
                       className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 sm:w-fit"
                     >
