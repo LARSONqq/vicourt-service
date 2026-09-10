@@ -26,6 +26,17 @@ import type {
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+export class EquipmentUsageDomainError extends Error {
+  readonly code =
+    "reading_below_current" as const;
+
+  constructor(message: string) {
+    super(message);
+    this.name =
+      "EquipmentUsageDomainError";
+  }
+}
+
 function isRecord(
   value: unknown
 ): value is Record<
@@ -254,6 +265,17 @@ export async function recordEquipmentUsageEntry(
     );
 
   if (error) {
+    if (
+      error.code === "22023" &&
+      error.message.includes(
+        "A normal usage reading cannot decrease."
+      )
+    ) {
+      throw new EquipmentUsageDomainError(
+        "Новий показник не може бути меншим за поточний. Для зменшення використайте корекцію."
+      );
+    }
+
     throw new Error(
       `Не вдалося зберегти показник техніки: ${error.message}`
     );

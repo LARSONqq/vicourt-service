@@ -286,21 +286,47 @@ export default function EquipmentUsagePanel({
         );
       }
 
-      await recordEquipmentUsage({
-        equipmentId:
-          selectedEquipment.id,
-        reading,
-        readingDate: String(
-          formData.get("reading_date") ?? ""
-        ),
-        entryType: String(
-          formData.get("entry_type") ?? "reading"
-        ) as EquipmentUsageEntryType,
-        note:
-          String(
-            formData.get("note") ?? ""
-          ).trim() || null,
-      });
+      const entryType = String(
+        formData.get("entry_type") ??
+          "reading"
+      ) as EquipmentUsageEntryType;
+
+      if (
+        entryType === "reading" &&
+        selectedEquipment.current_usage !==
+          null &&
+        reading <
+          selectedEquipment.current_usage
+      ) {
+        setError(
+          "Новий показник не може бути меншим за поточний. Для зменшення використайте корекцію."
+        );
+        return;
+      }
+
+      const result =
+        await recordEquipmentUsage({
+          equipmentId:
+            selectedEquipment.id,
+          reading,
+          readingDate: String(
+            formData.get(
+              "reading_date"
+            ) ?? ""
+          ),
+          entryType,
+          note:
+            String(
+              formData.get("note") ??
+                ""
+            ).trim() || null,
+        });
+
+      if (!result.success) {
+        setError(result.message);
+        return;
+      }
+
       setMessage(
         "Показник напрацювання додано."
       );

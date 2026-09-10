@@ -8,6 +8,7 @@ import {
 } from "@/services/activityLogService";
 import {
   configureEquipmentUsageSchedule,
+  EquipmentUsageDomainError,
   loadEquipmentWorkSessionFormOptions,
   recordEquipmentUsageEntry,
   recordEquipmentWorkSessionEntry,
@@ -33,8 +34,34 @@ function getUsageUnit(
 
 export async function recordEquipmentUsage(
   input: RecordEquipmentUsageInput
-): Promise<EquipmentUsageRecordResult> {
-  const data = await recordEquipmentUsageEntry(input);
+): Promise<
+  | {
+      success: true;
+      data: EquipmentUsageRecordResult;
+    }
+  | {
+      success: false;
+      message: string;
+    }
+> {
+  let data: EquipmentUsageRecordResult;
+
+  try {
+    data = await recordEquipmentUsageEntry(input);
+  } catch (error) {
+    if (
+      error instanceof
+      EquipmentUsageDomainError
+    ) {
+      return {
+        success: false,
+        message: error.message,
+      };
+    }
+
+    throw error;
+  }
+
   const corrected = data.entry_type === "correction";
 
   await recordActivity({
@@ -60,7 +87,10 @@ export async function recordEquipmentUsage(
   });
 
   revalidateEquipmentMaintenancePages();
-  return data;
+  return {
+    success: true,
+    data,
+  };
 }
 
 export async function recordEquipmentWorkSession(
