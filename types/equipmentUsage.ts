@@ -95,6 +95,28 @@ export interface EquipmentWorkSessionResult {
   idempotent_replay: boolean;
 }
 
+export type EquipmentWorkSessionListItem = {
+  id: number;
+  equipment_id: number | null;
+  equipment_name_snapshot: string;
+  reading_date: string;
+  delta: number | null;
+  object_id: number | null;
+  object_name_snapshot: string | null;
+  employee_id: number | null;
+  employee_name_snapshot: string | null;
+  note: string | null;
+};
+
+export type EquipmentWorkSessionPage = {
+  items: EquipmentWorkSessionListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+};
+
 export type EquipmentWorkSessionObjectOption = {
   id: number;
   name: string;

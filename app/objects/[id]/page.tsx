@@ -9,6 +9,7 @@ import ObjectTabs, {
   type ObjectTabId,
 } from "@/components/ObjectTabs";
 import ObjectActivityTimeline from "@/components/activity/ObjectActivityTimeline";
+import EquipmentWorkSessionList from "@/components/equipment/EquipmentWorkSessionList";
 
 import ObjectDocuments from "@/components/objects/ObjectDocuments";
 import ObjectExpenses from "@/components/objects/ObjectExpenses";
@@ -66,6 +67,7 @@ import {
   getCurrentUserProfile,
 } from "@/services/profileService";
 import {
+  canAccessSection,
   canManageObjects,
   canManageTasks,
   canViewActivityLog,
@@ -74,6 +76,9 @@ import {
 import {
   getObjectActivityLogs,
 } from "@/services/activityLogService";
+import {
+  getObjectEquipmentWorkSessionsPage,
+} from "@/services/equipmentWorkSessionService";
 import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
@@ -113,6 +118,7 @@ type TabContentProps = {
   canManageObject: boolean;
   canManageRecurrence: boolean;
   canViewActivity: boolean;
+  canViewEmployeeProfiles: boolean;
   canViewLedger: boolean;
 };
 
@@ -247,6 +253,7 @@ async function ObjectTabContent({
   canManageObject,
   canManageRecurrence,
   canViewActivity,
+  canViewEmployeeProfiles,
   canViewLedger,
 }: TabContentProps) {
   const objectId = object.id;
@@ -461,6 +468,41 @@ async function ObjectTabContent({
           }
           hasNextPage={
             workLogsPage.hasNextPage
+          }
+        />
+      </>
+    );
+  }
+
+  if (activeTab === "equipment") {
+    const workSessionsPage =
+      await getObjectEquipmentWorkSessionsPage(
+        objectId,
+        page
+      );
+
+    return (
+      <>
+        <EquipmentWorkSessionList
+          items={workSessionsPage.items}
+          total={workSessionsPage.total}
+          canViewEmployeeProfiles={
+            canViewEmployeeProfiles
+          }
+        />
+        <ObjectTabPagination
+          objectId={objectId}
+          tab="equipment"
+          page={workSessionsPage.page}
+          pageSize={
+            workSessionsPage.pageSize
+          }
+          total={workSessionsPage.total}
+          hasPreviousPage={
+            workSessionsPage.hasPreviousPage
+          }
+          hasNextPage={
+            workSessionsPage.hasNextPage
           }
         />
       </>
@@ -698,6 +740,13 @@ export default async function ObjectPage({
         profile.role
       )
     : false;
+  const canViewEmployeeProfiles =
+    profile
+      ? canAccessSection(
+          profile.role,
+          "employees"
+        )
+      : false;
   const activeTab = resolveObjectTab(
     getSingleSearchValue(query.tab),
     canViewFinance,
@@ -761,6 +810,9 @@ export default async function ObjectPage({
               }
               canViewActivity={
                 canViewActivity
+              }
+              canViewEmployeeProfiles={
+                canViewEmployeeProfiles
               }
               canViewLedger={
                 canViewLedger

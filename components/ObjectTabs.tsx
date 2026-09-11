@@ -6,6 +6,7 @@ export type ObjectTabId =
   | "overview"
   | "materials"
   | "work"
+  | "equipment"
   | "tasks"
   | "finance"
   | "documents"
@@ -39,6 +40,11 @@ const baseTabs: Array<{
     id: "work",
     label: "Роботи",
     icon: "📝",
+  },
+  {
+    id: "equipment",
+    label: "Техніка",
+    icon: "🛠",
   },
   {
     id: "tasks",
