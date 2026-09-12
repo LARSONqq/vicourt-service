@@ -101,7 +101,6 @@ const USAGE_LOG_SELECT = `
   employee_id,
   employee_name_snapshot,
   note,
-  created_by,
   created_by_name,
   created_at
 `;

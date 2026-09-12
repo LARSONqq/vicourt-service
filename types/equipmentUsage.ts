@@ -29,7 +29,6 @@ export interface EquipmentUsageLog {
   employee_id: number | null;
   employee_name_snapshot: string | null;
   note: string | null;
-  created_by: string | null;
   created_by_name: string;
   created_at: string;
 }
