@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import ActivityTimelineList from "@/components/activity/ActivityTimelineList";
 import { EmployeeTabPagination } from "@/components/employees/EmployeePassportNavigation";
+import EquipmentWorkSessionList from "@/components/equipment/EquipmentWorkSessionList";
 import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
 import {
   evaluateEquipmentMaintenance,
@@ -24,6 +25,9 @@ import type {
   EmployeeWorkLogPage,
 } from "@/types/employeeProfile";
 import type { Equipment } from "@/types/equipment";
+import type {
+  EquipmentWorkSessionPage,
+} from "@/types/equipmentUsage";
 import type { ObjectItem } from "@/types/object";
 import type { TaskWithObject } from "@/types/taskWithObject";
 
@@ -646,21 +650,63 @@ export function EmployeeObjectsTab({
 export function EmployeeEquipmentTab({
   employeeId,
   page,
+  workSessionsPage,
+  canViewObjectProfiles,
   today,
 }: {
   employeeId: number;
   page: EmployeeEquipmentPage;
+  workSessionsPage: EquipmentWorkSessionPage;
+  canViewObjectProfiles: boolean;
   today: string;
 }) {
   return (
-    <section className="min-w-0 space-y-4">
-      <SectionHeader
-        title="Закріплена техніка"
-        description="Стан техніки та планового обслуговування."
+    <div className="min-w-0 space-y-6">
+      <section className="min-w-0 space-y-4">
+        <SectionHeader
+          title="Закріплена техніка"
+          description="Стан техніки та планового обслуговування."
+        />
+        <EquipmentCards
+          equipment={page.items}
+          today={today}
+        />
+        <EmployeeTabPagination
+          employeeId={employeeId}
+          tab="equipment"
+          preservedPage={
+            workSessionsPage.page
+          }
+          {...page}
+        />
+      </section>
+
+      <EquipmentWorkSessionList
+        items={workSessionsPage.items}
+        total={workSessionsPage.total}
+        context="employee"
+        canViewObjectProfiles={
+          canViewObjectProfiles
+        }
       />
-      <EquipmentCards equipment={page.items} today={today} />
-      <EmployeeTabPagination employeeId={employeeId} tab="equipment" {...page} />
-    </section>
+      <EmployeeTabPagination
+        employeeId={employeeId}
+        tab="equipment"
+        parameter="workPage"
+        preservedPage={page.page}
+        page={workSessionsPage.page}
+        pageSize={
+          workSessionsPage.pageSize
+        }
+        total={workSessionsPage.total}
+        hasPreviousPage={
+          workSessionsPage.hasPreviousPage
+        }
+        hasNextPage={
+          workSessionsPage.hasNextPage
+        }
+      />
+    </div>
   );
 }
 

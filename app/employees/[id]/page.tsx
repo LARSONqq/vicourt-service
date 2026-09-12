@@ -20,6 +20,7 @@ import {
 import EmployeePassportShell from "@/components/employees/EmployeePassportShell";
 import EmployeeTabErrorBoundary from "@/components/employees/EmployeeTabErrorBoundary";
 import {
+  canAccessSection,
   canManageEmployees,
 } from "@/lib/auth/permissions";
 import {
@@ -47,6 +48,9 @@ import {
   getEmployeeTasksPage,
   getEmployeeWorkLogsPage,
 } from "@/services/employeeDetailService";
+import {
+  getEmployeeEquipmentWorkSessionsPage,
+} from "@/services/equipmentWorkSessionService";
 
 import type {
   EmployeeDetails,
@@ -55,6 +59,7 @@ import type {
 type SearchParams = {
   tab?: string | string[];
   page?: string | string[];
+  workPage?: string | string[];
   changesPage?: string | string[];
   actionsPage?: string | string[];
 };
@@ -72,6 +77,8 @@ type TabContentProps = {
   isAdmin: boolean;
   activeTab: EmployeeTabId;
   page: number;
+  workPage: number;
+  canViewObjectProfiles: boolean;
   changesPage: number;
   actionsPage: number;
 };
@@ -135,6 +142,8 @@ async function EmployeeTabContent({
   isAdmin,
   activeTab,
   page,
+  workPage,
+  canViewObjectProfiles,
   changesPage,
   actionsPage,
 }: TabContentProps) {
@@ -244,16 +253,30 @@ async function EmployeeTabContent({
   }
 
   if (activeTab === "equipment") {
-    const equipmentPage =
-      await getEmployeeEquipmentPage(
+    const [
+      equipmentPage,
+      workSessionsPage,
+    ] = await Promise.all([
+      getEmployeeEquipmentPage(
         employeeId,
         page
-      );
+      ),
+      getEmployeeEquipmentWorkSessionsPage(
+        employeeId,
+        workPage
+      ),
+    ]);
 
     return (
       <EmployeeEquipmentTab
         employeeId={employeeId}
         page={equipmentPage}
+        workSessionsPage={
+          workSessionsPage
+        }
+        canViewObjectProfiles={
+          canViewObjectProfiles
+        }
         today={today}
       />
     );
@@ -325,6 +348,16 @@ export default async function EmployeePage({
   const page = resolvePage(
     getSingleSearchValue(query.page)
   );
+  const workPage = resolvePage(
+    getSingleSearchValue(
+      query.workPage
+    )
+  );
+  const canViewObjectProfiles =
+    canAccessSection(
+      currentProfile.role,
+      "objects"
+    );
   const changesPage = resolvePage(
     getSingleSearchValue(
       query.changesPage
@@ -360,7 +393,7 @@ export default async function EmployeePage({
       activeTab={activeTab}
     >
       <EmployeeTabErrorBoundary
-        key={`${activeTab}:${page}:${changesPage}:${actionsPage}`}
+        key={`${activeTab}:${page}:${workPage}:${changesPage}:${actionsPage}`}
       >
         <Suspense
           fallback={
@@ -373,6 +406,10 @@ export default async function EmployeePage({
             isAdmin={isAdmin}
             activeTab={activeTab}
             page={page}
+            workPage={workPage}
+            canViewObjectProfiles={
+              canViewObjectProfiles
+            }
             changesPage={
               changesPage
             }

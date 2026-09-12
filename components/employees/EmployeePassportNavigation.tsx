@@ -10,6 +10,7 @@ export type EmployeeTabId =
 
 type PaginationParam =
   | "page"
+  | "workPage"
   | "changesPage"
   | "actionsPage";
 
@@ -112,6 +113,19 @@ function getPageHref(
     params.set(
       parameter,
       String(page)
+    );
+  }
+
+  if (
+    tab === "equipment" &&
+    preservedPage &&
+    preservedPage > 1
+  ) {
+    params.set(
+      parameter === "workPage"
+        ? "page"
+        : "workPage",
+      String(preservedPage)
     );
   }
 

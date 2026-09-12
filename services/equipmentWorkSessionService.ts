@@ -40,6 +40,21 @@ function normalizeObjectId(
   return objectId;
 }
 
+function normalizeEmployeeId(
+  employeeId: number
+) {
+  if (
+    !Number.isInteger(employeeId) ||
+    employeeId <= 0
+  ) {
+    throw new Error(
+      "Не вдалося визначити працівника."
+    );
+  }
+
+  return employeeId;
+}
+
 function normalizePage(
   requestedPage: number,
   total: number
@@ -63,12 +78,13 @@ function normalizePage(
   );
 }
 
-export async function getObjectEquipmentWorkSessionsPage(
-  objectId: number,
+async function getEquipmentWorkSessionsPage(
+  scopeColumn:
+    | "object_id"
+    | "employee_id",
+  scopeId: number,
   requestedPage = 1
 ): Promise<EquipmentWorkSessionPage> {
-  const normalizedObjectId =
-    normalizeObjectId(objectId);
   const supabase =
     await createClient();
   const { count, error: countError } =
@@ -83,8 +99,8 @@ export async function getObjectEquipmentWorkSessionsPage(
         "work_session"
       )
       .eq(
-        "object_id",
-        normalizedObjectId
+        scopeColumn,
+        scopeId
       );
 
   if (countError) {
@@ -112,8 +128,8 @@ export async function getObjectEquipmentWorkSessionsPage(
         "work_session"
       )
       .eq(
-        "object_id",
-        normalizedObjectId
+        scopeColumn,
+        scopeId
       )
       .order("reading_date", {
         ascending: false,
@@ -134,7 +150,7 @@ export async function getObjectEquipmentWorkSessionsPage(
 
   if (error) {
     throw new Error(
-      `Не вдалося завантажити роботу техніки на об’єкті: ${error.message}`
+      `Не вдалося завантажити записи роботи техніки: ${error.message}`
     );
   }
 
@@ -150,4 +166,26 @@ export async function getObjectEquipmentWorkSessionsPage(
         EQUIPMENT_WORK_SESSION_PAGE_SIZE <
       total,
   };
+}
+
+export async function getObjectEquipmentWorkSessionsPage(
+  objectId: number,
+  requestedPage = 1
+) {
+  return getEquipmentWorkSessionsPage(
+    "object_id",
+    normalizeObjectId(objectId),
+    requestedPage
+  );
+}
+
+export async function getEmployeeEquipmentWorkSessionsPage(
+  employeeId: number,
+  requestedPage = 1
+) {
+  return getEquipmentWorkSessionsPage(
+    "employee_id",
+    normalizeEmployeeId(employeeId),
+    requestedPage
+  );
 }

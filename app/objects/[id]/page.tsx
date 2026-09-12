@@ -486,6 +486,7 @@ async function ObjectTabContent({
         <EquipmentWorkSessionList
           items={workSessionsPage.items}
           total={workSessionsPage.total}
+          context="object"
           canViewEmployeeProfiles={
             canViewEmployeeProfiles
           }
