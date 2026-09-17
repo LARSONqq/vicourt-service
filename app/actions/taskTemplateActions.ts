@@ -33,6 +33,7 @@ function refreshTaskTemplatePages(
 ) {
   revalidatePath("/");
   revalidatePath("/task");
+  revalidatePath("/tasks");
   revalidatePath("/calendar");
   revalidatePath("/employees");
   revalidatePath("/objects");

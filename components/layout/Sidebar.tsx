@@ -41,7 +41,7 @@ const menuItems: MenuItem[] = [
   },
   {
     name: "Завдання",
-    href: "/task",
+    href: "/tasks",
     section: "tasks",
   },
   {

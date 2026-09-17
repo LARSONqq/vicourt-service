@@ -38,7 +38,7 @@ export function getTaskTarget(
       type: "equipment",
       id: task.equipment.id,
       name: task.equipment.name,
-      href: "/equipment",
+      href: `/equipment/${task.equipment.id}`,
       label: "Техніка",
     };
   }

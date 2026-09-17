@@ -3,34 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { TaskWithObject } from "@/types/taskWithObject";
 import type { TaskSource } from "@/types/objectTask";
 
-export type TaskQueryFilters = {
-  dueDateBefore?: string;
-  dueDateOnOrBefore?: string;
-  excludeStatus?: string;
-  taskSource?: TaskSource;
-};
-
-const priorityOrder: Record<
-  string,
-  number
-> = {
-  Терміновий: 1,
-  Високий: 2,
-  Середній: 3,
-  Низький: 4,
-};
-
-export async function getAllTasks(
-  filters: TaskQueryFilters = {}
-): Promise<
-  TaskWithObject[]
-> {
-  const supabase =
-    await createClient();
-
-  let query = supabase
-    .from("object_tasks")
-    .select(`
+export const TASK_LIST_SELECT = `
       id,
       object_id,
       equipment_id,
@@ -58,7 +31,36 @@ export async function getAllTasks(
         id,
         is_completed
       )
-    `);
+    `;
+
+export type TaskQueryFilters = {
+  dueDateBefore?: string;
+  dueDateOnOrBefore?: string;
+  excludeStatus?: string;
+  taskSource?: TaskSource;
+};
+
+const priorityOrder: Record<
+  string,
+  number
+> = {
+  Терміновий: 1,
+  Високий: 2,
+  Середній: 3,
+  Низький: 4,
+};
+
+export async function getAllTasks(
+  filters: TaskQueryFilters = {}
+): Promise<
+  TaskWithObject[]
+> {
+  const supabase =
+    await createClient();
+
+  let query = supabase
+    .from("object_tasks")
+    .select(TASK_LIST_SELECT);
 
   if (filters.dueDateBefore) {
     query = query.lt(

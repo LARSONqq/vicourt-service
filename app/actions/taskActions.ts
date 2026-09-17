@@ -102,6 +102,7 @@ function refreshTaskPages(task?: {
 }) {
   revalidatePath("/");
   revalidatePath("/task");
+  revalidatePath("/tasks");
   revalidatePath("/calendar");
   revalidatePath("/employees");
   revalidatePath("/objects");

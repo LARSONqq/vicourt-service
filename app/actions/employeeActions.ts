@@ -472,6 +472,7 @@ export async function createEmployee(
   revalidatePath(
     "/task"
   );
+  revalidatePath("/tasks");
   revalidatePath(
     "/reports"
   );
@@ -694,6 +695,7 @@ export async function updateEmployee(
   revalidatePath(
     "/task"
   );
+  revalidatePath("/tasks");
   revalidatePath(
     "/reports"
   );
@@ -788,6 +790,7 @@ export async function deleteEmployee(
   revalidatePath(
     "/task"
   );
+  revalidatePath("/tasks");
   revalidatePath(
     "/reports"
   );

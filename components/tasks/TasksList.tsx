@@ -49,6 +49,8 @@ import type {
 } from "@/types/taskTemplate";
 
 type Props = {
+  serverPaged?: boolean;
+  businessDate?: string;
   tasks: TaskWithObject[];
   employees?: Employee[];
   objects?: ObjectItem[];
@@ -239,12 +241,13 @@ function isTaskStatus(
 }
 
 function isTaskOverdue(
-  task: TaskWithObject
+  task: TaskWithObject,
+  today: string
 ) {
   return Boolean(
     task.due_date &&
       task.due_date <
-        getKyivDateValue() &&
+        today &&
       task.status !==
         "Виконано"
   );
@@ -361,6 +364,8 @@ function sortListTasks(
 }
 
 export default function TasksList({
+  serverPaged = false,
+  businessDate,
   tasks,
   employees = [],
   objects = [],
@@ -370,6 +375,7 @@ export default function TasksList({
   canManageRecurrence,
   taskTemplates = [],
 }: Props) {
+  const today = businessDate ?? getKyivDateValue();
   const router =
     useRouter();
 
@@ -401,7 +407,7 @@ export default function TasksList({
 
   const viewMode =
     selectedViewMode ??
-    (isMobile
+    (serverPaged || isMobile
       ? "list"
       : "board");
 
@@ -584,6 +590,7 @@ export default function TasksList({
 
   const filteredTasks =
     useMemo(() => {
+      if (serverPaged) return localTasks;
       const normalizedSearch =
         search
           .trim()
@@ -743,6 +750,7 @@ export default function TasksList({
           sortListTasks
         );
     }, [
+      serverPaged,
       localTasks,
       search,
       statusFilter,
@@ -893,12 +901,12 @@ export default function TasksList({
       );
 
       if (
-        newStatus === "Виконано" &&
+        serverPaged || (newStatus === "Виконано" &&
         (task.task_source ===
           SUPERVISION_TASK_SOURCE ||
           task.task_source ===
             EQUIPMENT_MAINTENANCE_TASK_SOURCE ||
-          task.task_template_id !== null)
+          task.task_template_id !== null))
       ) {
         router.refresh();
       }
@@ -999,6 +1007,8 @@ export default function TasksList({
       await deleteObjectTask(
         task.id
       );
+
+      if (serverPaged) router.refresh();
 
       if (
         editingTask?.id ===
@@ -1236,7 +1246,7 @@ export default function TasksList({
 
     const overdue =
       isTaskOverdue(
-        task
+        task, today
       );
 
     const completed =
@@ -1640,8 +1650,15 @@ export default function TasksList({
 
   return (
     <div className="min-w-0 space-y-5">
+      {serverPaged && <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex rounded-lg border bg-white p-1" aria-label="Вигляд поточної сторінки">
+          <button type="button" aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")} className={`min-h-10 rounded-md px-4 py-2 text-sm ${viewMode === "list" ? "bg-green-50 text-green-800" : "text-gray-500"}`}>Список</button>
+          <button type="button" aria-pressed={viewMode === "board"} onClick={() => setViewMode("board")} className={`min-h-10 rounded-md px-4 py-2 text-sm ${viewMode === "board" ? "bg-green-50 text-green-800" : "text-gray-500"}`}>Дошка</button>
+        </div>
+        {viewMode === "board" && <p className="text-xs text-gray-500">Дошка та кількості в колонках — лише поточна сторінка.</p>}
+      </div>}
       {/* STATS */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      {!serverPaged && <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <div className="rounded-xl border bg-white p-3 sm:p-5">
           <p className="text-xs text-gray-500 sm:text-sm">
             Усього завдань
@@ -1683,7 +1700,7 @@ export default function TasksList({
             {completedCount}
           </p>
         </div>
-      </div>
+      </div>}
 
       {/* ERROR */}
       {errorMessage && (
@@ -1693,7 +1710,7 @@ export default function TasksList({
       )}
 
       {/* FILTERS */}
-      <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+      {!serverPaged && <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* VIEW MODE */}
           <div className="grid w-full grid-cols-2 rounded-lg border bg-gray-50 p-1 sm:inline-grid sm:w-auto">
@@ -1938,7 +1955,7 @@ export default function TasksList({
             )}
           </select>
         </div>
-      </div>
+      </div>}
 
       {/* EMPTY */}
       {filteredTasks.length ===
@@ -2076,7 +2093,7 @@ export default function TasksList({
             (task) => {
               const overdue =
                 isTaskOverdue(
-                  task
+                  task, today
                 );
 
               const completed =

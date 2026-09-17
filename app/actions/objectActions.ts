@@ -292,6 +292,7 @@ function refreshObjectPages(
   revalidatePath("/objects");
   revalidatePath("/reports");
   revalidatePath("/task");
+  revalidatePath("/tasks");
   revalidatePath("/calendar");
   revalidatePath(
     "/notifications"

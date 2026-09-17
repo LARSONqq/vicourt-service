@@ -107,6 +107,7 @@ export async function requireEquipmentMaintenanceManagement() {
 export function revalidateEquipmentMaintenancePages() {
   revalidatePath("/");
   revalidatePath("/task");
+  revalidatePath("/tasks");
   revalidatePath("/calendar");
   revalidatePath("/equipment");
   revalidatePath("/notifications");

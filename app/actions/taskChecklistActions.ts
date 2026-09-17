@@ -70,6 +70,7 @@ async function requireAuthenticatedUser() {
 function refreshTaskPages() {
   revalidatePath("/");
   revalidatePath("/task");
+  revalidatePath("/tasks");
   revalidatePath("/calendar");
   revalidatePath("/employees");
   revalidatePath("/objects");
