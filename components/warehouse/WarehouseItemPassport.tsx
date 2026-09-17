@@ -1,4 +1,5 @@
 import Link from "next/link";
+import WarehouseItemOperations from "@/components/warehouse/WarehouseItemOperations";
 
 import {
   isWarehouseInboundMovement,
@@ -26,6 +27,7 @@ type Props = {
   item: WarehouseItem;
   currency: AppCurrency;
   canViewManagementHistory: boolean;
+  canAdjustStock: boolean;
   movements: WarehouseItemMovementPreview[] | null;
   purchases: WarehouseItemPurchasePreview[] | null;
   objectUsage: WarehouseItemMovementPreview[] | null;
@@ -619,6 +621,7 @@ export default function WarehouseItemPassport({
   item,
   currency,
   canViewManagementHistory,
+  canAdjustStock,
   movements,
   purchases,
   objectUsage,
@@ -673,6 +676,16 @@ export default function WarehouseItemPassport({
           </div>
         </div>
       </header>
+
+      {canViewManagementHistory && (
+        <WarehouseItemOperations
+          itemId={item.id}
+          name={item.name}
+          unit={item.unit}
+          currency={currency}
+          canAdjust={canAdjustStock}
+        />
+      )}
 
       <div className="grid min-w-0 gap-5 lg:grid-cols-2">
         <section className="min-w-0 rounded-xl border bg-white p-5">

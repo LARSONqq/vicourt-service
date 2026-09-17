@@ -5,6 +5,7 @@ import {
 import WarehouseItemPassport from "@/components/warehouse/WarehouseItemPassport";
 import {
   canManagePurchases,
+  canManageWarehouse,
   canViewWarehouseLedger,
 } from "@/lib/auth/permissions";
 import {
@@ -130,6 +131,7 @@ export default async function WarehouseItemPage({
     <WarehouseItemPassport
       item={item}
       currency={settings.currency}
+      canAdjustStock={canManageWarehouse(currentProfile.role)}
       canViewManagementHistory={
         canViewManagementHistory
       }
