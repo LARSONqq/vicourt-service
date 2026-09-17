@@ -530,9 +530,14 @@ export default function WarehouseList({
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
                           <h3 className="break-words font-semibold text-gray-900">
-                            {
-                              item.name
-                            }
+                            <Link
+                              href={`/warehouse/${item.id}`}
+                              className="text-green-800 hover:underline"
+                            >
+                              {
+                                item.name
+                              }
+                            </Link>
                           </h3>
 
                           <p className="mt-1 break-words text-xs text-gray-500">
@@ -1016,11 +1021,14 @@ export default function WarehouseList({
                         >
                           <td className="p-4">
                             <div className="flex items-center gap-3">
-                              <span className="font-medium">
+                              <Link
+                                href={`/warehouse/${item.id}`}
+                                className="font-medium text-green-800 hover:underline"
+                              >
                                 {
                                   item.name
                                 }
-                              </span>
+                              </Link>
 
                               {isLowStock && (
                                 <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700">

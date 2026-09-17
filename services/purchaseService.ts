@@ -11,6 +11,7 @@ import type {
   WarehousePurchase,
   WarehousePurchaseHistoryEntry,
   WarehousePurchaseInsights,
+  WarehouseItemPurchasePreview,
   WarehousePurchaseStatus,
 } from "@/types/warehousePurchase";
 
@@ -224,6 +225,58 @@ export async function getWarehouseItemPurchaseHistory(
         purchase.purchased_at,
     };
   });
+}
+
+export async function getWarehouseItemPurchasePreview(
+  itemId: number,
+  limit = 10
+): Promise<WarehouseItemPurchasePreview[]> {
+  if (
+    !Number.isSafeInteger(itemId) ||
+    itemId <= 0
+  ) {
+    return [];
+  }
+
+  const supabase = await createClient();
+  const safeLimit = Math.min(
+    Math.max(Math.trunc(limit), 1),
+    20
+  );
+  const { data, error } = await supabase
+    .from("warehouse_purchases")
+    .select(`
+      id,
+      item_id,
+      quantity,
+      purchase_price,
+      supplier,
+      status,
+      created_at,
+      purchased_at
+    `)
+    .eq("item_id", itemId)
+    .order("created_at", {
+      ascending: false,
+    })
+    .order("id", {
+      ascending: false,
+    })
+    .limit(safeLimit)
+    .overrideTypes<
+      WarehouseItemPurchasePreview[],
+      { merge: false }
+    >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити закупівлі матеріалу: ${error.message}`
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
 }
 
 export async function getPlannedPurchaseTotals(): Promise<

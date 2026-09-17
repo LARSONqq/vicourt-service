@@ -18,6 +18,7 @@ import type {
 } from "@/types/warehouseItem";
 import type {
   WarehouseMovement,
+  WarehouseItemMovementPreview,
   WarehouseMovementPage,
 } from "@/types/warehouseMovement";
 
@@ -75,6 +76,24 @@ const WAREHOUSE_MOVEMENT_SELECT = `
   )
 `;
 
+const WAREHOUSE_ITEM_MOVEMENT_PREVIEW_SELECT = `
+  id,
+  item_id,
+  object_id,
+  movement_type,
+  movement_code,
+  quantity,
+  unit_snapshot,
+  object_name_snapshot,
+  note,
+  created_at,
+  performed_by_name,
+  object:objects (
+    id,
+    name
+  )
+`;
+
 export type WarehouseLedgerFilters = {
   itemId?: number;
   objectId?: number;
@@ -104,6 +123,42 @@ async function loadWarehouseItems(): Promise<WarehouseItem[]> {
 }
 
 export const getWarehouseItems = cache(loadWarehouseItems);
+
+async function loadWarehouseItem(
+  itemId: number
+): Promise<WarehouseItem | null> {
+  if (
+    !Number.isSafeInteger(itemId) ||
+    itemId <= 0
+  ) {
+    return null;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("warehouse_items")
+    .select(
+      WAREHOUSE_ITEM_OPERATIONAL_SELECT
+    )
+    .eq("id", itemId)
+    .maybeSingle()
+    .overrideTypes<
+      WarehouseItem | null,
+      { merge: false }
+    >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити матеріал: ${error.message}`
+    );
+  }
+
+  return data;
+}
+
+export const getWarehouseItem = cache(
+  loadWarehouseItem
+);
 
 async function loadManagementWarehouseItems(): Promise<
   ManagementWarehouseItem[]
@@ -279,4 +334,112 @@ export async function getObjectMaterialMovements(
   }
 
   return Array.isArray(data) ? data : [];
+}
+
+function normalizePreviewLimit(
+  limit: number,
+  maximum: number
+) {
+  return Math.min(
+    Math.max(Math.trunc(limit), 1),
+    maximum
+  );
+}
+
+export async function getWarehouseItemRecentMovements(
+  itemId: number,
+  limit = 10
+): Promise<WarehouseItemMovementPreview[]> {
+  if (
+    !Number.isSafeInteger(itemId) ||
+    itemId <= 0
+  ) {
+    return [];
+  }
+
+  const supabase = await createClient();
+  const safeLimit = normalizePreviewLimit(
+    limit,
+    20
+  );
+  const { data, error } = await supabase
+    .from("warehouse_movements")
+    .select(
+      WAREHOUSE_ITEM_MOVEMENT_PREVIEW_SELECT
+    )
+    .eq("item_id", itemId)
+    .order("created_at", {
+      ascending: false,
+    })
+    .order("id", {
+      ascending: false,
+    })
+    .limit(safeLimit)
+    .overrideTypes<
+      WarehouseItemMovementPreview[],
+      { merge: false }
+    >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити останні рухи матеріалу: ${error.message}`
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
+}
+
+export async function getWarehouseItemObjectUsage(
+  itemId: number,
+  limit = 6
+): Promise<WarehouseItemMovementPreview[]> {
+  if (
+    !Number.isSafeInteger(itemId) ||
+    itemId <= 0
+  ) {
+    return [];
+  }
+
+  const supabase = await createClient();
+  const safeLimit = normalizePreviewLimit(
+    limit,
+    20
+  );
+  const { data, error } = await supabase
+    .from("warehouse_movements")
+    .select(
+      WAREHOUSE_ITEM_MOVEMENT_PREVIEW_SELECT
+    )
+    .eq("item_id", itemId)
+    .not("object_id", "is", null)
+    .in("movement_code", [
+      "issue_to_object",
+      "return_from_object",
+      "object_opening_balance",
+      "direct_to_object",
+      "direct_object_reversal",
+    ])
+    .order("created_at", {
+      ascending: false,
+    })
+    .order("id", {
+      ascending: false,
+    })
+    .limit(safeLimit)
+    .overrideTypes<
+      WarehouseItemMovementPreview[],
+      { merge: false }
+    >();
+
+  if (error) {
+    throw new Error(
+      `Не вдалося завантажити використання матеріалу на об’єктах: ${error.message}`
+    );
+  }
+
+  return Array.isArray(data)
+    ? data
+    : [];
 }

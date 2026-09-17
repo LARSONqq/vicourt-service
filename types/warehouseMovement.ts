@@ -95,3 +95,23 @@ export interface WarehouseMovementPage {
   hasPreviousPage: boolean;
   hasNextPage: boolean;
 }
+
+export interface WarehouseItemMovementPreview {
+  id: number;
+  item_id: number | null;
+  object_id: number | null;
+  movement_type:
+    | "Прихід"
+    | "Списання";
+  movement_code: WarehouseMovementCode;
+  quantity: number;
+  unit_snapshot: string;
+  object_name_snapshot: string | null;
+  note: string | null;
+  created_at: string;
+  performed_by_name: string | null;
+  object: {
+    id: number;
+    name: string;
+  } | null;
+}

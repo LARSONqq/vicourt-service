@@ -54,3 +54,14 @@ export interface WarehousePurchaseHistoryEntry {
   supplier: string | null;
   purchasedAt: string;
 }
+
+export interface WarehouseItemPurchasePreview {
+  id: number;
+  item_id: number;
+  quantity: number;
+  purchase_price: number;
+  supplier: string | null;
+  status: WarehousePurchaseStatus;
+  created_at: string;
+  purchased_at: string | null;
+}
