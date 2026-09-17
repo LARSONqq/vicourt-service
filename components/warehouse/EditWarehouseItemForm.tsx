@@ -229,7 +229,7 @@ export default function EditWarehouseItemForm({
             min="0"
             step="0.01"
             defaultValue={
-              item.min_quantity
+              item.min_quantity ?? ""
             }
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           />

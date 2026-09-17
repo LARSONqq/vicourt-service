@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getWarehouseStockStatus, getRecommendedPurchaseQuantity, warehouseStockPresentation } from "@/lib/warehouseStock";
 import WarehouseItemOperations from "@/components/warehouse/WarehouseItemOperations";
 
 import {
@@ -28,16 +29,10 @@ type Props = {
   currency: AppCurrency;
   canViewManagementHistory: boolean;
   canAdjustStock: boolean;
+  plannedQuantity: number | null;
   movements: WarehouseItemMovementPreview[] | null;
   purchases: WarehouseItemPurchasePreview[] | null;
   objectUsage: WarehouseItemMovementPreview[] | null;
-};
-
-type StockStatus = {
-  label: "Норма" | "Мало" | "Закінчився";
-  badgeClass: string;
-  panelClass: string;
-  valueClass: string;
 };
 
 function formatQuantity(value: number) {
@@ -63,42 +58,6 @@ function formatMoney(
       ? value
       : 0
   );
-}
-
-function getStockStatus(
-  quantity: number,
-  minimumQuantity: number
-): StockStatus {
-  if (quantity <= 0) {
-    return {
-      label: "Закінчився",
-      badgeClass:
-        "bg-red-100 text-red-800",
-      panelClass:
-        "border-red-200 bg-red-50",
-      valueClass: "text-red-700",
-    };
-  }
-
-  if (quantity <= minimumQuantity) {
-    return {
-      label: "Мало",
-      badgeClass:
-        "bg-orange-100 text-orange-800",
-      panelClass:
-        "border-orange-200 bg-orange-50",
-      valueClass: "text-orange-700",
-    };
-  }
-
-  return {
-    label: "Норма",
-    badgeClass:
-      "bg-green-100 text-green-800",
-    panelClass:
-      "border-green-200 bg-green-50",
-    valueClass: "text-green-700",
-  };
 }
 
 function getMovementQuantitySign(
@@ -622,6 +581,7 @@ export default function WarehouseItemPassport({
   currency,
   canViewManagementHistory,
   canAdjustStock,
+  plannedQuantity,
   movements,
   purchases,
   objectUsage,
@@ -630,10 +590,8 @@ export default function WarehouseItemPassport({
   const minimumQuantity = Number(
     item.min_quantity
   );
-  const stockStatus = getStockStatus(
-    quantity,
-    minimumQuantity
-  );
+  const stockStatus = warehouseStockPresentation[getWarehouseStockStatus(item)];
+  const recommended = getRecommendedPurchaseQuantity(item);
 
   return (
     <main className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-4 sm:p-6">
@@ -677,6 +635,8 @@ export default function WarehouseItemPassport({
         </div>
       </header>
 
+      {recommended !== null && <p className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm font-medium text-orange-800">Рекомендовано докупити: {formatQuantity(recommended)} {item.unit}</p>}
+
       {canViewManagementHistory && (
         <WarehouseItemOperations
           itemId={item.id}
@@ -684,6 +644,9 @@ export default function WarehouseItemPassport({
           unit={item.unit}
           currency={currency}
           canAdjust={canAdjustStock}
+          recommendedQuantity={recommended}
+          plannedQuantity={plannedQuantity}
+          supplier={item.supplier}
         />
       )}
 
@@ -742,9 +705,7 @@ export default function WarehouseItemPassport({
             <div className="min-w-0 rounded-xl bg-gray-50 p-4">
               <p className="text-xs text-gray-500">Мінімальний</p>
               <p className="mt-2 break-words text-xl font-semibold text-gray-900">
-                {formatQuantity(
-                  minimumQuantity
-                )}{" "}
+                {item.min_quantity == null ? "Не вказано" : formatQuantity(minimumQuantity)}{" "}
                 {item.unit}
               </p>
             </div>

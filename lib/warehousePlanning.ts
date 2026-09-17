@@ -6,6 +6,7 @@ import type {
   WarehousePurchaseInsights,
   WarehousePurchasePlanningRow,
 } from "@/types/warehousePurchase";
+import { getWarehouseStockStatus } from "@/lib/warehouseStock";
 
 const QUANTITY_PRECISION =
   1_000_000;
@@ -261,9 +262,7 @@ export function getWarehouseStockPlan(
     targetQuantity,
     plannedIncoming,
     expectedQuantity,
-    isLowStock:
-      currentQuantity <=
-      minimumQuantity,
+    isLowStock: getWarehouseStockStatus(item) !== "NORMAL",
     rawShortage,
     remainingRecommended,
     minimumShortage,

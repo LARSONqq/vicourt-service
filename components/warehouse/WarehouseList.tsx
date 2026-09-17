@@ -24,6 +24,8 @@ import {
 import AddWarehouseMovementForm from "./AddWarehouseMovementForm";
 import EditWarehouseItemForm from "./EditWarehouseItemForm";
 import WarehouseItemPlanningPanel from "./WarehouseItemPlanningPanel";
+import WarehousePurchaseHint from "./WarehousePurchaseHint";
+import { getWarehouseStockStatus, warehouseStockPresentation } from "@/lib/warehouseStock";
 
 type MovementDirection =
   | "in"
@@ -112,21 +114,6 @@ export default function WarehouseList({
     );
 
   const [
-    search,
-    setSearch,
-  ] = useState("");
-
-  const [
-    category,
-    setCategory,
-  ] = useState("Усі");
-
-  const [
-    stockFilter,
-    setStockFilter,
-  ] = useState("Усі");
-
-  const [
     editingId,
     setEditingId,
   ] = useState<
@@ -188,98 +175,6 @@ export default function WarehouseList({
       );
     };
   }, [focusedItemId]);
-
-  const categories =
-    useMemo(() => {
-      const values =
-        safeItems
-          .map(
-            (item) =>
-              item.category
-          )
-          .filter(
-            (
-              value
-            ): value is string =>
-              Boolean(value)
-          );
-
-      return [
-        "Усі",
-        ...Array.from(
-          new Set(values)
-        ),
-      ];
-    }, [safeItems]);
-
-  const filteredItems =
-    useMemo(() => {
-      const normalizedSearch =
-        search
-          .trim()
-          .toLowerCase();
-
-      return safeItems.filter(
-        (item) => {
-          const quantity =
-            Number(
-              item.quantity
-            );
-
-          const minQuantity =
-            Number(
-              item.min_quantity
-            );
-
-          const isLowStock =
-            quantity <=
-            minQuantity;
-
-          const searchableText =
-            [
-              item.name,
-              item.category,
-              item.supplier,
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
-
-          const matchesSearch =
-            !normalizedSearch ||
-            searchableText.includes(
-              normalizedSearch
-            );
-
-          const matchesCategory =
-            category ===
-              "Усі" ||
-            item.category ===
-              category;
-
-          const matchesStock =
-            stockFilter ===
-              "Усі" ||
-            (stockFilter ===
-              "Низький залишок" &&
-              isLowStock) ||
-            (stockFilter ===
-              "Є в наявності" &&
-              quantity > 0);
-
-          return (
-            matchesSearch &&
-            matchesCategory &&
-            matchesStock
-          );
-        }
-      );
-    }, [
-      safeItems,
-      search,
-      category,
-      stockFilter,
-    ]);
 
   function toggleMovementForm(
     itemId: number,
@@ -347,82 +242,13 @@ export default function WarehouseList({
 
   return (
     <div className="min-w-0 space-y-5">
-      {/* FILTERS */}
-      <div className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_220px_220px]">
-        <input
-          type="search"
-          value={search}
-          onChange={(
-            event
-          ) =>
-            setSearch(
-              event.target.value
-            )
-          }
-          placeholder="Пошук за назвою, категорією або постачальником"
-          className="min-h-11 w-full min-w-0 rounded-lg border px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
-        />
-
-        <select
-          value={category}
-          onChange={(
-            event
-          ) =>
-            setCategory(
-              event.target.value
-            )
-          }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-        >
-          {categories.map(
-            (item) => (
-              <option
-                key={item}
-                value={item}
-              >
-                {item ===
-                "Усі"
-                  ? "Усі категорії"
-                  : item}
-              </option>
-            )
-          )}
-        </select>
-
-        <select
-          value={
-            stockFilter
-          }
-          onChange={(
-            event
-          ) =>
-            setStockFilter(
-              event.target.value
-            )
-          }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
-        >
-          <option value="Усі">
-            Усі залишки
-          </option>
-
-          <option value="Низький залишок">
-            Низький залишок
-          </option>
-
-          <option value="Є в наявності">
-            Є в наявності
-          </option>
-        </select>
-      </div>
-
       {/* RESULT COUNT */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500">
-          Знайдено позицій:{" "}
+          Позицій на сторінці:{" "}
           <span className="font-semibold text-gray-800">
             {
-              filteredItems.length
+              safeItems.length
             }
           </span>
         </p>
@@ -434,7 +260,7 @@ export default function WarehouseList({
         )}
       </div>
 
-      {filteredItems.length ===
+      {safeItems.length ===
       0 ? (
         /* EMPTY */
         <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
@@ -455,7 +281,7 @@ export default function WarehouseList({
         <>
           {/* MOBILE CARDS */}
           <div className="space-y-3 md:hidden">
-            {filteredItems.map(
+            {safeItems.map(
               (item) => {
                 const quantity =
                   Number(
@@ -476,9 +302,9 @@ export default function WarehouseList({
                   quantity *
                   purchasePrice;
 
-                const isLowStock =
-                  quantity <=
-                  minQuantity;
+                const status = getWarehouseStockStatus(item);
+                const badge = warehouseStockPresentation[status];
+                const isLowStock = status !== "NORMAL";
 
                 const insight =
                   getWarehousePurchaseInsight(
@@ -546,11 +372,7 @@ export default function WarehouseList({
                           </p>
                         </div>
 
-                        {isLowStock && (
-                          <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-medium text-red-700">
-                            Низький
-                          </span>
-                        )}
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badge.badgeClass}`}>{badge.label}</span>
                       </div>
                     </div>
 
@@ -582,6 +404,8 @@ export default function WarehouseList({
                       </p>
                     </div>
 
+                    <WarehousePurchaseHint item={item} management={canCreatePurchases} plannedQuantity={insight.plannedQuantity} currency={currency} />
+
                     {/* DETAILS */}
                     <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-4">
                       <div className="min-w-0">
@@ -591,9 +415,7 @@ export default function WarehouseList({
 
                         <p className="mt-1 break-words text-sm font-medium text-gray-800">
                           {
-                            formatWarehouseQuantity(
-                              minQuantity
-                            )
+                            item.min_quantity == null ? "Не задано" : formatWarehouseQuantity(minQuantity)
                           }{" "}
                           {
                             item.unit
@@ -613,35 +435,6 @@ export default function WarehouseList({
                             : `${formatWarehouseQuantity(
                                 plan.targetQuantity
                               )} ${item.unit}`}
-                        </p>
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">
-                          Вже заплановано
-                        </p>
-
-                        <p className="mt-1 break-words text-sm font-medium text-blue-700">
-                          {formatWarehouseQuantity(
-                            plan.plannedIncoming
-                          )}{" "}
-                          {item.unit}
-                        </p>
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500">
-                          {plan.recommendationBasis ===
-                          "minimum"
-                            ? "До мінімуму"
-                            : "Ще рекомендовано"}
-                        </p>
-
-                        <p className="mt-1 break-words text-sm font-semibold text-orange-700">
-                          {formatWarehouseQuantity(
-                            plan.suggestedPurchaseQuantity
-                          )}{" "}
-                          {item.unit}
                         </p>
                       </div>
 
@@ -704,16 +497,6 @@ export default function WarehouseList({
                             : "Деталі запасу"}
                       </button>
 
-                      {canCreatePurchases &&
-                        plan.suggestedPurchaseQuantity >
-                          0 && (
-                        <Link
-                          href={`/purchases?item=${item.id}#new-purchase`}
-                          className="inline-flex min-h-10 items-center justify-center rounded-lg bg-green-600 px-3 py-2 text-center text-sm font-medium text-white transition hover:bg-green-700"
-                        >
-                          Створити закупівлю
-                        </Link>
-                      )}
                     </div>
 
                     {/* ACTIONS */}
@@ -953,7 +736,7 @@ export default function WarehouseList({
               </thead>
 
               <tbody>
-                {filteredItems.map(
+                {safeItems.map(
                   (item) => {
                     const quantity =
                       Number(
@@ -970,9 +753,9 @@ export default function WarehouseList({
                         item.purchase_price
                       );
 
-                    const isLowStock =
-                      quantity <=
-                      minQuantity;
+                    const status = getWarehouseStockStatus(item);
+                    const badge = warehouseStockPresentation[status];
+                    const isLowStock = status !== "NORMAL";
 
                     const insight =
                       getWarehousePurchaseInsight(
@@ -1030,13 +813,9 @@ export default function WarehouseList({
                                 }
                               </Link>
 
-                              {isLowStock && (
-                                <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
-                                  Низький
-                                  залишок
-                                </span>
-                              )}
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badge.badgeClass}`}>{badge.label}</span>
                             </div>
+                            <WarehousePurchaseHint item={item} management={canCreatePurchases} plannedQuantity={insight.plannedQuantity} currency={currency} />
                           </td>
 
                           <td className="p-4 text-gray-600">
@@ -1063,9 +842,7 @@ export default function WarehouseList({
 
                           <td className="p-4 text-gray-600">
                             {
-                              formatWarehouseQuantity(
-                                minQuantity
-                              )
+                              item.min_quantity == null ? "Не задано" : formatWarehouseQuantity(minQuantity)
                             }{" "}
                             {
                               item.unit
@@ -1122,17 +899,6 @@ export default function WarehouseList({
                                     ? "Запас і ціни"
                                     : "Деталі"}
                               </button>
-
-                              {canCreatePurchases &&
-                                plan.suggestedPurchaseQuantity >
-                                  0 && (
-                                <Link
-                                  href={`/purchases?item=${item.id}#new-purchase`}
-                                  className="rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100"
-                                >
-                                  Закупівля
-                                </Link>
-                              )}
 
                               {canManage && (
                                 <>

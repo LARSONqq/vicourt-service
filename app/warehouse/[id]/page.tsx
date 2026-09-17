@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth/requireAccess";
 import {
   getWarehouseItemPurchasePreview,
+  getWarehousePlannedQuantities,
 } from "@/services/purchaseService";
 import {
   getAppSettings,
@@ -98,12 +99,14 @@ export default async function WarehouseItemPage({
   let objectUsage:
     | WarehouseItemMovementPreview[]
     | null = null;
+  let plannedQuantity: number | null = null;
 
   if (canViewManagementHistory) {
     const [
       movementResult,
       purchaseResult,
       objectUsageResult,
+      plannedResult,
     ] = await Promise.allSettled([
       getWarehouseItemRecentMovements(
         itemId
@@ -114,6 +117,7 @@ export default async function WarehouseItemPage({
       getWarehouseItemObjectUsage(
         itemId
       ),
+      getWarehousePlannedQuantities([itemId]),
     ]);
 
     movements = getSettledValue(
@@ -125,6 +129,7 @@ export default async function WarehouseItemPage({
     objectUsage = getSettledValue(
       objectUsageResult
     );
+    plannedQuantity = plannedResult.status === "fulfilled" ? (plannedResult.value[itemId] || 0) : null;
   }
 
   return (
@@ -132,6 +137,7 @@ export default async function WarehouseItemPage({
       item={item}
       currency={settings.currency}
       canAdjustStock={canManageWarehouse(currentProfile.role)}
+      plannedQuantity={plannedQuantity}
       canViewManagementHistory={
         canViewManagementHistory
       }

@@ -3,6 +3,8 @@ import {
 } from "react";
 
 import { createClient } from "@/lib/supabase/server";
+import { canManagePurchases } from "@/lib/auth/permissions";
+import { getCurrentUserProfile } from "@/services/profileService";
 import {
   buildWarehousePurchaseInsights,
 } from "@/lib/warehousePlanning";
@@ -31,6 +33,44 @@ export type PlannedPurchaseTotals = Record<
 
 const PURCHASE_PAGE_SIZE =
   500;
+
+async function requirePurchaseReadAccess() {
+  const profile = await getCurrentUserProfile();
+  if (!profile || !canManagePurchases(profile.role)) throw new Error("Недостатньо прав для перегляду закупівель.");
+}
+
+export async function getWarehousePlannedQuantities(itemIds: number[]): Promise<Record<number, number>> {
+  await requirePurchaseReadAccess();
+  const ids = [...new Set(itemIds.filter((id) => Number.isSafeInteger(id) && id > 0))];
+  if (!ids.length) return {};
+  const supabase = await createClient();
+  const totals: Record<number, number> = {};
+  for (let from = 0; ; from += 500) {
+    const { data, error } = await supabase.from("warehouse_purchases")
+      .select("id, item_id, quantity").in("item_id", ids).eq("status", "Заплановано")
+      .order("id").range(from, from + 499);
+    if (error) throw new Error("Не вдалося завантажити план закупівель.");
+    for (const row of data) totals[row.item_id] = Math.round(((totals[row.item_id] || 0) + Number(row.quantity)) * 1_000_000) / 1_000_000;
+    if (data.length < 500) break;
+  }
+  return totals;
+}
+
+export type PlannedPurchaseOverview = {
+  id: number; item_id: number; quantity: number; supplier: string | null; status: string;
+  item: { id: number; name: string; unit: string } | null;
+};
+
+export async function getWarehousePlannedPurchaseOverview(): Promise<PlannedPurchaseOverview[]> {
+  await requirePurchaseReadAccess();
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("warehouse_purchases")
+    .select("id, item_id, quantity, supplier, status, item:warehouse_items(id, name, unit)")
+    .eq("status", "Заплановано").order("created_at", { ascending: false }).order("id", { ascending: false })
+    .limit(8).overrideTypes<PlannedPurchaseOverview[], { merge: false }>();
+  if (error) throw new Error("Не вдалося завантажити заплановані закупівлі.");
+  return data;
+}
 
 export async function getWarehousePurchases(
   filters: PurchaseQueryFilters = {}

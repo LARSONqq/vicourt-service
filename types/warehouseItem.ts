@@ -4,7 +4,7 @@ export interface WarehouseItem {
   category: string | null;
   quantity: number;
   unit: string;
-  min_quantity: number;
+  min_quantity: number | null;
   target_quantity: number | null;
   purchase_price?: number;
   supplier: string | null;

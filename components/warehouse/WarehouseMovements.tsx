@@ -17,6 +17,10 @@ import type {
 } from "@/types/warehouseMovement";
 
 type FilterValues = {
+  q?: string;
+  category?: string;
+  stock?: string;
+  page?: string;
   search?: string;
   item?: string;
   object?: string;
@@ -27,7 +31,7 @@ type FilterValues = {
 
 type Props = {
   movementPage: WarehouseMovementPage;
-  items: WarehouseItem[];
+  items: Pick<WarehouseItem, "id" | "name">[];
   objects: ObjectItem[];
   currency: AppCurrency;
   filters: FilterValues;
@@ -92,6 +96,11 @@ function getObjectName(movement: WarehouseMovement) {
 
 function buildPageHref(filters: FilterValues, page: number) {
   const params = new URLSearchParams();
+
+  if (filters.q) params.set("q", filters.q);
+  if (filters.category) params.set("category", filters.category);
+  if (filters.stock) params.set("stock", filters.stock);
+  if (filters.page) params.set("page", filters.page);
 
   if (filters.search) params.set("ledger_search", filters.search);
   if (filters.item) params.set("ledger_item", filters.item);
@@ -213,6 +222,9 @@ export default function WarehouseMovements({
         method="get"
         className="grid gap-3 border-b bg-gray-50 p-3 sm:p-4 md:grid-cols-2 xl:grid-cols-3"
       >
+        {["q", "category", "stock", "page"].map((key) => (
+          <input key={key} type="hidden" name={key} value={filters[key as keyof FilterValues] || ""} />
+        ))}
         <label className="min-w-0 text-sm font-medium text-gray-700">
           Пошук
           <input
@@ -300,7 +312,7 @@ export default function WarehouseMovements({
             Застосувати
           </button>
           <Link
-            href="/warehouse#materials-ledger"
+            href={buildPageHref({ q: filters.q, category: filters.category, stock: filters.stock, page: filters.page }, 1)}
             className="flex min-h-11 items-center justify-center rounded-lg border bg-white px-5 py-2 font-medium text-gray-700 hover:bg-gray-100"
           >
             Скинути

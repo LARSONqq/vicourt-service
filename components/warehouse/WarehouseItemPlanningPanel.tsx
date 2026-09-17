@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { getRecommendedPurchaseQuantity } from "@/lib/warehouseStock";
 import {
   useState,
 } from "react";
@@ -11,6 +12,7 @@ import {
 import {
   formatWarehouseQuantity,
   getWarehouseStockPlan,
+  getPurchasePriceChangePercent,
 } from "@/lib/warehousePlanning";
 
 import type {
@@ -90,8 +92,10 @@ export default function WarehouseItemPlanningPanel({
       item,
       insight.plannedQuantity
     );
-  const priceChange =
-    insight.priceChangePercent;
+  const lastPurchasePrice = history?.[0]?.purchasePrice ?? insight.lastPurchasePrice;
+  const previousPurchasePrice = history?.[1]?.purchasePrice ?? insight.previousPurchasePrice;
+  const priceChange = getPurchasePriceChangePercent(lastPurchasePrice, previousPurchasePrice);
+  const recommendation = getRecommendedPurchaseQuantity(item);
 
   async function showHistory() {
     if (history !== null) {
@@ -147,14 +151,12 @@ export default function WarehouseItemPlanningPanel({
             </p>
           </div>
 
-          {canCreatePurchase &&
-            plan.suggestedPurchaseQuantity >
-              0 && (
+          {canCreatePurchase && (
             <Link
-              href={`/purchases?item=${item.id}#new-purchase`}
+              href={`/warehouse/${item.id}`}
               className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
             >
-              Створити закупівлю
+              Операції та закупівлі →
             </Link>
           )}
         </div>
@@ -177,9 +179,7 @@ export default function WarehouseItemPlanningPanel({
               Мінімум
             </p>
             <p className="mt-1 font-semibold text-gray-900">
-              {formatWarehouseQuantity(
-                plan.minimumQuantity
-              )}{" "}
+              {item.min_quantity == null ? "Не задано" : formatWarehouseQuantity(plan.minimumQuantity)}{" "}
               {item.unit}
             </p>
           </div>
@@ -198,7 +198,7 @@ export default function WarehouseItemPlanningPanel({
             </p>
           </div>
 
-          <div>
+          {canViewPurchaseHistory && <div>
             <p className="text-xs text-gray-500">
               Вже заплановано
             </p>
@@ -208,9 +208,9 @@ export default function WarehouseItemPlanningPanel({
               )}{" "}
               {item.unit}
             </p>
-          </div>
+          </div>}
 
-          <div>
+          {canViewPurchaseHistory && <div>
             <p className="text-xs text-gray-500">
               Після запланованого
             </p>
@@ -220,19 +220,14 @@ export default function WarehouseItemPlanningPanel({
               )}{" "}
               {item.unit}
             </p>
-          </div>
+          </div>}
 
           <div>
             <p className="text-xs text-gray-500">
-              {plan.recommendationBasis ===
-              "minimum"
-                ? "До мінімуму"
-                : "Ще рекомендовано"}
+              Рекомендовано докупити
             </p>
             <p className="mt-1 font-semibold text-orange-700">
-              {formatWarehouseQuantity(
-                plan.suggestedPurchaseQuantity
-              )}{" "}
+              {recommendation === null ? "—" : formatWarehouseQuantity(recommendation)}{" "}
               {item.unit}
             </p>
           </div>
@@ -242,9 +237,7 @@ export default function WarehouseItemPlanningPanel({
           null && (
           <p className="mt-3 text-xs leading-5 text-gray-600">
             Цільовий запас не заданий.
-            За потреби ViCourt показує
-            лише кількість до
-            мінімального залишку.
+            Рекомендовану кількість не розраховано.
           </p>
         )}
 
@@ -291,11 +284,11 @@ export default function WarehouseItemPlanningPanel({
             Остання закупівельна ціна
           </p>
           <p className="mt-1 break-words font-semibold text-gray-900">
-            {insight.lastPurchasePrice ===
+            {lastPurchasePrice ===
             null
-              ? "Немає даних"
+              ? history === null ? "Завантажте історію нижче" : "Немає даних"
               : formatMoney(
-                  insight.lastPurchasePrice,
+                  lastPurchasePrice,
                   currency
                 )}
           </p>
@@ -306,11 +299,11 @@ export default function WarehouseItemPlanningPanel({
             Попередня ціна
           </p>
           <p className="mt-1 break-words font-semibold text-gray-900">
-            {insight.previousPurchasePrice ===
+            {previousPurchasePrice ===
             null
-              ? "Немає даних"
+              ? history === null ? "Завантажте історію нижче" : "Немає даних"
               : formatMoney(
-                  insight.previousPurchasePrice,
+                  previousPurchasePrice,
                   currency
                 )}
           </p>
