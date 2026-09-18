@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import { updateObjectTask } from "@/app/actions/taskActions";
 
 import TaskChecklist from "@/components/tasks/TaskChecklist";
 import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
+import { taskMutationMessage } from "@/lib/taskDetail";
 
 import type { Employee } from "@/types/employee";
 import type { Equipment } from "@/types/equipment";
@@ -24,6 +25,10 @@ type Props = {
   employees: Employee[];
   canManageRecurrence?: boolean;
   onCancel: () => void;
+  assignmentField?: ReactNode;
+  onSave?: (formData: FormData) => Promise<void>;
+  hideChecklist?: boolean;
+  separateStatusAction?: boolean;
 };
 
 const priorities: TaskPriority[] = [
@@ -41,7 +46,12 @@ export default function EditTaskForm({
   employees,
   canManageRecurrence = false,
   onCancel,
+  assignmentField,
+  onSave,
+  hideChecklist = false,
+  separateStatusAction = false,
 }: Props) {
+  const submitLock = useRef(false);
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
@@ -62,29 +72,33 @@ export default function EditTaskForm({
   async function handleSubmit(
     formData: FormData
   ) {
+    if (submitLock.current) return;
+    submitLock.current = true;
     setIsSubmitting(true);
     setErrorMessage("");
 
     try {
-      await updateObjectTask(
+      await (onSave ?? updateObjectTask)(
         formData
       );
 
       onCancel();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Не вдалося оновити завдання."
+        taskMutationMessage(error)
       );
     } finally {
+      submitLock.current = false;
       setIsSubmitting(false);
     }
   }
 
   return (
     <form
-      action={handleSubmit}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void handleSubmit(new FormData(event.currentTarget));
+      }}
       className="min-w-0 space-y-5 rounded-xl border bg-gray-50 p-4 sm:p-5"
     >
       <input
@@ -246,7 +260,7 @@ export default function EditTaskForm({
             Відповідальний працівник
           </label>
 
-          <select
+          {assignmentField ?? <select
             name="assigned_employee_id"
             defaultValue={
               task.assigned_employee_id
@@ -279,7 +293,7 @@ export default function EditTaskForm({
                 </option>
               )
             )}
-          </select>
+          </select>}
 
           {!task.assigned_employee_id &&
             task.assignee && (
@@ -289,7 +303,7 @@ export default function EditTaskForm({
               </p>
             )}
 
-          {employees.length === 0 && (
+          {!assignmentField && employees.length === 0 && (
             <p className="mt-2 text-xs text-gray-500">
               Працівників ще не додано.
             </p>
@@ -327,8 +341,8 @@ export default function EditTaskForm({
             Статус
           </label>
 
-          {task.task_template_id !== null &&
-            task.status === "Виконано" && (
+          {(separateStatusAction || (task.task_template_id !== null &&
+            task.status === "Виконано")) && (
             <input
               type="hidden"
               name="status"
@@ -340,8 +354,8 @@ export default function EditTaskForm({
             name="status"
             defaultValue={task.status}
             disabled={
-              task.task_template_id !== null &&
-              task.status === "Виконано"
+              separateStatusAction || (task.task_template_id !== null &&
+              task.status === "Виконано")
             }
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
           >
@@ -360,11 +374,11 @@ export default function EditTaskForm({
         </div>
       </div>
 
-      <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+      {!hideChecklist && <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
         <TaskChecklist
           taskId={task.id}
         />
-      </div>
+      </div>}
 
       <div className="grid grid-cols-1 gap-2 border-t pt-5 sm:flex sm:flex-wrap sm:gap-3">
         <button

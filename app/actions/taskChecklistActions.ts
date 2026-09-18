@@ -67,7 +67,7 @@ async function requireAuthenticatedUser() {
   return profile;
 }
 
-function refreshTaskPages() {
+async function refreshTaskPages(taskId: number) {
   revalidatePath("/");
   revalidatePath("/task");
   revalidatePath("/tasks");
@@ -75,6 +75,11 @@ function refreshTaskPages() {
   revalidatePath("/employees");
   revalidatePath("/objects");
   revalidatePath("/equipment");
+  revalidatePath(`/tasks/${taskId}`);
+  const supabase = await createClient();
+  const { data } = await supabase.from("object_tasks").select("object_id, equipment_id").eq("id", taskId).maybeSingle();
+  if (data?.object_id) revalidatePath(`/objects/${data.object_id}`);
+  if (data?.equipment_id) revalidatePath(`/equipment/${data.equipment_id}`);
 }
 
 export async function getTaskChecklistItems(
@@ -112,7 +117,7 @@ export async function getTaskChecklistItems(
       {
         ascending: true,
       }
-    );
+    ).order("id", { ascending: true });
 
   if (error) {
     throw new Error(
@@ -181,7 +186,7 @@ export async function addTaskChecklistItem(
     );
   }
 
-  refreshTaskPages();
+  await refreshTaskPages(taskId);
 
   return data as TaskChecklistItem;
 }
@@ -247,7 +252,7 @@ export async function toggleTaskChecklistItem(
     );
   }
 
-  refreshTaskPages();
+  await refreshTaskPages(taskId);
 
   return data as TaskChecklistItem;
 }
@@ -292,7 +297,7 @@ export async function deleteTaskChecklistItem(
     );
   }
 
-  refreshTaskPages();
+  await refreshTaskPages(taskId);
 
   return {
     id: itemId,

@@ -97,6 +97,7 @@ async function requireAuthenticatedUser() {
 }
 
 function refreshTaskPages(task?: {
+  id?: number;
   object_id: number | null;
   equipment_id: number | null;
 }) {
@@ -112,6 +113,8 @@ function refreshTaskPages(task?: {
   if (task?.object_id) {
     revalidatePath(`/objects/${task.object_id}`);
   }
+  if (task?.id) revalidatePath(`/tasks/${task.id}`);
+  if (task?.equipment_id) revalidatePath(`/equipment/${task.equipment_id}`);
 }
 
 function validateTaskId(taskId: number) {
@@ -736,6 +739,7 @@ export async function updateTaskStatus(taskId: number, status: string) {
       equipmentId: previousTask.equipment_id,
       taskId,
     });
+    refreshTaskPages(previousTask);
     return { id: taskId, status: "Виконано" };
   }
 
@@ -817,11 +821,13 @@ export async function updateTaskDueDate(
     if (!previousTask.equipment_id || !savedDueDate) {
       throw new Error("Автоматичне ТО повинно мати дату. Змініть її через техніку.");
     }
-    return rescheduleEquipmentMaintenanceTask({
+    const result = await rescheduleEquipmentMaintenanceTask({
       taskId,
       equipmentId: previousTask.equipment_id,
       dueDate: savedDueDate,
     });
+    refreshTaskPages(previousTask);
+    return result;
   }
 
   const supabase = await createClient();

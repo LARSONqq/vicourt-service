@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type KeyboardEvent,
 } from "react";
@@ -17,18 +18,27 @@ import {
 } from "@/app/actions/taskChecklistActions";
 
 import type { TaskChecklistItem } from "@/types/taskChecklistItem";
+import { taskMutationMessage } from "@/lib/taskDetail";
 
 type Props = {
   taskId: number;
+  initialItems?: TaskChecklistItem[];
 };
 
 export default function TaskChecklist({
   taskId,
+  initialItems,
 }: Props) {
   const router = useRouter();
+  const mutationLock = useRef(false);
 
   const [items, setItems] =
-    useState<TaskChecklistItem[]>([]);
+    useState<TaskChecklistItem[]>(initialItems ?? []);
+  const [previousInitialItems, setPreviousInitialItems] = useState(initialItems);
+  if (initialItems !== previousInitialItems) {
+    setPreviousInitialItems(initialItems);
+    if (initialItems) setItems(initialItems);
+  }
 
   const [
     newItemTitle,
@@ -36,7 +46,7 @@ export default function TaskChecklist({
   ] = useState("");
 
   const [isLoading, setIsLoading] =
-    useState(true);
+    useState(initialItems === undefined);
 
   const [isAdding, setIsAdding] =
     useState(false);
@@ -52,6 +62,7 @@ export default function TaskChecklist({
   ] = useState("");
 
   useEffect(() => {
+    if (initialItems !== undefined) return;
     let isActive = true;
 
     async function loadChecklist() {
@@ -75,9 +86,7 @@ export default function TaskChecklist({
         }
 
         setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Не вдалося завантажити чекліст."
+          taskMutationMessage(error, "Не вдалося завантажити чекліст.")
         );
       } finally {
         if (isActive) {
@@ -91,7 +100,7 @@ export default function TaskChecklist({
     return () => {
       isActive = false;
     };
-  }, [taskId]);
+  }, [taskId, initialItems]);
 
   const completedCount =
     useMemo(() => {
@@ -116,11 +125,12 @@ export default function TaskChecklist({
 
     if (
       !normalizedTitle ||
-      isAdding
+      mutationLock.current
     ) {
       return;
     }
 
+    mutationLock.current = true;
     setIsAdding(true);
     setErrorMessage("");
 
@@ -143,11 +153,10 @@ export default function TaskChecklist({
       router.refresh();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Не вдалося додати пункт."
+        taskMutationMessage(error, "Не вдалося додати пункт. Перевірте права доступу та спробуйте ще раз.")
       );
     } finally {
+      mutationLock.current = false;
       setIsAdding(false);
     }
   }
@@ -156,13 +165,15 @@ export default function TaskChecklist({
     item: TaskChecklistItem
   ) {
     if (
-      pendingItemId !== null
+      mutationLock.current
     ) {
       return;
     }
 
     const previousItems =
       items;
+
+    mutationLock.current = true;
 
     const nextCompleted =
       !item.is_completed;
@@ -214,11 +225,10 @@ export default function TaskChecklist({
       );
 
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Не вдалося оновити пункт."
+        taskMutationMessage(error, "Не вдалося оновити пункт. Спробуйте ще раз.")
       );
     } finally {
+      mutationLock.current = false;
       setPendingItemId(
         null
       );
@@ -235,13 +245,15 @@ export default function TaskChecklist({
 
     if (
       !confirmed ||
-      pendingItemId !== null
+      mutationLock.current
     ) {
       return;
     }
 
     const previousItems =
       items;
+
+    mutationLock.current = true;
 
     setPendingItemId(
       item.id
@@ -271,11 +283,10 @@ export default function TaskChecklist({
       );
 
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Не вдалося видалити пункт."
+        taskMutationMessage(error, "Не вдалося видалити пункт. Спробуйте ще раз.")
       );
     } finally {
+      mutationLock.current = false;
       setPendingItemId(
         null
       );
@@ -354,7 +365,7 @@ export default function TaskChecklist({
         <input
           type="text"
           value={newItemTitle}
-          disabled={isAdding}
+          disabled={isAdding || pendingItemId !== null || isLoading}
           onChange={(event) =>
             setNewItemTitle(
               event.target.value
@@ -372,6 +383,7 @@ export default function TaskChecklist({
           type="button"
           disabled={
             isAdding ||
+            pendingItemId !== null || isLoading ||
             !newItemTitle.trim()
           }
           onClick={
@@ -421,12 +433,14 @@ export default function TaskChecklist({
                   <button
                     type="button"
                     disabled={
+                      isAdding ||
                       pendingItemId !==
                       null
                     }
                     aria-pressed={
                       item.is_completed
                     }
+                    aria-label={`${item.is_completed ? "Позначити невиконаним" : "Виконати"}: ${item.title}`}
                     onClick={() =>
                       handleToggleItem(
                         item
@@ -456,6 +470,7 @@ export default function TaskChecklist({
                   <button
                     type="button"
                     disabled={
+                      isAdding ||
                       pendingItemId !==
                       null
                     }

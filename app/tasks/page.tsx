@@ -5,7 +5,7 @@ import TaskWorkspaceNavigation, { TaskWorkspacePagination } from "@/components/t
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
 import { canManageEquipment, canManageObjects, canManageTasks } from "@/lib/auth/permissions";
 import { getKyivDateValue } from "@/lib/kyivDate";
-import { normalizeTaskWorkspace, type TaskWorkspaceQuery } from "@/lib/taskWorkspace";
+import { normalizeTaskWorkspace, taskWorkspaceHref, type TaskWorkspaceQuery } from "@/lib/taskWorkspace";
 import { getEmployees } from "@/services/employeeService";
 import { getEquipment } from "@/services/equipmentService";
 import { getObjects } from "@/services/objectService";
@@ -34,7 +34,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     <TaskWorkspaceNavigation filters={filters} counts={result.counts} employees={employees} />
     {filters.view === "my" && profile.employee_id === null && <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Ваш профіль не прив’язаний до працівника. Для виду «Мої» попросіть адміністратора налаштувати цей зв’язок. Інші види залишаються доступними.</p>}
     <TaskWorkspacePagination filters={filters} {...result} />
-    <TasksList serverPaged businessDate={today} tasks={result.tasks} employees={employees} objects={objects} equipment={equipment}
+    <TasksList workspaceReturnTo={taskWorkspaceHref(filters, result.page)} serverPaged businessDate={today} tasks={result.tasks} employees={employees} objects={objects} equipment={equipment}
       canManageSupervision={canManageObjects(profile.role)} canManageEquipment={canManageEquipment(profile.role)} canManageRecurrence={recurrence} taskTemplates={templates} />
     {result.pageCount > 1 && <TaskWorkspacePagination filters={filters} {...result} />}
     {recurrence && <details className="min-w-0 rounded-xl border bg-white p-4">

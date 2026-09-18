@@ -30,6 +30,7 @@ import {
   SUPERVISION_TASK_SOURCE,
 } from "@/constants/taskSource";
 import { getTaskTarget } from "@/lib/taskTarget";
+import { taskDetailHref } from "@/lib/taskDetail";
 import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
@@ -49,6 +50,7 @@ import type {
 } from "@/types/taskTemplate";
 
 type Props = {
+  workspaceReturnTo?: string;
   serverPaged?: boolean;
   businessDate?: string;
   tasks: TaskWithObject[];
@@ -364,6 +366,7 @@ function sortListTasks(
 }
 
 export default function TasksList({
+  workspaceReturnTo = "/tasks",
   serverPaged = false,
   businessDate,
   tasks,
@@ -1353,7 +1356,7 @@ export default function TasksList({
                       : "text-gray-900"
                   }`}
                 >
-                  {task.title}
+                  <Link href={taskDetailHref(task.id, workspaceReturnTo)} className="hover:text-green-700 hover:underline">{task.title}</Link>
                 </h3>
 
                 {isSupervisionTask && (
@@ -2176,9 +2179,7 @@ export default function TasksList({
                               : "text-gray-900"
                           }`}
                         >
-                          {
-                            task.title
-                          }
+                          <Link href={taskDetailHref(task.id, workspaceReturnTo)} className="hover:text-green-700 hover:underline">{task.title}</Link>
                         </h3>
                       </div>
 
