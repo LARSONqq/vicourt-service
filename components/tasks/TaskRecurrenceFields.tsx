@@ -1,11 +1,14 @@
 "use client";
 
+import { getTaskRecurrenceLabel } from "@/lib/taskRecurrence";
+
 import type {
   TaskRecurrenceType,
 } from "@/types/taskTemplate";
 
 type Props = {
   idPrefix?: string;
+  templateDefinition?: boolean;
   allowNone?: boolean;
   value: TaskRecurrenceType;
   customInterval: string;
@@ -19,6 +22,7 @@ type Props = {
 
 export default function TaskRecurrenceFields({
   idPrefix = "task",
+  templateDefinition = false,
   allowNone = true,
   value,
   customInterval,
@@ -53,9 +57,9 @@ export default function TaskRecurrenceFields({
           {allowNone && (
             <option value="none">Ніколи</option>
           )}
-          <option value="daily">Щодня</option>
-          <option value="weekly">Щотижня</option>
-          <option value="monthly">Щомісяця</option>
+          <option value="daily">{getTaskRecurrenceLabel("daily", 1)}</option>
+          <option value="weekly">{getTaskRecurrenceLabel("weekly", 1)}</option>
+          <option value="monthly">{getTaskRecurrenceLabel("monthly", 1)}</option>
           <option value="custom">Кожні N днів</option>
         </select>
 
@@ -97,7 +101,9 @@ export default function TaskRecurrenceFields({
       )}
 
       <p className="mt-2 text-xs leading-5 text-gray-500">
-        {value === "none"
+        {templateDefinition
+          ? value === "none" ? "Шаблон для створення разових завдань." : `${getTaskRecurrenceLabel(value, value === "custom" ? Number(customInterval) || null : 1)}. Опорна дата визначає правило серії, а не прогноз наступного завдання. Нові повторення створює сервер після виконання поточного.`
+          : value === "none"
           ? "Буде створено одне звичайне завдання."
           : "Термін виконання стане опорною датою серії. Наступне завдання створиться після виконання поточного."}
       </p>

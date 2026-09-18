@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { taskMutationMessage } from "@/lib/taskDetail";
 
 import {
   disableTaskTemplateAction,
@@ -21,13 +22,14 @@ export default function StopRecurringTaskButton({
   onStopped,
 }: Props) {
   const router = useRouter();
+  const submitLock = useRef(false);
   const [isSubmitting, setIsSubmitting] =
     useState(false);
   const [errorMessage, setErrorMessage] =
     useState("");
 
   async function handleStop() {
-    if (isSubmitting) return;
+    if (submitLock.current) return;
 
     const confirmed = window.confirm(
       `Зупинити повторення «${taskTitle}»?\n\nПоточне незавершене завдання залишиться як разове. Нові повторення більше не створюватимуться.`
@@ -35,6 +37,7 @@ export default function StopRecurringTaskButton({
 
     if (!confirmed) return;
 
+    submitLock.current = true;
     setIsSubmitting(true);
     setErrorMessage("");
 
@@ -46,11 +49,10 @@ export default function StopRecurringTaskButton({
       router.refresh();
     } catch (error) {
       setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Не вдалося зупинити повторення."
+        taskMutationMessage(error, "Не вдалося зупинити повторення. Перевірте доступ і спробуйте ще раз.")
       );
     } finally {
+      submitLock.current = false;
       setIsSubmitting(false);
     }
   }

@@ -14,8 +14,10 @@ import RecurringTaskBadge from "@/components/tasks/RecurringTaskBadge";
 import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenanceTaskBadge";
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import type { TaskTemplate } from "@/types/taskTemplate";
+import { getTaskRecurrenceLabel } from "@/lib/taskRecurrence";
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string | string[] }> };
+type RecurrenceContext = Pick<TaskTemplate, "title" | "is_active" | "recurrence_type" | "recurrence_interval">;
 
 export default async function TaskDetailPage({ params, searchParams }: Props) {
   const profile = await requireSectionAccess("tasks");
@@ -29,12 +31,12 @@ export default async function TaskDetailPage({ params, searchParams }: Props) {
     getTaskAssignee(task.assigned_employee_id),
     getTaskChecklistItems(id).then((items) => ({ items, failed: false })).catch(() => ({ items: [], failed: true })),
   ]);
-  let recurrence: Pick<TaskTemplate, "recurrence_type" | "recurrence_interval"> | null = null;
-  if (task.task_template_id !== null && canManageTasks(profile.role)) {
+  let recurrence: RecurrenceContext | null = null;
+  if (task.task_source === "manual" && task.task_template_id !== null && canManageTasks(profile.role)) {
     const supabase = await createClient();
-    const { data } = await supabase.from("task_templates").select("recurrence_type, recurrence_interval")
+    const { data } = await supabase.from("task_templates").select("title, is_active, recurrence_type, recurrence_interval")
       .eq("id", task.task_template_id).maybeSingle();
-    recurrence = data as Pick<TaskTemplate, "recurrence_type" | "recurrence_interval"> | null;
+    recurrence = data as RecurrenceContext | null;
   }
   const target = getTaskTarget(task);
   const overdue = Boolean(task.due_date && task.due_date < getKyivDateValue() && task.status !== "Виконано");
@@ -61,6 +63,12 @@ export default async function TaskDetailPage({ params, searchParams }: Props) {
         {task.task_template_id !== null && <div><dt className="text-gray-500">Повторення</dt><dd className="mt-1">{task.recurrence_sequence ? `№ ${task.recurrence_sequence}` : "За серією"} · {task.status === "Виконано" ? "Завершене" : "Поточне"}</dd></div>}
       </dl>
     </header>
+    {task.task_source === "manual" && task.task_template_id !== null && <section className="min-w-0 space-y-2 rounded-xl border bg-teal-50 p-4 text-sm">
+      <h2 className="font-semibold">Окреме повторення серії № {task.task_template_id}</h2>
+      <p>Редагування цього завдання стосується лише цього повторення, а не правила серії. Після виконання поточного завдання наступне створює сервер. Завершене повторення залишається історичним.</p>
+      {recurrence && <><Link href={`/tasks/templates/${task.task_template_id}`} className="block break-words font-medium text-green-800 hover:underline">{recurrence.title} →</Link><p>Поточне правило: {getTaskRecurrenceLabel(recurrence.recurrence_type, recurrence.recurrence_interval)} · {recurrence.is_active ? "Активна серія" : "Серію зупинено"}</p><p className="text-xs text-gray-500">Правило показано станом на зараз, не на дату цього повторення. Зміна серії доступна на її окремій сторінці.</p></>}
+      {!recurrence && <p className="text-gray-600">Розклад і керування серією доступні керівнику.</p>}
+    </section>}
     <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5"><h2 className="font-semibold">Опис</h2><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-gray-700">{task.description || "Опис не додано."}</p></section>
     <TaskDetailActions key={JSON.stringify([task.id, task.title, task.description, task.status, task.priority, task.due_date, task.assigned_employee_id, assigneeName])} task={task} assignee={assignee} capabilities={capabilities} />
     {checklist.failed ? <section role="alert" className="rounded-xl border bg-white p-4 text-sm text-red-700">Не вдалося завантажити чекліст. <Link href={`/tasks/${id}?${new URLSearchParams({ returnTo })}`} className="underline">Спробувати ще раз</Link></section>

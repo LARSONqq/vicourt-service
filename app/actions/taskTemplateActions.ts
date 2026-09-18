@@ -27,24 +27,30 @@ import type {
 
 function refreshTaskTemplatePages(
   task?: {
+    id: number;
     object_id: number | null;
     equipment_id: number | null;
-  }
+  },
+  template?: TaskTemplate
 ) {
-  revalidatePath("/");
   revalidatePath("/task");
   revalidatePath("/tasks");
-  revalidatePath("/calendar");
-  revalidatePath("/employees");
-  revalidatePath("/objects");
-  revalidatePath("/equipment");
-  revalidatePath("/notifications");
-
-  if (task?.object_id) {
-    revalidatePath(
-      `/objects/${task.object_id}`
-    );
+  revalidatePath("/tasks/templates");
+  if (template) {
+    revalidatePath(`/tasks/templates/${template.id}`);
+    // Historical occurrences display the current rule, not a schedule snapshot.
+    revalidatePath("/tasks/[id]", "page");
   }
+  if (task) {
+    revalidatePath(`/tasks/${task.id}`);
+    revalidatePath("/");
+    revalidatePath("/calendar");
+  }
+  const objectId = task?.object_id ?? template?.object_id;
+  const equipmentId = task?.equipment_id ?? template?.equipment_id;
+  if (objectId) revalidatePath(`/objects/${objectId}`);
+  if (equipmentId) revalidatePath(`/equipment/${equipmentId}`);
+  if (template?.assigned_employee_id) revalidatePath(`/employees/${template.assigned_employee_id}`);
 }
 
 function getTemplateObjectId(
@@ -150,7 +156,8 @@ export async function createTaskTemplateAction(
   }
 
   refreshTaskTemplatePages(
-    result.first_task ?? undefined
+    result.first_task ?? undefined,
+    result.template
   );
   return result;
 }
@@ -188,7 +195,8 @@ export async function updateTaskTemplateAction(
   });
 
   refreshTaskTemplatePages(
-    result.first_task ?? undefined
+    result.first_task ?? undefined,
+    result.template
   );
   return result;
 }
@@ -238,7 +246,8 @@ export async function activateTaskTemplateSeriesAction(
   }
 
   refreshTaskTemplatePages(
-    result.first_task ?? undefined
+    result.first_task ?? undefined,
+    result.template
   );
   return result;
 }
@@ -273,7 +282,8 @@ export async function disableTaskTemplateAction(
   });
 
   refreshTaskTemplatePages(
-    result.first_task ?? undefined
+    result.first_task ?? undefined,
+    result.template
   );
   return result;
 }

@@ -60,7 +60,7 @@ type Props = {
   canManageSupervision: boolean;
   canManageEquipment: boolean;
   canManageRecurrence: boolean;
-  taskTemplates?: TaskTemplate[];
+  taskTemplates?: Pick<TaskTemplate, "id" | "recurrence_type" | "recurrence_interval">[];
 };
 
 type TaskStatus =

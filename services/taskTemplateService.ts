@@ -402,7 +402,7 @@ function validateTemplateFields(input: {
   };
 }
 
-async function requireTemplateManagement() {
+export async function requireTemplateManagement() {
   const profile =
     await getCurrentUserProfile();
 
