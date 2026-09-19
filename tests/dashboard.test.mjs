@@ -44,7 +44,11 @@ const task = (id, status, date, employee = 7) => ({
   object: null, equipment: null, priority: "Середній",
 });
 const fixtures = {
-  warehouse_items: Array.from({ length: 12 }, (_, index) => ({ id: index + 1, name: `Матеріал ${index}`, quantity: 0, unit: "шт", min_quantity: 3 })),
+  warehouse_items: Array.from({ length: 12 }, (_, index) => ({
+    id: index + 1, name: `Матеріал ${index}`,
+    quantity: index < 5 ? 0 : index < 9 ? 2 : 10,
+    unit: "шт", min_quantity: 3,
+  })),
   equipment: [equipment(1, "2026-09-18", 101), equipment(2, today), equipment(3, "2026-09-24"), equipment(4, null, 101)],
   objects: [{ id: 1, name: "Один", status: "В роботі" }, { id: 2, name: "Два", status: "На постійному обслуговуванні" }, { id: 3, name: "Три", status: "Під періодичним наглядом" }, { id: 4, name: "Готово", status: "Завершено" }],
   object_tasks: [task(1, "Заплановано", today), task(2, "В роботі", "2026-09-18"), task(3, "Виконано", today), task(4, "Заплановано", null, 8), ...Array.from({ length: 8 }, (_, i) => task(10 + i, "Заплановано", today))],
@@ -53,9 +57,42 @@ const fixtures = {
 
 function fixture(role = "worker", options = {}) {
   const requests = [];
+  const rpcRequests = [];
   let authCalls = 0;
   const profile = role ? { id: "auth-uuid", role, employee_id: options.unlinked ? null : 7, full_name: "Ім’я" } : null;
-  const client = { from(table) {
+  const client = { rpc(name, args) {
+    rpcRequests.push({ name, args });
+    const response = {
+      overrideTypes() { return response; },
+      then(done, reject) {
+        let data;
+        if (name === "get_warehouse_stock_summary") {
+          const rows = options.empty ? [] : fixtures.warehouse_items;
+          const out = rows.filter((row) => row.quantity <= 0).length;
+          const low = rows.filter((row) => row.quantity > 0 && row.min_quantity != null && row.quantity <= row.min_quantity).length;
+          data = [{ out_of_stock_count: out, low_stock_count: low, attention_count: out + low }];
+        } else if (name === "get_equipment_maintenance_summary") {
+          const rows = options.empty ? [] : fixtures.equipment;
+          const states = rows.map((row) => {
+            const dateOverdue = row.maintenance_interval_days > 0 && row.next_service_date != null && row.next_service_date < args.p_business_date;
+            const dateToday = row.maintenance_interval_days > 0 && row.next_service_date === args.p_business_date;
+            const dateUpcoming = row.maintenance_interval_days > 0 && row.next_service_date > args.p_business_date && row.next_service_date <= "2026-09-26";
+            const usageDue = ["hours", "km"].includes(row.usage_type) && row.maintenance_interval_usage > 0 && row.next_maintenance_usage >= 0 && row.current_usage >= 0 && row.current_usage >= row.next_maintenance_usage;
+            return { dateOverdue, dueNow: !dateOverdue && (usageDue || dateToday), upcoming: !dateOverdue && !usageDue && dateUpcoming, usageDue };
+          });
+          data = [{
+            overdue_count: states.filter((state) => state.dateOverdue).length,
+            due_now_count: states.filter((state) => state.dueNow).length,
+            upcoming_7_count: states.filter((state) => state.upcoming).length,
+            usage_due_count: states.filter((state) => state.usageDue).length,
+            attention_count: states.filter((state) => state.dateOverdue || state.dueNow || state.upcoming).length,
+          }];
+        } else data = [];
+        return Promise.resolve({ data, error: options.fail === name ? { message: "private failure details" } : null }).then(done, reject);
+      },
+    };
+    return response;
+  }, from(table) {
     const request = { table, filters: [], limit: null, orders: [], select: "", options: {} }; requests.push(request);
     const compare = (column, value, fn) => { request.filters.push((row) => row[column] != null && fn(row[column], value)); return query; };
     const query = {
@@ -96,20 +133,22 @@ function fixture(role = "worker", options = {}) {
     "@/lib/auth/requireAccess": { requireSectionAccess: async () => { authCalls++; if (!profile) throw new Error("AUTH_REDIRECT"); return profile; } },
     "@/lib/kyivDate": { ...loader({})("lib/kyivDate.ts"), getKyivDateValue: () => today },
   });
-  return { requests, load, service: load("services/dashboardService.ts"), authCalls: () => authCalls };
+  return { requests, rpcRequests, load, service: load("services/dashboardService.ts"), authCalls: () => authCalls };
 }
 
 test("worker dashboard: operational tables only, no Activity/mutation/management queries, bounded rows and exact counts", async () => {
-  const { service, requests, authCalls } = fixture();
+  const { service, requests, rpcRequests, authCalls } = fixture();
   const [summary, preview, warehouse, equipment, objects, activity] = await Promise.all([
     service.getDashboardTasksSummary(), service.getDashboardTasksPreview("today"), service.getDashboardWarehouse(),
     service.getDashboardEquipment(), service.getDashboardObjects(), service.getDashboardActivity(),
   ]);
   assert.equal(summary.today, 9); assert.equal(preview.tasks.length, 5);
-  assert.equal(warehouse.out, 12); assert.equal(warehouse.items.length, 5);
-  assert.deepEqual([equipment.overdue, equipment.today, equipment.upcoming], [1, 1, 1]);
+  assert.deepEqual([warehouse.out, warehouse.low, warehouse.attention], [5, 4, 9]); assert.equal(warehouse.items.length, 5);
+  assert.deepEqual([equipment.overdue, equipment.dueNow, equipment.upcoming, equipment.usageDue, equipment.attention], [1, 2, 1, 2, 4]);
   assert.equal(objects.total, 3); assert.equal(activity, null); assert.equal(authCalls(), 1);
   assert.ok(requests.every((r) => ["object_tasks", "warehouse_items", "equipment", "objects"].includes(r.table)));
+  assert.deepEqual(rpcRequests.map((request) => request.name).sort(), ["get_equipment_maintenance_summary", "get_warehouse_stock_summary"]);
+  assert.deepEqual(rpcRequests.find((request) => request.name === "get_equipment_maintenance_summary").args, { p_business_date: today });
   for (const request of requests) {
     assert.doesNotMatch(request.select, /\*|cost|price|metadata|hourly_rate|checklist_items/);
     if (!request.options.head) assert.equal(request.limit, 5);
@@ -156,17 +195,18 @@ test("date reuse, absent employee mapping and server-side today/overdue preview 
   assert.equal(requests.at(-1).limit, 5);
 });
 
-test("warehouse stock and equipment usage/date evaluations reuse canonical helpers without claiming usage-only totals", async () => {
-  const { service, load, requests } = fixture();
+test("warehouse and equipment summaries preserve canonical LOW/OUT and combined maintenance semantics", async () => {
+  const { service, load, requests, rpcRequests } = fixture();
   const warehouse = await service.getDashboardWarehouse();
   const { getWarehouseStockStatus } = load("lib/warehouseStock.ts");
   for (const row of warehouse.items) assert.equal(row.stockStatus, getWarehouseStockStatus(row));
-  assert.equal("low" in warehouse, false);
+  assert.deepEqual({ out: warehouse.out, low: warehouse.low, attention: warehouse.attention }, { out: 5, low: 4, attention: 9 });
   const equipment = await service.getDashboardEquipment();
   assert.equal(equipment.items.find((item) => item.id === 1).usageDue, true);
-  assert.equal(equipment.items.some((item) => item.id === 4), false); // usage-only intentionally excluded from DATE preview
-  assert.equal("totalDue" in equipment, false);
+  assert.equal(equipment.items.some((item) => item.id === 4), false); // The bounded preview remains date-ordered.
+  assert.deepEqual({ overdue: equipment.overdue, dueNow: equipment.dueNow, upcoming: equipment.upcoming, usageDue: equipment.usageDue }, { overdue: 1, dueNow: 2, upcoming: 1, usageDue: 2 });
   assert.ok(requests.every((request) => request.options.head || request.limit === 5));
+  assert.equal(rpcRequests.length, 2);
 });
 
 async function renderSection(current, name) {
@@ -179,8 +219,8 @@ test("empty states are scope-honest and do not promise all usage/stock issues ar
   const current = fixture("admin", { empty: true });
   const cases = [
     ["DashboardOverdueTasks", "Прострочених завдань немає"],
-    ["DashboardWarehouseAttention", "Матеріалів із нульовим або від’ємним залишком немає"],
-    ["DashboardEquipmentAttention", "Лічильники лише за датою"],
+    ["DashboardWarehouseAttention", "Запаси не потребують уваги"],
+    ["DashboardEquipmentAttention", "Планового ТО, що потребує уваги, немає"],
     ["DashboardObjectsOverview", "Активних об’єктів поки немає"],
     ["DashboardRecentActivity", "Записів у журналі дій поки немає"],
   ];
@@ -220,4 +260,30 @@ test("Sidebar keeps Notifications navigation without eagerly loading Notificatio
   assert.doesNotMatch(sidebar, /getNotificationCenter|notificationCenter|services\/notificationService/);
   const notificationsPage = readFileSync("app/notifications/page.tsx", "utf8");
   assert.match(notificationsPage, /getNotificationCenter\(\)/);
+});
+
+test("Dashboard 3.0B SQL is operational-only, exact, role-safe and aligned with canonical predicates", () => {
+  const deploy = readFileSync("database/dashboard-3.0b-operational-metrics-pre-deploy.sql", "utf8");
+  assert.match(deploy, /quantity <= 0/);
+  assert.match(deploy, /quantity > 0[\s\S]*min_quantity is not null[\s\S]*quantity <= min_quantity/);
+  assert.match(deploy, /current_usage >= next_maintenance_usage/);
+  assert.match(deploy, /not date_overdue[\s\S]*usage_due or date_today/);
+  assert.match(deploy, /security invoker/gi);
+  assert.match(deploy, /set search_path = ''/g);
+  assert.match(deploy, /grant execute[\s\S]*to authenticated, service_role/g);
+  assert.doesNotMatch(deploy, /service_record|purchase_price|unit_cost|total_cost/);
+  const audit = readFileSync("database/dashboard-3.0b-operational-metrics-production-audit.sql", "utf8");
+  assert.match(audit, /DASHBOARD_3_0B_AUDIT_SUMMARY/);
+  assert.match(audit, /set transaction read only/);
+});
+
+test("Dashboard header is concise while Kyiv remains the internal business timezone", () => {
+  const page = readFileSync("app/page.tsx", "utf8");
+  assert.match(page, />Оперативний огляд</);
+  assert.match(page, /formatLongDateValue\(today\)/);
+  assert.doesNotMatch(page, /Вітаємо|· Київ/);
+  const dates = readFileSync("lib/kyivDate.ts", "utf8");
+  assert.match(dates, /Europe\/Kyiv/);
+  const { formatLongDateValue } = loader({})("lib/kyivDate.ts");
+  assert.equal(formatLongDateValue(today), "19 вересня 2026");
 });

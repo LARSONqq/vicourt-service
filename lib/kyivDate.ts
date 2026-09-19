@@ -290,3 +290,25 @@ export function formatDateValue(
 
   return `${day}.${month}.${year}`;
 }
+
+export function formatLongDateValue(
+  value: string | null
+) {
+  const date = value
+    ? getUtcDate(value)
+    : null;
+
+  if (!date) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat(
+    "uk-UA",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }
+  ).format(date).replace(/\s*р\.$/, "");
+}

@@ -10,6 +10,8 @@ import { evaluateEquipmentMaintenance, getEquipmentMaintenanceOverallLabel } fro
 import { PERIODIC_SUPERVISION_STATUS } from "@/lib/objectSupervision";
 import { getTaskDashboardSummary, getTaskDashboardPreview } from "@/services/taskWorkspaceService";
 import { getRecentActivityPreview } from "@/services/activityLogService";
+import { getWarehouseStockSummary } from "@/services/warehouseStockSummaryService";
+import { getEquipmentMaintenanceSummary } from "@/services/equipmentMaintenanceSummaryService";
 import type { Equipment } from "@/types/equipment";
 import type { DashboardPermissions } from "@/types/dashboard";
 
@@ -49,15 +51,14 @@ export async function getDashboardTasksPreview(view: "today" | "overdue") {
 export async function getDashboardWarehouse() {
   await sectionContext("warehouse");
   const supabase = await createClient();
-  const [count, preview] = await Promise.all([
-    supabase.from("warehouse_items").select("id", { count: "exact", head: true }).lte("quantity", 0),
+  const [summary, preview] = await Promise.all([
+    getWarehouseStockSummary(),
     supabase.from("warehouse_items").select("id, name, quantity, unit, min_quantity")
       .lte("quantity", 0).order("quantity").order("id").limit(5)
       .overrideTypes<{ id: number; name: string; quantity: number; unit: string; min_quantity: number | null }[], { merge: false }>(),
   ]);
-  if (count.error || preview.error) throw new Error("Не вдалося завантажити залишки складу.");
-  // No low-stock count: column comparison requires DB support, not a directory scan.
-  return { out: count.count ?? 0, items: (preview.data ?? []).map((item) => ({ ...item, stockStatus: getWarehouseStockStatus(item) })) };
+  if (preview.error) throw new Error("Не вдалося завантажити залишки складу.");
+  return { ...summary, items: (preview.data ?? []).map((item) => ({ ...item, stockStatus: getWarehouseStockStatus(item) })) };
 }
 
 type MaintenancePreview = Pick<Equipment, "id" | "name" | "next_service_date" | "maintenance_interval_days" | "usage_type" | "current_usage" | "maintenance_interval_usage" | "next_maintenance_usage">;
@@ -66,18 +67,16 @@ export async function getDashboardEquipment() {
   const { today } = await sectionContext("equipment");
   const horizon = addDaysToDateValue(today, 7);
   const supabase = await createClient();
-  const [overdue, dueToday, upcoming, preview] = await Promise.all([
-    supabase.from("equipment").select("id", { count: "exact", head: true }).lt("next_service_date", today),
-    supabase.from("equipment").select("id", { count: "exact", head: true }).eq("next_service_date", today),
-    supabase.from("equipment").select("id", { count: "exact", head: true }).gt("next_service_date", today).lte("next_service_date", horizon),
+  const [summary, preview] = await Promise.all([
+    getEquipmentMaintenanceSummary(today),
     supabase.from("equipment")
       .select("id, name, next_service_date, maintenance_interval_days, usage_type, current_usage, maintenance_interval_usage, next_maintenance_usage")
-      .lte("next_service_date", horizon).order("next_service_date").order("id").limit(5)
+      .gt("maintenance_interval_days", 0).lte("next_service_date", horizon)
+      .order("next_service_date").order("id").limit(5)
       .overrideTypes<MaintenancePreview[], { merge: false }>(),
   ]);
-  if ([overdue, dueToday, upcoming, preview].some((result) => result.error)) throw new Error("Не вдалося завантажити план ТО.");
-  // Counts are explicitly DATE-scoped. Usage-only global due counts are unavailable.
-  return { overdue: overdue.count ?? 0, today: dueToday.count ?? 0, upcoming: upcoming.count ?? 0,
+  if (preview.error) throw new Error("Не вдалося завантажити план ТО.");
+  return { ...summary,
     items: (preview.data ?? []).map((item) => {
       const evaluation = evaluateEquipmentMaintenance(item, today);
       return { id: item.id, name: item.name, date: item.next_service_date,

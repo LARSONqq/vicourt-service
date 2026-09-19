@@ -6,19 +6,18 @@ import {
   DashboardWarehouseAttention, DashboardEquipmentAttention, DashboardObjectsOverview, DashboardRecentActivity,
 } from "@/components/dashboard/OperationalDashboard";
 import { getDashboardContext } from "@/services/dashboardService";
-import { formatDateValue } from "@/lib/kyivDate";
+import { formatLongDateValue } from "@/lib/kyivDate";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   // Only auth blocks the header. Independent widgets stream under their own boundaries.
-  const { profile, permissions, today, activityVisible } = await getDashboardContext();
+  const { permissions, today, activityVisible } = await getDashboardContext();
   return <div className="min-w-0 space-y-6">
     <header className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="min-w-0">
-        <h1 className="break-words text-2xl font-bold text-gray-900 sm:text-3xl">Головна</h1>
-        <p className="mt-1 break-words text-gray-600">{profile.full_name ? `Вітаємо, ${profile.full_name}!` : "Вітаємо у ViCourt!"}</p>
-        <p className="mt-1 text-sm text-gray-500">Оперативний огляд · {formatDateValue(today)} · Київ</p>
+        <h1 className="break-words text-2xl font-bold text-gray-900 sm:text-3xl">Оперативний огляд</h1>
+        <p className="mt-1 text-sm text-gray-500">{formatLongDateValue(today)}</p>
       </div>
       <DashboardQuickActions permissions={permissions} />
     </header>

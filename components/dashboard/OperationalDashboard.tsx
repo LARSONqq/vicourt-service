@@ -102,34 +102,38 @@ export function DashboardOverdueTasks() {
 
 export function DashboardWarehouseAttention() {
   return <DashboardSection title="Склад" subtitle="Увага до залишків" href="/warehouse" load={getDashboardWarehouse}>{(data) => <>
-    <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 sm:px-4">
-      <Link href="/warehouse?stock=out" className="inline-flex min-h-11 items-center text-sm text-gray-600 hover:text-green-700">Закінчилось <strong className="ml-2 text-xl text-gray-900 tabular-nums">{data.out}</strong></Link>
-      <Link href="/warehouse?stock=low" className={linkClass}>Перевірити низькі залишки →</Link>
+    <div className="grid grid-cols-2 gap-2 text-sm">
+      <Link href="/warehouse?stock=out" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-red-200 sm:px-3 ${data.out > 0 ? "bg-red-50" : "bg-gray-50"}`}>
+        <span className="break-words text-xs leading-4 text-gray-600 sm:text-sm">Закінчилось</span><strong className="mt-auto pt-1 text-xl font-semibold tabular-nums">{data.out}</strong>
+      </Link>
+      <Link href="/warehouse?stock=low" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-orange-200 sm:px-3 ${data.low > 0 ? "bg-orange-50" : "bg-gray-50"}`}>
+        <span className="break-words text-xs leading-4 text-gray-600 sm:text-sm">Мало</span><strong className="mt-auto pt-1 text-xl font-semibold tabular-nums">{data.low}</strong>
+      </Link>
     </div>
-    {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>Матеріалів із нульовим або від’ємним залишком немає.</p> : <ul className={compactListClass}>
+    {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>{data.attention === 0 ? "Запаси не потребують уваги." : "Є низькі залишки. Відкрийте Склад для повного списку."}</p> : <ul className={compactListClass}>
       {data.items.map((item) => <li key={item.id}><Link href={`/warehouse/${item.id}`} className={`${compactLinkClass} flex items-center justify-between gap-3`}>
         <span className="min-w-0"><span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">{Number(item.quantity).toLocaleString("uk-UA")} {item.unit}</span></span>
         <span className={`shrink-0 rounded-full px-2 py-1 text-xs ${warehouseStockPresentation[item.stockStatus].badgeClass}`}>{warehouseStockPresentation[item.stockStatus].label}</span>
       </Link></li>)}
     </ul>}
-    <p className={`${mutedClass} mt-auto border-t pt-3`}>До 5 позицій без запасу. Повний огляд низьких залишків — у Складі.</p>
+    <p className={`${mutedClass} mt-auto border-t pt-3`}>Точні показники по всьому складу. У списку — до 5 позицій без запасу.</p>
   </>}</DashboardSection>;
 }
 
 export function DashboardEquipmentAttention() {
-  return <DashboardSection title="Техніка" subtitle="План ТО за датою" href="/equipment" load={getDashboardEquipment}>{(data) => <>
+  return <DashboardSection title="Техніка" subtitle="ТО за датою та напрацюванням" href="/equipment" load={getDashboardEquipment}>{(data) => <>
     <dl className="grid grid-cols-3 gap-2 text-sm">
-      {[["Прострочено", data.overdue], ["Сьогодні", data.today], ["За 7 днів", data.upcoming]].map(([label, count]) => <div key={label} className="flex min-h-16 min-w-0 flex-col rounded-lg bg-gray-50 p-2 sm:px-3">
+      {[["Прострочено", data.overdue], ["Потрібне зараз", data.dueNow], ["За 7 днів", data.upcoming]].map(([label, count]) => <div key={label} className="flex min-h-16 min-w-0 flex-col rounded-lg bg-gray-50 p-2 sm:px-3">
         <dt className="break-words text-xs leading-4 text-gray-600 sm:text-sm">{label}</dt><dd className="mt-auto pt-1 text-xl font-semibold tabular-nums">{count}</dd>
       </div>)}
     </dl>
-    {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>ТО за датою до кінця найближчих 7 днів не заплановано; прострочених дат немає.</p> : <ul className={compactListClass}>
+    {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>{data.attention === 0 ? "Планового ТО, що потребує уваги, немає." : "Є техніка, що потребує ТО за напрацюванням. Відкрийте розділ Техніка для деталей."}</p> : <ul className={compactListClass}>
       {data.items.map((item) => <li key={item.id}><Link href={`/equipment/${item.id}`} className={`${compactLinkClass} flex items-center justify-between gap-3`}>
         <span className="min-w-0"><span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">{formatDateValue(item.date)}</span></span>
         <span className={`shrink-0 rounded-full px-2 py-1 text-right text-xs ${item.usageDue ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-700"}`}>{item.usageDue ? "Поріг напрацювання" : item.label}</span>
       </Link></li>)}
     </ul>}
-    <div className="mt-auto border-t pt-3"><p className={mutedClass}>До 5 найближчих або прострочених дат. Лічильники лише за датою.</p><Link href="/tasks?view=all&status=open&source=equipment_maintenance" className={linkClass}>Усі відкриті завдання ТО →</Link></div>
+    <div className="mt-auto border-t pt-3"><p className={mutedClass}>Точні показники враховують дату й поріг напрацювання. У списку — до 5 записів за датою.</p><Link href="/tasks?view=all&status=open&source=equipment_maintenance" className={linkClass}>Усі відкриті завдання ТО →</Link></div>
   </>}</DashboardSection>;
 }
 
