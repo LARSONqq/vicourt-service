@@ -161,57 +161,38 @@ export default function TodayTasksSection({
 
   if (localTasks.length === 0) {
     return (
-      <section className="flex flex-col gap-4 rounded-xl border bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <div className="flex items-start gap-3 sm:items-center">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-700">
-            ✓
-          </div>
-
+      <section className="flex h-full min-h-56 min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
+        <div className="flex min-h-20 items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
           <div className="min-w-0">
-            <h2 className="font-semibold text-gray-800">
-              У цьому огляді завдань немає
-            </h2>
-
+            <h2 className="break-words text-lg font-semibold">Завдання на сьогодні</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Перевірте повний список завдань на сьогодні
+              До 5 відкритих завдань
             </p>
           </div>
+          <Link href={taskDashboardLinks.today} className="inline-flex min-h-10 shrink-0 items-center py-2 text-sm font-medium text-green-700 hover:underline">Переглянути всі →</Link>
         </div>
-
-        <Link
-          href={taskDashboardLinks.today}
-          className="text-sm font-medium text-green-700 hover:underline"
-        >
-          Усі на сьогодні
-        </Link>
+        <div className="flex flex-1 items-center justify-center p-4 text-center sm:p-5">
+          <div><div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-green-50 text-green-700">✓</div><p className="mt-3 text-sm text-gray-500">На сьогодні термінових задач немає.</p></div>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
-      <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <section className="flex h-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
+      <div className="flex min-h-20 items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <h2 className="text-lg font-semibold">
-              Завдання на сьогодні
-            </h2>
-
-            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-              Показано: {localTasks.length}
-            </span>
-          </div>
-
+          <h2 className="break-words text-lg font-semibold">Завдання на сьогодні</h2>
           <p className="mt-1 text-sm text-gray-500">
-            До 5 відкритих завдань на сьогодні
+            Показано: {localTasks.length} · до 5 відкритих
           </p>
         </div>
 
         <Link
           href={taskDashboardLinks.today}
-          className="w-fit text-sm font-medium text-green-700 hover:underline"
+          className="inline-flex min-h-10 shrink-0 items-center py-2 text-sm font-medium text-green-700 hover:underline"
         >
-          Усі на сьогодні →
+          Переглянути всі →
         </Link>
       </div>
 
@@ -221,7 +202,7 @@ export default function TodayTasksSection({
         </div>
       )}
 
-      <div className="divide-y">
+      <div className="flex-1 divide-y">
         {localTasks
           .slice(0, 5)
           .map((task) => {
@@ -243,57 +224,35 @@ export default function TodayTasksSection({
             return (
               <article
                 key={task.id}
-                className="min-w-0 p-4 transition hover:bg-gray-50 sm:px-5"
+                className="min-w-0 px-3 py-3 transition hover:bg-gray-50 sm:px-4"
               >
-                <div className="flex flex-col gap-3">
+                <div className="flex min-w-0 flex-col gap-2">
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-start gap-2">
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <Link
                         href={`/tasks/${task.id}`}
-                        className="min-w-0 break-words font-medium hover:text-green-700 hover:underline"
+                        className="min-w-0 flex-1 break-words font-medium hover:text-green-700 hover:underline sm:line-clamp-2"
                       >
                         {task.title}
                       </Link>
-
-                      <span
-                        className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${getPriorityStyle(
-                          priority
-                        )}`}
-                      >
-                        {priority}
-                      </span>
-
-                      <span
-                        className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${getStatusStyle(
-                          task.status
-                        )}`}
-                      >
-                        {task.status}
-                      </span>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${getPriorityStyle(priority)}`}>{priority}</span>
+                        <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${getStatusStyle(task.status)}`}>{task.status}</span>
+                      </div>
                     </div>
 
-                    {task.task_source === EQUIPMENT_MAINTENANCE_TASK_SOURCE && (
-                      <div className="mt-2">
-                        <EquipmentMaintenanceTaskBadge compact />
-                      </div>
-                    )}
-
-                    {task.task_source === SUPERVISION_TASK_SOURCE && (
-                      <div className="mt-2">
-                        <SupervisionTaskBadge compact />
-                      </div>
-                    )}
-
-                    {task.task_template_id !== null && (
-                      <div className="mt-2">
-                        <RecurringTaskBadge compact />
+                    {(task.task_source === EQUIPMENT_MAINTENANCE_TASK_SOURCE || task.task_source === SUPERVISION_TASK_SOURCE || task.task_template_id !== null) && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {task.task_source === EQUIPMENT_MAINTENANCE_TASK_SOURCE && <EquipmentMaintenanceTaskBadge compact />}
+                        {task.task_source === SUPERVISION_TASK_SOURCE && <SupervisionTaskBadge compact />}
+                        {task.task_template_id !== null && <RecurringTaskBadge compact />}
                       </div>
                     )}
 
                     {target ? (
                       <Link
                         href={target.href}
-                        className="mt-1 block break-words text-sm text-gray-500 hover:text-green-700 hover:underline"
+                        className="mt-1 block break-words text-sm text-gray-500 hover:text-green-700 hover:underline sm:line-clamp-1"
                       >
                         {target.type === "equipment" ? "🔧" : "📍"} {target.name}
                       </Link>
@@ -304,7 +263,7 @@ export default function TodayTasksSection({
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-xs text-gray-400">
                         {formatDateValue(task.due_date)} · Відповідальний
@@ -315,7 +274,7 @@ export default function TodayTasksSection({
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
                       <RescheduleTaskButton
                         taskId={task.id}
                         currentDate={task.due_date}
