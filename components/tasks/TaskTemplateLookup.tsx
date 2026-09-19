@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { searchTemplateOptions } from "@/app/actions/taskTemplateLookupActions";
 import type { TemplateLookupKind, TemplateOption } from "@/types/taskTemplateWorkspace";
 
@@ -14,9 +14,32 @@ export default function TaskTemplateLookup({ kind, label, value, onChange, initi
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [pending, setPending] = useState(false);
+  const [pending, setPending] = useState(kind === "employee");
   const [error, setError] = useState("");
-  const lock = useRef(false);
+  const lock = useRef(kind === "employee");
+  const initialRequest = useRef<ReturnType<typeof searchTemplateOptions> | null>(null);
+
+  useEffect(() => {
+    if (kind !== "employee") return;
+    let mounted = true;
+    // This picker mounts only when a management form opens. Fetch one page,
+    // not the directory; retain the current assignee even if outside this page.
+    // Reuse the promise when Strict Mode replays the effect.
+    initialRequest.current ??= searchTemplateOptions("employee", "", 1);
+    void initialRequest.current.then((result) => {
+      if (!mounted) return;
+      if (!result.ok) { setError(result.error); return; }
+      setOptions(result.options);
+      setHasMore(result.hasMore);
+      setLoaded(true);
+    }).catch(() => {
+      if (mounted) setError("Не вдалося завантажити працівників. Спробуйте пошук ще раз.");
+    }).finally(() => {
+      if (mounted) { lock.current = false; setPending(false); }
+    });
+    return () => { mounted = false; };
+  }, [kind]);
+
   async function load(query: string, nextPage: number) {
     if (lock.current) return;
     lock.current = true; setPending(true); setError("");
@@ -43,7 +66,7 @@ export default function TaskTemplateLookup({ kind, label, value, onChange, initi
       {page > 1 && <button type="button" disabled={pending} onClick={() => void load(loadedSearch, page - 1)} className="min-h-10 rounded-lg border px-3">Назад</button>}
       {hasMore && <button type="button" disabled={pending} onClick={() => void load(loadedSearch, page + 1)} className="min-h-10 rounded-lg border px-3">Далі</button>}
     </div>
-    <p className="text-xs text-gray-500">{loaded && !options.length ? "Нічого не знайдено." : "До 20 результатів. Оберіть потрібний запис у списку після пошуку."}</p>
+    <p role="status" className="text-xs text-gray-500">{pending ? "Завантаження варіантів…" : loaded && !options.length ? "Нічого не знайдено." : "До 20 результатів. Оберіть запис у списку або уточніть пошук."}</p>
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
   </div>;
 }
