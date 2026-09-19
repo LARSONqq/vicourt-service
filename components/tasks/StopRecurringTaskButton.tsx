@@ -32,7 +32,7 @@ export default function StopRecurringTaskButton({
     if (submitLock.current) return;
 
     const confirmed = window.confirm(
-      `Зупинити повторення «${taskTitle}»?\n\nПоточне незавершене завдання залишиться як разове. Нові повторення більше не створюватимуться.`
+      `Зупинити повторення «${taskTitle}»?\n\nНові повторення більше не створюватимуться. Поточне незавершене завдання залишиться як разове. Завершена історія збережеться.`
     );
 
     if (!confirmed) return;

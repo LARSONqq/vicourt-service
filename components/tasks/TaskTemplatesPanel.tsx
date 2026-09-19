@@ -6,7 +6,7 @@ import { activateTaskTemplateSeriesAction, createTaskFromTemplateAction, createT
 import TaskRecurrenceFields from "@/components/tasks/TaskRecurrenceFields";
 import TaskTemplateLookup from "@/components/tasks/TaskTemplateLookup";
 import StopRecurringTaskButton from "@/components/tasks/StopRecurringTaskButton";
-import { isBoundTemplate } from "@/lib/taskTemplateWorkspace";
+import { isBoundTemplate, recurringTaskCopy } from "@/lib/taskTemplateWorkspace";
 import { taskMutationMessage } from "@/lib/taskDetail";
 import { workspaceTaskPriorities } from "@/lib/taskWorkspace";
 import type { TaskTemplateView } from "@/types/taskTemplateWorkspace";
@@ -88,7 +88,7 @@ export default function TaskTemplatesPanel({ template }: { template?: TaskTempla
       {bound && !template.is_active && <p className="w-full text-sm text-gray-500">Серію зупинено. Повторна активація цієї серії не підтримується; створіть нову серію. Історію збережено.</p>}
     </div>}
     {mode !== null && <form onSubmit={submit} className="min-w-0 space-y-4">
-      <h2 className="font-semibold">{using ? "Використати шаблон" : template ? "Редагування визначення" : "Новий шаблон / серія"}</h2>
+      <h2 className="font-semibold">{using ? "Використати шаблон" : template ? "Редагування правила та налаштувань" : "Налаштування повторення"}</h2>
       <p className="rounded-lg bg-teal-50 p-3 text-sm text-teal-900">{using
         ? template?.recurrence_type === "none" ? "Буде створено одне разове завдання без повторення." : "Буде створено окрему серію для вибраної цілі та одне актуальне повторення. Далі завдання створюються після виконання поточного. Якщо активна серія для цієї цілі вже існує, відкриється вона."
         : template?.is_active ? "Зміни вплинуть на правило серії та поточне незавершене завдання, включно з перерахунком його дати. Завершені завдання не зміняться. Ціль серії незмінна."
@@ -103,12 +103,12 @@ export default function TaskTemplatesPanel({ template }: { template?: TaskTempla
           </div>
           {!template && <label className="block text-sm">Тип цілі<select value={targetType} onChange={(event) => { setTargetType(event.target.value as TaskTargetType); setTarget(""); }} className="mt-1 min-h-11 w-full rounded-lg border bg-white px-3 py-2"><option value="object">Об’єкт</option><option value="equipment">Техніка</option></select></label>}
           <TaskRecurrenceFields idPrefix="template" templateDefinition allowNone={!active && !template?.is_active} value={recurrence} customInterval={interval} onChange={setRecurrence} onCustomIntervalChange={setInterval} />
-          {!template && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={active} disabled={recurrence === "none"} onChange={(event) => setActive(event.target.checked)} />Одразу запустити серію для обраної цілі</label>}
+          {!template && <div><label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={active} disabled={recurrence === "none"} onChange={(event) => setActive(event.target.checked)} />Одразу запустити серію для обраної цілі</label><p className="text-xs text-gray-500">Без цієї позначки збережеться лише шаблон — завдання ще не створюватимуться.</p></div>}
         </>}
         {(using || active) && <TaskTemplateLookup key={targetType} kind={targetType} label={targetType === "object" ? "Об’єкт" : "Техніка"} value={target} onChange={setTarget} required />}
         {(recurrence !== "none" || using) && <label className="block text-sm">{recurrence === "none" ? "Термін разового завдання" : "Опорна дата серії"}<input type="date" value={date} required={recurrence !== "none" && (active || using || template?.is_active)} onChange={(event) => setDate(event.target.value)} className="mt-1 min-h-11 w-full min-w-0 rounded-lg border px-3 py-2" /></label>}
         {using && template?.recurrence_type === "none" && <TaskTemplateLookup kind="employee" label="Відповідальний" emptyLabel="Як у шаблоні" value={useEmployee} onChange={setUseEmployee} />}
-        <div className="flex flex-wrap gap-2"><button type="submit" className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-white">{pending ? "Збереження…" : using ? "Створити" : "Зберегти"}</button><button type="button" onClick={() => template ? setMode(null) : router.push("/tasks/templates")} className="min-h-11 rounded-lg border px-4 py-2">Скасувати</button></div>
+        <div className="flex flex-wrap gap-2"><button type="submit" className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-white">{pending ? "Збереження…" : using ? "Створити" : template ? "Зберегти зміни" : active ? recurringTaskCopy.create : "Зберегти шаблон"}</button><button type="button" onClick={() => template ? setMode(null) : router.push("/tasks/templates")} className="min-h-11 rounded-lg border px-4 py-2">Скасувати</button></div>
       </fieldset>
     </form>}
   </section>;

@@ -12,6 +12,18 @@ export type TaskWorkspaceFilters = {
 };
 export const TASK_WORKSPACE_PAGE_SIZE = 20;
 
+export function taskWorkspaceEmptyMessage(filters: TaskWorkspaceFilters) {
+  if (Object.entries(filters).some(([key, value]) => key !== "view" && Boolean(value))) return "За цими умовами завдань немає. Змініть пошук або очистіть фільтри.";
+  switch (filters.view) {
+    case "my": return "Вам ще не призначено завдань.";
+    case "today": return "На сьогодні відкритих завдань немає.";
+    case "overdue": return "Прострочених завдань немає.";
+    case "upcoming": return "Майбутніх відкритих завдань поки немає.";
+    case "completed": return "Завершених завдань поки немає.";
+    default: return "Завдань поки немає.";
+  }
+}
+
 export function taskQueryValue(value: string | string[] | undefined) {
   return (Array.isArray(value) ? value[0] : value) ?? "";
 }

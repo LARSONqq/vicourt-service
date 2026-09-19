@@ -364,6 +364,7 @@ export default function TaskChecklist({
       <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
         <input
           type="text"
+          aria-label="Новий пункт чекліста"
           value={newItemTitle}
           disabled={isAdding || pendingItemId !== null || isLoading}
           onChange={(event) =>
@@ -446,7 +447,7 @@ export default function TaskChecklist({
                         item
                       )
                     }
-                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                       item.is_completed
                         ? "border-green-600 bg-green-600 text-white"
                         : "border-gray-300 bg-white text-transparent hover:border-green-500"
@@ -479,7 +480,8 @@ export default function TaskChecklist({
                         item
                       )
                     }
-                    className="col-start-2 w-fit rounded-md px-2 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 sm:col-start-3 sm:row-start-1"
+                    aria-label={`Видалити пункт: ${item.title}`}
+                    className="col-start-2 min-h-11 w-fit rounded-md px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 sm:col-start-3 sm:row-start-1"
                   >
                     {isPending
                       ? "..."

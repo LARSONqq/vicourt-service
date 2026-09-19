@@ -15,6 +15,7 @@ import EquipmentMaintenanceTaskBadge from "@/components/tasks/EquipmentMaintenan
 import SupervisionTaskBadge from "@/components/tasks/SupervisionTaskBadge";
 import type { TaskTemplate } from "@/types/taskTemplate";
 import { getTaskRecurrenceLabel } from "@/lib/taskRecurrence";
+import { isTaskOverdue, getTaskStatusStyle, getTaskPriorityStyle } from "@/lib/taskPresentation";
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string | string[] }> };
 type RecurrenceContext = Pick<TaskTemplate, "title" | "is_active" | "recurrence_type" | "recurrence_interval">;
@@ -39,15 +40,15 @@ export default async function TaskDetailPage({ params, searchParams }: Props) {
     recurrence = data as RecurrenceContext | null;
   }
   const target = getTaskTarget(task);
-  const overdue = Boolean(task.due_date && task.due_date < getKyivDateValue() && task.status !== "Виконано");
+  const overdue = isTaskOverdue(task, getKyivDateValue());
   const assigneeName = assignee ? `${assignee.last_name} ${assignee.first_name}` : task.assignee || "Не призначено";
   const capabilities = taskDetailCapabilities(task, profile.role);
   return <div className="min-w-0 space-y-5">
     <Link href={returnTo} className="inline-block py-2 text-sm font-medium text-green-700 hover:underline">← Назад до завдань</Link>
     <header className="min-w-0 space-y-4 rounded-xl border bg-white p-4 sm:p-6">
       <div className="flex flex-wrap gap-2 text-xs">
-        <span className={`rounded-full px-3 py-1 ${task.status === "Виконано" ? "bg-green-100 text-green-800" : "bg-blue-50 text-blue-800"}`}>{task.status}</span>
-        <span className="rounded-full bg-gray-100 px-3 py-1">{task.priority}</span>
+        <span className={`rounded-full px-3 py-1 ${getTaskStatusStyle(task.status)}`}>{task.status}</span>
+        <span className={`rounded-full px-3 py-1 ${getTaskPriorityStyle(task.priority)}`}>{task.priority}</span>
         {overdue && <span className="rounded-full bg-red-100 px-3 py-1 text-red-800">Прострочене</span>}
         {task.task_source === "manual" && <span className="rounded-full bg-gray-50 px-3 py-1">Створено вручну</span>}
         {task.task_source === "supervision" && <SupervisionTaskBadge />}
@@ -67,7 +68,7 @@ export default async function TaskDetailPage({ params, searchParams }: Props) {
       <h2 className="font-semibold">Окреме повторення серії № {task.task_template_id}</h2>
       <p>Редагування цього завдання стосується лише цього повторення, а не правила серії. Після виконання поточного завдання наступне створює сервер. Завершене повторення залишається історичним.</p>
       {recurrence && <><Link href={`/tasks/templates/${task.task_template_id}`} className="block break-words font-medium text-green-800 hover:underline">{recurrence.title} →</Link><p>Поточне правило: {getTaskRecurrenceLabel(recurrence.recurrence_type, recurrence.recurrence_interval)} · {recurrence.is_active ? "Активна серія" : "Серію зупинено"}</p><p className="text-xs text-gray-500">Правило показано станом на зараз, не на дату цього повторення. Зміна серії доступна на її окремій сторінці.</p></>}
-      {!recurrence && <p className="text-gray-600">Розклад і керування серією доступні керівнику.</p>}
+      {!recurrence && <p className="text-gray-600">{canManageTasks(profile.role) ? "Правило серії наразі недоступне. Спробуйте оновити сторінку." : "Розклад і керування серією доступні керівнику."}</p>}
     </section>}
     <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5"><h2 className="font-semibold">Опис</h2><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-gray-700">{task.description || "Опис не додано."}</p></section>
     <TaskDetailActions key={JSON.stringify([task.id, task.title, task.description, task.status, task.priority, task.due_date, task.assigned_employee_id, assigneeName])} task={task} assignee={assignee} capabilities={capabilities} />

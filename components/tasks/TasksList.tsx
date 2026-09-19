@@ -31,6 +31,7 @@ import {
 } from "@/constants/taskSource";
 import { getTaskTarget } from "@/lib/taskTarget";
 import { taskDetailHref } from "@/lib/taskDetail";
+import { isTaskOverdue, getTaskStatusStyle as getStatusStyle, getTaskPriorityStyle as getPriorityStyle } from "@/lib/taskPresentation";
 import {
   getKyivDateValue,
 } from "@/lib/kyivDate";
@@ -50,6 +51,7 @@ import type {
 } from "@/types/taskTemplate";
 
 type Props = {
+  emptyMessage?: string;
   workspaceReturnTo?: string;
   serverPaged?: boolean;
   businessDate?: string;
@@ -151,45 +153,6 @@ function formatDate(
   return `${day}.${month}.${year}`;
 }
 
-function getStatusStyle(
-  status: string
-) {
-  switch (status) {
-    case "Заплановано":
-      return "bg-blue-50 text-blue-700";
-
-    case "В роботі":
-      return "bg-yellow-50 text-yellow-700";
-
-    case "Виконано":
-      return "bg-green-100 text-green-700";
-
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-}
-
-function getPriorityStyle(
-  priority: string
-) {
-  switch (priority) {
-    case "Терміновий":
-      return "bg-red-100 text-red-700";
-
-    case "Високий":
-      return "bg-orange-100 text-orange-700";
-
-    case "Середній":
-      return "bg-violet-100 text-violet-700";
-
-    case "Низький":
-      return "bg-gray-100 text-gray-600";
-
-    default:
-      return "bg-gray-100 text-gray-600";
-  }
-}
-
 function getPriorityBorderStyle(
   priority: string
 ) {
@@ -239,19 +202,6 @@ function isTaskStatus(
     status === "Заплановано" ||
     status === "В роботі" ||
     status === "Виконано"
-  );
-}
-
-function isTaskOverdue(
-  task: TaskWithObject,
-  today: string
-) {
-  return Boolean(
-    task.due_date &&
-      task.due_date <
-        today &&
-      task.status !==
-        "Виконано"
   );
 }
 
@@ -366,6 +316,7 @@ function sortListTasks(
 }
 
 export default function TasksList({
+  emptyMessage = "Спробуйте змінити пошук або фільтри.",
   workspaceReturnTo = "/tasks",
   serverPaged = false,
   businessDate,
@@ -1973,8 +1924,7 @@ export default function TasksList({
           </p>
 
           <p className="mt-1 text-sm text-gray-500">
-            Спробуй змінити пошук або
-            фільтри.
+            {emptyMessage}
           </p>
         </div>
       ) : viewMode ===

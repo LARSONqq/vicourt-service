@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import TaskTemplatesPanel from "@/components/tasks/TaskTemplatesPanel";
 import { getTaskTemplateView, getTemplateOccurrencesPreview } from "@/services/taskTemplateWorkspaceService";
 import { parseTaskDetailId } from "@/lib/taskDetail";
-import { templateStateLabel } from "@/lib/taskTemplateWorkspace";
+import { recurringTaskCopy, templateStateLabel } from "@/lib/taskTemplateWorkspace";
 import { getTaskRecurrenceLabel } from "@/lib/taskRecurrence";
 import { formatDateValue, formatKyivTimestamp } from "@/lib/kyivDate";
 
@@ -14,7 +14,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
   if (!template) notFound();
   const occurrences = await getTemplateOccurrencesPreview(id);
   return <div className="min-w-0 space-y-5">
-    <Link href="/tasks/templates" className="inline-block py-2 text-sm text-green-700">← До шаблонів</Link>
+    <Link href="/tasks/templates" className="inline-block py-2 text-sm text-green-700">← {recurringTaskCopy.title}</Link>
     <header className="min-w-0 space-y-4 rounded-xl border bg-white p-4 sm:p-6">
       <div className="flex flex-wrap gap-2 text-sm"><span className="rounded-full bg-green-50 px-3 py-1">{templateStateLabel(template)}</span><span className="px-2 py-1">{getTaskRecurrenceLabel(template.recurrence_type, template.recurrence_interval)}</span></div>
       <h1 className="break-words text-2xl font-bold">{template.title}</h1>

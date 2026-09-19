@@ -2,6 +2,11 @@ import { taskQueryValue, type TaskWorkspaceQuery } from "@/lib/taskWorkspace";
 import type { TaskTemplate } from "@/types/taskTemplate";
 
 export const templateStatuses = { all: "Усі", active: "Активні", inactive: "Неактивні" } as const;
+export const recurringTaskCopy = {
+  title: "Повторювані задачі",
+  create: "Створити повторювану задачу",
+  description: "Створюйте задачі, які повторюються щодня, щотижня, щомісяця або через заданий інтервал. Наступне повторення з’являється після виконання поточного.",
+} as const;
 export function normalizeTemplateQuery(query: TaskWorkspaceQuery) {
   const status = taskQueryValue(query.status);
   const page = taskQueryValue(query.page);
