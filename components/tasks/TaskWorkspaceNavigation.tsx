@@ -10,7 +10,7 @@ type Props = {
 
 export default function TaskWorkspaceNavigation({ filters, counts, employees }: Props) {
   const selects = [
-    { name: "status", label: "Статус", options: workspaceTaskStatuses.map((value) => [value, value]) },
+    { name: "status", label: "Статус", options: [["open", "Відкриті"], ...workspaceTaskStatuses.map((value) => [value, value])] },
     { name: "priority", label: "Пріоритет", options: workspaceTaskPriorities.map((value) => [value, value]) },
     { name: "assignee", label: "Відповідальний", options: [["unassigned", "Без відповідального"], ...employees.map((employee) => [String(employee.id), `${employee.last_name} ${employee.first_name}`])] },
     { name: "target", label: "Зв’язок", options: [["object", "Об’єкт"], ["equipment", "Техніка"]] },

@@ -14,6 +14,8 @@ import {
   SUPERVISION_TASK_SOURCE,
 } from "@/constants/taskSource";
 import { getTaskTarget } from "@/lib/taskTarget";
+import { taskDashboardLinks } from "@/lib/taskWorkspace";
+import { formatDateValue } from "@/lib/kyivDate";
 
 import type { TaskWithObject } from "@/types/taskWithObject";
 
@@ -167,20 +169,20 @@ export default function TodayTasksSection({
 
           <div className="min-w-0">
             <h2 className="font-semibold text-gray-800">
-              Завдань на сьогодні немає
+              У цьому огляді завдань немає
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              Усі завдання виконано або перенесено
+              Перевірте повний список завдань на сьогодні
             </p>
           </div>
         </div>
 
         <Link
-          href="/calendar"
+          href={taskDashboardLinks.today}
           className="text-sm font-medium text-green-700 hover:underline"
         >
-          Відкрити календар
+          Усі на сьогодні
         </Link>
       </section>
     );
@@ -196,20 +198,20 @@ export default function TodayTasksSection({
             </h2>
 
             <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-              {localTasks.length}
+              Показано: {localTasks.length}
             </span>
           </div>
 
           <p className="mt-1 text-sm text-gray-500">
-            Активні завдання, заплановані на сьогодні
+            До 5 відкритих завдань на сьогодні
           </p>
         </div>
 
         <Link
-          href="/calendar"
+          href={taskDashboardLinks.today}
           className="w-fit text-sm font-medium text-green-700 hover:underline"
         >
-          Відкрити календар →
+          Усі на сьогодні →
         </Link>
       </div>
 
@@ -247,7 +249,7 @@ export default function TodayTasksSection({
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-start gap-2">
                       <Link
-                        href="/calendar"
+                        href={`/tasks/${task.id}`}
                         className="min-w-0 break-words font-medium hover:text-green-700 hover:underline"
                       >
                         {task.title}
@@ -305,7 +307,7 @@ export default function TodayTasksSection({
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                     <div className="min-w-0">
                       <p className="text-xs text-gray-400">
-                        Відповідальний
+                        {formatDateValue(task.due_date)} · Відповідальний
                       </p>
 
                       <p className="mt-1 break-words text-sm font-medium text-gray-700">

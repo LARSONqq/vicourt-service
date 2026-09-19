@@ -1,5 +1,7 @@
 import "server-only";
 
+import { canViewActivityLog } from "@/lib/auth/permissions";
+
 import {
   createClient as createAdminClient,
 } from "@supabase/supabase-js";
@@ -41,6 +43,21 @@ import type {
 
 const ACTIVITY_PAGE_SIZE =
   50;
+
+/** Bounded overview only; metadata/finance details remain on the Activity page. */
+export async function getRecentActivityPreview() {
+  const profile = await getCurrentUserProfile();
+  if (!profile || !canViewActivityLog(profile.role)) {
+    throw new Error("Недостатньо прав для перегляду журналу дій.");
+  }
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("activity_logs")
+    .select("id, action, entity_name, actor_name, created_at")
+    .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(5)
+    .overrideTypes<Pick<ActivityLog, "id" | "action" | "entity_name" | "actor_name" | "created_at">[], { merge: false }>();
+  if (error) throw new Error("Не вдалося завантажити останні дії.");
+  return data ?? [];
+}
 const OBJECT_ACTIVITY_PAGE_SIZE =
   25;
 const ACTOR_OPTIONS_SCAN_LIMIT =

@@ -9,8 +9,8 @@ import { getCurrentUserProfile } from "@/services/profileService";
 import { canAccessSection } from "@/lib/auth/permissions";
 import { getKyivDateValue } from "@/lib/kyivDate";
 
-function taskQuery(supabase: Awaited<ReturnType<typeof createClient>>, head = false) {
-  return supabase.from("object_tasks").select(head ? "id" : TASK_LIST_SELECT, head ? { count: "exact", head: true } : undefined);
+function taskQuery(supabase: Awaited<ReturnType<typeof createClient>>, head = false, columns: string = TASK_LIST_SELECT) {
+  return supabase.from("object_tasks").select(head ? "id" : columns, head ? { count: "exact", head: true } : undefined);
 }
 
 // Shared by workspace and future Dashboard. "Мої" includes all statuses in
@@ -28,7 +28,6 @@ function applyTaskView(query: ReturnType<typeof taskQuery>, view: TaskView, empl
 
 /** Exact, RLS-scoped operational counts; no task rows or selector/finance data.
  * Derive identity and Kyiv date on the server, never accept a caller's employee ID.
- * Does not replace the current home Dashboard UI/data flow in this phase.
  */
 export async function getTaskDashboardSummary() {
   const profile = await getCurrentUserProfile();
@@ -46,6 +45,23 @@ export async function getTaskDashboardSummary() {
     today: today.count ?? 0, overdue: overdue.count ?? 0, myOpen: myOpen.count ?? 0, open: open.count ?? 0 };
 }
 
+/** A small operational preview, sharing the workspace date/status semantics.
+ * No checklist collections, template definitions, selectors or cost queries.
+ */
+export async function getTaskDashboardPreview(view: "today" | "overdue", businessDate: string) {
+  const supabase = await createClient();
+  const query = taskQuery(supabase, false, `
+    id, object_id, equipment_id, title, description, created_at, due_date, assignee, assigned_employee_id,
+    priority, status, task_source, task_template_id, recurrence_sequence,
+    object:objects(id, name), equipment:equipment(id, name, inventory_number)
+  `);
+  const { data, error } = await applyTaskView(query, view, null, businessDate)
+    .order("due_date", { ascending: true }).order("id", { ascending: false })
+    .limit(5).overrideTypes<TaskWithObject[], { merge: false }>();
+  if (error) throw new Error("Не вдалося завантажити огляд завдань.");
+  return data ?? [];
+}
+
 // All filters/counts/ranges run under the request user's existing RLS, never service_role.
 export async function getTaskWorkspacePage(filters: TaskWorkspaceFilters, requestedPage: number, employeeId: number | null, today: string) {
   const supabase = await createClient();
@@ -57,7 +73,8 @@ export async function getTaskWorkspacePage(filters: TaskWorkspaceFilters, reques
       const term = taskSearchOperand(filters.q);
       query = query.or(`title.ilike.${term},description.ilike.${term}`);
     }
-    if (filters.status) query = query.eq("status", filters.status);
+    if (filters.status === "open") query = query.neq("status", COMPLETED_TASK_STATUS);
+    else if (filters.status) query = query.eq("status", filters.status);
     if (filters.priority) query = query.eq("priority", filters.priority);
     if (filters.assignee === "unassigned") query = query.is("assigned_employee_id", null);
     else if (filters.assignee) query = query.eq("assigned_employee_id", Number(filters.assignee));

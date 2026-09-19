@@ -37,7 +37,7 @@ export function normalizeTaskWorkspace(query: TaskWorkspaceQuery) {
     filters: {
       view: (allowed("view", Object.keys(taskViews)) || "all") as TaskView,
       q: value("q").trim().slice(0, 200),
-      status: allowed("status", workspaceTaskStatuses),
+      status: allowed("status", [...workspaceTaskStatuses, "open"]),
       priority: allowed("priority", workspaceTaskPriorities),
       assignee: assignee === "unassigned" || (/^[1-9]\d*$/.test(assignee) && Number.isSafeInteger(Number(assignee))) ? assignee : "",
       target: allowed("target", ["object", "equipment"]),
@@ -54,6 +54,13 @@ export function taskWorkspaceHref(filters: TaskWorkspaceFilters, page = 1) {
   if (page > 1) params.set("page", String(page));
   return `/tasks?${params}`;
 }
+
+export const taskDashboardLinks = {
+  today: taskWorkspaceHref(normalizeTaskWorkspace({ view: "today" }).filters),
+  overdue: taskWorkspaceHref(normalizeTaskWorkspace({ view: "overdue" }).filters),
+  myOpen: taskWorkspaceHref(normalizeTaskWorkspace({ view: "my", status: "open" }).filters),
+  open: taskWorkspaceHref(normalizeTaskWorkspace({ view: "all", status: "open" }).filters),
+};
 
 /** Quote the PostgREST OR operand and treat user wildcard characters literally. */
 export function taskSearchOperand(search: string) {
