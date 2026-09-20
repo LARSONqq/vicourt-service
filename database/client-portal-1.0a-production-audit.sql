@@ -148,16 +148,18 @@ with expected_functions(signature, source_md5, security_definer, authenticated_e
         and g.tgnargs=0 and cardinality(g.tgattr::smallint[])=1
         and a.attname='raw_app_meta_data' and not a.attisdropped
         and g.tgqual is not null
-        and regexp_replace(
-          replace(lower(pg_get_expr(g.tgqual,g.tgrelid)), '::text', ''),
-          '[[:space:]()]', '', 'g'
-        ) = 'old.raw_app_meta_data->>''account_type''isnullandnew.raw_app_meta_data->>''account_type''=anyarray[''internal'',''client'']'
+        and position(
+          'foreachrowwhenold.raw_app_meta_data->>''account_type''isnullandnew.raw_app_meta_data->>''account_type''=anyarray[''internal'',''client'']executefunction'
+          in regexp_replace(
+            replace(lower(pg_get_triggerdef(g.oid,true)), '::text', ''),
+            '[[:space:]()]', '', 'g'
+          )
+        ) > 0
     ),
     (select jsonb_build_object(
-      'definition',pg_get_triggerdef(g.oid),
-      'when_expression',pg_get_expr(g.tgqual,g.tgrelid),
-      'normalized_when_expression',regexp_replace(
-        replace(lower(pg_get_expr(g.tgqual,g.tgrelid)), '::text', ''),
+      'definition',pg_get_triggerdef(g.oid,true),
+      'normalized_definition',regexp_replace(
+        replace(lower(pg_get_triggerdef(g.oid,true)), '::text', ''),
         '[[:space:]()]', '', 'g'
       )
     ) from pg_trigger g
