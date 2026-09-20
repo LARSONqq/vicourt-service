@@ -136,7 +136,19 @@ test("provisioning is admin guarded, server-only, fixed trusted classification, 
   const service = loader({
     "@/services/clientAccessService": { requireClientAdministrator: async () => { if (!allowed) throw new Error("denied"); } },
     "@/lib/supabase/server": { createClient: async () => ({ rpc: async () => ({ data: postReady, error: null }) }) },
-    "@/lib/supabase/admin": { createServiceRoleClient: () => { adminCalls++; return { auth: { admin: { createUser: async (input) => { requests.push(input); return { data: { user: { id: "new-id", email: "not-returned", app_metadata: input.app_metadata } }, error: null }; } } } }; } },
+    "@/lib/supabase/admin": { createServiceRoleClient: () => { adminCalls++; return {
+      auth: { admin: { createUser: async (input) => { requests.push(input); return { data: { user: { id: "new-id", email: "not-returned", app_metadata: input.app_metadata } }, error: null }; } } },
+      from(table) {
+        assert.ok(["profiles", "client_profiles"].includes(table));
+        return { select(column) {
+          assert.equal(column, table === "client_profiles" ? "user_id" : "id");
+          return { eq(key, id) {
+            assert.equal(key, column); assert.equal(id, "new-id");
+            return { maybeSingle: async () => ({ data: { [column]: id }, error: null }) };
+          } };
+        } };
+      },
+    }; } },
   })("services/accountProvisioningService.ts");
   const input = { displayName: "Клієнт", email: "client@example.test", password: "correct-horse-123" };
   assert.deepEqual(await service.provisionAccount("client", input), { id: "new-id" });
@@ -236,7 +248,7 @@ test("final audit pins all reviewed function bodies and retains sequence optimiz
   const definitions = [...pre.matchAll(/create or replace function ([\s\S]*?)\nreturns [\s\S]*?as \$function\$([\s\S]*?)\$function\$;/g)];
   assert.equal(definitions.length, 12);
   for (const [, declaration, body] of definitions) {
-    const signature = declaration.replace(/\bp_\w+ /g, "").replace(/ default (?:''|1)/g, "").replace(/,\s*/g, ",");
+    const signature = declaration.replace(/\bp_\w+ /g, "").replace(/ default (?:''|1)/g, "").replace(/,\s*/g, ",").replace(/\(\s*/g, "(").replace(/\s*\)/g, ")");
     const hash = createHash("md5").update(body).digest("hex");
     assert.ok(audit.includes(`('${signature}', '${hash}'`), `Audit body hash drift: ${signature}`);
   }
@@ -251,4 +263,168 @@ test("PRE/POST do not redefine internal helpers, modify internal role constraint
   assert.doesNotMatch(pre + post, /create or replace function private\.(is_active_user|has_role|is_admin)\(/);
   assert.doesNotMatch(pre + post, /alter table public\.profiles/);
   assert.doesNotMatch(pre + post, /grant\s+[^;]*on (?:table )?public\.(objects|warehouse|employees)/);
+});
+
+test("Auth success without a client profile is not application success (INSERT before app_metadata UPDATE)", async (t) => {
+  const logs = [];
+  t.mock.method(console, "error", (...args) => logs.push(args));
+  let profileExists = false, authCalls = 0;
+  const reads = [];
+  const { provisionAccount } = loader({
+    "@/services/clientAccessService": { requireClientAdministrator: async () => {} },
+    "@/lib/supabase/server": { createClient: async () => ({ rpc: async () => ({ data: true, error: null }) }) },
+    "@/lib/supabase/admin": { createServiceRoleClient: () => ({
+      auth: { admin: { createUser: async (input) => {
+        authCalls++;
+        assert.deepEqual(input.app_metadata, { account_type: "client" });
+        // The Admin response has metadata even when the INSERT trigger did not.
+        return { data: { user: { id: "new-client", app_metadata: input.app_metadata } }, error: null };
+      } } },
+      from(table) { return { select(column) { return { eq(key, id) {
+        reads.push([table, column, key, id]);
+        return { maybeSingle: async () => ({ data: profileExists ? { user_id: id } : null, error: null }) };
+      } }; } }; },
+    }) },
+  })("services/accountProvisioningService.ts");
+  const input = { displayName: "Новий клієнт", email: "new@example.test", password: "safe-password-123" };
+  await assert.rejects(() => provisionAccount("client", input), /Auth-акаунт створено.*профіль.*Не створюйте його повторно/);
+  assert.equal(authCalls, 1); // no retry, repair, conversion, delete or extra create
+  assert.equal(logs.at(-1)[1].stage, "profile_missing");
+  profileExists = true;
+  assert.deepEqual(await provisionAccount("client", input), { id: "new-client" });
+  assert.deepEqual(reads, Array(2).fill(["client_profiles", "user_id", "user_id", "new-client"]));
+  assert.doesNotMatch(JSON.stringify(logs), /new-client|example\.test|safe-password/);
+});
+
+test("provisioning failures are safe, useful, stage-labelled and never disclose raw backend errors", async (t) => {
+  const logs = [];
+  t.mock.method(console, "error", (...args) => logs.push(args));
+  let mode = "configuration";
+  const raw = "secret-token email@example.test PRIVATE STACK";
+  const service = loader({
+    "@/services/clientAccessService": { requireClientAdministrator: async () => {} },
+    "@/lib/supabase/server": { createClient: async () => ({ rpc: async () => ({ data: true, error: null }) }) },
+    "@/lib/supabase/admin": { createServiceRoleClient: () => {
+      if (mode === "configuration") throw new Error(raw);
+      return {
+        auth: { admin: { createUser: async () => {
+          if (mode === "transport") throw new Error(raw);
+          if (["profile_read", "marker"].includes(mode)) return { error: null, data: { user: { id: "new-id", app_metadata: { account_type: mode === "marker" ? "internal" : "client" } } } };
+          return { data: { user: null }, error: { code: mode, status: mode === "not_admin" ? 403 : 422, message: raw } };
+        } } },
+        from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => { throw new Error(raw); } }) }) }),
+      };
+    } },
+  })("services/accountProvisioningService.ts");
+  const input = { displayName: "Клієнт", email: "client@example.test", password: "safe-password-123" };
+  for (const [scenario, message, stage] of [
+    ["configuration", /NEXT_PUBLIC_SUPABASE_URL.*SUPABASE_SERVICE_ROLE_KEY/, "admin_client_configuration"],
+    ["email_exists", /email уже існує/, "auth_create"],
+    ["weak_password", /Пароль не відповідає/, "auth_create"],
+    ["not_admin", /Production-конфігурацію SUPABASE_SERVICE_ROLE_KEY/, "auth_create"],
+    ["unexpected_failure", /Auth Logs/, "auth_create"],
+    ["transport", /чи акаунт уже створено/, "auth_create_transport"],
+    ["profile_read", /Не створюйте його повторно/, "profile_read_transport"],
+    ["marker", /тип не підтверджено/, "trusted_classification_missing"],
+  ]) {
+    mode = scenario;
+    await assert.rejects(() => service.provisionAccount("client", input), (error) => {
+      assert.match(error.message, message);
+      assert.doesNotMatch(error.message, /secret-token|example\.test|PRIVATE STACK/);
+      return true;
+    });
+    assert.equal(logs.at(-1)[1].stage, stage);
+  }
+  assert.doesNotMatch(JSON.stringify(logs), /secret-token|example\.test|PRIVATE STACK/);
+});
+
+test("create-client action revalidates the list only after a verified profile; failure stays local", async () => {
+  const calls = [];
+  const load = loader({
+    "next/cache": { revalidatePath: (path) => calls.push(["revalidate", path]) },
+    "@/services/clientAccessService": {},
+    "@/services/accountProvisioningService": { provisionAccount: async (kind) => {
+      calls.push(["provision", kind]);
+      if (!succeeds) throw new InputError("Профіль не підтверджено.");
+      return { id: "new-id" };
+    } },
+  });
+  const InputError = load("lib/clientPortal.ts").ClientPortalInputError;
+  const { createClientAccount } = load("app/actions/clientAccessActions.ts");
+  let succeeds = true;
+  const result = await createClientAccount({ kind: "internal" });
+  assert.equal(result.ok, true);
+  assert.match(result.message, /без доступу/);
+  assert.deepEqual(calls, [["provision", "client"], ["revalidate", "/users/clients"]]);
+  succeeds = false; calls.length = 0;
+  assert.deepEqual(await createClientAccount({}), { ok: false, message: "Профіль не підтверджено." });
+  assert.deepEqual(calls, [["provision", "client"]]);
+});
+
+// Isolated component callbacks/state, not a browser or live Supabase test.
+test("create form displays failures, releases lock and reveals a successful client on page 1", async (t) => {
+  const slots = []; let cursor = 0;
+  const react = {
+    useState(initial) {
+      const i = cursor++;
+      if (!(i in slots)) slots[i] = initial;
+      return [slots[i], (value) => { slots[i] = value; }];
+    },
+    useRef(initial) { const i = cursor++; return slots[i] ??= { current: initial }; },
+  };
+  const events = [];
+  let response = { ok: false, message: "Профіль не підтверджено. Не повторюйте створення." };
+  let resolveCreate;
+  t.mock.method(globalThis, "FormData", function () {
+    return { get: (key) => ({ displayName: "Клієнт", email: "client@example.test", password: "safe-password-123" })[key] };
+  });
+  const Form = loader({
+    react,
+    "next/navigation": {
+      useSearchParams: () => new URLSearchParams("q=old-name&page=3&object=47&grantPage=2"),
+      useRouter: () => ({ refresh: () => events.push("refresh"), replace: (url) => events.push(url) }),
+    },
+    "@/app/actions/clientAccessActions": {
+      createClientAccount: async (input) => { events.push(["create", input]); await new Promise((resolve) => { resolveCreate = resolve; }); return response; },
+      createInternalAccount: () => { throw new Error("Wrong identity"); },
+    },
+  })("components/users/CreateAccountForm.tsx").default;
+  function nodes(tree, match) {
+    if (!tree || typeof tree !== "object") return [];
+    if (Array.isArray(tree)) return tree.flatMap((child) => nodes(child, match));
+    return [...(match(tree) ? [tree] : []), ...nodes(tree.props?.children, match)];
+  }
+  const render = () => { cursor = 0; return Form({ kind: "client" }); };
+  const find = (match) => nodes(render(), match)[0];
+  const formEvent = { preventDefault() { events.push("preventDefault"); }, currentTarget: { reset() { events.push("reset"); } } };
+  find((node) => node.type === "button").props.onClick();
+  const submit = () => find((node) => node.type === "form").props.onSubmit(formEvent);
+  const pending = submit(); await submit(); // synchronous lock, one Admin action
+  assert.equal(events.filter(Array.isArray).length, 1);
+  resolveCreate(); await pending;
+  assert.equal(find((node) => node.props.role === "alert").props.children, response.message);
+  assert.ok(find((node) => node.type === "form"));
+  assert.ok(!events.includes("refresh")); assert.ok(!events.includes("reset"));
+  response = { ok: true, message: "Акаунт створено без доступу." };
+  const retry = submit(); resolveCreate(); await retry;
+  assert.equal(find((node) => node.props.role === "status").props.children, response.message);
+  assert.equal(find((node) => node.type === "form"), undefined);
+  assert.deepEqual(events.slice(-3), ["reset", "/users/clients?object=47&grantPage=2", "refresh"]);
+});
+
+test("provisioning repair binds metadata UPDATE to existing guarded trigger without changing PRE/POST or grants", () => {
+  const repair = read("database/client-portal-1.0a-provisioning-fix-deploy.sql");
+  assert.match(repair, /^begin;/m); assert.match(repair, /^commit;/m);
+  assert.match(repair, /if private\.legacy_internal_signup_enabled\(\) then/);
+  assert.match(repair, /create or replace trigger on_auth_user_classified\s+after update of raw_app_meta_data on auth\.users\s+for each row/);
+  assert.match(repair, /\(old\.raw_app_meta_data ->> 'account_type'\) is null/);
+  assert.match(repair, /\(new\.raw_app_meta_data ->> 'account_type'\) in \('internal', 'client'\)/);
+  assert.match(repair, /execute function public\.handle_new_user\(\)/);
+  assert.match(audit, /'identity_classification_update_trigger'/);
+  assert.match(audit, /g\.tgtype=17[\s\S]*a\.attname='raw_app_meta_data'/);
+  assert.doesNotMatch(repair, /^\s*(grant|revoke|insert|update|delete|alter|drop)\s/gim);
+  assert.doesNotMatch(repair, /create (or replace )?function|create policy|new\.raw_user_meta_data/);
+  // Existing body is still the only identity writer, with the original guards.
+  assert.match(pre, /Trusted client-only classification required/);
+  assert.doesNotMatch(read("services/accountProvisioningService.ts"), /\.insert\(|\.upsert\(|deleteUser\(|updateUserById\(|signUp\(/);
 });

@@ -1,4 +1,4 @@
--- Client Portal 1.0A FINAL structural audit (PRE + app + POST).
+-- Client Portal 1.0A FINAL structural audit (PRE + app + POST + provisioning repair).
 -- Strictly read-only: catalog evidence only; no user/business rows, tokens or
 -- application RPC execution. ONE result set. Structural PASS is NOT session
 -- smoke proof. Compare existing-boundary evidence with the reviewed discovery.
@@ -136,6 +136,33 @@ with expected_functions(signature, source_md5, security_definer, authenticated_e
     jsonb_build_object('binding',t.name,'function',t.function_name,'expected_trigger_type',t.trigger_type),
     'Shared auth-row lock and both profile guards prevent concurrent dual identity creation. Signup binding remains AFTER INSERT.'
   from expected_triggers t
+
+  union all
+  select 'identity_classification_update_trigger',
+    exists (
+      select 1 from pg_trigger g
+      join pg_attribute a on a.attrelid=g.tgrelid and a.attnum=g.tgattr[0]
+      where g.tgrelid=to_regclass('auth.users') and g.tgname='on_auth_user_classified'
+        and g.tgfoid=to_regprocedure('public.handle_new_user()')
+        and g.tgtype=17 and g.tgenabled='O' and not g.tgisinternal
+        and g.tgnargs=0 and cardinality(g.tgattr::smallint[])=1
+        and a.attname='raw_app_meta_data' and not a.attisdropped
+        and g.tgqual is not null
+        and regexp_replace(
+          replace(lower(pg_get_expr(g.tgqual,g.tgrelid)), '::text', ''),
+          '[[:space:]()]', '', 'g'
+        ) = 'old.raw_app_meta_data->>''account_type''isnullandnew.raw_app_meta_data->>''account_type''=anyarray[''internal'',''client'']'
+    ),
+    (select jsonb_build_object(
+      'definition',pg_get_triggerdef(g.oid),
+      'when_expression',pg_get_expr(g.tgqual,g.tgrelid),
+      'normalized_when_expression',regexp_replace(
+        replace(lower(pg_get_expr(g.tgqual,g.tgrelid)), '::text', ''),
+        '[[:space:]()]', '', 'g'
+      )
+    ) from pg_trigger g
+      where g.tgrelid=to_regclass('auth.users') and g.tgname='on_auth_user_classified'),
+    'Auth INSERT precedes app_metadata UPDATE. PASS requires the exact reviewed WHEN expression after normalization: old account_type IS NULL AND new account_type IN (internal, client). Source body/ACL checks remain above; actual Admin API create smoke is still required.'
 
   union all
   select 'client_self_read_policies',
