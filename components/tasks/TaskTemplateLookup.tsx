@@ -3,10 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { searchTemplateOptions } from "@/app/actions/taskTemplateLookupActions";
 import type { TemplateLookupKind, TemplateOption } from "@/types/taskTemplateWorkspace";
 
-export default function TaskTemplateLookup({ kind, label, value, onChange, initial, required = false, emptyLabel = "Не призначено" }: {
+export default function TaskTemplateLookup({ kind, label, value, onChange, initial, required = false, emptyLabel = "Не призначено", loadInitial = false }: {
   kind: TemplateLookupKind; label: string; value: string; onChange: (value: string) => void;
-  initial?: TemplateOption; required?: boolean; emptyLabel?: string;
+  initial?: TemplateOption; required?: boolean; emptyLabel?: string; loadInitial?: boolean;
 }) {
+  const shouldLoadInitially = kind === "employee" || loadInitial;
   const [search, setSearch] = useState("");
   const [loadedSearch, setLoadedSearch] = useState("");
   const [options, setOptions] = useState<TemplateOption[]>([]);
@@ -14,18 +15,18 @@ export default function TaskTemplateLookup({ kind, label, value, onChange, initi
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [pending, setPending] = useState(kind === "employee");
+  const [pending, setPending] = useState(shouldLoadInitially);
   const [error, setError] = useState("");
-  const lock = useRef(kind === "employee");
+  const lock = useRef(shouldLoadInitially);
   const initialRequest = useRef<ReturnType<typeof searchTemplateOptions> | null>(null);
 
   useEffect(() => {
-    if (kind !== "employee") return;
+    if (!shouldLoadInitially) return;
     let mounted = true;
     // This picker mounts only when a management form opens. Fetch one page,
     // not the directory; retain the current assignee even if outside this page.
     // Reuse the promise when Strict Mode replays the effect.
-    initialRequest.current ??= searchTemplateOptions("employee", "", 1);
+    initialRequest.current ??= searchTemplateOptions(kind, "", 1);
     void initialRequest.current.then((result) => {
       if (!mounted) return;
       if (!result.ok) { setError(result.error); return; }
@@ -38,7 +39,7 @@ export default function TaskTemplateLookup({ kind, label, value, onChange, initi
       if (mounted) { lock.current = false; setPending(false); }
     });
     return () => { mounted = false; };
-  }, [kind]);
+  }, [kind, shouldLoadInitially]);
 
   async function load(query: string, nextPage: number) {
     if (lock.current) return;

@@ -33,7 +33,7 @@ export default function ClientAccessManager({ clients, grants, object }: {
     </section>}
     <section className="space-y-4 rounded-xl border bg-white p-4">
       <h2 className="text-lg font-semibold">Клієнтські акаунти</h2>
-      {!object && <TaskTemplateLookup kind="object" label="Об’єкт для надання доступу" value={objectId} onChange={setObjectId} />}
+      {!object && <TaskTemplateLookup kind="object" label="Об’єкт для надання доступу" value={objectId} onChange={setObjectId} emptyLabel="Оберіть об’єкт" loadInitial />}
       {clients.length === 0 && <p className="text-sm text-gray-500">Клієнтів не знайдено.</p>}
       {clients.map(client => <div key={client.user_id} className="flex flex-wrap items-center justify-between gap-3 border-t py-3">
         <p className="min-w-0 break-words font-medium">{client.display_name}<span className="block text-xs font-normal text-gray-500">{client.is_active ? "Активний" : "Неактивний"}</span></p>

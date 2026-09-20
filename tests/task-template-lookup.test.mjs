@@ -76,7 +76,7 @@ function nodes(tree, predicate) {
 const element = (tree, type) => nodes(tree, (node) => node.type === type)[0];
 const button = (tree, label) => nodes(tree, (node) => node.type === "button" && String(node.props.children).includes(label))[0];
 
-function pickerFixture({ initial, fail = false } = {}) {
+function pickerFixture({ initial, fail = false, kind = "employee", loadInitial = false } = {}) {
   const harness = hooks();
   const requests = [];
   const load = loader({
@@ -93,7 +93,7 @@ function pickerFixture({ initial, fail = false } = {}) {
     },
   });
   const Component = load("components/tasks/TaskTemplateLookup.tsx").default;
-  const props = { kind: "employee", label: "Відповідальний", initial, value: initial ? String(initial.id) : "", onChange: (value) => { props.value = value; } };
+  const props = { kind, label: "Відповідальний", initial, value: initial ? String(initial.id) : "", loadInitial, onChange: (value) => { props.value = value; } };
   const render = () => harness.render(Component, props);
   return { harness, requests, props, render };
 }
@@ -108,6 +108,16 @@ test("opening employee picker loads one page without an explicit search; Strict 
   assert.equal(element(tree, "select").props.value, "");
   assert.equal(element(tree, "option").props.children, "Не призначено");
   assert.ok(button(tree, "Далі"));
+});
+
+test("admin client-access object picker can opt into one initial paged lookup", async () => {
+  const fixture = pickerFixture({ kind: "object", loadInitial: true });
+  fixture.render(); fixture.harness.runEffects(); fixture.harness.replayEffects();
+  await tick();
+  assert.deepEqual(fixture.requests, [["object", "", 1]]);
+  const tree = fixture.render();
+  assert.equal(nodes(tree, (node) => node.type === "option").length, 21);
+  assert.equal(element(tree, "select").props.value, "");
 });
 
 test("canonical selection survives pagination/search; clearing remains valid", async () => {

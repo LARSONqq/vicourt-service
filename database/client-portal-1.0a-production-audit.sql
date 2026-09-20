@@ -12,7 +12,7 @@ with expected_functions(signature, source_md5, security_definer, authenticated_e
     ('public.handle_new_user()', 'f055a9f5e7f827c549eff6e37b0c5b7c', true, false),
     ('private.is_active_client()', 'b220a9950bb96f0f6bd817af5fa20e41', true, true),
     ('private.client_has_object_access(bigint)', 'a94f372e167d6a9d30ab7db3ff2c698f', true, false),
-    ('public.get_application_identity()', 'a5edab323dda76149cce9ea7f530173c', true, true),
+    ('public.get_application_identity()', '955b141f146d01b047b85e9ca744db27', true, true),
     ('public.get_client_objects(integer)', '7f8fa613fd12e5f9495ba0104747972c', true, true),
     ('public.get_client_object(bigint)', 'faae6e13f9f94772084c3caaf0d538bf', true, true),
     ('public.get_admin_client_profiles(text,integer)', 'b4f02bb0b71c14846c2ec4264e1dcbe0', true, true),
