@@ -1,4 +1,6 @@
 import UserManagement from "@/components/users/UserManagement";
+import CreateAccountForm from "@/components/users/CreateAccountForm";
+import Link from "next/link";
 
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
 
@@ -35,6 +37,8 @@ export default async function UsersPage() {
       </div>
 
       {/* USER MANAGEMENT */}
+      <Link href="/users/clients" className="inline-block rounded-lg border bg-white px-4 py-3 text-sm font-medium text-green-700">Доступ клієнтів →</Link>
+      <CreateAccountForm kind="internal" />
       <div className="min-w-0">
         <UserManagement
           profiles={

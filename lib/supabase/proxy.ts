@@ -6,6 +6,7 @@ import {
   NextResponse,
   type NextRequest,
 } from "next/server";
+import { accountRedirect, type AccountIdentity } from "@/lib/auth/accountRouting";
 
 export async function updateSession(
   request: NextRequest
@@ -79,110 +80,22 @@ export async function updateSession(
   const pathname =
     request.nextUrl.pathname;
 
-  const isPublicRoute =
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname === "/auth/confirm";
-
-  const isGuestOnlyPage =
-    pathname === "/login" ||
-    pathname === "/register";
-
-  let isActiveUser = false;
-
-  if (
-    claims?.sub
-  ) {
-    const {
-      data: profile,
-      error: profileError,
-    } = await supabase
-      .from("profiles")
-      .select("is_active")
-      .eq(
-        "id",
-        claims.sub
-      )
-      .maybeSingle();
-
-    if (
-      !profileError &&
-      profile?.is_active ===
-        true
-    ) {
-      isActiveUser = true;
-    }
+  let identity: AccountIdentity = "guest";
+  if (claims?.sub) {
+    const result = await supabase.rpc("get_application_identity");
+    identity = !result.error && (result.data === "internal" || result.data === "client")
+      ? result.data : "denied";
   }
 
-  // Заблокований користувач
-  // не може відкривати ViCourt.
-  if (
-    claims &&
-    !isActiveUser
-  ) {
-    if (
-      pathname === "/login"
-    ) {
-      return supabaseResponse;
-    }
-
-    const url =
-      request.nextUrl.clone();
-
-    url.pathname =
-      "/login";
-
-    url.search =
-      "";
-
-    url.searchParams.set(
-      "blocked",
-      "1"
-    );
-
-    return NextResponse.redirect(
-      url
-    );
-  }
-
-  // Неавторизований користувач
-  if (
-    !claims &&
-    !isPublicRoute
-  ) {
-    const url =
-      request.nextUrl.clone();
-
-    url.pathname =
-      "/login";
-
-    url.search =
-      "";
-
-    return NextResponse.redirect(
-      url
-    );
-  }
-
-  // Активний авторизований користувач
-  // не повинен бачити login/register.
-  if (
-    claims &&
-    isActiveUser &&
-    isGuestOnlyPage
-  ) {
-    const url =
-      request.nextUrl.clone();
-
-    url.pathname =
-      "/";
-
-    url.search =
-      "";
-
-    return NextResponse.redirect(
-      url
-    );
+  const destination = accountRedirect(identity, pathname);
+  if (destination) {
+    const url = request.nextUrl.clone();
+    url.pathname = destination;
+    url.search = "";
+    const response = NextResponse.redirect(url);
+    // Retain refresh cookies on redirects as well as NextResponse.next().
+    for (const cookie of supabaseResponse.cookies.getAll()) response.cookies.set(cookie);
+    return response;
   }
 
   return supabaseResponse;

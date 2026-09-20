@@ -8,6 +8,7 @@ import AppShell from "@/components/layout/AppShell";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import PWARegister from "@/components/pwa/PWARegister";
+import { getAccountIdentity } from "@/services/accountIdentityService";
 
 export const metadata: Metadata = {
   title: "ViCourt Service",
@@ -44,22 +45,23 @@ export const viewport: Viewport = {
   themeColor: "#166534",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const identity = await getAccountIdentity();
   return (
     <html lang="uk">
       <body>
         <PWARegister />
 
-        <AppShell
+        {identity === "internal" ? <AppShell
           sidebar={<Sidebar />}
           header={<Header />}
         >
           {children}
-        </AppShell>
+        </AppShell> : children}
       </body>
     </html>
   );

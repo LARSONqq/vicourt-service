@@ -70,6 +70,7 @@ import {
   canAccessSection,
   canManageObjects,
   canManageTasks,
+  canManageUsers,
   canViewActivityLog,
   canViewWarehouseLedger,
 } from "@/lib/auth/permissions";
@@ -780,6 +781,10 @@ export default async function ObjectPage({
         employees={[]}
         canManage={canManageObject}
       />
+
+      {profile && canManageUsers(profile.role) && (
+        <Link href={`/users/clients?object=${objectId}`} className="inline-block rounded-lg border bg-white px-4 py-2 text-sm text-green-700">Доступ клієнта →</Link>
+      )}
 
       <ObjectTabs
         objectId={objectId}

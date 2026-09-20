@@ -120,45 +120,7 @@ export default function LoginPage({
         );
       }
 
-      const {
-        data: profile,
-        error: profileError,
-      } = await supabase
-        .from("profiles")
-        .select(`
-          is_active
-        `)
-        .eq(
-          "id",
-          data.user.id
-        )
-        .maybeSingle();
-
-      if (
-        profileError ||
-        !profile
-      ) {
-        await supabase.auth.signOut();
-
-        setErrorMessage(
-          "Не вдалося перевірити акаунт. Зверніться до адміністратора."
-        );
-
-        return;
-      }
-
-      if (
-        profile.is_active !== true
-      ) {
-        await supabase.auth.signOut();
-
-        setBlockedMessage(
-          "Ваш акаунт заблоковано. Зверніться до адміністратора ViCourt."
-        );
-
-        return;
-      }
-
+      // Proxy resolves the current DB identity; no client-side role fallback.
       router.replace("/");
       router.refresh();
     } catch {
@@ -297,7 +259,7 @@ export default function LoginPage({
             href="/register"
             className="mt-2 inline-flex min-h-10 items-center justify-center rounded-lg px-3 text-sm font-semibold text-green-700 transition hover:bg-green-50 hover:text-green-800"
           >
-            Створити акаунт
+            Як отримати доступ
           </Link>
         </div>
 
