@@ -12,6 +12,8 @@ import ObjectActivityTimeline from "@/components/activity/ObjectActivityTimeline
 import EquipmentWorkSessionList from "@/components/equipment/EquipmentWorkSessionList";
 
 import ObjectDocuments from "@/components/objects/ObjectDocuments";
+import ClientProgressEditor from "@/components/objects/ClientProgressEditor";
+import { getManagementClientObjectProgress } from "@/services/clientProgressManagementService";
 import ObjectExpenses from "@/components/objects/ObjectExpenses";
 import ObjectPassportHeader from "@/components/objects/ObjectInfo";
 import ObjectMaterials from "@/components/objects/ObjectMaterials";
@@ -134,7 +136,8 @@ function getSingleSearchValue(
 function resolveObjectTab(
   value: string | undefined,
   canViewFinance: boolean,
-  canViewHistory: boolean
+  canViewHistory: boolean,
+  canManageClientProgress: boolean
 ): ObjectTabId {
   if (
     !value ||
@@ -149,7 +152,9 @@ function resolveObjectTab(
     (value === "finance" &&
       !canViewFinance) ||
     (value === "history" &&
-      !canViewHistory)
+      !canViewHistory) ||
+    (value === "client-progress" &&
+      !canManageClientProgress)
   ) {
     return "overview";
   }
@@ -259,6 +264,16 @@ async function ObjectTabContent({
 }: TabContentProps) {
   const objectId = object.id;
   const today = getKyivDateValue();
+
+  if (activeTab === "client-progress" && canManageObject) {
+    // Only the active management tab requests this narrow DTO.
+    const result = await getManagementClientObjectProgress(objectId).then(
+      (progress) => ({ progress, loadFailed: false }),
+      // A failed read must not look like an unpublished object or crash the passport.
+      () => ({ progress: null, loadFailed: true })
+    );
+    return <ClientProgressEditor key={objectId} objectId={objectId} initialProgress={result.progress} loadFailed={result.loadFailed} />;
+  }
 
   if (activeTab === "overview") {
     const [preview, finance] =
@@ -752,7 +767,8 @@ export default async function ObjectPage({
   const activeTab = resolveObjectTab(
     getSingleSearchValue(query.tab),
     canViewFinance,
-    canViewActivity
+    canViewActivity,
+    canManageObject
   );
   const page = resolvePage(
     getSingleSearchValue(query.page)
@@ -795,6 +811,7 @@ export default async function ObjectPage({
         canViewHistory={
           canViewActivity
         }
+        canManageClientProgress={canManageObject}
       >
         <ObjectTabErrorBoundary
           key={`${activeTab}:${page}`}

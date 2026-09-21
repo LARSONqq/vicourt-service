@@ -2,7 +2,7 @@ import "server-only";
 
 import { canManageObjects } from "@/lib/auth/permissions";
 import {
-  ClientPortalInputError, clientProgressSaveInput, managementClientObjectProgressDto,
+  ClientPortalInputError, ClientProgressConflictError, clientProgressSaveInput, managementClientObjectProgressDto,
 } from "@/lib/clientPortal";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/services/profileService";
@@ -16,7 +16,7 @@ async function requireProgressManagement() {
 }
 
 function progressError(code: string): Error {
-  if (code === "40001") return new ClientPortalInputError("Прогрес уже змінено. Оновіть дані перед публікацією.");
+  if (code === "40001") return new ClientProgressConflictError("Прогрес уже змінено. Оновіть дані перед публікацією.");
   if (code === "P0002") return new ClientPortalInputError("Об’єкт більше не знайдено.");
   if (code === "42501") return new ClientPortalInputError("Недостатньо прав для роботи з прогресом об’єкта.");
   if (code === "22023") return new ClientPortalInputError("Перевірте відсоток, публічні підсумки та етапи. Оновіть дані, якщо склад етапів змінився.");

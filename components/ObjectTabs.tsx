@@ -11,6 +11,7 @@ export type ObjectTabId =
   | "finance"
   | "documents"
   | "photos"
+  | "client-progress"
   | "history";
 
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
   activeTab: ObjectTabId;
   canViewFinance: boolean;
   canViewHistory: boolean;
+  canManageClientProgress: boolean;
   children: ReactNode;
 };
 
@@ -67,6 +69,11 @@ const baseTabs: Array<{
     icon: "📷",
   },
   {
+    id: "client-progress",
+    label: "Прогрес для клієнта",
+    icon: "◔",
+  },
+  {
     id: "history",
     label: "Історія",
     icon: "🕘",
@@ -81,6 +88,7 @@ export default function ObjectTabs({
   activeTab,
   canViewFinance,
   canViewHistory,
+  canManageClientProgress,
   children,
 }: Props) {
   const tabs = baseTabs
@@ -93,6 +101,11 @@ export default function ObjectTabs({
       (item) =>
         item.id !== "history" ||
         canViewHistory
+    )
+    .filter(
+      (item) =>
+        item.id !== "client-progress" ||
+        canManageClientProgress
     );
 
   return (

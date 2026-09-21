@@ -4,6 +4,7 @@ import type {
 } from "@/types/clientPortal";
 
 export class ClientPortalInputError extends Error {}
+export class ClientProgressConflictError extends ClientPortalInputError {}
 
 const clientStatuses = new Set([
   "Новий", "В роботі", "На постійному обслуговуванні",
