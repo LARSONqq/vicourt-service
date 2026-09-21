@@ -4,8 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAccountIdentity } from "@/services/accountIdentityService";
 import { accountHome } from "@/lib/auth/accountRouting";
-import { clientObjectDto } from "@/lib/clientPortal";
-import type { ClientObjectProfile } from "@/types/clientPortal";
+import { clientObjectDto, clientObjectProgressDto } from "@/lib/clientPortal";
+import type { ClientObjectProfile, ClientObjectProgress } from "@/types/clientPortal";
 
 export async function requireClientAccess() {
   const identity = await getAccountIdentity();
@@ -33,4 +33,18 @@ export async function getClientObject(id: number): Promise<ClientObjectProfile> 
   const object = clientObjectDto(data[0]);
   if (object.id !== id) notFound();
   return object;
+}
+
+export async function getClientObjectProgress(id: number): Promise<ClientObjectProgress | null> {
+  await requireClientAccess();
+  if (!Number.isSafeInteger(id) || id <= 0) notFound();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_client_object_progress", { p_object_id: id });
+  // The DB uses the same denial for missing, revoked and unassigned objects.
+  if (error?.code === "42501") notFound();
+  if (error || !Array.isArray(data) || data.length > 1) throw new Error("Не вдалося завантажити прогрес об’єкта. Спробуйте пізніше.");
+  if (data.length === 0) return null; // Authorized, but not yet published.
+  const progress = clientObjectProgressDto(data[0]);
+  if (progress.object_id !== id) notFound();
+  return progress;
 }
