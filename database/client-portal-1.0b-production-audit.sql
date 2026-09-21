@@ -49,7 +49,7 @@ with expected_tables(name) as (
 ), check_catalog as materialized (
   select e.*, c.oid, c.convalidated, pg_get_constraintdef(c.oid, true) as definition,
     -- CHECKs reference one relation (unlike trigger OLD/NEW WHEN expressions).
-    regexp_replace(replace(replace(pg_get_expr(c.conbin,c.conrelid), '::text', ''), 'pg_catalog.', ''),
+    regexp_replace(replace(replace(lower(pg_get_expr(c.conbin,c.conrelid)), '::text', ''), 'pg_catalog.', ''),
       '[[:space:]()]', '', 'g') as normalized_actual
   from expected_checks e join tables t on t.name = e.table_name
   left join pg_constraint c on c.conrelid = t.oid and c.conname::text = e.name and c.contype = 'c'
