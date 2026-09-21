@@ -7,6 +7,13 @@ import { accountHome } from "@/lib/auth/accountRouting";
 import { clientObjectDto, clientObjectProgressDto } from "@/lib/clientPortal";
 import type { ClientObjectProfile, ClientObjectProgress } from "@/types/clientPortal";
 
+export class ClientObjectProgressLoadError extends Error {
+  constructor() {
+    super("Не вдалося завантажити прогрес об’єкта. Спробуйте пізніше.");
+    this.name = "ClientObjectProgressLoadError";
+  }
+}
+
 export async function requireClientAccess() {
   const identity = await getAccountIdentity();
   if (identity !== "client") redirect(accountHome(identity));
@@ -39,12 +46,24 @@ export async function getClientObjectProgress(id: number): Promise<ClientObjectP
   await requireClientAccess();
   if (!Number.isSafeInteger(id) || id <= 0) notFound();
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_client_object_progress", { p_object_id: id });
+  const loadProgress = async () => {
+    try {
+      return await supabase.rpc("get_client_object_progress", { p_object_id: id });
+    } catch {
+      throw new ClientObjectProgressLoadError();
+    }
+  };
+  const { data, error } = await loadProgress();
   // The DB uses the same denial for missing, revoked and unassigned objects.
   if (error?.code === "42501") notFound();
-  if (error || !Array.isArray(data) || data.length > 1) throw new Error("Не вдалося завантажити прогрес об’єкта. Спробуйте пізніше.");
+  if (error || !Array.isArray(data) || data.length > 1) throw new ClientObjectProgressLoadError();
   if (data.length === 0) return null; // Authorized, but not yet published.
-  const progress = clientObjectProgressDto(data[0]);
+  let progress: ClientObjectProgress;
+  try {
+    progress = clientObjectProgressDto(data[0]);
+  } catch {
+    throw new ClientObjectProgressLoadError();
+  }
   if (progress.object_id !== id) notFound();
   return progress;
 }

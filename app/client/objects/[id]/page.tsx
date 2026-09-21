@@ -1,11 +1,27 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getClientObject } from "@/services/clientPortalService";
+import ClientObjectProgress from "@/components/client/ClientObjectProgress";
+import {
+  ClientObjectProgressLoadError,
+  getClientObject,
+  getClientObjectProgress,
+} from "@/services/clientPortalService";
+import type { ClientObjectProgress as ClientObjectProgressDto } from "@/types/clientPortal";
 
 export default async function ClientObjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^\d+$/u.test(id)) notFound();
   const object = await getClientObject(Number(id));
+  // Authorize the object first, then independently authorize its progress.
+  // Resolve both before rendering so a revoked grant cannot leave a partial passport.
+  let progress: ClientObjectProgressDto | null = null;
+  let progressUnavailable = false;
+  try {
+    progress = await getClientObjectProgress(object.id);
+  } catch (error) {
+    if (!(error instanceof ClientObjectProgressLoadError)) throw error;
+    progressUnavailable = true;
+  }
   return <>
     <Link href="/client" className="inline-block py-2 text-sm font-medium text-green-700">← Ваші об’єкти</Link>
     <section className="min-w-0 space-y-4 rounded-2xl border bg-white p-5 sm:p-8">
@@ -13,5 +29,6 @@ export default async function ClientObjectPage({ params }: { params: Promise<{ i
       <h1 className="break-words text-2xl font-bold sm:text-3xl">{object.name}</h1>
       <dl className="border-t pt-4"><dt className="text-sm text-gray-500">Адреса</dt><dd className="mt-1 break-words">{object.address || "Адресу не вказано"}</dd></dl>
     </section>
+    <ClientObjectProgress progress={progress} unavailable={progressUnavailable} />
   </>;
 }
