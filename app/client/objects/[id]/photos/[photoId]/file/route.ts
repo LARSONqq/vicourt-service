@@ -34,6 +34,12 @@ export async function GET(_request: Request, { params }: {
     const { storage_path } = await getClientObjectPhotoFile(Number(id), Number(photoId));
     lookupComplete = true;
     const supabase = await createClient(); // Same requesting session cookies, never an admin client.
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      console.warn("[client-photo-file] storage_client_unauthenticated", diagnosticIds);
+    } else {
+      console.warn("[client-photo-file] storage_client_authenticated", diagnosticIds);
+    }
     // Storage independently authorizes object.get_authenticated; lookup is not a bearer grant.
     const { data, error } = await supabase.storage.from("object-photos").download(storage_path);
     if (error) {
