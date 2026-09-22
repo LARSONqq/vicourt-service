@@ -28,6 +28,7 @@ export async function GET(_request: Request, { params }: {
     || !positivePhotoId(Number(id)) || !positivePhotoId(Number(photoId))) return unavailable();
   const diagnosticIds = { objectId: Number(id), photoId: Number(photoId) };
   let lookupComplete = false;
+  let storageAuthState: "authenticated" | "unauthenticated" = "unauthenticated";
   try {
     // Rechecks identity + current object grant + publication on every request.
     // The delivery reference never leaves this server-only handler.
@@ -35,15 +36,13 @@ export async function GET(_request: Request, { params }: {
     lookupComplete = true;
     const supabase = await createClient(); // Same requesting session cookies, never an admin client.
     const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData.user) {
-      console.warn("[client-photo-file] storage_client_unauthenticated", diagnosticIds);
-    } else {
-      console.warn("[client-photo-file] storage_client_authenticated", diagnosticIds);
-    }
+    if (!authError && authData.user) storageAuthState = "authenticated";
     // Storage independently authorizes object.get_authenticated; lookup is not a bearer grant.
     const { data, error } = await supabase.storage.from("object-photos").download(storage_path);
     if (error) {
-      console.warn("[client-photo-file] storage_download_failed", { ...diagnosticIds, ...safeStorageErrorFields(error) });
+      console.warn("[client-photo-file] storage_download_failed", {
+        ...diagnosticIds, authState: storageAuthState, ...safeStorageErrorFields(error),
+      });
       return unavailable();
     }
     if (!(data instanceof Blob)) {
@@ -59,7 +58,9 @@ export async function GET(_request: Request, { params }: {
     // Includes identity redirects and notFound from the lookup. File denials
     // are indistinguishable and must never redirect to login or a Storage URL.
     if (lookupComplete) {
-      console.warn("[client-photo-file] storage_download_failed", { ...diagnosticIds, ...safeStorageErrorFields(error) });
+      console.warn("[client-photo-file] storage_download_failed", {
+        ...diagnosticIds, authState: storageAuthState, ...safeStorageErrorFields(error),
+      });
     } else {
       console.warn("[client-photo-file] lookup_failed", diagnosticIds);
     }
