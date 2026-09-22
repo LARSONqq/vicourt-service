@@ -243,6 +243,7 @@ test("client flow never uses management RPCs, signed URLs, privileged clients or
   assert.match(gallery, /prefetch=\{false\}/);
   assert.match(gallery, /showModal\(\)/); assert.match(gallery, /onCancel=/); assert.match(gallery, /aria-labelledby=/);
   const route = read("app/client/objects/[id]/photos/[photoId]/file/route.ts");
+  assert.doesNotMatch(route, /console\s*\.|safeStorageErrorFields|diagnosticIds|lookupComplete|storageAuthState|auth\.getUser|client-photo-file/);
   assert.match(route, /from "@\/lib\/supabase\/server"/);
   assert.match(route, /dynamic = "force-dynamic"/);
 });

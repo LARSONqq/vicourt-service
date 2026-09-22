@@ -1,4 +1,5 @@
 -- Client Portal 1.0C1a structural audit. Read-only; one consolidated result.
+-- Final contract includes client-portal-1.0c1-storage-read-hotfix.sql.
 -- No business/auth/photo/file rows, helper calls or application RPC execution.
 -- PASS is not runtime Storage authorization proof; test actual sessions later.
 begin;
@@ -207,9 +208,9 @@ verified_guard_fingerprints(signature,source_md5) as (
   select 'client_storage_get_policy', exists (select 1 from client_policy p
     where p.cmd='SELECT' and p.permissive='PERMISSIVE' and p.roles=array['authenticated'::name]
       and p.with_check is null
-      and p.normalized_qual=$expr$bucket_id='object-photos'ANDstorage.allow_only_operation'object.get_authenticated'ANDprivate.client_photo_is_safe_rastername,metadata->>'mimetype'ANDprivate.client_can_read_object_photoname$expr$),
+      and p.normalized_qual=$expr$bucket_id='object-photos'ANDstorage.allow_any_operationARRAY['object.get_authenticated_info','object.get_authenticated']ANDprivate.client_photo_is_safe_rastername,metadata->>'mimetype'ANDprivate.client_can_read_object_photoname$expr$),
     (select jsonb_build_object('roles',p.roles,'command',p.cmd,'mode',p.permissive,'using',p.qual,'normalized',p.normalized_qual) from client_policy p),
-    'Exact bucket + operation + current-row MIME/extension predicate + narrow authorization helper. No list/sign/info/write operation is authorized by this policy.'
+    'Exact bucket + authenticated info/download pair + current-row MIME/extension predicate + narrow authorization helper. No list/sign/write or other operation is authorized by this policy.'
 
   union all
   select 'private_bucket_and_storage_rls',

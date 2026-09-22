@@ -39,6 +39,7 @@ const publication = () => ({ photo_id: 11, object_id: 47, is_published: true, cl
 const input = () => ({ object_id: 47, photo_id: 11, is_published: true, client_caption: "Квітник", sort_order: 0 });
 const pre = read("database/client-portal-1.0c1-pre-deploy.sql");
 const audit = read("database/client-portal-1.0c1-production-audit.sql");
+const hotfix = read("database/client-portal-1.0c1-storage-read-hotfix.sql");
 const functions = [...pre.matchAll(/create or replace function\s+([\w.]+)\(([^)]*)\)([\s\S]*?)as \$function\$([\s\S]*?)\$function\$/gu)];
 const body = (name) => functions.find((m) => m[1].endsWith(`.${name}`))[4];
 
@@ -205,7 +206,7 @@ test("SQL client reads independently guard object grants and publication, never 
   assert.match(body("get_client_object_photo_file"), /if not found then raise exception 'Photo access denied\.'/u);
 });
 
-test("new Storage policy permits authenticated GET only; old table/Storage policy bodies and helper ACL are untouched", () => {
+test("historical PRE added only the original GET policy; old table/Storage policy bodies and helper ACL are untouched", () => {
   const policies = [...pre.matchAll(/create policy (\w+)[\s\S]*?\);/gu)];
   assert.equal(policies.length, 1);
   const policy = policies[0][0];
@@ -230,7 +231,7 @@ test("PRE/audit reject known merged SQL tokens; declared parameters and ACL sign
   for (const token of ["andrelkind", "endif", "usingerrcode", "with_checkis", "'objects'and", "thenraise", "ifnot", "endloop", "returnquery", "andp.prokind"]) {
     assert.match(token, malformed, `scanner must catch ${token}`);
   }
-  for (const sql of [pre, audit]) assert.doesNotMatch(sql, malformed);
+  for (const sql of [pre, audit, hotfix]) assert.doesNotMatch(sql, malformed);
   for (const [, name, args] of functions) {
     for (const arg of args.split(",")) assert.match(arg.trim(), /^p_\w+\s+(?:bigint(?:\[\])?|integer|text|boolean)(?:\s+default\s+1)?$/u, name);
   }
@@ -287,24 +288,58 @@ test("policy preflight and audit accept reviewed scalar SELECT guards but reject
   assert.match(audit, /from internal_policy_results p/u);
 });
 
-test("Storage audit rejects wrong GET operation, missing current-row raster guard and broadened access path", () => {
-  const policy = pre.match(/create policy client_object_photos_authenticated_get[\s\S]*?using \(([\s\S]*?)\n    \);/u)[1];
+test("Storage hotfix is transactional/repeatable and replaces only the named SELECT policy with the exact read pair", () => {
+  const sql = hotfix.replace(/--[^\n]*/gu, "").trim();
+  const statements = sql.split(";").map((s) => s.trim()).filter(Boolean);
+  assert.equal(statements.length, 5);
+  assert.deepEqual(statements.slice(0, 3), [
+    "begin", "set local search_path = pg_catalog",
+    "drop policy if exists client_object_photos_authenticated_get on storage.objects",
+  ]);
+  assert.equal(statements[4], "commit");
+  assert.match(statements[3], /^create policy client_object_photos_authenticated_get on storage\.objects\s+as permissive for select to authenticated\s+using \(/u);
+  assert.deepEqual([...statements[3].matchAll(/'object\.([^']+)'/gu)].map((m) => m[1]), ["get_authenticated_info", "get_authenticated"]);
+  assert.doesNotMatch(sql, /\b(?:grant|revoke|alter|insert|update|delete|function|table)\b/iu);
+});
+
+test("Storage audit requires both authenticated reads and rejects old policy, extra operations, missing guards and role/command drift", () => {
+  const policy = hotfix.match(/create policy client_object_photos_authenticated_get[\s\S]*?using \(([\s\S]*?)\n\);/u)[1];
   const normalize = (value) => value.replaceAll("::text[]", "").replaceAll("::text", "").replaceAll("objects.", "").replace(/[\s()]/gu, "");
   // CREATE text uses lower-case SQL keywords; pg_policies deparses AND as upper-case.
   const deparsed = policy.replace(/\band\b/gu, "AND");
-  const expected = pre.match(/\$expr\$(bucket_id='object-photos'ANDstorage\.allow_only_operation[^$]+)\$expr\$/u)[1];
-  assert.ok(audit.includes(`$expr$${expected}$expr$`));
+  const expected = audit.match(/\$expr\$(bucket_id='object-photos'ANDstorage\.allow_any_operation[^$]+)\$expr\$/u)[1];
   assert.equal(normalize(deparsed), expected);
+  // Also model the actual pg_policies rendering with per-element text casts.
+  assert.equal(normalize(deparsed.replace(/'(object\.[^']+)'/gu, "'$1'::text")), expected);
+  const oldPolicy = pre.match(/create policy client_object_photos_authenticated_get[\s\S]*?using \(([\s\S]*?)\n    \);/u)[1];
   for (const bad of [
-    deparsed.replace("object.get_authenticated", "object.list"),
-    deparsed.replace("object.get_authenticated", "object.sign"),
-    deparsed.replace("object.get_authenticated", "OBJECT.GET_AUTHENTICATED"),
+    oldPolicy.replace(/\band\b/gu, "AND"),
+    deparsed.replace(/'object.get_authenticated_info',/u, ""),
+    deparsed.replace(/,\s*'object.get_authenticated'/u, ""),
+    ...["object.list", "object.sign", "object.upload", "object.delete", "object.info"].map((operation) =>
+      deparsed.replace("'object.get_authenticated'", `'object.get_authenticated','${operation}'`)),
+    deparsed.replace("object.get_authenticated_info", "OBJECT.GET_AUTHENTICATED_INFO"),
+    deparsed.replace(/bucket_id = 'object-photos'\s+AND /u, ""),
     deparsed.replace(/AND private\.client_photo_is_safe_raster[^\n]+/u, ""),
     deparsed.replace(/AND private\.client_can_read_object_photo[^\n]+/u, ""),
     `${deparsed} OR true`, deparsed.replace("'object-photos'", "'other-bucket'"),
   ]) assert.notEqual(normalize(bad), expected);
+  const policyCheck = audit.match(/select 'client_storage_get_policy',[\s\S]*?\n\s*union all/u)[0];
+  assert.match(policyCheck, /p\.cmd='SELECT' and p\.permissive='PERMISSIVE' and p\.roles=array\['authenticated'::name\]/u);
+  assert.match(policyCheck, /p\.with_check is null/u);
+  assert.match(policyCheck, /p\.normalized_qual=\$expr\$/u);
+  // Model these exact catalog predicates; this is not a live RLS simulation.
+  const accepts = ({ cmd = "SELECT", mode = "PERMISSIVE", roles = ["authenticated"], withCheck = null, qual = deparsed } = {}) =>
+    cmd === "SELECT" && mode === "PERMISSIVE" && roles.length === 1 && roles[0] === "authenticated"
+    && withCheck === null && normalize(qual) === expected;
+  assert.equal(accepts(), true);
+  for (const drift of [{ cmd: "ALL" }, { cmd: "INSERT" }, { cmd: "UPDATE" }, { cmd: "DELETE" },
+    { mode: "RESTRICTIVE" }, { roles: ["anon"] }, { roles: ["public"] },
+    { roles: ["authenticated", "anon"] }, { withCheck: "true" }]) assert.equal(accepts(drift), false);
   assert.match(audit, /storage_policy_helpers_no_self_reference/u);
   assert.match(audit, /md5\(f.prosrc\)=f.source_md5/u);
+  assert.match(audit, /\('storage.allow_any_operation\(text\[\]\)'\)/u);
+  assert.match(audit, /'definition',pg_get_functiondef\(p.oid\),'acl',p.proacl::text/u);
 });
 
 test("verified production guards are pinned and metadata-reading DEFINER ownership/BYPASSRLS is asserted", () => {
