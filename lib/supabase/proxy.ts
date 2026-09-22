@@ -89,6 +89,15 @@ export async function updateSession(
 
   const destination = accountRedirect(identity, pathname);
   if (destination) {
+    // Binary portal requests must fail like missing photos, not return a login
+    // redirect/HTML. The route independently authorizes every allowed request.
+    if (/^\/client\/objects\/[^/]+\/photos\/[^/]+\/file\/?$/u.test(pathname)) {
+      const response = new NextResponse(null, { status: 404, headers: {
+        "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff",
+      } });
+      for (const cookie of supabaseResponse.cookies.getAll()) response.cookies.set(cookie);
+      return response;
+    }
     const url = request.nextUrl.clone();
     url.pathname = destination;
     url.search = "";
