@@ -14,6 +14,9 @@ import EquipmentWorkSessionList from "@/components/equipment/EquipmentWorkSessio
 import ObjectDocuments from "@/components/objects/ObjectDocuments";
 import ClientProgressEditor from "@/components/objects/ClientProgressEditor";
 import { getManagementClientObjectProgress } from "@/services/clientProgressManagementService";
+import { getManagementClientPhotoPublications } from "@/services/clientPhotoManagementService";
+import { clientPhotoPublicationEditorDto } from "@/lib/clientPhoto";
+import type { ClientPhotoPublicationEditorState } from "@/types/clientPhoto";
 import ObjectExpenses from "@/components/objects/ObjectExpenses";
 import ObjectPassportHeader from "@/components/objects/ObjectInfo";
 import ObjectMaterials from "@/components/objects/ObjectMaterials";
@@ -666,10 +669,22 @@ async function ObjectTabContent({
         objectId,
         page
       );
+    let publications: ClientPhotoPublicationEditorState[] | undefined;
+    if (canManageObject && photosPage.items.length > 0) {
+      try {
+        publications = (await getManagementClientPhotoPublications(
+          objectId, photosPage.items.map((photo) => photo.id)
+        )).map(clientPhotoPublicationEditorDto);
+      } catch {
+        // Keep internal photos available; unknown publication state is NOT false.
+        publications = undefined;
+      }
+    }
 
     return (
       <>
         <ObjectPhotos
+          {...(canManageObject ? { publications } : {})}
           photos={photosPage.items}
           totalCount={
             photosPage.total

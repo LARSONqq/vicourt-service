@@ -33,3 +33,7 @@ export type SetClientPhotoPublicationInput = {
   client_caption: string | null;
   sort_order: number;
 };
+
+// Only the fields needed by internal photo-card controls, not the RPC snapshot.
+export type ClientPhotoPublicationEditorState = Pick<ManagementClientPhotoPublication,
+  "photo_id" | "is_published" | "client_caption" | "sort_order">;

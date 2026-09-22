@@ -5,6 +5,8 @@ import { useState } from "react";
 import { deleteObjectPhoto } from "@/app/actions/photoActions";
 
 import type { ObjectPhoto } from "@/types/objectPhoto";
+import type { ClientPhotoPublicationEditorState } from "@/types/clientPhoto";
+import ClientPhotoPublicationEditor from "./ClientPhotoPublicationEditor";
 
 import AddPhotoForm from "./AddPhotoForm";
 
@@ -13,6 +15,7 @@ type Props = {
   objectId: number;
   canManage?: boolean;
   totalCount?: number;
+  publications?: ClientPhotoPublicationEditorState[];
 };
 
 export default function ObjectPhotos({
@@ -20,7 +23,9 @@ export default function ObjectPhotos({
   objectId,
   canManage = false,
   totalCount,
+  publications,
 }: Props) {
+  const publicationsById = new Map((publications ?? []).map((item) => [item.photo_id, item]));
   const [
     showForm,
     setShowForm,
@@ -133,6 +138,7 @@ export default function ObjectPhotos({
 
                 {/* INFO */}
                 <div className="p-3 sm:p-4">
+                  {canManage && <p className="mb-1 text-xs text-gray-400">Внутрішній підпис</p>}
                   {photo.caption ? (
                     <p className="break-words text-sm leading-5 text-gray-700">
                       {
@@ -144,6 +150,12 @@ export default function ObjectPhotos({
                       Без підпису
                     </p>
                   )}
+
+                  {canManage && <ClientPhotoPublicationEditor
+                    key={JSON.stringify([objectId, photo.id, publicationsById.get(photo.id) ?? null])}
+                    objectId={objectId}
+                    initialPublication={publicationsById.get(photo.id) ?? null}
+                  />}
 
                   {canManage && (
                   <div className="mt-3 border-t pt-3">

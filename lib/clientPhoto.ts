@@ -1,5 +1,5 @@
 import { ClientPortalInputError } from "@/lib/clientPortal";
-import type { ClientObjectPhoto, ManagementClientPhotoPublication, SetClientPhotoPublicationInput } from "@/types/clientPhoto";
+import type { ClientObjectPhoto, ClientPhotoPublicationEditorState, ManagementClientPhotoPublication, SetClientPhotoPublicationInput } from "@/types/clientPhoto";
 
 export const CLIENT_PHOTO_PAGE_SIZE = 12;
 export const CLIENT_PHOTO_BATCH_LIMIT = 100;
@@ -46,4 +46,9 @@ export function clientPhotoPublicationInput(value: unknown): SetClientPhotoPubli
   if (!positivePhotoId(row.photo_id) || !positivePhotoId(row.object_id) || typeof row.is_published !== "boolean" || !order(row.sort_order)) throw invalid();
   return { object_id: row.object_id, photo_id: row.photo_id, is_published: row.is_published,
     client_caption: caption(row.client_caption, true), sort_order: row.sort_order };
+}
+
+export function clientPhotoPublicationEditorDto(value: ManagementClientPhotoPublication): ClientPhotoPublicationEditorState {
+  return { photo_id: value.photo_id, is_published: value.is_published,
+    client_caption: value.client_caption, sort_order: value.sort_order };
 }
