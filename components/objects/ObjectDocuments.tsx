@@ -28,12 +28,15 @@ import type {
 
 import ObjectDocumentForm from "./ObjectDocumentForm";
 import ObjectDocumentMetadataForm from "./ObjectDocumentMetadataForm";
+import ClientDocumentPublicationEditor from "./ClientDocumentPublicationEditor";
+import type { ClientDocumentPublicationEditorState } from "@/types/clientDocument";
 
 type Props = {
   objectId: number;
   documents: ObjectDocument[];
   canManage: boolean;
   totalCount?: number;
+  publications?: ClientDocumentPublicationEditorState[];
 };
 
 function formatDocumentDate(
@@ -64,7 +67,20 @@ export default function ObjectDocuments({
   documents,
   canManage,
   totalCount,
+  publications,
 }: Props) {
+  const publicationsById = new Map((publications ?? []).map((item) => [item.document_id, item]));
+
+  function publicationEditor(document: ObjectDocument) {
+    const publication = publicationsById.get(document.id) ?? null;
+    return <ClientDocumentPublicationEditor
+      key={JSON.stringify([objectId, document.id, publication])}
+      objectId={objectId}
+      defaultTitle={document.title}
+      initialPublication={publication}
+    />;
+  }
+
   const router =
     useRouter();
   const [showForm, setShowForm] =
@@ -446,6 +462,8 @@ export default function ObjectDocuments({
                     </p>
                   )}
 
+                  {canManage && publicationEditor(document)}
+
                   <div className={`mt-4 grid gap-2 border-t pt-4 ${canManage ? "grid-cols-3" : "grid-cols-1"}`}>
                     <button
                       type="button"
@@ -559,6 +577,7 @@ export default function ObjectDocuments({
                                   {document.note}
                                 </p>
                               )}
+                              {canManage && publicationEditor(document)}
                             </div>
                           </div>
                         </td>

@@ -262,9 +262,18 @@ test("PRE requires reviewed discovery pins; preserved exact baseline is shared w
   assert.match(pre, /rolsuper or rolbypassrls/u);
   assert.match(pre, /has_table_privilege\(current_user,'storage.objects','SELECT'\)/u);
   assert.match(audit, /runtime_authorization_tested',false/u);
-  assert.match(audit, /bool_and\(coalesce\(matches,false\)\)/u);
+  // The reviewed audit now evaluates each catalog group separately, then
+  // summarizes its JSONB results. SQL errors remain FAIL, never skipped checks.
+  assert.match(audit, /case when coalesce\(audit_row\.matches,false\) then 'PASS' else 'FAIL' end/u);
+  assert.match(audit, /bool_and\(status='PASS'\)/u);
+  assert.match(audit, /exception when others then[\s\S]*?'status','FAIL'/u);
+  assert.match(audit, /v_actual_check_names is distinct from/u);
+  assert.match(audit, /perform set_config\('vicourt\.client_portal_1_0c2b_audit_results',v_results::text,true\)/u);
+  const groups = [...audit.matchAll(/^    \(\d+, '[^']+',\n      array\[([^\n]+)\]::text\[\]/gmu)];
+  assert.equal(groups.length, 16);
+  assert.equal(groups.reduce((count, group) => count + [...group[1].matchAll(/'[^']+'/gu)].length, 0), 47);
   assert.match(audit, /begin;\s*set transaction read only;\s*set local search_path = pg_catalog;/u);
-  assert.doesNotMatch(audit.replace(/--[^\n]*/gu, ""), /^(?:create|alter|drop|grant|revoke|insert|update|delete|do|call)\s/gimu);
+  assert.doesNotMatch(audit.replace(/--[^\n]*/gu, ""), /^(?:create|alter|drop|grant|revoke|insert|update|delete|call)\s/gimu);
 });
 test("SQL signatures, hash pins and malformed-token regression scans agree without executing SQL", () => {
   assert.equal(functions.length, 6);

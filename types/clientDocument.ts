@@ -39,3 +39,7 @@ export type SetClientDocumentPublicationInput = {
   client_description: string | null;
   sort_order: number;
 };
+
+// Internal publication controls need no storage, source metadata or audit actors.
+export type ClientDocumentPublicationEditorState = Pick<ManagementClientDocumentPublication,
+  "document_id" | "is_published" | "client_title" | "client_description" | "sort_order">;

@@ -17,6 +17,9 @@ import { getManagementClientObjectProgress } from "@/services/clientProgressMana
 import { getManagementClientPhotoPublications } from "@/services/clientPhotoManagementService";
 import { clientPhotoPublicationEditorDto } from "@/lib/clientPhoto";
 import type { ClientPhotoPublicationEditorState } from "@/types/clientPhoto";
+import { getManagementClientDocumentPublications } from "@/services/clientDocumentManagementService";
+import { clientDocumentPublicationEditorDto } from "@/lib/clientDocument";
+import type { ClientDocumentPublicationEditorState } from "@/types/clientDocument";
 import ObjectExpenses from "@/components/objects/ObjectExpenses";
 import ObjectPassportHeader from "@/components/objects/ObjectInfo";
 import ObjectMaterials from "@/components/objects/ObjectMaterials";
@@ -629,10 +632,22 @@ async function ObjectTabContent({
         objectId,
         page
       );
+    let publications: ClientDocumentPublicationEditorState[] | undefined;
+    if (canManageObject && documentsPage.items.length > 0) {
+      try {
+        publications = (await getManagementClientDocumentPublications(
+          objectId, documentsPage.items.map((document) => document.id)
+        )).map(clientDocumentPublicationEditorDto);
+      } catch {
+        // Internal documents remain available; unknown state must not imply unpublished.
+        publications = undefined;
+      }
+    }
 
     return (
       <>
         <ObjectDocuments
+          {...(canManageObject ? { publications } : {})}
           objectId={objectId}
           documents={
             documentsPage.items

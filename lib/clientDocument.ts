@@ -1,5 +1,5 @@
 import { ClientPortalInputError } from "@/lib/clientPortal";
-import type { ClientObjectDocument, ManagementClientDocumentPublication, SetClientDocumentPublicationInput } from "@/types/clientDocument";
+import type { ClientDocumentPublicationEditorState, ClientObjectDocument, ManagementClientDocumentPublication, SetClientDocumentPublicationInput } from "@/types/clientDocument";
 
 export const CLIENT_DOCUMENT_PAGE_SIZE = 20;
 export const CLIENT_DOCUMENT_BATCH_LIMIT = 100;
@@ -84,5 +84,12 @@ export function clientDocumentPublicationInput(value: unknown): SetClientDocumen
     object_id: row.object_id, document_id: row.document_id, is_published: row.is_published,
     client_title: text(row.client_title, CLIENT_DOCUMENT_TITLE_LIMIT, false, true) as string,
     client_description: text(row.client_description, CLIENT_DOCUMENT_DESCRIPTION_LIMIT, true, true), sort_order: row.sort_order,
+  };
+}
+
+export function clientDocumentPublicationEditorDto(value: ManagementClientDocumentPublication): ClientDocumentPublicationEditorState {
+  return {
+    document_id: value.document_id, is_published: value.is_published,
+    client_title: value.client_title, client_description: value.client_description, sort_order: value.sort_order,
   };
 }
