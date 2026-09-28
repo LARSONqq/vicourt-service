@@ -89,9 +89,9 @@ export async function updateSession(
 
   const destination = accountRedirect(identity, pathname);
   if (destination) {
-    // Binary portal requests must fail like missing photos, not return a login
+    // Binary portal requests must fail like missing files, not return a login
     // redirect/HTML. The route independently authorizes every allowed request.
-    if (/^\/client\/objects\/[^/]+\/photos\/[^/]+\/file\/?$/u.test(pathname)) {
+    if (/^\/client\/objects\/[^/]+\/(?:photos|documents)\/[^/]+\/file\/?$/u.test(pathname)) {
       const response = new NextResponse(null, { status: 404, headers: {
         "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff",
       } });

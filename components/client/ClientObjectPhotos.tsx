@@ -6,10 +6,11 @@ import type { ClientObjectPhoto, ClientObjectPhotosPage } from "@/types/clientPh
 
 const fileUrl = (photo: ClientObjectPhoto) => `/client/objects/${photo.object_id}/photos/${photo.id}/file`;
 
-export default function ClientObjectPhotos({ objectId, photos }: {
+export default function ClientObjectPhotos({ objectId, photos, documentPage = 1 }: {
   objectId: number;
   // null means technical failure, not an empty/unpublished gallery.
   photos: ClientObjectPhotosPage | null;
+  documentPage?: number;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [selected, setSelected] = useState<ClientObjectPhoto | null>(null);
@@ -34,10 +35,10 @@ export default function ClientObjectPhotos({ objectId, photos }: {
         </li>)}
       </ul>
       {(photos.page > 1 || photos.hasNextPage) && <nav aria-label="Сторінки фото" className="flex flex-wrap items-center justify-between gap-3 text-sm">
-        {photos.page > 1 && <Link prefetch={false} href={`/client/objects/${objectId}?photoPage=${photos.page - 1}`}
+        {photos.page > 1 && <Link prefetch={false} href={`/client/objects/${objectId}?photoPage=${photos.page - 1}${documentPage > 1 ? `&documentPage=${documentPage}` : ""}`}
           className="min-h-11 rounded-lg border px-4 py-3">← Попередня</Link>}
         <span className="text-gray-500">Сторінка {photos.page}</span>
-        {photos.hasNextPage && <Link prefetch={false} href={`/client/objects/${objectId}?photoPage=${photos.page + 1}`}
+        {photos.hasNextPage && <Link prefetch={false} href={`/client/objects/${objectId}?photoPage=${photos.page + 1}${documentPage > 1 ? `&documentPage=${documentPage}` : ""}`}
           className="min-h-11 rounded-lg border px-4 py-3">Наступна →</Link>}
       </nav>}
     </>}

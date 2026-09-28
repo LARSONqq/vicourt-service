@@ -61,7 +61,7 @@ function fixture() {
       from: () => assert.fail("No direct table queries"),
       rpc: async (name, args) => {
         calls.push({ session, name, args });
-        if (name === "get_client_object_photos") {
+        if (name === "get_client_object_photos" || name === "get_client_object_documents") {
           assert.deepEqual(Object.keys(args), ["p_object_id", "p_page"]);
           assert.equal(args.p_page, 1);
           return grants[session].has(args.p_object_id)
@@ -114,6 +114,7 @@ test("published progress renders below object header: manual percentage, ordered
   assert.deepEqual(f.calls.map(({ name, args }) => [name, args]), [
     ["get_client_object", { p_object_id: 47 }], ["get_client_object_progress", { p_object_id: 47 }],
     ["get_client_object_photos", { p_object_id: 47, p_page: 1 }],
+    ["get_client_object_documents", { p_object_id: 47, p_page: 1 }],
   ]);
   const progressHtml = renderToStaticMarkup(nodes(tree, (n) => n.type === f.Component)[0]);
   assert.doesNotMatch(progressHtml, /<(?:form|input|textarea|select|button)\b/);
@@ -210,6 +211,7 @@ test("public text is escaped, queries are repeated per request, invalid IDs neve
     ["get_client_object", { p_object_id: 47 }],
     ["get_client_object_progress", { p_object_id: 47 }],
     ["get_client_object_photos", { p_object_id: 47, p_page: 1 }],
+    ["get_client_object_documents", { p_object_id: 47, p_page: 1 }],
   ];
   assert.deepEqual(f.calls.map(({ name, args }) => [name, args]), [...perRequest, ...perRequest]);
   const beforeInvalidRequests = f.calls.length;

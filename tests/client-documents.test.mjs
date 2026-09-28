@@ -135,7 +135,6 @@ test("inactive/internal/guest denied before client RPC; revoked/wrong-object den
     f.result(result);
     for (const id of [47, 48]) {
       await assert.rejects(() => f.service.getClientObjectDocumentsPage(id), /not-found/);
-      await assert.rejects(() => f.service.getClientObjectDocumentFile(id, 11), /not-found/);
     }
   }
   f.result({ data: [{ ...document(), object_id: 48 }], error: null });
@@ -145,18 +144,25 @@ test("inactive/internal/guest denied before client RPC; revoked/wrong-object den
     await assert.rejects(() => f.service.getClientObjectDocumentsPage(47), (e) => e.name === "ClientDocumentLoadError" && !e.message.includes("SECRET"));
   }
 });
-test("file lookup is server-only, scoped and allowlisted, not a bearer URL or generic client DTO", async () => {
-  const f = clientFixture();
+test("file lookup uses the metadata-only server resolver, with a narrow validated reference", async () => {
+  let response;
+  const calls = [];
+  const userId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+  const service = loader({ "@/lib/supabase/admin": { createServiceRoleClient: () => ({
+    rpc: async (name, args) => { calls.push([name, args]); return response; },
+    get storage() { assert.fail("Service credential must never download bytes"); },
+  }) } })("services/clientDocumentFileService.ts");
   const reference = { storage_path: "47/uuid.pdf", mime_type: "application/pdf", client_title: "План" };
-  f.result({ data: [{ ...reference, note: "SECRET", original_file_name: "SECRET" }], error: null });
-  assert.deepEqual(await f.service.getClientObjectDocumentFile(47, 11), reference);
-  assert.deepEqual(f.calls.at(-1), ["get_client_object_document_file", { p_object_id: 47, p_document_id: 11 }]);
+  response = { data: [{ ...reference, note: "SECRET", original_file_name: "SECRET" }], error: null };
+  const resolveFile = () => service.resolveClientObjectDocumentFile(userId, 47, 11);
+  assert.deepEqual(await resolveFile(), reference);
+  assert.deepEqual(calls.at(-1), ["get_client_object_document_file_server", { p_client_user_id: userId, p_object_id: 47, p_document_id: 11 }]);
   for (const path of ["../file.pdf", "/file.pdf", "47/../file.pdf", "47/file.html", "47/file.svg", "47/file.pdf\n"]) {
-    f.result({ data: [{ ...reference, storage_path: path }], error: null });
-    await assert.rejects(() => f.service.getClientObjectDocumentFile(47, 11), /Не вдалося/);
+    response = { data: [{ ...reference, storage_path: path }], error: null };
+    await assert.rejects(resolveFile, /Документ недоступний/);
   }
-  f.result({ data: [], error: null });
-  await assert.rejects(() => f.service.getClientObjectDocumentFile(47, 11), /not-found/);
+  response = { data: [], error: null };
+  await assert.rejects(resolveFile, /Документ недоступний/);
   for (const file of ["services/clientDocumentService.ts", "services/clientDocumentManagementService.ts"]) {
     const code = read(file); assert.match(code, /^import "server-only";/);
     assert.doesNotMatch(code, /createServiceRoleClient|createAdminClient|createSignedUrl|SUPABASE_SERVICE|supabase\.from\(/u);

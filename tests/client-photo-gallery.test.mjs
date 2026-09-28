@@ -65,6 +65,7 @@ function fixture() {
         if (name === "get_client_object_progress") { afterProgress(); return { data: [], error: null }; }
         if (name === "get_client_object_photos") return typeof galleryResult === "function" ? galleryResult(args)
           : galleryResult ?? { data: [photo(11, id)], error: null };
+        if (name === "get_client_object_documents") return { data: [], error: null };
         assert.equal(name, "get_client_object_photo_file", "Only dedicated client RPCs");
         if (fileResult !== undefined) return fileResult;
         return args.p_photo_id === (id === 47 ? 11 : 12)
@@ -163,14 +164,14 @@ test("pagination stays scoped at 12/page with URL links, normalized invalid page
   const tree = await f.page("47", "2"), gallery = nodes(tree, (n) => n.type === f.Gallery)[0];
   assert.equal(gallery.props.photos.pageSize, 12); assert.equal(gallery.props.photos.page, 2);
   assert.equal(gallery.props.photos.items.length, 12); assert.equal(gallery.props.photos.hasNextPage, true);
-  assert.deepEqual(f.calls.at(-1), ["get_client_object_photos", { p_object_id: 47, p_page: 2 }]);
+  assert.deepEqual(f.calls.filter(([name]) => name === "get_client_object_photos").at(-1), ["get_client_object_photos", { p_object_id: 47, p_page: 2 }]);
   const html = renderToStaticMarkup(tree);
   assert.match(html, /href="\/client\/objects\/47\?photoPage=1"/);
   assert.match(html, /href="\/client\/objects\/47\?photoPage=3"/);
   assert.deepEqual(f.downloads, [], "Metadata never prefetches image binaries");
   for (const page of [undefined, "0", "-1", "1.5", "abc", "100001", ["2", "3"]]) {
     await f.page("47", page);
-    assert.equal(f.calls.at(-1)[1].p_page, 1);
+    assert.equal(f.calls.filter(([name]) => name === "get_client_object_photos").at(-1)[1].p_page, 1);
   }
   f.gallery({ data: [], error: null });
   await assert.rejects(() => f.page("47", "99"), (error) => error.digest.startsWith("NEXT_REDIRECT;") && error.digest.includes("/client/objects/47?photoPage=1"));

@@ -23,6 +23,35 @@ const EXTENSION_MIMES: Readonly<Record<string, readonly string[]>> = {
   webp: ["image/webp"],
 };
 const mimes = new Set(Object.values(EXTENSION_MIMES).flat());
+// Browser-facing names use a canonical extension, never a source filename.
+const FILE_TYPES: Readonly<Record<string, { extension: string; label: string }>> = {
+  "application/pdf": { extension: "pdf", label: "PDF" },
+  "application/msword": { extension: "doc", label: "Word" },
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": { extension: "docx", label: "Word" },
+  "application/vnd.ms-excel": { extension: "xls", label: "Excel" },
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": { extension: "xlsx", label: "Excel" },
+  "text/csv": { extension: "csv", label: "CSV" },
+  "application/csv": { extension: "csv", label: "CSV" },
+  "text/plain": { extension: "txt", label: "Текстовий документ" },
+  "image/jpeg": { extension: "jpg", label: "Зображення JPEG" },
+  "image/png": { extension: "png", label: "Зображення PNG" },
+  "image/webp": { extension: "webp", label: "Зображення WebP" },
+};
+
+export function clientDocumentFileType(mime: string) {
+  return mimes.has(mime) && Object.hasOwn(FILE_TYPES, mime) ? FILE_TYPES[mime] : null;
+}
+
+// Transport metadata is not the eligibility predicate above: the DB and
+// user-scoped Storage already validate the stored MIME/path. Some downloads
+// omit Content-Type or use octet-stream. A concrete conflicting type still fails.
+export function clientDocumentTransportMimeMatches(transport: string, validatedMime: string): boolean {
+  if (!clientDocumentFileType(validatedMime)) return false;
+  const normalized = transport.toLowerCase().trim()
+    .replace(/;\s*charset\s*=\s*(?:"[^";]*"|[^;]*)/gu, "").trim();
+  return normalized === "" || normalized === "application/octet-stream" || normalized === validatedMime;
+}
+
 const invalid = () => new ClientPortalInputError("Некоректні дані публікації документа.");
 export const positiveDocumentId = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) > 0;
 const order = (value: unknown): value is number => Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 2147483647;
