@@ -132,7 +132,8 @@ test("unpublished is not fabricated 0%; published 0 and 100 are valid; optional 
     html = renderToStaticMarkup(await f.page());
     assert.ok(html.includes(`aria-valuenow="${value}"`));
     assert.ok(html.includes(`width:${value}%`));
-    assert.doesNotMatch(html, /Оновлення прогресу ще не опубліковано|Що виконано|Що далі|Етапи проєкту/);
+    assert.doesNotMatch(html, /Оновлення прогресу ще не опубліковано|Що виконано|Що далі|<ol/);
+    assert.match(html, /Етапи проєкту ще не додано/);
   }
 });
 

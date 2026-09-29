@@ -1,8 +1,10 @@
 "use client";
+import ClientPortalState from "@/components/client/ClientPortalState";
+
 export default function ClientError({ reset }: { reset: () => void }) {
-  return <section className="space-y-3 rounded-xl border bg-white p-5" role="alert">
-    <h2 className="font-semibold">Не вдалося завантажити дані</h2>
-    <p className="text-sm text-gray-500">Перевірте з’єднання або спробуйте пізніше.</p>
-    <button onClick={reset} className="min-h-11 rounded-lg border px-4 py-2">Спробувати ще раз</button>
+  return <section className="min-w-0 rounded-2xl border bg-white p-5 sm:p-8" aria-label="Не вдалося завантажити дані">
+    <ClientPortalState error title="Не вдалося завантажити дані" description="Перевірте з’єднання або спробуйте пізніше.">
+      <button type="button" onClick={reset} className="min-h-11 rounded-lg bg-green-800 px-4 py-3 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700">Спробувати ще раз</button>
+    </ClientPortalState>
   </section>;
 }

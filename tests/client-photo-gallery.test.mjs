@@ -166,8 +166,8 @@ test("pagination stays scoped at 12/page with URL links, normalized invalid page
   assert.equal(gallery.props.photos.items.length, 12); assert.equal(gallery.props.photos.hasNextPage, true);
   assert.deepEqual(f.calls.filter(([name]) => name === "get_client_object_photos").at(-1), ["get_client_object_photos", { p_object_id: 47, p_page: 2 }]);
   const html = renderToStaticMarkup(tree);
-  assert.match(html, /href="\/client\/objects\/47\?photoPage=1"/);
-  assert.match(html, /href="\/client\/objects\/47\?photoPage=3"/);
+  assert.match(html, /href="\/client\/objects\/47\?photoPage=1#client-photos-title"/);
+  assert.match(html, /href="\/client\/objects\/47\?photoPage=3#client-photos-title"/);
   assert.deepEqual(f.downloads, [], "Metadata never prefetches image binaries");
   for (const page of [undefined, "0", "-1", "1.5", "abc", "100001", ["2", "3"]]) {
     await f.page("47", page);

@@ -13,6 +13,9 @@ import {
   getClientObjectProgress,
 } from "@/services/clientPortalService";
 import type { ClientObjectProgress as ClientObjectProgressDto } from "@/types/clientPortal";
+import ClientObjectNavigation from "@/components/client/ClientObjectNavigation";
+import ClientObjectStatus from "@/components/client/ClientObjectStatus";
+import { MapPin } from "lucide-react";
 
 export default async function ClientObjectPage({ params, searchParams }: {
   params: Promise<{ id: string }>;
@@ -61,12 +64,13 @@ export default async function ClientObjectPage({ params, searchParams }: {
     redirect(`/client/objects/${object.id}?${normalizedQuery}`);
   }
   return <>
-    <Link href="/client" className="inline-block py-2 text-sm font-medium text-green-700">← Ваші об’єкти</Link>
-    <section className="min-w-0 space-y-4 rounded-2xl border bg-white p-5 sm:p-8">
-      <span className="inline-block rounded-full bg-green-50 px-3 py-1 text-sm text-green-800">{object.status}</span>
-      <h1 className="break-words text-2xl font-bold sm:text-3xl">{object.name}</h1>
-      <dl className="border-t pt-4"><dt className="text-sm text-gray-500">Адреса</dt><dd className="mt-1 break-words">{object.address || "Адресу не вказано"}</dd></dl>
+    <Link href="/client" className="inline-flex min-h-11 items-center rounded-lg text-sm font-medium text-green-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-green-700">← Ваші об’єкти</Link>
+    <section id="client-overview" aria-labelledby="client-object-title" className="min-w-0 scroll-mt-24 space-y-4 rounded-2xl border border-gray-200 bg-white p-5 sm:p-8">
+      <ClientObjectStatus status={object.status} />
+      <h1 id="client-object-title" className="break-words text-2xl font-bold tracking-tight [overflow-wrap:anywhere] sm:text-3xl">{object.name}</h1>
+      <p className="flex min-w-0 items-start gap-2 text-sm leading-relaxed text-gray-600"><MapPin aria-hidden="true" className="mt-0.5 size-4 shrink-0" /><span className="min-w-0 [overflow-wrap:anywhere]">{object.address || "Адресу не вказано"}</span></p>
     </section>
+    <ClientObjectNavigation />
     <ClientObjectProgress progress={progress} unavailable={progressUnavailable} />
     <ClientObjectPhotos key={`${object.id}:${photoPage}`} objectId={object.id} photos={photos} documentPage={documentPage} />
     <ClientObjectDocuments objectId={object.id} documents={documents} photoPage={photoPage} />
