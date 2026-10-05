@@ -33,6 +33,9 @@ import {
 import {
   getManagementEquipmentServiceRecordsRange,
 } from "@/services/equipmentService";
+import {
+  reportsSections,
+} from "@/types/report";
 
 import type { WorkLog } from "@/types/workLog";
 
@@ -50,6 +53,7 @@ import type {
   ReportPaymentScheduleDetail,
   ReportPurchaseExportRow,
   ReportWarehouseSnapshotRow,
+  ReportDataScope,
   ReportsData,
   ReportsFilterInput,
   ReportsFilters,
@@ -664,10 +668,50 @@ export function normalizeReportsFilters(
 }
 
 export async function getReportsData(
-  filters: ReportsFilters
+  filters: ReportsFilters,
+  requestedScopes: readonly ReportDataScope[] =
+    reportsSections
 ): Promise<ReportsData> {
   const supabase =
     await createClient();
+
+  const scopes = new Set(
+    requestedScopes
+  );
+  const needsOverview =
+    scopes.has("overview");
+  const needsObjects =
+    scopes.has("objects");
+  const needsWorkforce =
+    scopes.has("workforce");
+  const needsCashflow =
+    scopes.has("cashflow");
+  const needsWarehouse =
+    scopes.has("warehouse");
+  const needsEquipment =
+    scopes.has("equipment");
+  const needsWorkLogs =
+    needsOverview ||
+    needsObjects ||
+    needsWorkforce;
+  const needsMaterialCosts =
+    needsOverview ||
+    needsObjects ||
+    needsWarehouse;
+  const needsExpenses =
+    needsOverview ||
+    needsObjects ||
+    needsCashflow;
+  const needsPayments =
+    needsOverview ||
+    needsObjects ||
+    needsCashflow;
+  const needsPaymentSchedule =
+    needsOverview ||
+    needsCashflow;
+  const needsPeriodPurchases =
+    needsOverview ||
+    needsCashflow;
 
   const invalidPeriod =
     filters.dateFrom >
@@ -696,15 +740,19 @@ export async function getReportsData(
   }
 
   const materialLedgerCutover =
-    await getMaterialLedgerCutover(
-      supabase
-    );
+    needsMaterialCosts
+      ? await getMaterialLedgerCutover(
+          supabase
+        )
+      : null;
   const materialPeriodMode =
-    getReportMaterialPeriodMode(
-      timestampFrom,
-      timestampToExclusive,
-      materialLedgerCutover
-    );
+    needsMaterialCosts
+      ? getReportMaterialPeriodMode(
+          timestampFrom,
+          timestampToExclusive,
+          materialLedgerCutover
+        )
+      : "exact";
   const legacyTimestampToExclusive =
     materialLedgerCutover &&
     Date.parse(
@@ -1337,44 +1385,64 @@ export async function getReportsData(
   ] = await Promise.all([
     loadObjects(),
     loadEmployees(),
-    loadWarehouseItems(),
-    invalidPeriod
+    needsCashflow ||
+    needsWarehouse
+      ? loadWarehouseItems()
+      : emptyRows<
+          ReportWarehouseItemRow
+        >(),
+    invalidPeriod ||
+    !needsWorkLogs
       ? emptyRows<
           ReportWorkLogRow
         >()
       : loadWorkLogs(),
+    !needsMaterialCosts ||
     !hasLegacyPeriodSegment
       ? emptyRows<
           ReportMaterialRow
         >()
       : loadMaterials(),
-    invalidPeriod
+    invalidPeriod ||
+    !needsExpenses
       ? emptyRows<
           ReportExpenseRow
         >()
       : loadExpenses(),
-    invalidPeriod
+    invalidPeriod ||
+    !needsPayments
       ? emptyRows<
           ReportPaymentRow
         >()
       : loadPayments(),
-    loadLifetimePayments(),
-    loadPaymentSchedule(),
-    invalidPeriod
+    needsPayments
+      ? loadLifetimePayments()
+      : emptyRows<
+          ReportLifetimePaymentRow
+        >(),
+    needsPaymentSchedule
+      ? loadPaymentSchedule()
+      : emptyRows<
+          ReportPaymentScheduleRow
+        >(),
+    invalidPeriod ||
+    !needsPeriodPurchases
       ? emptyRows<
           ReportPurchaseRow
         >()
       : loadPurchases(
           "Заплановано"
         ),
-    invalidPeriod
+    invalidPeriod ||
+    !needsPeriodPurchases
       ? emptyRows<
           ReportPurchaseRow
         >()
       : loadPurchases(
           "Закуплено"
         ),
-    invalidPeriod
+    invalidPeriod ||
+    !needsMaterialCosts
       ? Promise.resolve({
           cutover:
             materialLedgerCutover,
@@ -1394,8 +1462,16 @@ export async function getReportsData(
           },
           materialLedgerCutover
         ),
-    loadWarehousePlanningPurchases(),
-    loadEquipmentServiceRecords(),
+    needsWarehouse
+      ? loadWarehousePlanningPurchases()
+      : emptyRows<
+          ReportPurchaseRow
+        >(),
+    needsEquipment
+      ? loadEquipmentServiceRecords()
+      : emptyRows<
+          ReportEquipmentServiceRow
+        >(),
   ]);
 
   const objectNames =
@@ -2007,6 +2083,7 @@ export async function getReportsData(
     lifetimeMaterials,
     lifetimeExpenses,
   ] =
+    needsObjects &&
     reportObjectIds.length > 0
       ? await Promise.all([
           loadLifetimeWorkLogs(

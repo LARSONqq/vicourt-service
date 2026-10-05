@@ -12,10 +12,12 @@ import {
 
 import type {
   ReportsData,
+  ReportsSection,
 } from "@/types/report";
 
 type Props = {
   data: ReportsData;
+  section: ReportsSection;
 };
 
 function formatMoney(
@@ -154,6 +156,7 @@ function EmptyState({
 
 export default function ReportsDashboard({
   data,
+  section,
 }: Props) {
   const kpiCards = [
     {
@@ -297,6 +300,11 @@ export default function ReportsDashboard({
       )}
 
       {!data.invalidPeriod &&
+        [
+          "overview",
+          "objects",
+          "warehouse",
+        ].includes(section) &&
         data.materialAccounting
           .limitation && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900 sm:px-5">
@@ -310,6 +318,7 @@ export default function ReportsDashboard({
           </div>
         )}
 
+      {section === "overview" && (
       <section className="min-w-0">
         <div className="mb-3 sm:mb-4">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
@@ -354,7 +363,9 @@ export default function ReportsDashboard({
           )}
         </div>
       </section>
+      )}
 
+      {section === "objects" && (
       <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
         <div className="border-b p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
@@ -885,7 +896,9 @@ export default function ReportsDashboard({
           </>
         )}
       </section>
+      )}
 
+      {section === "workforce" && (
       <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
         <div className="border-b p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
@@ -1038,9 +1051,13 @@ export default function ReportsDashboard({
           </>
         )}
       </section>
+      )}
 
-      <EquipmentCostReport data={data} />
+      {section === "equipment" && (
+        <EquipmentCostReport data={data} />
+      )}
 
+      {section === "cashflow" && (
       <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
@@ -1176,7 +1193,9 @@ export default function ReportsDashboard({
           )}
         </div>
       </section>
+      )}
 
+      {section === "cashflow" && (
       <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
         <div className="border-b p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
@@ -1312,7 +1331,9 @@ export default function ReportsDashboard({
           </>
         )}
       </section>
+      )}
 
+      {section === "cashflow" && (
       <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
         <div className="border-b p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
@@ -1429,11 +1450,15 @@ export default function ReportsDashboard({
           </>
         )}
       </section>
+      )}
 
-      <MaterialLedgerReport
-        data={data}
-      />
+      {section === "warehouse" && (
+        <MaterialLedgerReport
+          data={data}
+        />
+      )}
 
+      {section === "cashflow" && (
       <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -1506,7 +1531,9 @@ export default function ReportsDashboard({
           </div>
         </div>
       </section>
+      )}
 
+      {section === "warehouse" && (
       <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
         <div className="flex min-w-0 flex-col gap-2 border-b p-4 sm:flex-row sm:items-end sm:justify-between sm:p-5">
           <div>
@@ -1668,7 +1695,9 @@ export default function ReportsDashboard({
           </div>
         )}
       </section>
+      )}
 
+      {section === "warehouse" && (
       <p className="text-xs leading-5 text-gray-500 sm:text-sm">
         Дані розраховані за вибраний
         період. Після переходу на
@@ -1678,6 +1707,7 @@ export default function ReportsDashboard({
         legacy-частина позначена як
         приблизна.
       </p>
+      )}
     </div>
   );
 }

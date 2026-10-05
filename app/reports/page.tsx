@@ -3,6 +3,7 @@ import ReportExportButtons, {
   type ReportExportGroup,
 } from "@/components/reports/ReportExportButtons";
 import ReportsFilters from "@/components/reports/ReportsFilters";
+import ReportsSectionNavigation from "@/components/reports/ReportsSectionNavigation";
 
 import {
   requireSectionAccess,
@@ -10,6 +11,9 @@ import {
 import {
   createReportExportSearchParams,
 } from "@/lib/reportExportParams";
+import {
+  normalizeReportsSection,
+} from "@/lib/reportSections";
 
 import {
   getReportsData,
@@ -35,6 +39,7 @@ type SearchParams = {
   movement_type?:
     | string
     | string[];
+  section?: string | string[];
 };
 
 type Props = {
@@ -118,12 +123,28 @@ export default async function ReportsPage({
           params.movement_type
         ),
     });
+  const section =
+    normalizeReportsSection(
+      getParam(params.section)
+    );
 
-  const [data, settings] =
-    await Promise.all([
-      getReportsData(filters),
-      getAppSettings(),
-    ]);
+  const settings =
+    await getAppSettings();
+  let data = null;
+
+  try {
+    data = await getReportsData(
+      filters,
+      [section]
+    );
+  } catch (error) {
+    console.error(
+      "Не вдалося завантажити розділ звітів:",
+      error instanceof Error
+        ? error.message
+        : error
+    );
+  }
 
   const exportGroups = [
     {
@@ -138,7 +159,7 @@ export default async function ReportsPage({
           href:
             createPeriodExportHref(
               "summary",
-              data.filters
+              filters
             ),
           note:
             "KPI та метод обліку матеріалів",
@@ -149,7 +170,7 @@ export default async function ReportsPage({
           href:
             createPeriodExportHref(
               "object-costs",
-              data.filters
+              filters
             ),
           note:
             "За вибраний період",
@@ -160,7 +181,7 @@ export default async function ReportsPage({
           href:
             createPeriodExportHref(
               "employee-work",
-              data.filters
+              filters
             ),
           note:
             "За вибраний період",
@@ -171,7 +192,7 @@ export default async function ReportsPage({
           href:
             createPeriodExportHref(
               "expense-categories",
-              data.filters
+              filters
             ),
           note:
             "За вибраний період",
@@ -182,7 +203,7 @@ export default async function ReportsPage({
           href:
             createPeriodExportHref(
               "client-payments",
-              data.filters
+              filters
             ),
           note:
             "За вибраний період",
@@ -192,7 +213,7 @@ export default async function ReportsPage({
           href:
             createPeriodExportHref(
               "payment-schedule",
-              data.filters
+              filters
             ),
           note:
             "За датою платежу",
@@ -203,7 +224,7 @@ export default async function ReportsPage({
           href:
             createPeriodExportHref(
               "purchases",
-              data.filters
+              filters
             ),
           note:
             "За вибраний період",
@@ -214,7 +235,7 @@ export default async function ReportsPage({
           href:
             createPeriodExportHref(
               "warehouse-movements",
-              data.filters
+              filters
             ),
           note:
             "Ledger, snapshots і метод обліку",
@@ -225,7 +246,7 @@ export default async function ReportsPage({
           href:
             createPeriodExportHref(
               "equipment-costs",
-              data.filters
+              filters
             ),
           note:
             "ТО, ремонти та інший сервіс",
@@ -297,32 +318,52 @@ export default async function ReportsPage({
       </div>
 
       <ReportsFilters
-        filters={data.filters}
+        filters={filters}
         objects={
-          data.objectOptions
+          data?.objectOptions || []
         }
         employees={
-          data.employeeOptions
+          data?.employeeOptions || []
         }
+        section={section}
       />
 
-      <ReportsDashboard
-        data={data}
+      <ReportsSectionNavigation
+        activeSection={section}
+        filters={filters}
       />
 
+      {data ? (
+        <ReportsDashboard
+          data={data}
+          section={section}
+        />
+      ) : (
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
+          <h2 className="font-semibold">
+            Не вдалося завантажити цей розділ звітів
+          </h2>
+          <p className="mt-1">
+            Спробуй оновити сторінку. Інші розділи звітів залишаються доступними через навігацію вище.
+          </p>
+        </section>
+      )}
+
+      {data && (
       <ReportExportButtons
         excelExport={{
           title:
             "Завантажити Excel",
           href:
             createExcelExportHref(
-              data.filters
+              filters
             ),
           note:
             "Один файл із 11 вкладками",
         }}
         groups={exportGroups}
       />
+      )}
     </div>
   );
 }

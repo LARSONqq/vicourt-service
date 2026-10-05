@@ -43,6 +43,10 @@ import {
   objectPaymentScheduleStatusLabels,
 } from "@/constants/objectPaymentSchedule";
 
+import type {
+  ReportDataScope,
+} from "@/types/report";
+
 type ExportType =
   | "summary"
   | "object-costs"
@@ -195,6 +199,35 @@ function createPeriodFilename(
   return `vicourt-${name}-${dateFrom}-${dateTo}.csv`;
 }
 
+function getPeriodExportScopes(
+  type: ExportType
+): readonly ReportDataScope[] {
+  switch (type) {
+    case "summary":
+      return [
+        "overview",
+        "equipment",
+      ];
+    case "object-costs":
+      return ["objects"];
+    case "employee-work":
+      return ["workforce"];
+    case "expense-categories":
+    case "client-payments":
+    case "payment-schedule":
+    case "purchases":
+      return ["cashflow"];
+    case "warehouse-movements":
+      return ["warehouse"];
+    case "equipment-costs":
+      return ["equipment"];
+    default:
+      throw new Error(
+        "Невідомий періодний звіт."
+      );
+  }
+}
+
 async function getPeriodCsv(
   type: ExportType,
   request: NextRequest
@@ -212,7 +245,10 @@ async function getPeriodCsv(
 
   const data =
     await getReportsData(
-      filters
+      filters,
+      getPeriodExportScopes(
+        type
+      )
     );
 
   switch (type) {
@@ -840,6 +876,7 @@ export async function GET(
     }
 
     const result = [
+      "summary",
       "object-costs",
       "employee-work",
       "expense-categories",

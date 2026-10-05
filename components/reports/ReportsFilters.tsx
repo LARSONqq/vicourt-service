@@ -8,6 +8,7 @@ import type {
   ReportEmployeeOption,
   ReportObjectOption,
   ReportsFilters,
+  ReportsSection,
 } from "@/types/report";
 
 type Props = {
@@ -15,12 +16,14 @@ type Props = {
   objects: ReportObjectOption[];
   employees:
     ReportEmployeeOption[];
+  section: ReportsSection;
 };
 
 export default function ReportsFilters({
   filters,
   objects,
   employees,
+  section,
 }: Props) {
   return (
     <section className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
@@ -41,6 +44,11 @@ export default function ReportsFilters({
         method="get"
         className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6"
       >
+        <input
+          type="hidden"
+          name="section"
+          value={section}
+        />
         <div className="min-w-0">
           <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400">
             Дата від
@@ -212,7 +220,7 @@ export default function ReportsFilters({
           </button>
 
           <Link
-            href="/reports"
+            href={`/reports?section=${section}`}
             className="flex min-h-11 items-center justify-center rounded-lg border bg-white px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 2xl:min-w-40"
           >
             Скинути фільтри

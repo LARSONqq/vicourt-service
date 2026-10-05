@@ -34,6 +34,21 @@ export type ReportsFilters = {
     | null;
 };
 
+export const reportsSections = [
+  "overview",
+  "objects",
+  "workforce",
+  "cashflow",
+  "warehouse",
+  "equipment",
+] as const;
+
+export type ReportsSection =
+  (typeof reportsSections)[number];
+
+export type ReportDataScope =
+  ReportsSection;
+
 export type ReportsFilterInput = {
   from?: string;
   to?: string;
