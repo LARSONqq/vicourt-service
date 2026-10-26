@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getReportOverviewCurrentFinance } from "@/services/reportCurrentFinanceService";
 
 import {
   objectExpenseCategories,
@@ -690,6 +691,11 @@ export async function getReportsData(
     scopes.has("warehouse");
   const needsEquipment =
     scopes.has("equipment");
+  // Overview (including summary CSV) needs only three current-finance totals.
+  // Objects/Cashflow and the full Excel scope retain their original detail path.
+  const useCurrentFinanceAggregate =
+    needsOverview && !needsObjects && !needsCashflow;
+  const reportToday = getKyivDateValue();
   const needsWorkLogs =
     needsOverview ||
     needsObjects ||
@@ -1382,6 +1388,7 @@ export async function getReportsData(
     materialLedger,
     warehousePlanningPurchases,
     equipmentServiceRows,
+    currentFinance,
   ] = await Promise.all([
     loadObjects(),
     loadEmployees(),
@@ -1415,12 +1422,12 @@ export async function getReportsData(
           ReportPaymentRow
         >()
       : loadPayments(),
-    needsPayments
+    needsPayments && !useCurrentFinanceAggregate
       ? loadLifetimePayments()
       : emptyRows<
           ReportLifetimePaymentRow
         >(),
-    needsPaymentSchedule
+    needsPaymentSchedule && !useCurrentFinanceAggregate
       ? loadPaymentSchedule()
       : emptyRows<
           ReportPaymentScheduleRow
@@ -1472,6 +1479,9 @@ export async function getReportsData(
       : emptyRows<
           ReportEquipmentServiceRow
         >(),
+    useCurrentFinanceAggregate
+      ? getReportOverviewCurrentFinance(filters.objectId, reportToday)
+      : Promise.resolve(null),
   ]);
 
   const objectNames =
@@ -1574,8 +1584,6 @@ export async function getReportsData(
       );
     }
   );
-  const reportToday =
-    getKyivDateValue();
   const scheduleByObject =
     new Map<
       number,
@@ -3090,9 +3098,12 @@ export async function getReportsData(
       purchasedCost:
         purchasedAmount,
       paymentsReceived,
-      outstandingReceivables,
-      objectsWithoutClientPrice,
-      overdueScheduleAmount,
+      outstandingReceivables:
+        currentFinance?.outstanding_receivables ?? outstandingReceivables,
+      objectsWithoutClientPrice:
+        currentFinance?.objects_without_client_price ?? objectsWithoutClientPrice,
+      overdueScheduleAmount:
+        currentFinance?.overdue_schedule_amount ?? overdueScheduleAmount,
     },
     materialAccounting: {
       periodMode:

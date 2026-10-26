@@ -81,6 +81,12 @@ export type ReportKpis = {
   overdueScheduleAmount: number;
 };
 
+export type ReportOverviewCurrentFinance = {
+  outstanding_receivables: number;
+  objects_without_client_price: number;
+  overdue_schedule_amount: number;
+};
+
 export type ReportObjectCost = {
   objectId: number;
   objectName: string;
