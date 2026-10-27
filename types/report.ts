@@ -87,6 +87,14 @@ export type ReportOverviewCurrentFinance = {
   overdue_schedule_amount: number;
 };
 
+export type ReportOverviewPeriodTotals = {
+  labor_cost: number;
+  other_expenses_cost: number;
+  total_hours: number;
+  purchased_cost: number;
+  payments_received: number;
+};
+
 export type ReportObjectCost = {
   objectId: number;
   objectName: string;

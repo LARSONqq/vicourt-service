@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getReportOverviewCurrentFinance } from "@/services/reportCurrentFinanceService";
+import { getReportOverviewPeriodTotals } from "@/services/reportPeriodTotalsService";
 
 import {
   objectExpenseCategories,
@@ -695,6 +696,10 @@ export async function getReportsData(
   // Objects/Cashflow and the full Excel scope retain their original detail path.
   const useCurrentFinanceAggregate =
     needsOverview && !needsObjects && !needsCashflow;
+  // Only KPI-only scopes use period aggregates. Detail sections and full Excel
+  // retain their raw rows, and materials/cutover keep their independent path.
+  const usePeriodTotalsAggregate =
+    needsOverview && !needsObjects && !needsWorkforce && !needsCashflow && !needsWarehouse;
   const reportToday = getKyivDateValue();
   const needsWorkLogs =
     needsOverview ||
@@ -1389,6 +1394,7 @@ export async function getReportsData(
     warehousePlanningPurchases,
     equipmentServiceRows,
     currentFinance,
+    periodTotals,
   ] = await Promise.all([
     loadObjects(),
     loadEmployees(),
@@ -1399,7 +1405,7 @@ export async function getReportsData(
           ReportWarehouseItemRow
         >(),
     invalidPeriod ||
-    !needsWorkLogs
+    !needsWorkLogs || usePeriodTotalsAggregate
       ? emptyRows<
           ReportWorkLogRow
         >()
@@ -1411,13 +1417,13 @@ export async function getReportsData(
         >()
       : loadMaterials(),
     invalidPeriod ||
-    !needsExpenses
+    !needsExpenses || usePeriodTotalsAggregate
       ? emptyRows<
           ReportExpenseRow
         >()
       : loadExpenses(),
     invalidPeriod ||
-    !needsPayments
+    !needsPayments || usePeriodTotalsAggregate
       ? emptyRows<
           ReportPaymentRow
         >()
@@ -1433,7 +1439,7 @@ export async function getReportsData(
           ReportPaymentScheduleRow
         >(),
     invalidPeriod ||
-    !needsPeriodPurchases
+    !needsPeriodPurchases || usePeriodTotalsAggregate
       ? emptyRows<
           ReportPurchaseRow
         >()
@@ -1441,7 +1447,7 @@ export async function getReportsData(
           "Заплановано"
         ),
     invalidPeriod ||
-    !needsPeriodPurchases
+    !needsPeriodPurchases || usePeriodTotalsAggregate
       ? emptyRows<
           ReportPurchaseRow
         >()
@@ -1481,6 +1487,9 @@ export async function getReportsData(
         >(),
     useCurrentFinanceAggregate
       ? getReportOverviewCurrentFinance(filters.objectId, reportToday)
+      : Promise.resolve(null),
+    usePeriodTotalsAggregate && !invalidPeriod
+      ? getReportOverviewPeriodTotals(filters)
       : Promise.resolve(null),
   ]);
 
@@ -3081,6 +3090,9 @@ export async function getReportsData(
         ? "Показано лише підтверджену exact-частину після переходу на Ledger. Legacy-частина цього змішаного періоду не включена, щоб не змішувати несумісні методи й не допустити подвійного обліку."
         : "Історичні матеріальні витрати до переходу на Ledger розраховані за поточними legacy-рядками й можуть відрізнятися від фактичного руху в минулому.";
 
+  const kpiLaborCost = periodTotals?.labor_cost ?? laborCost;
+  const kpiOtherExpensesCost = periodTotals?.other_expenses_cost ?? otherExpensesCost;
+
   return {
     filters,
     invalidPeriod,
@@ -3088,16 +3100,16 @@ export async function getReportsData(
     employeeOptions,
     kpis: {
       materialsCost,
-      laborCost,
-      otherExpensesCost,
+      laborCost: kpiLaborCost,
+      otherExpensesCost: kpiOtherExpensesCost,
       totalObjectCost:
         materialsCost +
-        laborCost +
-        otherExpensesCost,
-      totalHours,
+        kpiLaborCost +
+        kpiOtherExpensesCost,
+      totalHours: periodTotals?.total_hours ?? totalHours,
       purchasedCost:
-        purchasedAmount,
-      paymentsReceived,
+        periodTotals?.purchased_cost ?? purchasedAmount,
+      paymentsReceived: periodTotals?.payments_received ?? paymentsReceived,
       outstandingReceivables:
         currentFinance?.outstanding_receivables ?? outstandingReceivables,
       objectsWithoutClientPrice:

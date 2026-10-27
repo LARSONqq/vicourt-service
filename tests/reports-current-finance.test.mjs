@@ -210,6 +210,9 @@ function reportsFixture() {
   const load = loader({
     "@/lib/supabase/server": { createClient: async () => ({ from: (name) => query("from", name), rpc: (name) => query("rpc", name) }) },
     "@/services/reportCurrentFinanceService": { getReportOverviewCurrentFinance: async (...args) => { aggregates.push(args); return dto; } },
+    "@/services/reportPeriodTotalsService": { getReportOverviewPeriodTotals: async () => ({
+      labor_cost: 0, other_expenses_cost: 0, total_hours: 0, purchased_cost: 0, payments_received: 0,
+    }) },
     "@/services/equipmentService": { getManagementEquipmentServiceRecordsRange: async () => [] },
     "@/services/reportMaterialLedgerService": {
       getMaterialLedgerCutover: async () => null, getReportMaterialPeriodMode: () => "legacy",
@@ -219,7 +222,7 @@ function reportsFixture() {
   return { queries, aggregates, get: load("services/reportService.ts").getReportsData };
 }
 const filters = { dateFrom: "2026-01-01", dateTo: "2026-01-03", objectId: 47, employeeId: null, expenseCategory: null, movementType: null };
-test("Overview and summary CSV replace only lifetime payments/schedule with current finance DTO", async () => {
+test("Overview and summary CSV retain B1 current finance DTO while B2 replaces period loaders", async () => {
   for (const scope of [["overview"], ["overview", "equipment"]]) {
     const f = reportsFixture();
     const data = await f.get(filters, scope);
@@ -231,10 +234,10 @@ test("Overview and summary CSV replace only lifetime payments/schedule with curr
     assert.equal(data.kpis.overdueScheduleAmount, dto.overdue_schedule_amount);
     assert.equal(f.queries.filter((q) => q.name === "object_payment_schedule").length, 0);
     const payments = f.queries.filter((q) => q.name === "object_payments");
-    assert.equal(payments.length, 1);
-    assert.ok(payments[0].methods.some(([m, col, v]) => m === "gte" && col === "payment_date" && v === filters.dateFrom));
-    for (const name of ["get_management_work_logs", "get_management_materials", "object_expenses", "warehouse_purchases"])
-      assert.ok(f.queries.some((q) => q.name === name), `${name} remains raw`);
+    assert.equal(payments.length, 0);
+    for (const name of ["get_management_work_logs", "object_expenses", "warehouse_purchases"])
+      assert.equal(f.queries.filter((q) => q.name === name).length, 0, `${name} moved to B2 period aggregate`);
+    assert.ok(f.queries.some((q) => q.name === "get_management_materials"), "materials remains raw and independent");
   }
 });
 test("Objects/Cashflow/full Excel retain old raw contracts; non-overview sections do not call new RPC", async () => {
