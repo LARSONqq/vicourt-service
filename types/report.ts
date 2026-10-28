@@ -131,6 +131,14 @@ export type ReportMaterialPeriodMode =
   | "legacy"
   | "mixed";
 
+export type ReportOverviewMaterialTotals = {
+  materials_cost: number;
+  exact_cost: number;
+  legacy_approximate_cost: number | null;
+  period_mode: ReportMaterialPeriodMode;
+  cutover_at: string | null;
+};
+
 export type ReportMaterialAccounting = {
   periodMode: ReportMaterialPeriodMode;
   periodTotal: number;

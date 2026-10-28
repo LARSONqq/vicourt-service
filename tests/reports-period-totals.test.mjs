@@ -90,7 +90,7 @@ function dataFixture(overrides = {}) {
   };
 }
 function reportFixture(data = dataFixture(), { aggregateError = null, materialMode = "legacy" } = {}) {
-  const queries = [], aggregateCalls = [], currentCalls = [], materialCalls = [], equipmentCalls = [];
+  const queries = [], aggregateCalls = [], currentCalls = [], materialCalls = [], materialAggregateCalls = [], equipmentCalls = [];
   const rows = {
     get_management_objects: [1, 2].map((id) => ({ id, name: `Об’єкт ${id}`, client_price: 10000, cost_budget: 10000 })),
     employees: [11, 12].map((id) => ({ id, first_name: `Працівник ${id}`, last_name: "Тест", hourly_rate: 99999 })),
@@ -130,6 +130,13 @@ function reportFixture(data = dataFixture(), { aggregateError = null, materialMo
     "@/services/reportCurrentFinanceService": { getReportOverviewCurrentFinance: async (...args) => {
       currentCalls.push(args); return { outstanding_receivables: 150, objects_without_client_price: 0, overdue_schedule_amount: 20 };
     } },
+    "@/services/reportMaterialTotalsService": { getReportOverviewMaterialTotals: async (f) => {
+      materialAggregateCalls.push(f);
+      const exact = materialMode === "legacy" ? 0 : 7.25;
+      return { materials_cost: materialMode === "legacy" ? 6 : exact, exact_cost: exact,
+        legacy_approximate_cost: materialMode === "mixed" ? null : materialMode === "legacy" ? 6 : 0,
+        period_mode: materialMode, cutover_at: cutover?.cutoverAt ?? null };
+    } },
     "@/services/reportMaterialLedgerService": {
       getMaterialLedgerCutover: async () => cutover, getReportMaterialPeriodMode: () => materialMode,
       getMaterialLedgerReport: async (...args) => { materialCalls.push(args); return {
@@ -140,7 +147,8 @@ function reportFixture(data = dataFixture(), { aggregateError = null, materialMo
     },
     "@/services/equipmentService": { getManagementEquipmentServiceRecordsRange: async (...args) => { equipmentCalls.push(args); return []; } },
   });
-  return { get: load("services/reportService.ts").getReportsData, queries, aggregateCalls, currentCalls, materialCalls, equipmentCalls };
+  return { get: load("services/reportService.ts").getReportsData, queries, aggregateCalls, currentCalls,
+    materialCalls, materialAggregateCalls, equipmentCalls };
 }
 function dtoFromKpis(k) {
   return { labor_cost: k.laborCost, other_expenses_cost: k.otherExpensesCost, total_hours: k.totalHours,
@@ -286,14 +294,15 @@ test("invalid dates/IDs/category fail before RPC; missing domain objects and DB 
     { data: [{ ...zero, payments_received: -1 }], error: null },
   ]) await assert.rejects(() => serviceFixture({ result }).get(input()), (e) => /Не вдалося/.test(e.message) && !/SECRET/.test(e.message));
 });
-test("Overview/summary make no raw KPI queries, keep B1/materials independent and totalObjectCost app-side", async () => {
+test("Overview/summary make no raw KPI queries and keep B1/B2/B3 totals app-composed", async () => {
   for (const scopes of [["overview"], ["overview", "equipment"]]) {
     const app = reportFixture(); const data = await app.get(input(), scopes);
     assert.equal(app.aggregateCalls.length, 1); assert.equal(app.currentCalls.length, 1);
     for (const name of ["get_management_work_logs", "object_expenses", "object_payments", "object_payment_schedule", "warehouse_purchases"])
       assert.equal(app.queries.filter((q) => q.name === name).length, 0, name);
-    assert.ok(app.queries.some((q) => q.name === "get_management_materials"));
-    assert.equal(app.materialCalls.length, 1); assert.equal(data.kpis.materialsCost, 6);
+    assert.equal(app.queries.some((q) => q.name === "get_management_materials"), false);
+    assert.equal(app.materialCalls.length, 0); assert.equal(app.materialAggregateCalls.length, 1);
+    assert.equal(data.kpis.materialsCost, 6);
     assert.equal(app.equipmentCalls.length, scopes.includes("equipment") ? 1 : 0);
     assert.deepEqual(Object.keys(sqlModel(dataFixture(), input())), Object.keys(zero));
     assert.doesNotMatch(JSON.stringify(data), /INTERNAL_NOTE|INTERNAL_PAYMENT/);

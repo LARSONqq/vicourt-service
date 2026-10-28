@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getReportOverviewCurrentFinance } from "@/services/reportCurrentFinanceService";
+import { getReportOverviewMaterialTotals } from "@/services/reportMaterialTotalsService";
 import { getReportOverviewPeriodTotals } from "@/services/reportPeriodTotalsService";
 
 import {
@@ -697,9 +698,13 @@ export async function getReportsData(
   const useCurrentFinanceAggregate =
     needsOverview && !needsObjects && !needsCashflow;
   // Only KPI-only scopes use period aggregates. Detail sections and full Excel
-  // retain their raw rows, and materials/cutover keep their independent path.
+  // retain their raw rows; the material aggregate has its own narrower gate.
   const usePeriodTotalsAggregate =
     needsOverview && !needsObjects && !needsWorkforce && !needsCashflow && !needsWarehouse;
+  // Material-only Overview scopes use one compact aggregate. Objects, Warehouse
+  // and full Excel retain their existing raw/ledger detail contracts.
+  const useMaterialTotalsAggregate =
+    needsOverview && !needsObjects && !needsWarehouse;
   const reportToday = getKyivDateValue();
   const needsWorkLogs =
     needsOverview ||
@@ -751,7 +756,7 @@ export async function getReportsData(
   }
 
   const materialLedgerCutover =
-    needsMaterialCosts
+    needsMaterialCosts && !useMaterialTotalsAggregate
       ? await getMaterialLedgerCutover(
           supabase
         )
@@ -1395,6 +1400,7 @@ export async function getReportsData(
     equipmentServiceRows,
     currentFinance,
     periodTotals,
+    materialTotals,
   ] = await Promise.all([
     loadObjects(),
     loadEmployees(),
@@ -1411,6 +1417,7 @@ export async function getReportsData(
         >()
       : loadWorkLogs(),
     !needsMaterialCosts ||
+    useMaterialTotalsAggregate ||
     !hasLegacyPeriodSegment
       ? emptyRows<
           ReportMaterialRow
@@ -1455,7 +1462,8 @@ export async function getReportsData(
           "Закуплено"
         ),
     invalidPeriod ||
-    !needsMaterialCosts
+    !needsMaterialCosts ||
+    useMaterialTotalsAggregate
       ? Promise.resolve({
           cutover:
             materialLedgerCutover,
@@ -1490,6 +1498,9 @@ export async function getReportsData(
       : Promise.resolve(null),
     usePeriodTotalsAggregate && !invalidPeriod
       ? getReportOverviewPeriodTotals(filters)
+      : Promise.resolve(null),
+    useMaterialTotalsAggregate && !invalidPeriod
+      ? getReportOverviewMaterialTotals(filters)
       : Promise.resolve(null),
   ]);
 
@@ -3075,18 +3086,36 @@ export async function getReportsData(
       }
     );
 
+  const resolvedMaterialCutoverAt =
+    materialTotals?.cutover_at ??
+    materialLedgerCutover?.cutoverAt ??
+    null;
+  const resolvedMaterialPeriodMode =
+    materialTotals?.period_mode ??
+    materialPeriodMode;
+  const resolvedMaterialsCost =
+    materialTotals?.materials_cost ??
+    materialsCost;
+  const resolvedExactMaterialsCost =
+    materialTotals?.exact_cost ??
+    exactMaterialsCost;
+  const resolvedLegacyMaterialsCost =
+    materialTotals?.legacy_approximate_cost ??
+    (resolvedMaterialPeriodMode === "mixed"
+      ? null
+      : legacyMaterialsCost);
   const exactFromDate =
-    materialLedgerCutover
+    resolvedMaterialCutoverAt
       ? getKyivDateValue(
           new Date(
-            materialLedgerCutover.cutoverAt
+            resolvedMaterialCutoverAt
           )
         )
       : null;
   const materialLimitation =
-    materialPeriodMode === "exact"
+    resolvedMaterialPeriodMode === "exact"
       ? null
-      : materialPeriodMode === "mixed"
+      : resolvedMaterialPeriodMode === "mixed"
         ? "Показано лише підтверджену exact-частину після переходу на Ledger. Legacy-частина цього змішаного періоду не включена, щоб не змішувати несумісні методи й не допустити подвійного обліку."
         : "Історичні матеріальні витрати до переходу на Ledger розраховані за поточними legacy-рядками й можуть відрізнятися від фактичного руху в минулому.";
 
@@ -3099,11 +3128,12 @@ export async function getReportsData(
     objectOptions,
     employeeOptions,
     kpis: {
-      materialsCost,
+      materialsCost:
+        resolvedMaterialsCost,
       laborCost: kpiLaborCost,
       otherExpensesCost: kpiOtherExpensesCost,
       totalObjectCost:
-        materialsCost +
+        resolvedMaterialsCost +
         kpiLaborCost +
         kpiOtherExpensesCost,
       totalHours: periodTotals?.total_hours ?? totalHours,
@@ -3119,22 +3149,18 @@ export async function getReportsData(
     },
     materialAccounting: {
       periodMode:
-        materialPeriodMode,
+        resolvedMaterialPeriodMode,
       periodTotal:
-        materialsCost,
+        resolvedMaterialsCost,
       exactCost:
-        exactMaterialsCost,
+        resolvedExactMaterialsCost,
       legacyApproximateCost:
-        materialPeriodMode ===
-        "mixed"
-          ? null
-          : legacyMaterialsCost,
+        resolvedLegacyMaterialsCost,
       cutoverAt:
-        materialLedgerCutover?.cutoverAt ??
-        null,
+        resolvedMaterialCutoverAt,
       exactFromDate,
       lifetimeMethod:
-        materialLedgerCutover
+        resolvedMaterialCutoverAt
           ? "exact_ledger"
           : "legacy_current_balance",
       limitation:

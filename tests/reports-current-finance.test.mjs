@@ -199,7 +199,7 @@ test("invalid date/object fails before RPC; missing object/DB errors yield safe 
 });
 
 function reportsFixture() {
-  const queries = [], aggregates = [];
+  const queries = [], aggregates = [], materialAggregates = [];
   const query = (kind, name) => {
     const log = { kind, name, methods: [] }; queries.push(log);
     const chain = new Proxy({}, { get: (_, method) => method === "then"
@@ -213,13 +213,17 @@ function reportsFixture() {
     "@/services/reportPeriodTotalsService": { getReportOverviewPeriodTotals: async () => ({
       labor_cost: 0, other_expenses_cost: 0, total_hours: 0, purchased_cost: 0, payments_received: 0,
     }) },
+    "@/services/reportMaterialTotalsService": { getReportOverviewMaterialTotals: async (...args) => {
+      materialAggregates.push(args); return { materials_cost: 0, exact_cost: 0,
+        legacy_approximate_cost: 0, period_mode: "legacy", cutover_at: null };
+    } },
     "@/services/equipmentService": { getManagementEquipmentServiceRecordsRange: async () => [] },
     "@/services/reportMaterialLedgerService": {
       getMaterialLedgerCutover: async () => null, getReportMaterialPeriodMode: () => "legacy",
       getMaterialLedgerReport: async () => ({ cutover: null, periodMode: "legacy", costs: [], movements: [] }),
     },
   });
-  return { queries, aggregates, get: load("services/reportService.ts").getReportsData };
+  return { queries, aggregates, materialAggregates, get: load("services/reportService.ts").getReportsData };
 }
 const filters = { dateFrom: "2026-01-01", dateTo: "2026-01-03", objectId: 47, employeeId: null, expenseCategory: null, movementType: null };
 test("Overview and summary CSV retain B1 current finance DTO while B2 replaces period loaders", async () => {
@@ -237,7 +241,9 @@ test("Overview and summary CSV retain B1 current finance DTO while B2 replaces p
     assert.equal(payments.length, 0);
     for (const name of ["get_management_work_logs", "object_expenses", "warehouse_purchases"])
       assert.equal(f.queries.filter((q) => q.name === name).length, 0, `${name} moved to B2 period aggregate`);
-    assert.ok(f.queries.some((q) => q.name === "get_management_materials"), "materials remains raw and independent");
+    assert.equal(f.materialAggregates.length, 1);
+    assert.equal(f.queries.some((q) => q.name === "get_management_materials"), false,
+      "B3 material aggregate replaces the independent raw Overview path");
   }
 });
 test("Objects/Cashflow/full Excel retain old raw contracts; non-overview sections do not call new RPC", async () => {
