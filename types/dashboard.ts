@@ -23,6 +23,43 @@ export type DashboardPermissions = {
   canViewFinance: boolean;
 };
 
+export type ManagementDashboardData = {
+  kind: "management";
+  role: "admin" | "object_manager";
+  today: string;
+  userName: string | null;
+  currency: AppCurrency;
+  kpis: {
+    outstandingReceivables: number;
+    overdueScheduleAmount: number;
+    overdueTasks: number;
+    activeObjects: number;
+  };
+};
+
+export type WorkerDashboardData = {
+  kind: "worker";
+  role: "worker";
+  today: string;
+  userName: string | null;
+  employeeLinked: boolean;
+  taskLinks: {
+    today: string;
+    overdue: string;
+    open: string;
+  };
+  kpis: {
+    myTodayTasks: number;
+    myOverdueTasks: number;
+    myOpenTasks: number;
+    assignedActiveObjects: number;
+  };
+};
+
+export type DashboardCommandData =
+  | ManagementDashboardData
+  | WorkerDashboardData;
+
 export type DashboardObjectPreview = {
   id: number;
   name: string;

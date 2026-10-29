@@ -6,7 +6,7 @@ import { activityEventRegistry, isActivityEventName } from "@/constants/activity
 import { formatDateValue, formatKyivTimestamp } from "@/lib/kyivDate";
 import { getTaskPriorityStyle } from "@/lib/taskPresentation";
 import { getTaskTarget } from "@/lib/taskTarget";
-import { taskDashboardLinks } from "@/lib/taskWorkspace";
+import { getPersonalTaskDashboardLinks, taskDashboardLinks } from "@/lib/taskWorkspace";
 import { warehouseStockPresentation } from "@/lib/warehouseStock";
 import {
   getDashboardContext, getDashboardTasksSummary, getDashboardTasksPreview,
@@ -75,16 +75,24 @@ export function DashboardTaskSummary() {
   </>}</DashboardSection>;
 }
 
-export function DashboardTodayTasks() {
+export async function DashboardTodayTasks() {
+  const context = await getDashboardContext();
+  const allTasksHref = context.profile.role === "worker"
+    ? getPersonalTaskDashboardLinks(context.profile.employee_id).today
+    : taskDashboardLinks.today;
   return <DashboardSection standalone title="Сьогодні" href={taskDashboardLinks.today} load={async () => {
-    const context = await getDashboardContext();
     return { ...await getDashboardTasksPreview("today"), permissions: context.permissions };
   }}>{({ tasks, today, permissions }) => <TodayTasksSection tasks={tasks} today={today}
+    allTasksHref={allTasksHref}
     canManageSupervision={permissions.canManageSupervision} canManageEquipment={permissions.canManageEquipment} />}</DashboardSection>;
 }
 
-export function DashboardOverdueTasks() {
-  return <DashboardSection title="Прострочені завдання" subtitle="До 5 найдавніших відкритих" href={taskDashboardLinks.overdue} load={() => getDashboardTasksPreview("overdue")}>{({ tasks }) => <>
+export async function DashboardOverdueTasks() {
+  const context = await getDashboardContext();
+  const href = context.profile.role === "worker"
+    ? getPersonalTaskDashboardLinks(context.profile.employee_id).overdue
+    : taskDashboardLinks.overdue;
+  return <DashboardSection title="Прострочені завдання" subtitle="До 5 найдавніших відкритих" href={href} load={() => getDashboardTasksPreview("overdue")}>{({ tasks }) => <>
     {tasks.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>Прострочених завдань немає.</p> : <ul className={compactListClass}>
       {tasks.map((task) => {
         const target = getTaskTarget(task);
@@ -139,6 +147,7 @@ export function DashboardEquipmentAttention() {
 
 export function DashboardObjectsOverview() {
   return <DashboardSection title="Активні об’єкти" subtitle="Поточні об’єкти в роботі" href="/objects" load={getDashboardObjects}>{(data) => <>
+    {data.scope === "assigned" && <p className="text-sm font-medium text-green-700">Лише об’єкти, призначені вам</p>}
     <div className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 sm:px-4">
       <span className="text-sm text-gray-600">Всього активних</span><strong className="text-xl tabular-nums">{data.total}</strong>
     </div>

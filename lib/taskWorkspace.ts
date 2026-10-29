@@ -62,6 +62,20 @@ export const taskDashboardLinks = {
   open: taskWorkspaceHref(normalizeTaskWorkspace({ view: "all", status: "open" }).filters),
 };
 
+export function getPersonalTaskDashboardLinks(employeeId: number | null) {
+  if (employeeId === null) return {
+    today: taskDashboardLinks.myOpen,
+    overdue: taskDashboardLinks.myOpen,
+    open: taskDashboardLinks.myOpen,
+  };
+  const assignee = String(employeeId);
+  return {
+    today: taskWorkspaceHref(normalizeTaskWorkspace({ view: "today", assignee }).filters),
+    overdue: taskWorkspaceHref(normalizeTaskWorkspace({ view: "overdue", assignee }).filters),
+    open: taskWorkspaceHref(normalizeTaskWorkspace({ view: "my", status: "open", assignee }).filters),
+  };
+}
+
 /** Quote the PostgREST OR operand and treat user wildcard characters literally. */
 export function taskSearchOperand(search: string) {
   const pattern = `%${search.replace(/[\\%_*]/g, "\\$&")}%`;

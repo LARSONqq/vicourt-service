@@ -22,7 +22,7 @@ export default function DashboardQuickActions({
     permissions.canCreateTask
       ? {
           label: "+ Завдання",
-          href: "/task",
+          href: "/tasks",
           primary: false,
         }
       : null,
@@ -64,7 +64,7 @@ export default function DashboardQuickActions({
           <Link
             key={action.href}
             href={action.href}
-            className={`inline-flex min-h-10 min-w-0 items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-medium transition sm:px-4 ${
+            className={`inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-medium transition sm:px-4 ${
               action.primary
                 ? "bg-green-600 text-white hover:bg-green-700"
                 : "border bg-white text-gray-700 hover:bg-gray-50"

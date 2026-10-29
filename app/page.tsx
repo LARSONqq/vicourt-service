@@ -1,32 +1,37 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import DashboardQuickActions from "@/components/dashboard/DashboardQuickActions";
+import { DashboardCommandSkeleton, DashboardCommandSurface } from "@/components/dashboard/DashboardCommandSurface";
 import {
-  DashboardSkeleton, DashboardTaskSummary, DashboardTodayTasks, DashboardOverdueTasks,
+  DashboardSkeleton, DashboardTodayTasks, DashboardOverdueTasks,
   DashboardWarehouseAttention, DashboardEquipmentAttention, DashboardObjectsOverview, DashboardRecentActivity,
 } from "@/components/dashboard/OperationalDashboard";
 import { getDashboardContext } from "@/services/dashboardService";
 import { formatLongDateValue } from "@/lib/kyivDate";
+import { getUserRoleLabel } from "@/types/userProfile";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   // Only auth blocks the header. Independent widgets stream under their own boundaries.
-  const { permissions, today, activityVisible } = await getDashboardContext();
+  const { profile, permissions, today, activityVisible } = await getDashboardContext();
   return <div className="min-w-0 space-y-6">
-    <header className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div className="min-w-0">
-        <h1 className="break-words text-2xl font-bold text-gray-900 sm:text-3xl">Оперативний огляд</h1>
-        <p className="mt-1 text-sm text-gray-500">{formatLongDateValue(today)}</p>
+    <header className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+      <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="break-words text-sm font-medium text-green-700">{getUserRoleLabel(profile.role)}</p>
+          <h1 className="mt-1 break-words text-2xl font-bold text-gray-900 sm:text-3xl">Оперативний огляд</h1>
+          <p className="mt-1 break-words text-sm text-gray-500">{profile.full_name ?? "Користувач"} · {formatLongDateValue(today)}</p>
+        </div>
+        <DashboardQuickActions permissions={permissions} />
       </div>
-      <DashboardQuickActions permissions={permissions} />
+      <nav aria-label="Оперативні розділи" className="mt-4 flex flex-wrap gap-x-5 border-t pt-3 text-sm font-medium text-green-700">
+        <Link href="/notifications" className="inline-flex min-h-11 items-center hover:underline">Сповіщення →</Link>
+        <Link href="/calendar" className="inline-flex min-h-11 items-center hover:underline">Календар →</Link>
+      </nav>
     </header>
-    <nav aria-label="Оперативні розділи" className="flex flex-wrap gap-x-5 text-sm font-medium text-green-700">
-      <Link href="/notifications" className="inline-flex min-h-11 items-center hover:underline">Сповіщення →</Link>
-      <Link href="/calendar" className="inline-flex min-h-11 items-center hover:underline">Календар →</Link>
-    </nav>
-    <Suspense fallback={<DashboardSkeleton title="Завдання" />}><DashboardTaskSummary /></Suspense>
-    <div className="grid min-w-0 items-stretch gap-4 sm:gap-5 xl:grid-cols-2">
+    <Suspense fallback={<DashboardCommandSkeleton />}><DashboardCommandSurface /></Suspense>
+    <div className="grid min-w-0 items-stretch gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
       <Suspense fallback={<DashboardSkeleton title="Сьогодні" />}><DashboardTodayTasks /></Suspense>
       <Suspense fallback={<DashboardSkeleton title="Прострочені завдання" />}><DashboardOverdueTasks /></Suspense>
     </div>

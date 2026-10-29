@@ -50,16 +50,27 @@ const fixtures = {
     unit: "шт", min_quantity: 3,
   })),
   equipment: [equipment(1, "2026-09-18", 101), equipment(2, today), equipment(3, "2026-09-24"), equipment(4, null, 101)],
-  objects: [{ id: 1, name: "Один", status: "В роботі" }, { id: 2, name: "Два", status: "На постійному обслуговуванні" }, { id: 3, name: "Три", status: "Під періодичним наглядом" }, { id: 4, name: "Готово", status: "Завершено" }],
-  object_tasks: [task(1, "Заплановано", today), task(2, "В роботі", "2026-09-18"), task(3, "Виконано", today), task(4, "Заплановано", null, 8), ...Array.from({ length: 8 }, (_, i) => task(10 + i, "Заплановано", today))],
+  objects: [
+    { id: 1, name: "Один", status: "В роботі", responsible_employee_id: 7 },
+    { id: 2, name: "Два", status: "На постійному обслуговуванні", responsible_employee_id: 8 },
+    { id: 3, name: "Три", status: "Під періодичним наглядом", responsible_employee_id: 7 },
+    { id: 4, name: "Готово", status: "Завершено", responsible_employee_id: 7 },
+  ],
+  object_tasks: [task(1, "Заплановано", today), task(2, "В роботі", "2026-09-18"), task(3, "Виконано", today),
+    task(4, "Заплановано", "2026-09-18", 8), task(5, "Заплановано", today, 8),
+    ...Array.from({ length: 8 }, (_, i) => task(10 + i, "Заплановано", today))],
   activity_logs: Array.from({ length: 8 }, (_, index) => ({ id: index, action: "task.created", entity_name: "Завдання", actor_name: "Адміністратор", created_at: "2026-09-19T10:00:00Z", metadata: { cost: 999 }, actor_id: "not-for-preview" })),
 };
 
 function fixture(role = "worker", options = {}) {
   const requests = [];
   const rpcRequests = [];
+  const financeCalls = [];
+  const events = [];
   let authCalls = 0;
-  const profile = role ? { id: "auth-uuid", role, employee_id: options.unlinked ? null : 7, full_name: "Ім’я" } : null;
+  const profile = role && !options.inactive
+    ? { id: "auth-uuid", role, employee_id: options.unlinked ? null : 7, full_name: "Ім’я", is_active: true }
+    : null;
   const client = { rpc(name, args) {
     rpcRequests.push({ name, args });
     const response = {
@@ -130,10 +141,15 @@ function fixture(role = "worker", options = {}) {
     "@/components/dashboard/TodayTasksSection": () => React.createElement("p", {}, "Today preview"),
     "@/lib/supabase/server": { createClient: async () => client },
     "@/services/profileService": { getCurrentUserProfile: async () => profile },
-    "@/lib/auth/requireAccess": { requireSectionAccess: async () => { authCalls++; if (!profile) throw new Error("AUTH_REDIRECT"); return profile; } },
+    "@/lib/auth/requireAccess": { requireSectionAccess: async () => { authCalls++; events.push("role"); if (!profile) throw new Error("AUTH_REDIRECT"); return profile; } },
     "@/lib/kyivDate": { ...loader({})("lib/kyivDate.ts"), getKyivDateValue: () => today },
+    "@/services/reportCurrentFinanceService": { getReportOverviewCurrentFinance: async (...args) => {
+      events.push("finance"); financeCalls.push(args);
+      return options.finance ?? { outstanding_receivables: 12500.5, objects_without_client_price: 1, overdue_schedule_amount: 2300 };
+    } },
+    "@/services/settingsService": { getAppSettings: async () => ({ currency: "UAH" }) },
   });
-  return { requests, rpcRequests, load, service: load("services/dashboardService.ts"), authCalls: () => authCalls };
+  return { requests, rpcRequests, financeCalls, events, load, service: load("services/dashboardService.ts"), authCalls: () => authCalls };
 }
 
 test("worker dashboard: operational tables only, no Activity/mutation/management queries, bounded rows and exact counts", async () => {
@@ -145,7 +161,7 @@ test("worker dashboard: operational tables only, no Activity/mutation/management
   assert.equal(summary.today, 9); assert.equal(preview.tasks.length, 5);
   assert.deepEqual([warehouse.out, warehouse.low, warehouse.attention], [5, 4, 9]); assert.equal(warehouse.items.length, 5);
   assert.deepEqual([equipment.overdue, equipment.dueNow, equipment.upcoming, equipment.usageDue, equipment.attention], [1, 2, 1, 2, 4]);
-  assert.equal(objects.total, 3); assert.equal(activity, null); assert.equal(authCalls(), 1);
+  assert.equal(objects.total, 2); assert.equal(objects.scope, "assigned"); assert.equal(activity, null); assert.equal(authCalls(), 1);
   assert.ok(requests.every((r) => ["object_tasks", "warehouse_items", "equipment", "objects"].includes(r.table)));
   assert.deepEqual(rpcRequests.map((request) => request.name).sort(), ["get_equipment_maintenance_summary", "get_warehouse_stock_summary"]);
   assert.deepEqual(rpcRequests.find((request) => request.name === "get_equipment_maintenance_summary").args, { p_business_date: today });
@@ -154,7 +170,53 @@ test("worker dashboard: operational tables only, no Activity/mutation/management
     if (!request.options.head) assert.equal(request.limit, 5);
     else assert.equal(request.options.count, "exact");
   }
-  assert.equal(requests.filter((r) => r.table === "object_tasks" && r.options.head).length, 4);
+  assert.equal(requests.filter((r) => r.table === "object_tasks" && r.options.head).length, 3);
+});
+
+test("role-aware command data keeps management finance and worker personal data structurally separate", async () => {
+  for (const role of ["admin", "object_manager"]) {
+    const current = fixture(role);
+    const data = await current.service.getDashboardCommandData();
+    assert.deepEqual(data, {
+      kind: "management", role, today, userName: "Ім’я", currency: "UAH",
+      kpis: { outstandingReceivables: 12500.5, overdueScheduleAmount: 2300, overdueTasks: 2, activeObjects: 3 },
+    });
+    assert.deepEqual(current.financeCalls, [[null, today]]);
+    assert.ok(current.events.indexOf("role") < current.events.indexOf("finance"));
+  }
+
+  const worker = fixture("worker");
+  const data = await worker.service.getDashboardCommandData();
+  assert.deepEqual(data, {
+    kind: "worker", role: "worker", today, userName: "Ім’я", employeeLinked: true,
+    taskLinks: {
+      today: "/tasks?view=today&assignee=7",
+      overdue: "/tasks?view=overdue&assignee=7",
+      open: "/tasks?view=my&status=open&assignee=7",
+    },
+    kpis: { myTodayTasks: 9, myOverdueTasks: 1, myOpenTasks: 10, assignedActiveObjects: 2 },
+  });
+  assert.equal(worker.financeCalls.length, 0);
+  assert.doesNotMatch(JSON.stringify(data), /finance|receivable|schedule|payment|cost|price/i);
+  assert.ok(worker.requests.every((request) => !["object_payments", "object_payment_schedule", "warehouse_purchases", "equipment_service_records"].includes(request.table)));
+  assert.ok(worker.rpcRequests.every((request) => !/report_overview_(current_finance|period_totals|material_totals)/.test(request.name)));
+});
+
+test("worker personal metrics are assignment-scoped and unlinked worker never falls back to team data", async () => {
+  const linked = fixture("worker");
+  const summary = await linked.service.getDashboardTasksSummary();
+  const objects = await linked.service.getDashboardObjects();
+  assert.deepEqual({ today: summary.today, overdue: summary.overdue, open: summary.myOpen }, { today: 9, overdue: 1, open: 10 });
+  assert.equal(objects.total, 2);
+  assert.ok(objects.items.every((object) => [1, 3].includes(object.id)));
+
+  const unlinked = fixture("worker", { unlinked: true });
+  const command = await unlinked.service.getDashboardCommandData();
+  assert.equal(command.kind, "worker");
+  assert.equal(command.employeeLinked, false);
+  assert.deepEqual(command.kpis, { myTodayTasks: 0, myOverdueTasks: 0, myOpenTasks: 0, assignedActiveObjects: 0 });
+  assert.equal(unlinked.requests.length, 0);
+  assert.equal(unlinked.financeCalls.length, 0);
 });
 
 test("admin and object_manager have the same bounded Activity service; worker cannot call it directly", async () => {
@@ -171,7 +233,7 @@ test("admin and object_manager have the same bounded Activity service; worker ca
 });
 
 test("dashboard task links normalize to supported views with exact open semantics", async () => {
-  const { load, service } = fixture();
+  const { load, service } = fixture("admin");
   const { taskDashboardLinks, normalizeTaskWorkspace } = load("lib/taskWorkspace.ts");
   const summary = await service.getDashboardTasksSummary();
   const workspace = load("services/taskWorkspaceService.ts");
@@ -188,11 +250,55 @@ test("date reuse, absent employee mapping and server-side today/overdue preview 
   const { service, requests } = fixture("worker", { unlinked: true });
   const summary = await service.getDashboardTasksSummary();
   assert.equal(summary.myOpen, 0); assert.equal(summary.hasEmployeeLink, false);
-  assert.equal(requests.length, 3);
+  assert.equal(requests.length, 0);
   const preview = await service.getDashboardTasksPreview("overdue");
   assert.equal(preview.today, summary.businessDate);
-  assert.deepEqual(preview.tasks.map((row) => row.id), [2]);
-  assert.equal(requests.at(-1).limit, 5);
+  assert.deepEqual(preview.tasks, []);
+  assert.equal(requests.length, 0);
+});
+
+test("quick actions are role-correct, touch-sized and use canonical Tasks route", async () => {
+  const expected = {
+    admin: ["/objects/new", "/tasks", "/purchases#new-purchase", "/equipment"],
+    object_manager: ["/objects/new", "/tasks", "/purchases#new-purchase"],
+    worker: ["/tasks"],
+  };
+  for (const role of Object.keys(expected)) {
+    const current = fixture(role);
+    const { permissions } = await current.service.getDashboardContext();
+    const QuickActions = current.load("components/dashboard/DashboardQuickActions.tsx").default;
+    const html = renderToStaticMarkup(React.createElement(QuickActions, { permissions }));
+    assert.deepEqual([...html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]), expected[role]);
+    assert.doesNotMatch(html, /href="\/task"/);
+    assert.match(html, /min-h-11/);
+  }
+});
+
+test("worker render contains no management finance cards; internal Dashboard rejects non-internal/inactive access", async () => {
+  const worker = fixture("worker");
+  const command = worker.load("components/dashboard/DashboardCommandSurface.tsx").DashboardCommandSurface;
+  const html = renderToStaticMarkup(await command());
+  assert.match(html, /Мої сьогодні/);
+  assert.doesNotMatch(html, /Дебіторська|Прострочено за графіком/);
+  const denied = fixture(null);
+  await assert.rejects(() => denied.service.getDashboardCommandData(), /AUTH_REDIRECT/);
+  assert.equal(denied.requests.length, 0);
+  assert.equal(denied.financeCalls.length, 0);
+  const inactive = fixture("worker", { inactive: true });
+  await assert.rejects(() => inactive.service.getDashboardCommandData(), /AUTH_REDIRECT/);
+  assert.equal(inactive.requests.length, 0);
+  assert.equal(inactive.financeCalls.length, 0);
+  const { accountRedirect } = denied.load("lib/auth/accountRouting.ts");
+  assert.equal(accountRedirect("client", "/"), "/client");
+});
+
+test("D1 imports only B1 finance and worker contract has no finance placeholders", () => {
+  const service = readFileSync("services/dashboardService.ts", "utf8");
+  assert.match(service, /getReportOverviewCurrentFinance/);
+  assert.doesNotMatch(service, /getReportOverviewPeriodTotals|getReportOverviewMaterialTotals|reportPeriodTotalsService|reportMaterialTotalsService/);
+  const types = readFileSync("types/dashboard.ts", "utf8");
+  const worker = types.slice(types.indexOf("export type WorkerDashboardData"), types.indexOf("export type DashboardCommandData"));
+  assert.doesNotMatch(worker, /finance|receivable|schedule|payment|cost|price/i);
 });
 
 test("warehouse and equipment summaries preserve canonical LOW/OUT and combined maintenance semantics", async () => {
@@ -211,7 +317,7 @@ test("warehouse and equipment summaries preserve canonical LOW/OUT and combined 
 
 async function renderSection(current, name) {
   const component = current.load("components/dashboard/OperationalDashboard.tsx")[name];
-  const element = component();
+  const element = await component();
   return renderToStaticMarkup(await element.type(element.props));
 }
 
@@ -246,6 +352,8 @@ test("page streams independent sections and gates Activity; canonical completion
   const page = readFileSync("app/page.tsx", "utf8");
   assert.equal((page.match(/<Suspense /g) ?? []).length, 7);
   assert.match(page, /activityVisible && <Suspense/);
+  assert.match(page, /DashboardCommandSurface/);
+  assert.doesNotMatch(page, /DashboardTaskSummary/);
   assert.doesNotMatch(page, /getDashboardData|getAllTasks|getWarehouseItems|getEquipment\(/);
   const actions = readFileSync("app/actions/dashboardTaskActions.ts", "utf8");
   assert.match(actions, /return updateTaskStatus\(taskId, "Виконано"\)/);

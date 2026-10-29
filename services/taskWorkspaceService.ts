@@ -48,14 +48,21 @@ export async function getTaskDashboardSummary() {
 /** A small operational preview, sharing the workspace date/status semantics.
  * No checklist collections, template definitions, selectors or cost queries.
  */
-export async function getTaskDashboardPreview(view: "today" | "overdue", businessDate: string) {
+export async function getTaskDashboardPreview(
+  view: "today" | "overdue",
+  businessDate: string,
+  assignedEmployeeId?: number
+) {
   const supabase = await createClient();
   const query = taskQuery(supabase, false, `
     id, object_id, equipment_id, title, description, created_at, due_date, assignee, assigned_employee_id,
     priority, status, task_source, task_template_id, recurrence_sequence,
     object:objects(id, name), equipment:equipment(id, name, inventory_number)
   `);
-  const { data, error } = await applyTaskView(query, view, null, businessDate)
+  const scopedQuery = assignedEmployeeId === undefined
+    ? query
+    : query.eq("assigned_employee_id", assignedEmployeeId);
+  const { data, error } = await applyTaskView(scopedQuery, view, null, businessDate)
     .order("due_date", { ascending: true }).order("id", { ascending: false })
     .limit(5).overrideTypes<TaskWithObject[], { merge: false }>();
   if (error) throw new Error("Не вдалося завантажити огляд завдань.");

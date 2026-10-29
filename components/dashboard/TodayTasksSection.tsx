@@ -22,6 +22,7 @@ import type { TaskWithObject } from "@/types/taskWithObject";
 type Props = {
   tasks: TaskWithObject[];
   today: string;
+  allTasksHref?: string;
   canManageSupervision: boolean;
   canManageEquipment: boolean;
 };
@@ -63,6 +64,7 @@ function getStatusStyle(
 export default function TodayTasksSection({
   tasks,
   today,
+  allTasksHref = taskDashboardLinks.today,
   canManageSupervision,
   canManageEquipment,
 }: Props) {
@@ -169,7 +171,7 @@ export default function TodayTasksSection({
               До 5 відкритих завдань
             </p>
           </div>
-          <Link href={taskDashboardLinks.today} className="inline-flex min-h-10 shrink-0 items-center py-2 text-sm font-medium text-green-700 hover:underline">Переглянути всі →</Link>
+          <Link href={allTasksHref} className="inline-flex min-h-11 shrink-0 items-center py-2 text-sm font-medium text-green-700 hover:underline">Переглянути всі →</Link>
         </div>
         <div className="flex flex-1 items-center justify-center p-4 text-center sm:p-5">
           <div><div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-green-50 text-green-700">✓</div><p className="mt-3 text-sm text-gray-500">На сьогодні термінових задач немає.</p></div>
@@ -189,8 +191,8 @@ export default function TodayTasksSection({
         </div>
 
         <Link
-          href={taskDashboardLinks.today}
-          className="inline-flex min-h-10 shrink-0 items-center py-2 text-sm font-medium text-green-700 hover:underline"
+          href={allTasksHref}
+          className="inline-flex min-h-11 shrink-0 items-center py-2 text-sm font-medium text-green-700 hover:underline"
         >
           Переглянути всі →
         </Link>
