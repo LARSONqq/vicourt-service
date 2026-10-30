@@ -2,8 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import DashboardQuickActions from "@/components/dashboard/DashboardQuickActions";
 import { DashboardCommandSkeleton, DashboardCommandSurface } from "@/components/dashboard/DashboardCommandSurface";
+import { DashboardAttention, DashboardAttentionSkeleton } from "@/components/dashboard/DashboardAttention";
 import {
-  DashboardSkeleton, DashboardTodayTasks, DashboardOverdueTasks,
+  DashboardSkeleton, DashboardTodayTasks,
   DashboardWarehouseAttention, DashboardEquipmentAttention, DashboardObjectsOverview, DashboardRecentActivity,
 } from "@/components/dashboard/OperationalDashboard";
 import { getDashboardContext } from "@/services/dashboardService";
@@ -31,10 +32,8 @@ export default async function HomePage() {
       </nav>
     </header>
     <Suspense fallback={<DashboardCommandSkeleton />}><DashboardCommandSurface /></Suspense>
-    <div className="grid min-w-0 items-stretch gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
-      <Suspense fallback={<DashboardSkeleton title="Сьогодні" />}><DashboardTodayTasks /></Suspense>
-      <Suspense fallback={<DashboardSkeleton title="Прострочені завдання" />}><DashboardOverdueTasks /></Suspense>
-    </div>
+    <Suspense fallback={<DashboardAttentionSkeleton />}><DashboardAttention /></Suspense>
+    <Suspense fallback={<DashboardSkeleton title="Сьогодні" />}><DashboardTodayTasks /></Suspense>
     <div className="grid min-w-0 items-stretch gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
       <Suspense fallback={<DashboardSkeleton title="Склад" />}><DashboardWarehouseAttention /></Suspense>
       <Suspense fallback={<DashboardSkeleton title="Техніка" />}><DashboardEquipmentAttention /></Suspense>
