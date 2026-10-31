@@ -1,8 +1,10 @@
-export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+import { cn } from "@/lib/utils";
+
+export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
+      className={cn("vc-field", className)}
       {...props}
-      className="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-green-600"
     />
   );
 }

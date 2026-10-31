@@ -1203,6 +1203,10 @@ export default function TasksList({
         task, today
       );
 
+    const dueToday =
+      task.status !== "Виконано" &&
+      task.due_date === today;
+
     const completed =
       task.status ===
       "Виконано";
@@ -1262,7 +1266,9 @@ export default function TasksList({
           completed
             ? "bg-green-50/40 opacity-80"
             : overdue
-              ? "border-red-200"
+              ? "border-red-300 bg-red-50/30"
+              : dueToday
+                ? "border-amber-300 bg-amber-50/30"
               : ""
         } ${
           isDragging
@@ -1307,7 +1313,7 @@ export default function TasksList({
                       : "text-gray-900"
                   }`}
                 >
-                  <Link href={taskDetailHref(task.id, workspaceReturnTo)} className="hover:text-green-700 hover:underline">{task.title}</Link>
+                  <Link href={taskDetailHref(task.id, workspaceReturnTo)} className="inline rounded-sm hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">{task.title}<span aria-hidden="true" className="ml-1 text-gray-300">↗</span></Link>
                 </h3>
 
                 {isSupervisionTask && (
@@ -1605,15 +1611,15 @@ export default function TasksList({
   return (
     <div className="min-w-0 space-y-5">
       {serverPaged && <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex rounded-lg border bg-white p-1" aria-label="Вигляд поточної сторінки">
-          <button type="button" aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")} className={`min-h-10 rounded-md px-4 py-2 text-sm ${viewMode === "list" ? "bg-green-50 text-green-800" : "text-gray-500"}`}>Список</button>
-          <button type="button" aria-pressed={viewMode === "board"} onClick={() => setViewMode("board")} className={`min-h-10 rounded-md px-4 py-2 text-sm ${viewMode === "board" ? "bg-green-50 text-green-800" : "text-gray-500"}`}>Дошка</button>
+        <div className="flex rounded-lg border border-gray-200 bg-white p-1 shadow-xs" aria-label="Вигляд поточної сторінки">
+          <button type="button" aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")} className={`min-h-10 rounded-md px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 ${viewMode === "list" ? "bg-green-50 text-green-800" : "text-gray-500 hover:text-gray-800"}`}>Список</button>
+          <button type="button" aria-pressed={viewMode === "board"} onClick={() => setViewMode("board")} className={`min-h-10 rounded-md px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 ${viewMode === "board" ? "bg-green-50 text-green-800" : "text-gray-500 hover:text-gray-800"}`}>Дошка</button>
         </div>
         {viewMode === "board" && <p className="text-xs text-gray-500">Дошка та кількості в колонках — лише поточна сторінка.</p>}
       </div>}
       {/* STATS */}
       {!serverPaged && <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <div className="rounded-xl border bg-white p-3 sm:p-5">
+        <div className="vc-surface p-3 sm:p-5">
           <p className="text-xs text-gray-500 sm:text-sm">
             Усього завдань
           </p>
@@ -1625,7 +1631,7 @@ export default function TasksList({
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-3 sm:p-5">
+        <div className="vc-surface p-3 sm:p-5">
           <p className="text-xs text-gray-500 sm:text-sm">
             Заплановано
           </p>
@@ -1635,7 +1641,7 @@ export default function TasksList({
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-3 sm:p-5">
+        <div className="vc-surface p-3 sm:p-5">
           <p className="text-xs text-gray-500 sm:text-sm">
             В роботі
           </p>
@@ -1645,7 +1651,7 @@ export default function TasksList({
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-3 sm:p-5">
+        <div className="vc-surface p-3 sm:p-5">
           <p className="text-xs text-gray-500 sm:text-sm">
             Виконано
           </p>
@@ -1664,7 +1670,7 @@ export default function TasksList({
       )}
 
       {/* FILTERS */}
-      {!serverPaged && <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+      {!serverPaged && <div className="vc-surface min-w-0 p-3 sm:p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* VIEW MODE */}
           <div className="grid w-full grid-cols-2 rounded-lg border bg-gray-50 p-1 sm:inline-grid sm:w-auto">
@@ -1737,7 +1743,7 @@ export default function TasksList({
               )
             }
             placeholder="Пошук завдання..."
-            className="min-h-11 w-full min-w-0 rounded-lg border px-4 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 min-w-0 px-4 py-3"
           />
 
           <select
@@ -1751,7 +1757,7 @@ export default function TasksList({
                 event.target.value
               )
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            className="vc-field min-h-11 min-w-0 py-3"
           >
             {taskStatuses.map(
               (status) => (
@@ -1783,7 +1789,7 @@ export default function TasksList({
                 event.target.value
               )
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            className="vc-field min-h-11 min-w-0 py-3"
           >
             {taskPriorities.map(
               (
@@ -1809,7 +1815,7 @@ export default function TasksList({
           <select
             value={targetFilter}
             onChange={(event) => setTargetFilter(event.target.value)}
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            className="vc-field min-h-11 min-w-0 py-3"
           >
             <option value="Усі">Усі типи</option>
             <option value="Об’єкти">Об’єкти</option>
@@ -1823,7 +1829,7 @@ export default function TasksList({
                 event.target.value
               )
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            className="vc-field min-h-11 min-w-0 py-3"
             aria-label="Повторюваність"
           >
             <option value="Усі">Усі повторення</option>
@@ -1838,7 +1844,7 @@ export default function TasksList({
                 event.target.value
               )
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            className="vc-field min-h-11 min-w-0 py-3"
             aria-label="Джерело завдання"
           >
             <option value="Усі">Усі джерела</option>
@@ -1854,7 +1860,7 @@ export default function TasksList({
                 event.target.value
               )
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            className="vc-field min-h-11 min-w-0 py-3"
             aria-label="Термін виконання"
           >
             <option value="Усі">Усі терміни</option>
@@ -1875,7 +1881,7 @@ export default function TasksList({
                 event.target.value
               )
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            className="vc-field min-h-11 min-w-0 py-3"
           >
             <option value="Усі">
               Усі працівники
@@ -1914,7 +1920,7 @@ export default function TasksList({
       {/* EMPTY */}
       {filteredTasks.length ===
       0 ? (
-        <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
+        <div className="vc-surface p-6 text-center sm:p-8">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-400">
             ✓
           </div>
@@ -2049,6 +2055,10 @@ export default function TasksList({
                   task, today
                 );
 
+              const dueToday =
+                task.status !== "Виконано" &&
+                task.due_date === today;
+
               const completed =
                 task.status ===
                 "Виконано";
@@ -2104,12 +2114,14 @@ export default function TasksList({
                   key={
                     task.id
                   }
-                  className={`min-w-0 rounded-xl border p-4 transition sm:p-5 ${
+                  className={`min-w-0 rounded-xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:shadow-md sm:p-5 ${
                     completed
                       ? "border-green-200 bg-green-50/50"
                       : overdue
-                        ? "border-red-300 bg-white"
-                        : "bg-white"
+                        ? "border-red-300 bg-red-50/25"
+                        : dueToday
+                          ? "border-amber-300 bg-amber-50/30"
+                          : "border-gray-200 bg-white"
                   }`}
                 >
                   {/* TOP */}
@@ -2129,7 +2141,7 @@ export default function TasksList({
                               : "text-gray-900"
                           }`}
                         >
-                          <Link href={taskDetailHref(task.id, workspaceReturnTo)} className="hover:text-green-700 hover:underline">{task.title}</Link>
+                          <Link href={taskDetailHref(task.id, workspaceReturnTo)} className="inline rounded-sm hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">{task.title}<span aria-hidden="true" className="ml-1 text-gray-300">↗</span></Link>
                         </h3>
                       </div>
 
@@ -2268,6 +2280,8 @@ export default function TasksList({
                             ? "text-gray-400"
                             : overdue
                               ? "text-red-600"
+                              : dueToday
+                                ? "text-amber-700"
                               : "text-gray-700"
                         }`}
                       >
@@ -2281,6 +2295,9 @@ export default function TasksList({
                           Завдання
                           прострочене
                         </p>
+                      )}
+                      {dueToday && (
+                        <p className="mt-1 text-xs font-medium text-amber-700">Термін сьогодні</p>
                       )}
                     </div>
 
@@ -2325,7 +2342,7 @@ export default function TasksList({
                             event.target.value
                           )
                         }
-                        className="mt-1 min-h-10 w-full min-w-0 rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="vc-field mt-1 min-h-10 min-w-0 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <option value="Заплановано">
                           Заплановано

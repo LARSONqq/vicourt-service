@@ -52,6 +52,6 @@ test("empty and recoverable error states stay concise, neutral and Ukrainian", (
   assert.match(command, /border bg-gray-50[\s\S]*Профіль не пов’язаний/);
   assert.match(
 command,
-  /return <section className="rounded-xl border bg-white p-4 sm:p-5">/
+  /return <section className="vc-surface p-4 sm:p-5">/
 );
 });

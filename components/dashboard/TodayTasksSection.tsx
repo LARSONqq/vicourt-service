@@ -163,7 +163,7 @@ export default function TodayTasksSection({
 
   if (localTasks.length === 0) {
     return (
-      <section className="flex h-full min-h-56 min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
+      <section className="vc-surface flex h-full min-h-56 min-w-0 flex-col overflow-hidden">
         <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
           <div className="min-w-0">
             <h2 className="break-words text-lg font-semibold">Завдання на сьогодні</h2>
@@ -181,7 +181,7 @@ export default function TodayTasksSection({
   }
 
   return (
-    <section className="flex h-full min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
+    <section className="vc-surface flex h-full min-w-0 flex-col overflow-hidden">
       <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
         <div className="min-w-0">
           <h2 className="break-words text-lg font-semibold">Завдання на сьогодні</h2>

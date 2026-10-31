@@ -9,6 +9,7 @@ import {
 import {
   getUserRoleLabel,
 } from "@/types/userProfile";
+import SidebarNavigation from "@/components/layout/SidebarNavigation";
 
 type MenuItem = {
   name: string;
@@ -105,51 +106,37 @@ export async function Sidebar() {
       : [];
 
   return (
-    <aside className="flex min-h-screen w-64 flex-col border-r bg-white p-5">
-      <div className="mb-8">
-        <h2 className="break-words text-2xl font-bold text-green-800">
-          {settings.company_name}
-        </h2>
-
-        <p className="mt-2 text-sm text-gray-500">
-          Управління роботою компанії
-        </p>
+    <aside className="flex h-dvh w-72 flex-col border-r border-gray-200/90 bg-white px-4 py-5">
+      <div className="mb-5 border-b border-gray-100 px-2 pb-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-700 text-sm font-bold tracking-wide text-white shadow-sm">VC</span>
+          <div className="min-w-0">
+            <h2 className="break-words text-lg font-semibold leading-tight tracking-tight text-gray-950">
+              {settings.company_name}
+            </h2>
+            <p className="mt-1 text-xs text-gray-500">ViCourt Service</p>
+          </div>
+        </div>
       </div>
 
-      <nav className="space-y-2">
-        {visibleMenuItems.map(
-          (item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="flex min-w-0 items-center justify-between gap-3 rounded-lg px-4 py-3 font-medium text-gray-700 transition hover:bg-green-50 hover:text-green-700"
-            >
-              <span className="min-w-0 break-words">
-                {item.name}
-              </span>
-            </a>
-          )
-        )}
-      </nav>
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <SidebarNavigation items={visibleMenuItems.map(({ name, href }) => ({ name, href }))} />
+      </div>
 
-      <div className="mt-auto border-t pt-5">
+      <div className="mt-5 border-t border-gray-100 px-2 pt-4">
         {currentProfile && (
-          <div className="mb-4">
-            <p className="text-xs text-gray-400">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
               Ви увійшли як
             </p>
 
-            <p className="mt-1 text-sm font-semibold text-gray-700">
+            <p className="mt-1 break-words text-sm font-semibold text-gray-700">
               {getUserRoleLabel(
                 currentProfile.role
               )}
             </p>
           </div>
         )}
-
-        <p className="text-xs text-gray-400">
-          ViCourt Service
-        </p>
       </div>
     </aside>
   );

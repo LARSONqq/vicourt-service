@@ -1,8 +1,10 @@
-import { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
-export function Card({ children }: { children: ReactNode }) {
+import { cn } from "@/lib/utils";
+
+export function Card({ children, className, ...props }: { children: ReactNode } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className={cn("vc-surface", className)} {...props}>
       {children}
     </div>
   );
@@ -10,7 +12,7 @@ export function Card({ children }: { children: ReactNode }) {
 
 export function CardHeader({ children }: { children: ReactNode }) {
   return (
-    <div className="border-b p-5">
+    <div className="border-b border-gray-200/80 px-4 py-4 sm:px-5">
       {children}
     </div>
   );
@@ -18,7 +20,7 @@ export function CardHeader({ children }: { children: ReactNode }) {
 
 export function CardTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className="text-lg font-semibold">
+    <h2 className="vc-section-title">
       {children}
     </h2>
   );
@@ -26,7 +28,7 @@ export function CardTitle({ children }: { children: ReactNode }) {
 
 export function CardContent({ children }: { children: ReactNode }) {
   return (
-    <div className="p-5">
+    <div className="p-4 sm:p-5">
       {children}
     </div>
   );

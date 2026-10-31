@@ -71,7 +71,7 @@ export async function DashboardCommandSurface() {
   } catch (error) {
     unstable_rethrow(error);
     console.error("[Dashboard] command surface load failed", error);
-    return <section className="rounded-xl border bg-white p-4 sm:p-5">
+    return <section className="vc-surface p-4 sm:p-5">
       <p role="status" className="text-sm text-gray-600">Не вдалося завантажити показники. Оновіть сторінку та спробуйте ще раз.</p>
     </section>;
   }

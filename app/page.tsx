@@ -18,16 +18,16 @@ export default async function HomePage() {
   // Only auth blocks the header. Independent widgets stream under their own boundaries.
   const { profile, permissions, today, activityVisible } = await getDashboardContext();
   return <div className="min-w-0 space-y-5 sm:space-y-6">
-    <header className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+    <header className="vc-surface min-w-0 p-4 sm:p-5 lg:p-6">
       <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="break-words text-sm font-medium text-green-700">{getUserRoleLabel(profile.role)}</p>
-          <h1 className="mt-1 break-words text-2xl font-bold text-gray-900 sm:text-3xl">Оперативний огляд</h1>
+          <h1 className="vc-page-title mt-1 break-words">Оперативний огляд</h1>
           <p className="mt-1 break-words text-sm text-gray-500">{profile.full_name ?? "Користувач"} · {formatLongDateValue(today)}</p>
         </div>
         <DashboardQuickActions permissions={permissions} />
       </div>
-      <nav aria-label="Оперативні розділи" className="mt-4 flex flex-wrap gap-x-5 border-t pt-3 text-sm font-medium text-green-700">
+      <nav aria-label="Оперативні розділи" className="mt-5 flex flex-wrap gap-x-5 border-t border-gray-200/80 pt-3 text-sm font-medium text-green-700">
         <Link href="/notifications" className="inline-flex min-h-11 items-center rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Сповіщення →</Link>
         <Link href="/calendar" className="inline-flex min-h-11 items-center rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Календар →</Link>
       </nav>

@@ -64,7 +64,7 @@ function WatchlistRow({
 }
 
 export function DashboardObjectWatchlistSkeleton() {
-  return <section aria-busy="true" aria-label="Об’єкти під контролем" className="min-w-0 overflow-hidden rounded-xl border bg-white">
+  return <section aria-busy="true" aria-label="Об’єкти під контролем" className="vc-surface min-w-0 overflow-hidden">
     <div className="border-b px-4 py-4 sm:px-5"><div className="h-5 w-52 animate-pulse rounded bg-gray-100 motion-reduce:animate-none" /></div>
     <div className="space-y-3 p-4 sm:p-5">{Array.from({ length: 3 }, (_, index) => <div key={index} className="h-16 animate-pulse rounded-lg bg-gray-100 motion-reduce:animate-none" />)}</div>
   </section>;
@@ -77,12 +77,12 @@ export async function DashboardObjectWatchlist() {
   } catch (error) {
     unstable_rethrow(error);
     console.error("[Dashboard] object watchlist load failed", error);
-    return <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+    return <section className="vc-surface min-w-0 p-4 sm:p-5">
       <h2 className="text-lg font-semibold">Об’єкти під контролем</h2>
       <p role="status" className="mt-3 text-sm text-gray-600">Не вдалося завантажити дані. Оновіть сторінку та спробуйте ще раз.</p>
     </section>;
   }
-  return <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+  return <section className="vc-surface min-w-0 overflow-hidden">
     <div className="flex min-h-20 flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-5">
       <div className="min-w-0"><h2 className="break-words text-lg font-semibold">Об’єкти під контролем</h2><p className="mt-1 break-words text-sm text-gray-500">До 5 активних об’єктів за пріоритетом</p></div>
       <Link href="/objects" className="inline-flex min-h-11 shrink-0 items-center rounded-md text-sm font-medium text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Усі об’єкти →</Link>

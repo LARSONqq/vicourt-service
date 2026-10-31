@@ -1,3 +1,3 @@
 export default function Loading() {
-  return <div role="status" className="min-w-0 animate-pulse space-y-4"><p className="text-gray-500">Завантаження завдань…</p>{[1, 2, 3].map((id) => <div key={id} className="h-36 rounded-xl border bg-gray-50" />)}</div>;
+  return <div role="status" aria-label="Завантаження завдань" className="min-w-0 animate-pulse space-y-4 motion-reduce:animate-none"><div className="h-8 w-48 rounded bg-gray-200" />{[1, 2, 3].map((id) => <div key={id} className="vc-surface h-36 bg-gray-50/70" />)}<span className="sr-only">Завантаження завдань…</span></div>;
 }

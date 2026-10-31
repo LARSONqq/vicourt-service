@@ -19,7 +19,7 @@ const compactLinkClass = "block min-h-16 min-w-0 px-3 py-3 transition hover:bg-g
 const mutedClass = "text-sm text-gray-500";
 
 export function DashboardSkeleton({ title }: { title: string }) {
-  return <section aria-busy="true" aria-label={title} className="flex min-h-56 min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
+  return <section aria-busy="true" aria-label={title} className="vc-surface flex min-h-56 min-w-0 flex-col overflow-hidden">
     <div className="flex min-h-20 items-center border-b px-4 py-3 sm:px-5">
       <div><h2 className="text-lg font-semibold">{title}</h2><p className="mt-1 text-sm text-gray-500">Завантаження даних…</p></div>
     </div>
@@ -38,7 +38,7 @@ async function DashboardSection<T>({ title, subtitle, href, load, children, stan
   } catch (error) {
     unstable_rethrow(error);
     console.error(`[Dashboard] ${title}: section load failed`, error);
-    return <section className="flex h-full min-h-56 min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
+    return <section className="vc-surface flex h-full min-h-56 min-w-0 flex-col overflow-hidden">
       <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
         <h2 className="min-w-0 break-words text-lg font-semibold">{title}</h2>
         <Link href={href} className={linkClass}>Переглянути всі →</Link>
@@ -49,7 +49,7 @@ async function DashboardSection<T>({ title, subtitle, href, load, children, stan
     </section>;
   }
   if (standalone) return children(data);
-  return <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
+  return <section className="vc-surface flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
     <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
       <div className="min-w-0">
         <h2 className="break-words text-lg font-semibold">{title}</h2>

@@ -149,9 +149,9 @@ export function Header() {
     "Користувач";
 
   return (
-    <header className="flex min-h-[64px] items-center justify-between gap-3 border-b bg-white px-3 py-3 sm:px-6 lg:px-8 lg:py-4">
+    <header className="sticky top-0 z-30 flex min-h-[68px] items-center justify-between gap-3 border-b border-gray-200/90 bg-white/95 px-3 py-3 shadow-[0_1px_0_rgba(15,23,42,0.02)] backdrop-blur sm:px-6 lg:px-8">
       <div className="min-w-0">
-        <h1 className="truncate text-lg font-bold text-gray-900 sm:text-xl">
+        <h1 className="truncate text-lg font-semibold tracking-tight text-gray-950 sm:text-xl">
           <span className="sm:hidden">
             ViCourt
           </span>
@@ -161,7 +161,7 @@ export function Header() {
           </span>
         </h1>
 
-        <p className="mt-0.5 hidden text-xs text-gray-400 sm:block">
+        <p className="mt-0.5 hidden text-xs text-gray-500 sm:block">
           Система управління
         </p>
       </div>
@@ -177,7 +177,7 @@ export function Header() {
           ) : (
             <>
               <p className="max-w-[220px] truncate text-sm font-semibold text-gray-800">
-                👤 {displayName}
+                {displayName}
               </p>
 
               <div className="mt-1 flex items-center justify-end gap-2">
@@ -211,7 +211,7 @@ export function Header() {
           type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="rounded-lg border bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-xs transition hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         >
           {isLoggingOut
             ? "..."

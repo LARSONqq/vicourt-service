@@ -12,14 +12,15 @@ export default async function ObjectsPage() {
     await getObjects();
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold sm:text-3xl">
+          <p className="text-sm font-medium text-green-700">Робочий простір</p>
+          <h1 className="vc-page-title mt-1 break-words">
             Об’єкти
           </h1>
 
-          <p className="mt-1 text-sm text-gray-500 sm:text-base">
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
             Керування об’єктами та
             виконаними роботами
           </p>
@@ -27,11 +28,11 @@ export default async function ObjectsPage() {
 
         <Link
           href="/objects/new"
-          className="w-full rounded-lg bg-green-600 px-5 py-3 text-center font-medium text-white transition hover:bg-green-700 sm:w-fit"
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-green-700 px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-fit"
         >
           + Новий об’єкт
         </Link>
-      </div>
+      </header>
 
       <ObjectsList
         objects={objects}

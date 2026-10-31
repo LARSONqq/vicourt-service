@@ -71,14 +71,14 @@ export default function AppShell({
 
   if (isAuthPage) {
     return (
-      <main className="min-h-screen bg-gray-100">
+      <main className="min-h-dvh bg-background">
         {children}
       </main>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-dvh min-w-0 bg-background">
       {/* DESKTOP SIDEBAR */}
       <div className="hidden shrink-0 lg:block">
         {sidebar}
@@ -91,7 +91,7 @@ export default function AppShell({
           setIsMobileMenuOpen(true)
         }
         aria-label="Відкрити меню"
-        className="fixed left-3 top-3 z-40 flex h-10 w-10 items-center justify-center rounded-lg border bg-white text-xl text-gray-700 shadow-sm lg:hidden"
+        className="fixed left-3 top-3 z-40 flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-xl text-gray-700 shadow-sm transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 lg:hidden"
       >
         ☰
       </button>
@@ -105,11 +105,11 @@ export default function AppShell({
             onClick={() =>
               setIsMobileMenuOpen(false)
             }
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-gray-950/45 backdrop-blur-[1px]"
           />
 
           <div
-            className="absolute inset-y-0 left-0 w-64 overflow-y-auto bg-white shadow-xl"
+            className="absolute inset-y-0 left-0 w-72 max-w-[calc(100vw-3rem)] overflow-y-auto bg-white shadow-2xl"
             onClick={(event) => {
               const target =
                 event.target as HTMLElement;
@@ -131,7 +131,7 @@ export default function AppShell({
                 setIsMobileMenuOpen(false)
               }
               aria-label="Закрити меню"
-              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-xl text-gray-600 hover:bg-gray-200"
+              className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xl text-gray-600 transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
             >
               ×
             </button>
@@ -141,12 +141,12 @@ export default function AppShell({
 
       {/* PAGE */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="pl-12 lg:pl-0">
+        <div className="pl-14 lg:pl-0">
           {header}
         </div>
 
-        <main className="flex-1 overflow-auto p-4 sm:p-5 lg:p-8">
-          {children}
+        <main className="min-w-0 flex-1 overflow-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+          <div className="mx-auto w-full max-w-[1600px] min-w-0">{children}</div>
         </main>
       </div>
     </div>

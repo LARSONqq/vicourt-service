@@ -509,7 +509,7 @@ export default function GlobalSearch() {
         aria-label="Відкрити глобальний пошук"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="hidden min-h-10 w-44 items-center justify-between gap-3 rounded-lg border bg-gray-50 px-3 text-sm text-gray-500 transition hover:border-green-300 hover:bg-white hover:text-gray-700 sm:inline-flex xl:w-64"
+        className="hidden min-h-10 w-44 items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-500 transition hover:border-green-300 hover:bg-white hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:inline-flex xl:w-64"
       >
         <span className="truncate">
           🔍 Пошук...
@@ -525,7 +525,7 @@ export default function GlobalSearch() {
         aria-label="Відкрити глобальний пошук"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="flex h-10 w-10 items-center justify-center rounded-lg border bg-white text-base text-gray-600 transition hover:bg-gray-50 sm:hidden"
+        className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-base text-gray-600 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:hidden"
       >
         🔍
       </button>
@@ -548,7 +548,7 @@ export default function GlobalSearch() {
             onKeyDown={
               handleDialogKeyDown
             }
-            className="relative flex max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-2xl flex-col overflow-hidden rounded-xl border bg-white shadow-2xl sm:max-h-[80vh]"
+            className="relative flex max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl sm:max-h-[80vh]"
           >
             <div className="flex min-w-0 items-center gap-3 border-b px-3 py-3 sm:px-4">
               <span
@@ -603,7 +603,7 @@ export default function GlobalSearch() {
                 type="button"
                 onClick={closeSearch}
                 aria-label="Закрити пошук"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xl text-gray-600 hover:bg-gray-200"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-xl text-gray-600 transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
               >
                 ×
               </button>

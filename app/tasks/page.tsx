@@ -27,10 +27,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const result = await getTaskWorkspacePage(filters, page, profile.employee_id, today);
   const templates = recurrence ? await getTaskTemplateSummaries(result.tasks.flatMap((task) => task.task_template_id === null ? [] : [task.task_template_id])) : [];
   return <div className="min-w-0 space-y-5 sm:space-y-6">
-    <header>
-      <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Завдання</h1>
-      <p className="mt-1 text-sm text-gray-500">Робочий простір команди · {today.split("-").reverse().join(".")} · Київ</p>
-      {recurrence && <Link href="/tasks/templates" className="mt-3 inline-block rounded-lg border bg-white px-4 py-3 text-sm font-medium text-green-700">{recurringTaskCopy.title} →</Link>}
+    <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0"><p className="text-sm font-medium text-green-700">Робочий простір команди</p>
+      <h1 className="vc-page-title mt-1 break-words">Завдання</h1>
+      <p className="mt-1 text-sm text-gray-500">{today.split("-").reverse().join(".")} · Київ</p></div>
+      {recurrence && <Link href="/tasks/templates" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-green-700 shadow-xs transition hover:border-green-300 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-fit">{recurringTaskCopy.title} →</Link>}
     </header>
     <AddGlobalTaskForm objects={objects} equipment={equipment} employees={employees} canManageRecurrence={recurrence} />
     <TaskWorkspaceNavigation filters={filters} counts={result.counts} employees={employees} />

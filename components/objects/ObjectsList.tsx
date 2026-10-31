@@ -191,7 +191,7 @@ export default function ObjectsList({
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* FILTERS */}
-      <div className="grid grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 md:grid-cols-[1fr_220px]">
+      <div className="vc-surface grid grid-cols-1 gap-3 p-3 sm:p-4 md:grid-cols-[1fr_240px]">
         <input
           type="search"
           value={search}
@@ -201,7 +201,8 @@ export default function ObjectsList({
             )
           }
           placeholder="Пошук об’єкта..."
-          className="min-h-11 w-full min-w-0 rounded-lg border px-4 py-3 text-sm outline-none transition placeholder:text-gray-400 focus:border-green-600 sm:text-base"
+          aria-label="Пошук об’єкта"
+          className="vc-field min-h-11 min-w-0 px-4 py-3 sm:text-base"
         />
 
         <select
@@ -211,7 +212,8 @@ export default function ObjectsList({
               event.target.value
             )
           }
-          className="min-h-11 w-full rounded-lg border bg-white px-4 py-3 text-sm outline-none transition focus:border-green-600 sm:text-base"
+          aria-label="Фільтр за статусом"
+          className="vc-field min-h-11 px-4 py-3 sm:text-base"
         >
           {statuses.map(
             (item) => (
@@ -243,7 +245,7 @@ export default function ObjectsList({
             onClick={() =>
               setStatus("Усі")
             }
-            className="text-xs font-medium text-green-700 hover:underline"
+            className="inline-flex min-h-10 items-center rounded-md px-2 text-sm font-medium text-green-700 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
           >
             Скинути фільтр
           </button>
@@ -253,7 +255,7 @@ export default function ObjectsList({
       {/* EMPTY */}
       {filteredObjects.length ===
       0 ? (
-        <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
+        <div className="vc-surface p-6 text-center sm:p-8">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500">
             ⌕
           </div>
@@ -263,7 +265,7 @@ export default function ObjectsList({
           </p>
 
           <p className="mt-1 text-sm text-gray-500">
-            Спробуй змінити пошук або
+            Спробуйте змінити пошук або
             статус.
           </p>
         </div>
@@ -274,13 +276,13 @@ export default function ObjectsList({
               <Link
                 key={object.id}
                 href={`/objects/${object.id}`}
-                className="block min-w-0 rounded-xl border bg-white p-4 transition active:bg-gray-50 sm:p-5 sm:hover:border-green-300 sm:hover:shadow-sm"
+                className="vc-surface group block min-w-0 p-4 transition hover:border-green-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 active:bg-gray-50 sm:p-5"
               >
                 <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   {/* LEFT */}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-start gap-2 sm:block">
-                      <h2 className="min-w-0 break-words text-base font-semibold text-gray-900 sm:text-lg">
+                      <h2 className="min-w-0 break-words text-base font-semibold text-gray-950 transition group-hover:text-green-800 sm:text-lg">
                         {
                           object.name
                         }
@@ -315,6 +317,13 @@ export default function ObjectsList({
                           "Не вказано"}
                       </p>
 
+                      {object.phone && (
+                        <p className="break-words text-sm text-gray-600">
+                          <span className="text-gray-400">Телефон: </span>
+                          {object.phone}
+                        </p>
+                      )}
+
                       <ObjectSupervisionNote
                         object={object}
                         today={today}
@@ -344,7 +353,7 @@ export default function ObjectsList({
                       </p>
                     </div>
 
-                    <span className="shrink-0 text-lg text-gray-300 sm:hidden">
+                    <span aria-hidden="true" className="shrink-0 text-lg text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-green-700 sm:hidden">
                       ›
                     </span>
                   </div>

@@ -49,38 +49,38 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.975 0.006 145);
+  --foreground: oklch(0.23 0.018 150);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.23 0.018 150);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.23 0.018 150);
+  --primary: oklch(0.47 0.125 148);
+  --primary-foreground: oklch(0.99 0.003 145);
+  --secondary: oklch(0.95 0.012 145);
+  --secondary-foreground: oklch(0.3 0.025 148);
+  --muted: oklch(0.955 0.008 145);
+  --muted-foreground: oklch(0.51 0.02 150);
+  --accent: oklch(0.945 0.025 145);
+  --accent-foreground: oklch(0.35 0.07 148);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.9 0.012 145);
+  --input: oklch(0.88 0.014 145);
+  --ring: oklch(0.55 0.12 148);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.99 0.003 145);
+  --sidebar-foreground: oklch(0.27 0.025 150);
+  --sidebar-primary: oklch(0.47 0.125 148);
+  --sidebar-primary-foreground: oklch(0.99 0.003 145);
+  --sidebar-accent: oklch(0.945 0.025 145);
+  --sidebar-accent-foreground: oklch(0.35 0.07 148);
+  --sidebar-border: oklch(0.9 0.012 145);
+  --sidebar-ring: oklch(0.55 0.12 148);
 }
 
 .dark {
@@ -122,9 +122,57 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply min-w-0 bg-background text-foreground antialiased;
+    text-rendering: optimizeLegibility;
   }
   html {
-    @apply font-sans;
+    @apply min-w-0 font-sans;
+  }
+  ::selection {
+    background: oklch(0.88 0.065 148);
+    color: oklch(0.25 0.04 148);
+  }
+}
+
+@layer components {
+  .vc-surface {
+    @apply rounded-xl border border-gray-200/90 bg-white;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px rgb(15 23 42 / 0.025);
+  }
+
+  .vc-page-title {
+    @apply text-2xl font-semibold tracking-tight text-gray-950 sm:text-3xl;
+  }
+
+  .vc-section-title {
+    @apply text-lg font-semibold tracking-tight text-gray-900;
+  }
+
+  .vc-muted {
+    @apply text-sm leading-6 text-gray-500;
+  }
+
+  .vc-field {
+    @apply min-h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-xs outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-600/15 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500;
+  }
+
+  .vc-table-shell {
+    @apply min-w-0 overflow-hidden rounded-xl border border-gray-200/90 bg-white shadow-sm;
+  }
+
+  .vc-status-neutral {
+    @apply inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700;
+  }
+
+  .vc-status-success {
+    @apply inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700;
+  }
+
+  .vc-status-warning {
+    @apply inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800;
+  }
+
+  .vc-status-danger {
+    @apply inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700;
   }
 }
