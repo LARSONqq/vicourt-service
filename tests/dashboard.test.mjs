@@ -59,7 +59,7 @@ const fixtures = {
   object_tasks: [task(1, "Заплановано", today), task(2, "В роботі", "2026-09-18"), task(3, "Виконано", today),
     task(4, "Заплановано", "2026-09-18", 8), task(5, "Заплановано", today, 8),
     ...Array.from({ length: 8 }, (_, i) => task(10 + i, "Заплановано", today))],
-  activity_logs: Array.from({ length: 8 }, (_, index) => ({ id: index, action: "task.created", entity_name: "Завдання", actor_name: "Адміністратор", created_at: "2026-09-19T10:00:00Z", metadata: { cost: 999 }, actor_id: "not-for-preview" })),
+  activity_logs: Array.from({ length: 8 }, (_, index) => ({ id: index, action: "task.created", entity_type: "task", entity_id: String(index + 1), entity_name: "Завдання", object_id: null, actor_name: "Адміністратор", created_at: "2026-09-19T10:00:00Z", metadata: { cost: 999 }, actor_id: "not-for-preview" })),
 };
 
 function fixture(role = "worker", options = {}) {
@@ -82,6 +82,13 @@ function fixture(role = "worker", options = {}) {
           const out = rows.filter((row) => row.quantity <= 0).length;
           const low = rows.filter((row) => row.quantity > 0 && row.min_quantity != null && row.quantity <= row.min_quantity).length;
           data = [{ out_of_stock_count: out, low_stock_count: low, attention_count: out + low }];
+        } else if (name === "get_dashboard_warehouse_attention_items") {
+          const rows = options.empty ? [] : fixtures.warehouse_items
+            .filter((row) => row.quantity <= 0 || (row.quantity > 0 && row.min_quantity != null && row.quantity <= row.min_quantity))
+            .sort((a, b) => Number(a.quantity > 0) - Number(b.quantity > 0) || a.quantity - b.quantity || a.id - b.id)
+            .slice(0, 5);
+          data = rows.map((row) => ({ item_id: row.id, name: row.name, quantity: row.quantity,
+            min_quantity: row.min_quantity, stock_state: row.quantity <= 0 ? "out" : "low" }));
         } else if (name === "get_equipment_maintenance_summary") {
           const rows = options.empty ? [] : fixtures.equipment;
           const states = rows.map((row) => {
@@ -98,6 +105,20 @@ function fixture(role = "worker", options = {}) {
             usage_due_count: states.filter((state) => state.usageDue).length,
             attention_count: states.filter((state) => state.dateOverdue || state.dueNow || state.upcoming).length,
           }];
+        } else if (name === "get_dashboard_equipment_attention_items") {
+          const rows = options.empty ? [] : fixtures.equipment.map((row) => {
+            const dateOverdue = row.maintenance_interval_days > 0 && row.next_service_date != null && row.next_service_date < args.p_business_date;
+            const dateToday = row.maintenance_interval_days > 0 && row.next_service_date === args.p_business_date;
+            const dateUpcoming = row.maintenance_interval_days > 0 && row.next_service_date > args.p_business_date && row.next_service_date <= "2026-09-26";
+            const usageDue = ["hours", "km"].includes(row.usage_type) && row.maintenance_interval_usage > 0 && row.next_maintenance_usage >= 0 && row.current_usage >= 0 && row.current_usage >= row.next_maintenance_usage;
+            const state = dateOverdue ? "overdue" : usageDue || dateToday ? "due_now" : dateUpcoming ? "upcoming" : null;
+            return { row, state, usageDue };
+          }).filter(({ state }) => state)
+            .sort((a, b) => ["overdue", "due_now", "upcoming"].indexOf(a.state) - ["overdue", "due_now", "upcoming"].indexOf(b.state)
+              || (a.row.next_service_date == null ? 1 : b.row.next_service_date == null ? -1 : a.row.next_service_date.localeCompare(b.row.next_service_date)) || a.row.id - b.row.id)
+            .slice(0, 5);
+          data = rows.map(({ row, state, usageDue }) => ({ equipment_id: row.id, name: row.name,
+            next_service_date: row.next_service_date, attention_state: state, usage_due: usageDue }));
         } else data = [];
         return Promise.resolve({ data, error: options.fail === name ? { message: "private failure details" } : null }).then(done, reject);
       },
@@ -162,9 +183,10 @@ test("worker dashboard: operational tables only, no Activity/mutation/management
   assert.deepEqual([warehouse.out, warehouse.low, warehouse.attention], [5, 4, 9]); assert.equal(warehouse.items.length, 5);
   assert.deepEqual([equipment.overdue, equipment.dueNow, equipment.upcoming, equipment.usageDue, equipment.attention], [1, 2, 1, 2, 4]);
   assert.equal(objects.total, 2); assert.equal(objects.scope, "assigned"); assert.equal(activity, null); assert.equal(authCalls(), 1);
-  assert.ok(requests.every((r) => ["object_tasks", "warehouse_items", "equipment", "objects"].includes(r.table)));
-  assert.deepEqual(rpcRequests.map((request) => request.name).sort(), ["get_equipment_maintenance_summary", "get_warehouse_stock_summary"]);
+  assert.ok(requests.every((r) => ["object_tasks", "objects"].includes(r.table)));
+  assert.deepEqual(rpcRequests.map((request) => request.name).sort(), ["get_dashboard_equipment_attention_items", "get_dashboard_warehouse_attention_items", "get_equipment_maintenance_summary", "get_warehouse_stock_summary"]);
   assert.deepEqual(rpcRequests.find((request) => request.name === "get_equipment_maintenance_summary").args, { p_business_date: today });
+  assert.deepEqual(rpcRequests.find((request) => request.name === "get_dashboard_equipment_attention_items").args, { p_business_date: today });
   for (const request of requests) {
     assert.doesNotMatch(request.select, /\*|cost|price|metadata|hourly_rate|checklist_items/);
     if (!request.options.head) assert.equal(request.limit, 5);
@@ -225,7 +247,9 @@ test("admin and object_manager have the same bounded Activity service; worker ca
     const logs = await service.getDashboardActivity();
     assert.equal(logs.length, 5); assert.equal(requests.length, 1);
     assert.equal(requests[0].table, "activity_logs");
-    assert.deepEqual(Object.keys(logs[0]).sort(), ["action", "actor_name", "created_at", "entity_name", "id"]);
+    assert.deepEqual(Object.keys(logs[0]).sort(), ["action", "actor_name", "created_at", "entity_name", "href", "id"]);
+    assert.equal(logs[0].href, "/tasks/8");
+    assert.doesNotMatch(requests[0].select, /metadata|description|actor_id/);
   }
   const worker = fixture();
   await assert.rejects(() => worker.load("services/activityLogService.ts").getRecentActivityPreview());
@@ -302,17 +326,15 @@ test("D1 imports only B1 finance and worker contract has no finance placeholders
 });
 
 test("warehouse and equipment summaries preserve canonical LOW/OUT and combined maintenance semantics", async () => {
-  const { service, load, requests, rpcRequests } = fixture();
+  const { service, rpcRequests } = fixture();
   const warehouse = await service.getDashboardWarehouse();
-  const { getWarehouseStockStatus } = load("lib/warehouseStock.ts");
-  for (const row of warehouse.items) assert.equal(row.stockStatus, getWarehouseStockStatus(row));
+  for (const row of warehouse.items) assert.equal(row.stockStatus, row.quantity <= 0 ? "OUT_OF_STOCK" : "LOW_STOCK");
   assert.deepEqual({ out: warehouse.out, low: warehouse.low, attention: warehouse.attention }, { out: 5, low: 4, attention: 9 });
   const equipment = await service.getDashboardEquipment();
   assert.equal(equipment.items.find((item) => item.id === 1).usageDue, true);
-  assert.equal(equipment.items.some((item) => item.id === 4), false); // The bounded preview remains date-ordered.
+  assert.equal(equipment.items.some((item) => item.id === 4), true); // Usage-only due is part of the bounded preview.
   assert.deepEqual({ overdue: equipment.overdue, dueNow: equipment.dueNow, upcoming: equipment.upcoming, usageDue: equipment.usageDue }, { overdue: 1, dueNow: 2, upcoming: 1, usageDue: 2 });
-  assert.ok(requests.every((request) => request.options.head || request.limit === 5));
-  assert.equal(rpcRequests.length, 2);
+  assert.equal(rpcRequests.length, 4);
 });
 
 async function renderSection(current, name) {
@@ -333,7 +355,7 @@ test("empty states are scope-honest and do not promise all usage/stock issues ar
 });
 
 test("secondary query failure is local, never fake zero; auth redirects are not swallowed", async () => {
-  const current = fixture("worker", { fail: "warehouse_items" });
+  const current = fixture("worker", { fail: "get_dashboard_warehouse_attention_items" });
   const originalError = console.error; console.error = () => {};
   try {
     const html = await renderSection(current, "DashboardWarehouseAttention");

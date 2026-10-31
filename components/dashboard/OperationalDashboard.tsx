@@ -120,38 +120,50 @@ export function DashboardWarehouseAttention() {
     </div>
     {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>{data.attention === 0 ? "Запаси не потребують уваги." : "Є низькі залишки. Відкрийте Склад для повного списку."}</p> : <ul className={compactListClass}>
       {data.items.map((item) => <li key={item.id}><Link href={`/warehouse/${item.id}`} className={`${compactLinkClass} flex items-center justify-between gap-3`}>
-        <span className="min-w-0"><span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">{Number(item.quantity).toLocaleString("uk-UA")} {item.unit}</span></span>
+        <span className="min-w-0"><span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">Залишок: {Number(item.quantity).toLocaleString("uk-UA")}{item.minQuantity === null ? "" : ` · Мінімум: ${Number(item.minQuantity).toLocaleString("uk-UA")}`}</span></span>
         <span className={`shrink-0 rounded-full px-2 py-1 text-xs ${warehouseStockPresentation[item.stockStatus].badgeClass}`}>{warehouseStockPresentation[item.stockStatus].label}</span>
       </Link></li>)}
     </ul>}
-    <p className={`${mutedClass} mt-auto border-t pt-3`}>Точні показники по всьому складу. У списку — до 5 позицій без запасу.</p>
+    <p className={`${mutedClass} mt-auto border-t pt-3`}>Точні показники по всьому складу. У списку — до 5 позицій без запасу або з низьким залишком.</p>
   </>}</DashboardSection>;
 }
 
 export function DashboardEquipmentAttention() {
-  return <DashboardSection title="Техніка" subtitle="ТО за датою та напрацюванням" href="/equipment" load={getDashboardEquipment}>{(data) => <>
+  return <DashboardSection title="Техніка" subtitle="ТО та технічний стан" href="/equipment" load={getDashboardEquipment}>{(data) => <>
     <dl className="grid grid-cols-3 gap-2 text-sm">
       {[["Прострочено", data.overdue], ["Потрібне зараз", data.dueNow], ["За 7 днів", data.upcoming]].map(([label, count]) => <div key={label} className="flex min-h-16 min-w-0 flex-col rounded-lg bg-gray-50 p-2 sm:px-3">
         <dt className="break-words text-xs leading-4 text-gray-600 sm:text-sm">{label}</dt><dd className="mt-auto pt-1 text-xl font-semibold tabular-nums">{count}</dd>
       </div>)}
     </dl>
     {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>{data.attention === 0 ? "Планового ТО, що потребує уваги, немає." : "Є техніка, що потребує ТО за напрацюванням. Відкрийте розділ Техніка для деталей."}</p> : <ul className={compactListClass}>
-      {data.items.map((item) => <li key={item.id}><Link href={`/equipment/${item.id}`} className={`${compactLinkClass} flex items-center justify-between gap-3`}>
-        <span className="min-w-0"><span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">{formatDateValue(item.date)}</span></span>
-        <span className={`shrink-0 rounded-full px-2 py-1 text-right text-xs ${item.usageDue ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-700"}`}>{item.usageDue ? "Поріг напрацювання" : item.label}</span>
-      </Link></li>)}
+      {data.items.map((item) => {
+        const label = item.state === "overdue" ? "ТО прострочено"
+          : item.usageDue ? "Поріг напрацювання"
+            : item.state === "due_now" ? "ТО сьогодні"
+              : item.state === "repair_required" ? "Потребує ремонту"
+                : item.state === "in_repair" ? "На ремонті" : "ТО протягом 7 днів";
+        const badgeClass = item.state === "overdue" ? "bg-red-100 text-red-700"
+          : item.state === "due_now" || item.state === "repair_required" ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-700";
+        return <li key={item.id}><Link href={`/equipment/${item.id}`} className={`${compactLinkClass} flex items-center justify-between gap-3`}>
+          <span className="min-w-0"><span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">{item.date ? formatDateValue(item.date) : "За напрацюванням"}</span></span>
+          <span className={`shrink-0 rounded-full px-2 py-1 text-right text-xs ${badgeClass}`}>{label}</span>
+        </Link></li>;
+      })}
     </ul>}
-    <div className="mt-auto border-t pt-3"><p className={mutedClass}>Точні показники враховують дату й поріг напрацювання. У списку — до 5 записів за датою.</p><Link href="/tasks?view=all&status=open&source=equipment_maintenance" className={linkClass}>Усі відкриті завдання ТО →</Link></div>
+    <div className="mt-auto border-t pt-3"><p className={mutedClass}>Точні показники враховують дату й поріг напрацювання. У списку — до 5 найважливіших записів.</p><Link href="/tasks?view=all&status=open&source=equipment_maintenance" className={linkClass}>Усі відкриті завдання ТО →</Link></div>
   </>}</DashboardSection>;
 }
 
 export function DashboardRecentActivity() {
   return <DashboardSection title="Останні дії" subtitle="Останні 5 подій у системі" href="/activity" load={getDashboardActivity}>{(logs) => !logs?.length
     ? <p className={`${mutedClass} py-4 text-center`}>Записів у журналі дій поки немає.</p>
-    : <ul className={compactListClass}>{logs.map((log) => <li key={log.id} className="min-w-0 px-3 py-3 sm:px-4">
-      <p className="break-words text-sm font-medium">{isActivityEventName(log.action) ? activityEventRegistry[log.action].label : "Дія в системі"}</p>
-      {log.entity_name && <p className="mt-1 break-words text-sm text-gray-600">{log.entity_name}</p>}
-      <p className="mt-1 break-words text-xs text-gray-500">{log.actor_name || "Система"} · {formatKyivTimestamp(log.created_at)}</p>
-    </li>)}</ul>
+    : <ul className={compactListClass}>{logs.map((log) => {
+      const content = <><p className="break-words text-sm font-medium">{isActivityEventName(log.action) ? activityEventRegistry[log.action].label : "Дія в системі"}</p>
+        {log.entity_name && <p className="mt-1 break-words text-sm text-gray-600">{log.entity_name}</p>}
+        <p className="mt-1 break-words text-xs text-gray-500">{log.actor_name || "Система"} · {formatKyivTimestamp(log.created_at)}</p></>;
+      return <li key={log.id}>{log.href
+        ? <Link href={log.href} className={compactLinkClass}>{content}</Link>
+        : <div className="min-w-0 px-3 py-3 sm:px-4">{content}</div>}</li>;
+    })}</ul>
   }</DashboardSection>;
 }

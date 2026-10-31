@@ -4,9 +4,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
 import { canAccessSection, canManageEquipment, canManageObjects, canManagePurchases, canViewActivityLog, type AppSection } from "@/lib/auth/permissions";
-import { addDaysToDateValue, getKyivDateValue } from "@/lib/kyivDate";
-import { getWarehouseStockStatus } from "@/lib/warehouseStock";
-import { evaluateEquipmentMaintenance, getEquipmentMaintenanceOverallLabel } from "@/lib/equipmentMaintenance";
+import { getKyivDateValue } from "@/lib/kyivDate";
 import { PERIODIC_SUPERVISION_STATUS } from "@/lib/objectSupervision";
 import { COMPLETED_TASK_STATUS } from "@/lib/taskPresentation";
 import { getPersonalTaskDashboardLinks } from "@/lib/taskWorkspace";
@@ -14,9 +12,9 @@ import { getTaskDashboardSummary, getTaskDashboardPreview } from "@/services/tas
 import { getRecentActivityPreview } from "@/services/activityLogService";
 import { getWarehouseStockSummary } from "@/services/warehouseStockSummaryService";
 import { getEquipmentMaintenanceSummary } from "@/services/equipmentMaintenanceSummaryService";
+import { getDashboardEquipmentAttentionItems, getDashboardWarehouseAttentionItems } from "@/services/dashboardOperationalPreviewService";
 import { getReportOverviewCurrentFinance } from "@/services/reportCurrentFinanceService";
 import { getAppSettings } from "@/services/settingsService";
-import type { Equipment } from "@/types/equipment";
 import type { DashboardCommandData, DashboardPermissions } from "@/types/dashboard";
 
 // Request-local auth/date only: never persist a user's dashboard across requests.
@@ -90,38 +88,20 @@ export async function getDashboardTasksPreview(view: "today" | "overdue") {
 
 export async function getDashboardWarehouse() {
   await sectionContext("warehouse");
-  const supabase = await createClient();
   const [summary, preview] = await Promise.all([
     getWarehouseStockSummary(),
-    supabase.from("warehouse_items").select("id, name, quantity, unit, min_quantity")
-      .lte("quantity", 0).order("quantity").order("id").limit(5)
-      .overrideTypes<{ id: number; name: string; quantity: number; unit: string; min_quantity: number | null }[], { merge: false }>(),
+    getDashboardWarehouseAttentionItems(),
   ]);
-  if (preview.error) throw new Error("Не вдалося завантажити залишки складу.");
-  return { ...summary, items: (preview.data ?? []).map((item) => ({ ...item, stockStatus: getWarehouseStockStatus(item) })) };
+  return { ...summary, items: preview };
 }
-
-type MaintenancePreview = Pick<Equipment, "id" | "name" | "next_service_date" | "maintenance_interval_days" | "usage_type" | "current_usage" | "maintenance_interval_usage" | "next_maintenance_usage">;
 
 export async function getDashboardEquipment() {
   const { today } = await sectionContext("equipment");
-  const horizon = addDaysToDateValue(today, 7);
-  const supabase = await createClient();
   const [summary, preview] = await Promise.all([
     getEquipmentMaintenanceSummary(today),
-    supabase.from("equipment")
-      .select("id, name, next_service_date, maintenance_interval_days, usage_type, current_usage, maintenance_interval_usage, next_maintenance_usage")
-      .gt("maintenance_interval_days", 0).lte("next_service_date", horizon)
-      .order("next_service_date").order("id").limit(5)
-      .overrideTypes<MaintenancePreview[], { merge: false }>(),
+    getDashboardEquipmentAttentionItems(today),
   ]);
-  if (preview.error) throw new Error("Не вдалося завантажити план ТО.");
-  return { ...summary,
-    items: (preview.data ?? []).map((item) => {
-      const evaluation = evaluateEquipmentMaintenance(item, today);
-      return { id: item.id, name: item.name, date: item.next_service_date,
-        label: getEquipmentMaintenanceOverallLabel(evaluation), usageDue: evaluation.usageDue };
-    }) };
+  return { ...summary, items: preview };
 }
 
 // Preserve the established Home definition of active objects; not all non-completed statuses.

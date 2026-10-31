@@ -44,6 +44,31 @@ import type {
 const ACTIVITY_PAGE_SIZE =
   50;
 
+type ActivityPreviewRow = Pick<ActivityLog,
+  "id" | "action" | "entity_type" | "entity_id" | "entity_name" | "object_id" | "actor_name" | "created_at">;
+
+function toPositiveId(value: string | number | null) {
+  const parsed = typeof value === "string" && /^\d+$/.test(value) ? Number(value) : value;
+  return typeof parsed === "number" && Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+function getActivityPreviewHref(log: ActivityPreviewRow) {
+  const entityId = toPositiveId(log.entity_id);
+  const objectId = toPositiveId(log.object_id);
+  const deleted = log.action.endsWith(".deleted");
+
+  if (!deleted && entityId !== null) {
+    if (log.entity_type === "object") return `/objects/${entityId}`;
+    if (log.entity_type === "task") return `/tasks/${entityId}`;
+    if (log.entity_type === "equipment") return `/equipment/${entityId}`;
+    if (log.entity_type === "employee") return `/employees/${entityId}`;
+    if (log.action.startsWith("warehouse_item.")) return `/warehouse/${entityId}`;
+  }
+  if (objectId !== null && !(deleted && log.entity_type === "object")) return `/objects/${objectId}`;
+  if (!deleted && log.entity_type === "purchase") return "/purchases";
+  return null;
+}
+
 /** Bounded overview only; metadata/finance details remain on the Activity page. */
 export async function getRecentActivityPreview() {
   const profile = await getCurrentUserProfile();
@@ -52,11 +77,18 @@ export async function getRecentActivityPreview() {
   }
   const supabase = await createClient();
   const { data, error } = await supabase.from("activity_logs")
-    .select("id, action, entity_name, actor_name, created_at")
+    .select("id, action, entity_type, entity_id, entity_name, object_id, actor_name, created_at")
     .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(5)
-    .overrideTypes<Pick<ActivityLog, "id" | "action" | "entity_name" | "actor_name" | "created_at">[], { merge: false }>();
+    .overrideTypes<ActivityPreviewRow[], { merge: false }>();
   if (error) throw new Error("Не вдалося завантажити останні дії.");
-  return data ?? [];
+  return (data ?? []).map((log) => ({
+    id: log.id,
+    action: log.action,
+    entity_name: log.entity_name,
+    actor_name: log.actor_name,
+    created_at: log.created_at,
+    href: getActivityPreviewHref(log),
+  }));
 }
 const OBJECT_ACTIVITY_PAGE_SIZE =
   25;
