@@ -10,7 +10,7 @@ import { getPersonalTaskDashboardLinks, taskDashboardLinks } from "@/lib/taskWor
 import { warehouseStockPresentation } from "@/lib/warehouseStock";
 import {
   getDashboardContext, getDashboardTasksSummary, getDashboardTasksPreview,
-  getDashboardWarehouse, getDashboardEquipment, getDashboardObjects, getDashboardActivity,
+  getDashboardWarehouse, getDashboardEquipment, getDashboardActivity,
 } from "@/services/dashboardService";
 
 const linkClass = "inline-flex min-h-10 shrink-0 items-center py-2 text-sm font-medium text-green-700 hover:underline";
@@ -142,24 +142,6 @@ export function DashboardEquipmentAttention() {
       </Link></li>)}
     </ul>}
     <div className="mt-auto border-t pt-3"><p className={mutedClass}>Точні показники враховують дату й поріг напрацювання. У списку — до 5 записів за датою.</p><Link href="/tasks?view=all&status=open&source=equipment_maintenance" className={linkClass}>Усі відкриті завдання ТО →</Link></div>
-  </>}</DashboardSection>;
-}
-
-export function DashboardObjectsOverview() {
-  return <DashboardSection title="Активні об’єкти" subtitle="Поточні об’єкти в роботі" href="/objects" load={getDashboardObjects}>{(data) => <>
-    {data.scope === "assigned" && <p className="text-sm font-medium text-green-700">Лише об’єкти, призначені вам</p>}
-    <div className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2 sm:px-4">
-      <span className="text-sm text-gray-600">Всього активних</span><strong className="text-xl tabular-nums">{data.total}</strong>
-    </div>
-    <dl className="space-y-1.5 text-sm">{data.statuses.map(({ status, count }) => <div key={status} className="flex justify-between gap-3">
-      <dt className="break-words text-gray-600">{status}</dt><dd className="font-semibold tabular-nums">{count}</dd>
-    </div>)}</dl>
-    {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>Активних об’єктів поки немає.</p> : <ul className={compactListClass}>
-      {data.items.map((item) => <li key={item.id}><Link href={`/objects/${item.id}`} className={compactLinkClass}>
-        <span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">{item.status}</span>
-      </Link></li>)}
-    </ul>}
-    <p className={`${mutedClass} mt-auto border-t pt-3`}>До 5 останніх створених активних об’єктів.</p>
   </>}</DashboardSection>;
 }
 

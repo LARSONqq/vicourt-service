@@ -327,7 +327,6 @@ test("empty states are scope-honest and do not promise all usage/stock issues ar
     ["DashboardOverdueTasks", "Прострочених завдань немає"],
     ["DashboardWarehouseAttention", "Запаси не потребують уваги"],
     ["DashboardEquipmentAttention", "Планового ТО, що потребує уваги, немає"],
-    ["DashboardObjectsOverview", "Активних об’єктів поки немає"],
     ["DashboardRecentActivity", "Записів у журналі дій поки немає"],
   ];
   for (const [name, text] of cases) assert.ok((await renderSection(current, name)).includes(text));

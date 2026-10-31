@@ -3,9 +3,10 @@ import { Suspense } from "react";
 import DashboardQuickActions from "@/components/dashboard/DashboardQuickActions";
 import { DashboardCommandSkeleton, DashboardCommandSurface } from "@/components/dashboard/DashboardCommandSurface";
 import { DashboardAttention, DashboardAttentionSkeleton } from "@/components/dashboard/DashboardAttention";
+import { DashboardObjectWatchlist, DashboardObjectWatchlistSkeleton } from "@/components/dashboard/DashboardObjectWatchlist";
 import {
   DashboardSkeleton, DashboardTodayTasks,
-  DashboardWarehouseAttention, DashboardEquipmentAttention, DashboardObjectsOverview, DashboardRecentActivity,
+  DashboardWarehouseAttention, DashboardEquipmentAttention, DashboardRecentActivity,
 } from "@/components/dashboard/OperationalDashboard";
 import { getDashboardContext } from "@/services/dashboardService";
 import { formatLongDateValue } from "@/lib/kyivDate";
@@ -38,7 +39,7 @@ export default async function HomePage() {
       <Suspense fallback={<DashboardSkeleton title="Склад" />}><DashboardWarehouseAttention /></Suspense>
       <Suspense fallback={<DashboardSkeleton title="Техніка" />}><DashboardEquipmentAttention /></Suspense>
       <div className="h-full md:col-span-2 xl:col-span-1">
-        <Suspense fallback={<DashboardSkeleton title="Активні об’єкти" />}><DashboardObjectsOverview /></Suspense>
+        <Suspense fallback={<DashboardObjectWatchlistSkeleton />}><DashboardObjectWatchlist /></Suspense>
       </div>
     </div>
     {activityVisible && <Suspense fallback={<DashboardSkeleton title="Останні дії" />}><DashboardRecentActivity /></Suspense>}
