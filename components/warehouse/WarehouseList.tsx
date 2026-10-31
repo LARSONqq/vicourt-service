@@ -305,7 +305,7 @@ export default function WarehouseList({
                 const status = getWarehouseStockStatus(item);
                 const badge = warehouseStockPresentation[status];
                 const isLowStock = status !== "NORMAL";
-                const isOutOfStock = status === "OUT";
+                const isOutOfStock = status === "OUT_OF_STOCK";
 
                 const insight =
                   getWarehousePurchaseInsight(
@@ -763,7 +763,7 @@ export default function WarehouseList({
                     const status = getWarehouseStockStatus(item);
                     const badge = warehouseStockPresentation[status];
                     const isLowStock = status !== "NORMAL";
-                    const isOutOfStock = status === "OUT";
+                    const isOutOfStock = status === "OUT_OF_STOCK";
 
                     const insight =
                       getWarehousePurchaseInsight(
