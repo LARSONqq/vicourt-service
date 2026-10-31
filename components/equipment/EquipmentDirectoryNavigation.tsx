@@ -24,7 +24,7 @@ export function EquipmentDirectoryFilters({
     <form
       action="/equipment"
       method="get"
-      className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_210px_230px_auto]"
+      className="vc-surface grid min-w-0 grid-cols-1 gap-3 p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_210px_230px_auto]"
     >
       <label className="min-w-0">
         <span className="sr-only">
@@ -38,7 +38,7 @@ export function EquipmentDirectoryFilters({
           }
           maxLength={100}
           placeholder="Назва або інвентарний номер"
-          className="min-h-11 w-full min-w-0 rounded-lg border px-4 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field min-h-11 min-w-0 px-4 py-3"
         />
       </label>
 
@@ -51,7 +51,7 @@ export function EquipmentDirectoryFilters({
           defaultValue={
             filters.status || ""
           }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+          className="vc-field min-h-11 min-w-0 py-3"
         >
           <option value="">
             Усі статуси
@@ -78,7 +78,7 @@ export function EquipmentDirectoryFilters({
           defaultValue={
             filters.category || ""
           }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+          className="vc-field min-h-11 min-w-0 py-3"
         >
           <option value="">
             Усі категорії
@@ -99,7 +99,7 @@ export function EquipmentDirectoryFilters({
       <div className="grid grid-cols-2 gap-2 lg:flex">
         <button
           type="submit"
-          className="min-h-11 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+          className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
         >
           Застосувати
         </button>
@@ -107,7 +107,7 @@ export function EquipmentDirectoryFilters({
         {hasFilters ? (
           <Link
             href="/equipment"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
           >
             Скинути
           </Link>
@@ -198,7 +198,7 @@ export function EquipmentDirectoryPagination({
   return (
     <nav
       aria-label="Сторінки техніки"
-      className="flex min-w-0 flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+      className="vc-surface flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="text-center text-xs text-gray-500 sm:text-left sm:text-sm">
         {hasVisibleItems
@@ -214,7 +214,7 @@ export function EquipmentDirectoryPagination({
               page - 1
             )}
             scroll={false}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:px-4"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-xs transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:px-4"
           >
             ← Назад
           </Link>
@@ -233,7 +233,7 @@ export function EquipmentDirectoryPagination({
               page + 1
             )}
             scroll={false}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:px-4"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-xs transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:px-4"
           >
             Далі →
           </Link>

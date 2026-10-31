@@ -121,7 +121,7 @@ function DirectoryLoading() {
     <div
       role="status"
       aria-live="polite"
-      className="animate-pulse space-y-4"
+      className="animate-pulse space-y-4 motion-reduce:animate-none"
     >
       <span className="sr-only">
         Завантаження техніки…
@@ -132,11 +132,11 @@ function DirectoryLoading() {
         }).map((_, index) => (
           <div
             key={index}
-            className="h-24 rounded-xl border bg-gray-50"
+            className="vc-surface h-24 bg-gray-50/70"
           />
         ))}
       </div>
-      <div className="h-80 rounded-xl border bg-gray-50" />
+      <div className="vc-surface h-80 bg-gray-50/70" />
     </div>
   );
 }
@@ -224,7 +224,7 @@ async function EquipmentDirectoryContent({
           ([label, value, className]) => (
             <div
               key={label}
-              className="min-w-0 rounded-xl border bg-white p-3 sm:p-5"
+              className="vc-surface min-w-0 p-3 sm:p-5"
             >
               <p className="text-xs leading-4 text-gray-500 sm:text-sm">
                 {label}
@@ -295,9 +295,10 @@ export default async function EquipmentPage({
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
-      <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+      <header className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+          <p className="text-sm font-medium text-green-700">Облік і технічний стан</p>
+          <h1 className="vc-page-title mt-1 break-words">
             Техніка
           </h1>
           <p className="mt-1 max-w-2xl text-sm leading-5 text-gray-500 sm:text-base sm:leading-6">
@@ -317,7 +318,7 @@ export default async function EquipmentPage({
             />
           </div>
         )}
-      </div>
+      </header>
 
       {!canManage && (
         <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 sm:px-5">

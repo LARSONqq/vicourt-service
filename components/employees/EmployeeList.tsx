@@ -177,7 +177,7 @@ export default function EmployeeList({
 
       {safeEmployees.length ===
       0 ? (
-        <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
+        <div className="vc-surface p-6 text-center sm:p-8">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
             👤
           </div>
@@ -188,8 +188,8 @@ export default function EmployeeList({
 
           <p className="mt-1 text-sm text-gray-500">
             {hasFilters
-              ? "Спробуй змінити пошук, статус або тип роботи."
-              : "Додай першого працівника, щоб сформувати команду."}
+              ? "Спробуйте змінити пошук, статус або тип роботи."
+              : "Додайте першого працівника, щоб сформувати команду."}
           </p>
         </div>
       ) : (
@@ -218,7 +218,7 @@ export default function EmployeeList({
               return (
                 <article
                   key={employee.id}
-                  className={`min-w-0 overflow-hidden rounded-xl border bg-white ${
+                  className={`vc-surface min-w-0 overflow-hidden transition hover:shadow-md ${
                     isEditing
                       ? "xl:col-span-2 2xl:col-span-3"
                       : ""
@@ -249,7 +249,7 @@ export default function EmployeeList({
                               null
                             )
                           }
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white text-xl text-gray-500 transition hover:bg-gray-50 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-sm"
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-xl text-gray-500 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:h-auto sm:w-auto sm:px-3 sm:py-2 sm:text-sm"
                           aria-label="Закрити редагування"
                         >
                           <span className="sm:hidden">
@@ -288,7 +288,7 @@ export default function EmployeeList({
                           <div className="flex min-w-0 items-center gap-3">
                             <Link
                               href={`/employees/${employee.id}`}
-                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-700 transition hover:bg-green-200"
+                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-700 transition hover:bg-green-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                               title="Відкрити сторінку працівника"
                             >
                               {getInitials(
@@ -299,7 +299,7 @@ export default function EmployeeList({
                             <div className="min-w-0">
                               <Link
                                 href={`/employees/${employee.id}`}
-                                className="block break-words font-semibold text-gray-900 transition hover:text-green-700 hover:underline"
+                                className="rounded-sm break-words font-semibold text-gray-900 transition hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                               >
                                 {
                                   employee.last_name
@@ -336,7 +336,7 @@ export default function EmployeeList({
 
                               <a
                                 href={`tel:${employee.phone}`}
-                                className="min-w-0 break-all text-right font-medium text-green-700 hover:underline"
+                                className="min-w-0 break-all rounded-sm text-right font-medium text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                               >
                                 {
                                   employee.phone
@@ -353,7 +353,7 @@ export default function EmployeeList({
 
                               <a
                                 href={`mailto:${employee.email}`}
-                                className="min-w-0 break-all text-right font-medium text-green-700 hover:underline"
+                                className="min-w-0 break-all rounded-sm text-right font-medium text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                               >
                                 {
                                   employee.email
@@ -457,7 +457,7 @@ export default function EmployeeList({
                       >
                         <Link
                           href={`/employees/${employee.id}`}
-                          className="flex min-h-10 min-w-0 items-center justify-center rounded-lg px-2 py-2 text-center text-sm font-medium text-green-700 transition hover:bg-green-50"
+                          className="flex min-h-10 min-w-0 items-center justify-center rounded-lg px-2 py-2 text-center text-sm font-medium text-green-700 transition hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                         >
                           Відкрити
                         </Link>

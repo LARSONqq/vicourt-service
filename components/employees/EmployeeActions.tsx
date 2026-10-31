@@ -20,7 +20,7 @@ export default function EmployeeActions() {
               !current
           )
         }
-        className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium transition sm:w-auto ${
+        className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-auto ${
           showForm
             ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
             : "bg-green-600 text-white hover:bg-green-700"
@@ -32,7 +32,7 @@ export default function EmployeeActions() {
       </button>
 
       {showForm && (
-        <div className="mt-4 min-w-0 rounded-xl border bg-white p-4 sm:mt-5 sm:p-5">
+        <div className="vc-surface mt-4 min-w-0 p-4 sm:mt-5 sm:p-5">
           <div className="mb-4 sm:mb-5">
             <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
               Новий працівник

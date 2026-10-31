@@ -263,7 +263,7 @@ export default function WarehouseList({
       {safeItems.length ===
       0 ? (
         /* EMPTY */
-        <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
+        <div className="vc-surface p-6 text-center sm:p-8">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
             📦
           </div>
@@ -273,7 +273,7 @@ export default function WarehouseList({
           </p>
 
           <p className="mt-1 text-sm text-gray-500">
-            Спробуй змінити пошук або
+            Спробуйте змінити пошук або
             фільтри.
           </p>
         </div>
@@ -305,6 +305,7 @@ export default function WarehouseList({
                 const status = getWarehouseStockStatus(item);
                 const badge = warehouseStockPresentation[status];
                 const isLowStock = status !== "NORMAL";
+                const isOutOfStock = status === "OUT";
 
                 const insight =
                   getWarehousePurchaseInsight(
@@ -342,9 +343,11 @@ export default function WarehouseList({
                     data-warehouse-item-id={
                       item.id
                     }
-                    className={`scroll-mt-24 min-w-0 rounded-xl border bg-white p-4 ${
-                      isLowStock
-                        ? "border-red-200"
+                    className={`vc-surface scroll-mt-24 min-w-0 p-4 transition hover:shadow-md ${
+                      isOutOfStock
+                        ? "border-red-300"
+                        : isLowStock
+                          ? "border-amber-300"
                         : focusedItemId ===
                             item.id
                           ? "border-green-300"
@@ -358,7 +361,7 @@ export default function WarehouseList({
                           <h3 className="break-words font-semibold text-gray-900">
                             <Link
                               href={`/warehouse/${item.id}`}
-                              className="text-green-800 hover:underline"
+                              className="rounded-sm text-green-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                             >
                               {
                                 item.name
@@ -379,8 +382,10 @@ export default function WarehouseList({
                     {/* QUANTITY */}
                     <div
                       className={`mt-4 rounded-xl p-3 ${
-                        isLowStock
+                        isOutOfStock
                           ? "bg-red-50"
+                          : isLowStock
+                            ? "bg-amber-50"
                           : "bg-green-50"
                       }`}
                     >
@@ -390,8 +395,10 @@ export default function WarehouseList({
 
                       <p
                         className={`mt-1 text-2xl font-bold ${
-                          isLowStock
-                            ? "text-red-600"
+                          isOutOfStock
+                            ? "text-red-700"
+                            : isLowStock
+                              ? "text-amber-700"
                             : "text-green-700"
                         }`}
                       >
@@ -687,7 +694,7 @@ export default function WarehouseList({
           </div>
 
           {/* DESKTOP TABLE */}
-          <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
+          <div className="vc-table-shell hidden overflow-x-auto md:block">
             <table
               className={`w-full ${
                 canManage
@@ -756,6 +763,7 @@ export default function WarehouseList({
                     const status = getWarehouseStockStatus(item);
                     const badge = warehouseStockPresentation[status];
                     const isLowStock = status !== "NORMAL";
+                    const isOutOfStock = status === "OUT";
 
                     const insight =
                       getWarehousePurchaseInsight(
@@ -795,7 +803,7 @@ export default function WarehouseList({
                           data-warehouse-item-id={
                             item.id
                           }
-                          className={`scroll-mt-24 border-t ${
+                          className={`scroll-mt-24 border-t transition hover:bg-gray-50/80 ${
                             focusedItemId ===
                             item.id
                               ? "bg-green-50/50"
@@ -806,7 +814,7 @@ export default function WarehouseList({
                             <div className="flex items-center gap-3">
                               <Link
                                 href={`/warehouse/${item.id}`}
-                                className="font-medium text-green-800 hover:underline"
+                                className="rounded-sm font-medium text-green-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                               >
                                 {
                                   item.name
@@ -825,8 +833,10 @@ export default function WarehouseList({
 
                           <td
                             className={`p-4 font-semibold ${
-                              isLowStock
-                                ? "text-red-600"
+                              isOutOfStock
+                                ? "text-red-700"
+                                : isLowStock
+                                  ? "text-amber-700"
                                 : "text-green-700"
                             }`}
                           >

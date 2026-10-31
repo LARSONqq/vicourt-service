@@ -43,13 +43,13 @@ export default async function WarehousePage({ searchParams }: Props) {
     { label: "Норма", count: directory.stats.normal, stock: "normal" as const },
   ];
   return <div className="min-w-0 space-y-5 sm:space-y-6">
-    <div className="flex min-w-0 flex-col justify-between gap-4 xl:flex-row">
-      <div><h1 className="text-2xl font-bold sm:text-3xl">Склад</h1><p className="mt-1 text-sm text-gray-500">Залишки, потреба в матеріалах та очікувані закупівлі</p></div>
+    <header className="flex min-w-0 flex-col justify-between gap-4 xl:flex-row xl:items-end">
+      <div className="min-w-0"><p className="text-sm font-medium text-green-700">Матеріали та запаси</p><h1 className="vc-page-title mt-1 break-words">Склад</h1><p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">Залишки, потреба в матеріалах та очікувані закупівлі</p></div>
       {canManage && <div className="min-w-0"><WarehouseActions items={directory.items} /><p className="mt-2 text-xs text-gray-500">У формі корекції — матеріали поточної сторінки. Інші знайдіть через фільтри або паспорт.</p></div>}
-    </div>
+    </header>
     {!purchasing && <p className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">Режим перегляду: залишки та параметри запасу матеріалів.</p>}
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {cards.map((card) => <Link key={card.stock} href={warehouseDirectoryHref({ q: "", category: "", stock: card.stock }, 1, query)} className={`min-w-0 rounded-xl border bg-white p-4 hover:border-green-500 ${directory.filters.stock === card.stock ? "border-green-600 ring-1 ring-green-600" : ""}`}>
+      {cards.map((card) => <Link key={card.stock} href={warehouseDirectoryHref({ q: "", category: "", stock: card.stock }, 1, query)} aria-current={directory.filters.stock === card.stock ? "page" : undefined} className={`vc-surface min-w-0 p-4 transition hover:border-green-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 ${directory.filters.stock === card.stock ? "border-green-600 ring-1 ring-green-600" : ""}`}>
         <p className="text-sm text-gray-500">{card.label}</p><p className={`mt-2 text-2xl font-bold ${card.stock === "out" ? "text-red-700" : card.stock === "low" ? "text-orange-700" : "text-gray-900"}`}>{card.count}</p>
       </Link>)}
     </div>

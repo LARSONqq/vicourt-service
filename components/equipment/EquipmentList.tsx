@@ -175,7 +175,7 @@ export default function EquipmentList({
       {/* EMPTY */}
       {safeEquipment.length ===
       0 ? (
-        <div className="rounded-xl border bg-white p-6 text-center sm:p-8">
+        <div className="vc-surface p-6 text-center sm:p-8">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
             🛠️
           </div>
@@ -186,8 +186,8 @@ export default function EquipmentList({
 
           <p className="mt-1 text-sm text-gray-500">
             {hasFilters
-              ? "Спробуй змінити пошук, категорію або статус."
-              : "Додай першу одиницю техніки, щоб вона з’явилася у списку."}
+              ? "Спробуйте змінити пошук, категорію або статус."
+              : "Додайте першу одиницю техніки, щоб вона з’явилася у списку."}
           </p>
         </div>
       ) : (
@@ -219,7 +219,7 @@ export default function EquipmentList({
                     key={
                       item.id
                     }
-                    className={`min-w-0 rounded-xl border bg-white p-4 ${
+                    className={`vc-surface min-w-0 p-4 transition hover:shadow-md ${
                       serviceOverdue
                         ? "border-red-200"
                         : ""
@@ -231,7 +231,7 @@ export default function EquipmentList({
                         <h3 className="break-words font-semibold">
                           <Link
                             href={`/equipment/${item.id}`}
-                            className="text-gray-900 transition hover:text-green-700 hover:underline"
+                            className="rounded-sm text-gray-900 transition hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                           >
                             {item.name}
                           </Link>
@@ -421,7 +421,7 @@ export default function EquipmentList({
           </div>
 
           {/* DESKTOP TABLE */}
-          <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
+          <div className="vc-table-shell hidden overflow-x-auto md:block">
             <table
               className={`w-full ${
                 canManage
@@ -494,12 +494,12 @@ export default function EquipmentList({
                           item.id
                         }
                       >
-                        <tr className="border-t">
+                        <tr className={`border-t transition hover:bg-gray-50/80 ${serviceOverdue ? "bg-red-50/25" : ""}`}>
                           <td className="p-4">
                             <p className="font-medium">
                               <Link
                                 href={`/equipment/${item.id}`}
-                                className="text-gray-900 transition hover:text-green-700 hover:underline"
+                                className="rounded-sm text-gray-900 transition hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                               >
                                 {item.name}
                               </Link>
