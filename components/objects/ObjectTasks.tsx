@@ -78,7 +78,7 @@ export default function ObjectTasks({
   );
 
   return (
-    <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+    <section className="vc-surface min-w-0 p-4 sm:p-6">
       {/* HEADER */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -100,7 +100,7 @@ export default function ObjectTasks({
                 !previous
             )
           }
-          className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition sm:w-fit ${
+          className={`min-h-11 w-full rounded-lg px-4 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-fit ${
             showForm
               ? "border bg-white text-gray-700 hover:bg-gray-50"
               : "bg-green-600 text-white hover:bg-green-700"
@@ -159,7 +159,7 @@ export default function ObjectTasks({
                 <Fragment
                   key={task.id}
                 >
-                <article className="min-w-0 rounded-xl border p-4 sm:p-5">
+                <article className="min-w-0 rounded-xl border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white sm:p-5">
                   {/* TOP */}
                   <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">

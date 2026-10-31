@@ -163,7 +163,7 @@ export default function ObjectPassportHeader({
 
   if (isEditing) {
     return (
-      <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+      <section className="vc-surface min-w-0 p-4 sm:p-6">
         <div className="mb-5">
           <h2 className="text-lg font-semibold sm:text-xl">
             Редагування об’єкта
@@ -200,7 +200,7 @@ export default function ObjectPassportHeader({
               defaultValue={
                 object.name
               }
-              className="min-h-11 w-full min-w-0 rounded-lg border px-3 py-3 outline-none transition focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
               required
             />
           </div>
@@ -217,7 +217,7 @@ export default function ObjectPassportHeader({
                   object.customer ||
                   ""
                 }
-                className="min-h-11 w-full min-w-0 rounded-lg border px-3 py-3 outline-none transition focus:border-green-600"
+                className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
               />
             </div>
 
@@ -233,7 +233,7 @@ export default function ObjectPassportHeader({
                   object.phone ||
                   ""
                 }
-                className="min-h-11 w-full min-w-0 rounded-lg border px-3 py-3 outline-none transition focus:border-green-600"
+                className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
               />
             </div>
 
@@ -251,7 +251,7 @@ export default function ObjectPassportHeader({
                       )
                     : ""
                 }
-                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
               >
                 <option value="">
                   Не призначати
@@ -308,7 +308,7 @@ export default function ObjectPassportHeader({
                     event.target.value
                   )
                 }
-                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
               >
                 {statuses.map(
                   (status) => (
@@ -339,7 +339,7 @@ export default function ObjectPassportHeader({
                 object.address ||
                 ""
               }
-              className="min-h-11 w-full min-w-0 rounded-lg border px-3 py-3 outline-none transition focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
             />
           </div>
 
@@ -372,7 +372,7 @@ export default function ObjectPassportHeader({
                       object.supervision_interval_days ??
                       ""
                     }
-                    className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                    className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
                     placeholder="Наприклад, 14"
                   />
 
@@ -398,7 +398,7 @@ export default function ObjectPassportHeader({
                       object.next_supervision_date ||
                       ""
                     }
-                    className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                    className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
                   />
                 </div>
               </div>
@@ -441,7 +441,7 @@ export default function ObjectPassportHeader({
                     object.cost_budget ??
                     ""
                   }
-                  className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                  className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
                 />
               </div>
 
@@ -461,7 +461,7 @@ export default function ObjectPassportHeader({
                     object.client_price ??
                     ""
                   }
-                  className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                  className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
                 />
               </div>
             </div>
@@ -473,7 +473,7 @@ export default function ObjectPassportHeader({
               disabled={
                 isSubmitting
               }
-              className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+              className="min-h-11 w-full rounded-lg bg-green-700 px-5 py-3 font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
             >
               {isSubmitting
                 ? "Збереження..."
@@ -498,7 +498,7 @@ export default function ObjectPassportHeader({
               disabled={
                 isSubmitting
               }
-              className="min-h-11 w-full rounded-lg border px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 sm:w-fit"
+              className="min-h-11 w-full rounded-lg border bg-white px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:opacity-60 sm:w-fit"
             >
               Скасувати
             </button>
@@ -509,7 +509,7 @@ export default function ObjectPassportHeader({
   }
 
   return (
-    <section className="min-w-0 rounded-2xl border bg-white shadow-sm">
+    <section className="vc-surface min-w-0 overflow-hidden">
       <div className="min-w-0 p-4 sm:p-6">
         <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
@@ -518,7 +518,7 @@ export default function ObjectPassportHeader({
             </p>
 
             <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className="min-w-0 break-words text-2xl font-bold text-gray-900 sm:text-3xl">
+              <h1 className="vc-page-title min-w-0 break-words">
                 {object.name}
               </h1>
 
@@ -548,7 +548,7 @@ export default function ObjectPassportHeader({
                   "tel:" +
                   object.phone
                 }
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium text-green-700 transition hover:bg-green-50"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-green-200 px-4 py-2.5 text-sm font-medium text-green-700 transition hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
               >
                 Зателефонувати
               </a>
@@ -564,7 +564,7 @@ export default function ObjectPassportHeader({
                   disabled={
                     isSubmitting
                   }
-                  className="min-h-11 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-700"
+                  className="min-h-11 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                 >
                   {isSubmitting
                     ? "Завантаження…"
@@ -572,7 +572,7 @@ export default function ObjectPassportHeader({
                 </button>
 
                 <details className="relative col-span-2 sm:col-span-1">
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">
                     Ще
                   </summary>
 

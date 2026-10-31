@@ -113,7 +113,7 @@ export default function ObjectExpenses({
     );
 
   return (
-    <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+    <section className="vc-surface min-w-0 p-4 sm:p-6">
       {/* HEADER */}
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
@@ -154,7 +154,7 @@ export default function ObjectExpenses({
                 !previous
             )
           }
-          className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition sm:w-fit ${
+          className={`min-h-11 w-full rounded-lg px-4 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-fit ${
             showForm
               ? "border bg-white text-gray-700 hover:bg-gray-50"
               : "bg-green-600 text-white hover:bg-green-700"
@@ -211,7 +211,7 @@ export default function ObjectExpenses({
                     expense.id
                   }
                 >
-                  <article className="min-w-0 rounded-xl border p-4">
+                  <article className="min-w-0 rounded-xl border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white">
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0">
                         <span className="inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">

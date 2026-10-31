@@ -251,7 +251,7 @@ export default function ObjectDocuments({
   }
 
   return (
-    <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+    <section className="vc-surface min-w-0 p-4 sm:p-6">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
@@ -280,7 +280,7 @@ export default function ObjectDocuments({
               );
               setErrorMessage("");
             }}
-            className={`min-h-11 w-full rounded-lg px-4 py-2.5 text-sm font-medium transition sm:w-fit ${
+            className={`min-h-11 w-full rounded-lg px-4 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-fit ${
               showForm
                 ? "border bg-white text-gray-700 hover:bg-gray-50"
                 : "bg-green-600 text-white hover:bg-green-700"
@@ -321,7 +321,7 @@ export default function ObjectDocuments({
               )
             }
             placeholder="Пошук за назвою або файлом"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 text-sm outline-none focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 px-3 py-3 text-sm"
           />
 
           <select
@@ -331,7 +331,7 @@ export default function ObjectDocuments({
                 event.target.value
               )
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 text-sm outline-none focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 px-3 py-3 text-sm"
           >
             <option value="all">
               Усі категорії
@@ -356,7 +356,7 @@ export default function ObjectDocuments({
                   event.target.value
                 )
               }
-              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 text-sm outline-none focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0 px-3 py-3 text-sm"
             >
               <option value="all">
                 Усі рівні доступу
@@ -405,7 +405,7 @@ export default function ObjectDocuments({
               (document) => (
                 <article
                   key={document.id}
-                  className="min-w-0 rounded-xl border p-4"
+                  className="min-w-0 rounded-xl border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white"
                 >
                   <div className="flex min-w-0 items-start gap-3">
                     <span
@@ -539,7 +539,7 @@ export default function ObjectDocuments({
             )}
           </div>
 
-          <div className="mt-5 hidden overflow-x-auto rounded-xl border md:block">
+          <div className="vc-table-shell mt-5 hidden overflow-x-auto md:block">
             <table className="w-full min-w-[900px]">
               <thead className="bg-gray-50 text-left text-sm text-gray-600">
                 <tr>

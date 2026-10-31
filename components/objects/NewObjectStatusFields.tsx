@@ -28,7 +28,7 @@ export default function NewObjectStatusFields() {
               event.target.value
             )
           }
-          className="w-full rounded-lg border bg-white p-3"
+          className="vc-field min-h-11 w-full p-3"
         >
           <option value="В роботі">
             В роботі
@@ -77,7 +77,7 @@ export default function NewObjectStatusFields() {
                 step="1"
                 inputMode="numeric"
                 list="new-object-supervision-intervals"
-                className="w-full rounded-lg border bg-white p-3"
+                className="vc-field min-h-11 w-full p-3"
                 placeholder="Наприклад, 14"
               />
 
@@ -97,7 +97,7 @@ export default function NewObjectStatusFields() {
               <input
                 type="date"
                 name="next_supervision_date"
-                className="w-full rounded-lg border bg-white p-3"
+                className="vc-field min-h-11 w-full p-3"
               />
             </div>
           </div>

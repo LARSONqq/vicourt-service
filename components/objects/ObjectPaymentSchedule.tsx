@@ -120,7 +120,7 @@ export default function ObjectPaymentSchedule({
   }
 
   return (
-    <section id="payment-schedule" className="scroll-mt-24 min-w-0 overflow-hidden rounded-xl border bg-white">
+    <section id="payment-schedule" className="vc-surface scroll-mt-24 min-w-0 overflow-hidden">
       <div className="flex min-w-0 flex-col gap-4 border-b p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">Графік оплат</h2>
@@ -135,7 +135,7 @@ export default function ObjectPaymentSchedule({
             setEditingId(null);
             setErrorMessage("");
           }}
-          className={`min-h-11 w-full rounded-lg px-4 py-2.5 text-sm font-medium transition sm:w-fit ${
+          className={`min-h-11 w-full rounded-lg px-4 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-fit ${
             showForm
               ? "border bg-white text-gray-700 hover:bg-gray-50"
               : "bg-green-600 text-white hover:bg-green-700"
@@ -202,7 +202,7 @@ export default function ObjectPaymentSchedule({
           <div className="space-y-3 p-3 md:hidden">
             {summary.items.map((item) => (
               <Fragment key={item.id}>
-                <article className="min-w-0 rounded-xl border p-4">
+                <article className="min-w-0 rounded-xl border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white">
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="break-words font-semibold text-gray-900">{item.title}</p>
@@ -245,7 +245,7 @@ export default function ObjectPaymentSchedule({
             ))}
           </div>
 
-          <div className="hidden overflow-x-auto md:block">
+          <div className="vc-table-shell hidden overflow-x-auto rounded-none border-0 md:block">
             <table className="w-full min-w-[980px] text-sm">
               <thead className="bg-gray-50 text-left text-gray-500">
                 <tr>

@@ -72,7 +72,7 @@ export default function ObjectPaymentScheduleForm({
             maxLength={150}
             defaultValue={scheduleItem?.title || ""}
             placeholder="Наприклад, Аванс"
-            className="mt-2 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field mt-2 min-h-11 w-full min-w-0 px-3 py-3 placeholder:text-gray-400"
             required
           />
           <datalist id="payment-schedule-title-presets">
@@ -93,7 +93,7 @@ export default function ObjectPaymentScheduleForm({
             inputMode="decimal"
             defaultValue={scheduleItem ? Number(scheduleItem.amount) : ""}
             placeholder="0"
-            className="mt-2 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field mt-2 min-h-11 w-full min-w-0 px-3 py-3 placeholder:text-gray-400"
             required
           />
         </label>
@@ -104,7 +104,7 @@ export default function ObjectPaymentScheduleForm({
             type="date"
             name="due_date"
             defaultValue={scheduleItem?.due_date || ""}
-            className="mt-2 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field mt-2 min-h-11 w-full min-w-0 px-3 py-3"
             required
           />
         </label>
@@ -118,7 +118,7 @@ export default function ObjectPaymentScheduleForm({
           maxLength={2000}
           defaultValue={scheduleItem?.note || ""}
           placeholder="Додаткова інформація, за потреби"
-          className="mt-2 w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field mt-2 w-full min-w-0 resize-none px-3 py-3 placeholder:text-gray-400"
         />
       </label>
 

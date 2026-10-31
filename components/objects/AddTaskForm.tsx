@@ -89,7 +89,7 @@ export default function AddTaskForm({
           type="text"
           name="title"
           placeholder="Наприклад: підготувати ділянку"
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field min-h-11 w-full min-w-0 px-3 py-3 placeholder:text-gray-400"
           required
         />
       </div>
@@ -103,7 +103,7 @@ export default function AddTaskForm({
           name="description"
           rows={4}
           placeholder="Додаткова інформація про завдання"
-          className="w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field w-full min-w-0 resize-none px-3 py-3 placeholder:text-gray-400"
         />
       </div>
 
@@ -119,7 +119,7 @@ export default function AddTaskForm({
             required={
               recurrenceType !== "none"
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
           />
         </div>
 
@@ -131,7 +131,7 @@ export default function AddTaskForm({
           <select
             name="assigned_employee_id"
             defaultValue=""
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
           >
             <option value="">
               Не призначати
@@ -218,7 +218,7 @@ export default function AddTaskForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-lg bg-green-700 px-5 py-3 font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."

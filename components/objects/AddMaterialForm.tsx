@@ -222,7 +222,7 @@ export default function AddMaterialForm({
                   event.target.value
                 )
               }
-              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
               required
             >
               <option value="">
@@ -326,7 +326,7 @@ export default function AddMaterialForm({
                     : undefined
                 }
                 placeholder="0"
-                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
                 required
               />
 
@@ -351,7 +351,7 @@ export default function AddMaterialForm({
             <input
               name="name"
               placeholder="Наприклад: Туя Смарагд"
-              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0 px-3 py-3 placeholder:text-gray-400"
               required
             />
           </div>
@@ -370,7 +370,7 @@ export default function AddMaterialForm({
                 min="0.01"
                 step="0.01"
                 placeholder="0"
-                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
                 required
               />
             </div>
@@ -383,7 +383,7 @@ export default function AddMaterialForm({
               <select
                 name="unit"
                 defaultValue=""
-                className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+                className="vc-field min-h-11 w-full min-w-0 px-3 py-3"
                 required
               >
                 <option
@@ -439,7 +439,7 @@ export default function AddMaterialForm({
                   selectedWarehouseItem.quantity
                 ) <= 0))
           }
-          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-lg bg-green-700 px-5 py-3 font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."

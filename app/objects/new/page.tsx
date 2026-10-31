@@ -7,19 +7,20 @@ export default async function NewObjectPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">
+      <header>
+        <p className="text-sm font-medium text-green-700">Новий робочий простір</p>
+        <h1 className="vc-page-title mt-1">
           Новий об&apos;єкт
         </h1>
 
         <p className="text-gray-500">
           Заповніть інформацію про новий об&apos;єкт.
         </p>
-      </div>
+      </header>
 
       <form
         action={createObject}
-        className="space-y-5 rounded-xl border bg-white p-6"
+        className="vc-surface space-y-5 p-4 sm:p-6"
       >
         <div>
           <label className="mb-2 block font-medium">
@@ -29,7 +30,7 @@ export default async function NewObjectPage() {
           <input
             name="name"
             required
-            className="w-full rounded-lg border p-3"
+            className="vc-field min-h-11 w-full p-3"
             placeholder="Будинок Петренків"
           />
         </div>
@@ -57,7 +58,7 @@ export default async function NewObjectPage() {
                 min="0"
                 step="0.01"
                 inputMode="decimal"
-                className="w-full rounded-lg border bg-white p-3"
+                className="vc-field min-h-11 w-full p-3"
                 placeholder="100000"
               />
             </div>
@@ -74,7 +75,7 @@ export default async function NewObjectPage() {
                 min="0"
                 step="0.01"
                 inputMode="decimal"
-                className="w-full rounded-lg border bg-white p-3"
+                className="vc-field min-h-11 w-full p-3"
                 placeholder="135000"
               />
             </div>
@@ -88,7 +89,7 @@ export default async function NewObjectPage() {
 
           <input
             name="customer"
-            className="w-full rounded-lg border p-3"
+            className="vc-field min-h-11 w-full p-3"
           />
         </div>
 
@@ -100,7 +101,7 @@ export default async function NewObjectPage() {
           <input
             type="tel"
             name="phone"
-            className="w-full rounded-lg border p-3"
+            className="vc-field min-h-11 w-full p-3"
             placeholder="+380..."
           />
         </div>
@@ -112,7 +113,7 @@ export default async function NewObjectPage() {
 
           <input
             name="address"
-            className="w-full rounded-lg border p-3"
+            className="vc-field min-h-11 w-full p-3"
           />
         </div>
 
@@ -126,7 +127,7 @@ export default async function NewObjectPage() {
           <select
             name="responsible_employee_id"
             defaultValue=""
-            className="w-full rounded-lg border bg-white p-3"
+            className="vc-field min-h-11 w-full p-3"
           >
             <option value="">
               Не призначати
@@ -159,7 +160,7 @@ export default async function NewObjectPage() {
 
         <button
           type="submit"
-          className="rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700"
+          className="min-h-11 w-full rounded-lg bg-green-700 px-6 py-3 font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-fit"
         >
           Створити об&apos;єкт
         </button>

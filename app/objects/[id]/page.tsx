@@ -244,15 +244,15 @@ function ObjectTabLoading() {
     <div
       role="status"
       aria-live="polite"
-      className="min-w-0 animate-pulse space-y-4"
+      className="min-w-0 animate-pulse space-y-4 motion-reduce:animate-none"
     >
       <span className="sr-only">
         Завантаження розділу…
       </span>
-      <div className="h-28 rounded-xl border bg-gray-50" />
+      <div className="vc-surface h-28 bg-gray-50/70" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="h-36 rounded-xl border bg-gray-50" />
-        <div className="h-36 rounded-xl border bg-gray-50" />
+        <div className="vc-surface h-36 bg-gray-50/70" />
+        <div className="vc-surface h-36 bg-gray-50/70" />
       </div>
     </div>
   );
@@ -814,10 +814,10 @@ export default async function ObjectPage({
   }
 
   return (
-    <div className="min-w-0 space-y-5 sm:space-y-8">
+    <div className="min-w-0 space-y-5 sm:space-y-7">
       <Link
         href="/objects"
-        className="inline-flex items-center gap-1 text-sm font-medium text-gray-500 transition hover:text-green-700"
+        className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-gray-600 transition hover:bg-white hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
       >
         ← До об’єктів
       </Link>
@@ -829,7 +829,7 @@ export default async function ObjectPage({
       />
 
       {profile && canManageUsers(profile.role) && (
-        <Link href={`/users/clients?object=${objectId}`} className="inline-block rounded-lg border bg-white px-4 py-2 text-sm text-green-700">Доступ клієнта →</Link>
+        <Link href={`/users/clients?object=${objectId}`} className="inline-flex min-h-11 items-center rounded-lg border border-green-200 bg-white px-4 py-2.5 text-sm font-medium text-green-700 shadow-sm transition hover:border-green-300 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Доступ клієнта →</Link>
       )}
 
       <ObjectTabs

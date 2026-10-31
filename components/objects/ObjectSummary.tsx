@@ -115,7 +115,7 @@ export default function ObjectSummary({
         );
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+    <section className="vc-surface min-w-0 overflow-hidden">
         <div className="border-b p-4 sm:p-5">
           <h2 className="text-lg font-semibold text-gray-900">
             Фінансовий підсумок

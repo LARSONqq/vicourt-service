@@ -150,7 +150,7 @@ function KpiCard({
     | "negative";
 }) {
   return (
-    <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+    <div className="vc-surface min-w-0 p-3 sm:p-4">
       <p className="text-xs text-gray-500 sm:text-sm">
         {label}
       </p>
@@ -423,7 +423,7 @@ export default function ObjectOverview({
       {supervision}
 
       <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
-        <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+        <section className="vc-surface min-w-0 p-4 sm:p-5">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
               Найближчі завдання
@@ -479,7 +479,7 @@ export default function ObjectOverview({
           )}
         </section>
 
-        <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+        <section className="vc-surface min-w-0 p-4 sm:p-5">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
               Останні роботи
