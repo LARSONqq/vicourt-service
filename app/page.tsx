@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   // Only auth blocks the header. Independent widgets stream under their own boundaries.
   const { profile, permissions, today, activityVisible } = await getDashboardContext();
-  return <div className="min-w-0 space-y-6">
+  return <div className="min-w-0 space-y-5 sm:space-y-6">
     <header className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
       <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
@@ -28,8 +28,8 @@ export default async function HomePage() {
         <DashboardQuickActions permissions={permissions} />
       </div>
       <nav aria-label="Оперативні розділи" className="mt-4 flex flex-wrap gap-x-5 border-t pt-3 text-sm font-medium text-green-700">
-        <Link href="/notifications" className="inline-flex min-h-11 items-center hover:underline">Сповіщення →</Link>
-        <Link href="/calendar" className="inline-flex min-h-11 items-center hover:underline">Календар →</Link>
+        <Link href="/notifications" className="inline-flex min-h-11 items-center rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Сповіщення →</Link>
+        <Link href="/calendar" className="inline-flex min-h-11 items-center rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Календар →</Link>
       </nav>
     </header>
     <Suspense fallback={<DashboardCommandSkeleton />}><DashboardCommandSurface /></Suspense>

@@ -21,7 +21,7 @@ function formatMoney(value: number, currency: AppCurrency) {
 function AttentionRow({ item, currency }: { item: DashboardAttentionItem; currency: AppCurrency | null }) {
   const date = item.relevantDate ? formatDateValue(item.relevantDate) : null;
   return <li>
-    <Link href={item.href} className="flex min-h-16 min-w-0 items-start gap-3 px-4 py-3 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-600 sm:px-5">
+    <Link href={item.href} aria-label={`${item.title}: ${item.description}`} className="flex min-h-16 min-w-0 items-start gap-3 px-4 py-3 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-600 sm:px-5">
       <span aria-hidden="true" className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${severityClass[item.severity]}`} />
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -52,17 +52,17 @@ export async function DashboardAttention() {
     console.error("[Dashboard] attention load failed", error);
     return <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
       <h2 className="text-lg font-semibold">Потребує уваги</h2>
-      <p role="status" className="mt-3 text-sm text-gray-600">Не вдалося завантажити цей розділ. Спробуйте оновити сторінку.</p>
+      <p role="status" className="mt-3 text-sm text-gray-600">Не вдалося завантажити дані. Оновіть сторінку та спробуйте ще раз.</p>
     </section>;
   }
   const currency = data.kind === "management" ? data.currency : null;
   return <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
     <div className="flex min-h-20 flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-5">
       <div><h2 className="text-lg font-semibold">Потребує уваги</h2><p className="mt-1 text-sm text-gray-500">До 8 пріоритетних дій</p></div>
-      <Link href="/notifications" className="inline-flex min-h-11 items-center text-sm font-medium text-green-700 hover:underline">Усі сповіщення →</Link>
+      <Link href="/notifications" className="inline-flex min-h-11 items-center rounded-md text-sm font-medium text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Усі сповіщення →</Link>
     </div>
     {data.items.length === 0
-      ? <p className="px-4 py-8 text-center text-sm text-gray-500 sm:px-5">Зараз немає термінових дій.</p>
+      ? <p className="px-4 py-8 text-center text-sm text-gray-500 sm:px-5">Наразі немає дій, що потребують уваги.</p>
       : <ul className="min-w-0 divide-y">{data.items.map((item) => <AttentionRow key={item.id} item={item} currency={currency} />)}</ul>}
     {data.partialFailure && <p role="status" className="border-t bg-orange-50 px-4 py-3 text-sm text-orange-800 sm:px-5">Частина показників тимчасово недоступна.</p>}
   </section>;

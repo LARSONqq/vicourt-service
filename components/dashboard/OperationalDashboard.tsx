@@ -13,15 +13,15 @@ import {
   getDashboardWarehouse, getDashboardEquipment, getDashboardActivity,
 } from "@/services/dashboardService";
 
-const linkClass = "inline-flex min-h-10 shrink-0 items-center py-2 text-sm font-medium text-green-700 hover:underline";
+const linkClass = "inline-flex min-h-11 shrink-0 items-center rounded-md py-2 text-sm font-medium text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2";
 const compactListClass = "min-w-0 divide-y overflow-hidden rounded-lg border";
-const compactLinkClass = "block min-h-16 min-w-0 px-3 py-3 transition hover:bg-gray-50 sm:px-4";
+const compactLinkClass = "block min-h-16 min-w-0 px-3 py-3 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-600 sm:px-4";
 const mutedClass = "text-sm text-gray-500";
 
 export function DashboardSkeleton({ title }: { title: string }) {
   return <section aria-busy="true" aria-label={title} className="flex min-h-56 min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
     <div className="flex min-h-20 items-center border-b px-4 py-3 sm:px-5">
-      <div><h2 className="text-lg font-semibold">{title}</h2><p className="mt-1 text-sm text-gray-500">Завантаження…</p></div>
+      <div><h2 className="text-lg font-semibold">{title}</h2><p className="mt-1 text-sm text-gray-500">Завантаження даних…</p></div>
     </div>
     <div className="flex-1 p-4 sm:p-5"><div className="h-24 animate-pulse rounded-lg bg-gray-100 motion-reduce:animate-none" /></div>
   </section>;
@@ -39,18 +39,18 @@ async function DashboardSection<T>({ title, subtitle, href, load, children, stan
     unstable_rethrow(error);
     console.error(`[Dashboard] ${title}: section load failed`, error);
     return <section className="flex h-full min-h-56 min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
-      <div className="flex min-h-20 items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
-        <h2 className="text-lg font-semibold">{title}</h2>
+      <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
+        <h2 className="min-w-0 break-words text-lg font-semibold">{title}</h2>
         <Link href={href} className={linkClass}>Переглянути всі →</Link>
       </div>
       <div className="flex flex-1 flex-col justify-center p-4 sm:p-5">
-        <p role="status" className="text-sm text-gray-600">Не вдалося завантажити цей розділ. Спробуйте оновити сторінку.</p>
+        <p role="status" className="text-sm text-gray-600">Не вдалося завантажити дані. Оновіть сторінку та спробуйте ще раз.</p>
       </div>
     </section>;
   }
   if (standalone) return children(data);
   return <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border bg-white">
-    <div className="flex min-h-20 items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
+    <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
       <div className="min-w-0">
         <h2 className="break-words text-lg font-semibold">{title}</h2>
         {subtitle && <p className="mt-1 break-words text-sm text-gray-500">{subtitle}</p>}
@@ -66,7 +66,7 @@ export function DashboardTaskSummary() {
     <div className="grid grid-cols-2 items-stretch gap-3 lg:grid-cols-4">
       {([
         ["today", "Сьогодні"], ["overdue", "Прострочені"], ["myOpen", "Мої відкриті"], ["open", "Відкриті"],
-      ] as const).map(([key, label]) => <Link key={key} href={taskDashboardLinks[key]} className={`flex min-h-28 min-w-0 flex-col rounded-lg border p-3 transition hover:border-green-300 hover:bg-gray-50 sm:p-4 ${key === "overdue" && data.overdue > 0 ? "border-orange-200 bg-orange-50" : ""}`}>
+      ] as const).map(([key, label]) => <Link key={key} href={taskDashboardLinks[key]} className={`flex min-h-28 min-w-0 flex-col rounded-lg border p-3 transition hover:border-green-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:p-4 ${key === "overdue" && data.overdue > 0 ? "border-orange-200 bg-orange-50" : ""}`}>
         <span className="block min-h-10 break-words text-sm leading-5 text-gray-600">{label}</span>
         <span className="mt-auto block pt-2 text-2xl font-semibold tabular-nums">{data[key]}</span>
       </Link>)}
@@ -111,14 +111,14 @@ export async function DashboardOverdueTasks() {
 export function DashboardWarehouseAttention() {
   return <DashboardSection title="Склад" subtitle="Увага до залишків" href="/warehouse" load={getDashboardWarehouse}>{(data) => <>
     <div className="grid grid-cols-2 gap-2 text-sm">
-      <Link href="/warehouse?stock=out" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-red-200 sm:px-3 ${data.out > 0 ? "bg-red-50" : "bg-gray-50"}`}>
+      <Link href="/warehouse?stock=out" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:px-3 ${data.out > 0 ? "bg-red-50" : "bg-gray-50"}`}>
         <span className="break-words text-xs leading-4 text-gray-600 sm:text-sm">Закінчилось</span><strong className="mt-auto pt-1 text-xl font-semibold tabular-nums">{data.out}</strong>
       </Link>
-      <Link href="/warehouse?stock=low" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-orange-200 sm:px-3 ${data.low > 0 ? "bg-orange-50" : "bg-gray-50"}`}>
+      <Link href="/warehouse?stock=low" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:px-3 ${data.low > 0 ? "bg-orange-50" : "bg-gray-50"}`}>
         <span className="break-words text-xs leading-4 text-gray-600 sm:text-sm">Мало</span><strong className="mt-auto pt-1 text-xl font-semibold tabular-nums">{data.low}</strong>
       </Link>
     </div>
-    {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>{data.attention === 0 ? "Запаси не потребують уваги." : "Є низькі залишки. Відкрийте Склад для повного списку."}</p> : <ul className={compactListClass}>
+    {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>Залишки не потребують уваги.</p> : <ul className={compactListClass}>
       {data.items.map((item) => <li key={item.id}><Link href={`/warehouse/${item.id}`} className={`${compactLinkClass} flex items-center justify-between gap-3`}>
         <span className="min-w-0"><span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">Залишок: {Number(item.quantity).toLocaleString("uk-UA")}{item.minQuantity === null ? "" : ` · Мінімум: ${Number(item.minQuantity).toLocaleString("uk-UA")}`}</span></span>
         <span className={`shrink-0 rounded-full px-2 py-1 text-xs ${warehouseStockPresentation[item.stockStatus].badgeClass}`}>{warehouseStockPresentation[item.stockStatus].label}</span>
@@ -135,7 +135,7 @@ export function DashboardEquipmentAttention() {
         <dt className="break-words text-xs leading-4 text-gray-600 sm:text-sm">{label}</dt><dd className="mt-auto pt-1 text-xl font-semibold tabular-nums">{count}</dd>
       </div>)}
     </dl>
-    {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>{data.attention === 0 ? "Планового ТО, що потребує уваги, немає." : "Є техніка, що потребує ТО за напрацюванням. Відкрийте розділ Техніка для деталей."}</p> : <ul className={compactListClass}>
+    {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>Техніка не потребує уваги.</p> : <ul className={compactListClass}>
       {data.items.map((item) => {
         const label = item.state === "overdue" ? "ТО прострочено"
           : item.usageDue ? "Поріг напрацювання"
@@ -156,7 +156,7 @@ export function DashboardEquipmentAttention() {
 
 export function DashboardRecentActivity() {
   return <DashboardSection title="Останні дії" subtitle="Останні 5 подій у системі" href="/activity" load={getDashboardActivity}>{(logs) => !logs?.length
-    ? <p className={`${mutedClass} py-4 text-center`}>Записів у журналі дій поки немає.</p>
+    ? <p className={`${mutedClass} py-4 text-center`}>Останніх дій поки немає.</p>
     : <ul className={compactListClass}>{logs.map((log) => {
       const content = <><p className="break-words text-sm font-medium">{isActivityEventName(log.action) ? activityEventRegistry[log.action].label : "Дія в системі"}</p>
         {log.entity_name && <p className="mt-1 break-words text-sm text-gray-600">{log.entity_name}</p>}

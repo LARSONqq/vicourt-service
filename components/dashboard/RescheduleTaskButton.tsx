@@ -607,9 +607,9 @@ export default function RescheduleTaskButton({
           onClick={
             handleToggle
           }
-          className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-blue-200 bg-blue-50 font-medium text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 ${
+          className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-blue-200 bg-blue-50 font-medium text-blue-700 transition hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
             compact
-              ? "min-h-9 px-3 py-2 text-xs"
+              ? "min-h-10 px-3 py-2 text-xs"
               : "min-h-10 px-4 py-2 text-sm"
           }`}
         >

@@ -187,7 +187,7 @@ test("Watchlist empty and error states are generic, local and metadata-safe", as
     "@/services/dashboardObjectWatchlistService": { getDashboardObjectWatchlist: async () => ({ kind: "worker", items: [] }) },
   });
   assert.match(renderToStaticMarkup(await emptyLoad("components/dashboard/DashboardObjectWatchlist.tsx").DashboardObjectWatchlist()),
-    /не потребують окремої уваги/);
+    /немає активних об’єктів, що потребують уваги/);
 
   const failedLoad = loader({ ...baseMocks,
     "@/services/dashboardObjectWatchlistService": { getDashboardObjectWatchlist: async () => { throw new Error("DB_SECRET"); } },
@@ -196,7 +196,7 @@ test("Watchlist empty and error states are generic, local and metadata-safe", as
   console.error = () => {};
   try {
     const html = renderToStaticMarkup(await failedLoad("components/dashboard/DashboardObjectWatchlist.tsx").DashboardObjectWatchlist());
-    assert.match(html, /Не вдалося завантажити цей розділ/);
+    assert.match(html, /Не вдалося завантажити дані/);
     assert.doesNotMatch(html, /DB_SECRET/);
   } finally { console.error = originalError; }
 });

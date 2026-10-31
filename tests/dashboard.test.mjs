@@ -347,9 +347,9 @@ test("empty states are scope-honest and do not promise all usage/stock issues ar
   const current = fixture("admin", { empty: true });
   const cases = [
     ["DashboardOverdueTasks", "Прострочених завдань немає"],
-    ["DashboardWarehouseAttention", "Запаси не потребують уваги"],
-    ["DashboardEquipmentAttention", "Планового ТО, що потребує уваги, немає"],
-    ["DashboardRecentActivity", "Записів у журналі дій поки немає"],
+    ["DashboardWarehouseAttention", "Залишки не потребують уваги"],
+    ["DashboardEquipmentAttention", "Техніка не потребує уваги"],
+    ["DashboardRecentActivity", "Останніх дій поки немає"],
   ];
   for (const [name, text] of cases) assert.ok((await renderSection(current, name)).includes(text));
 });
@@ -359,7 +359,7 @@ test("secondary query failure is local, never fake zero; auth redirects are not 
   const originalError = console.error; console.error = () => {};
   try {
     const html = await renderSection(current, "DashboardWarehouseAttention");
-    assert.match(html, /Не вдалося завантажити цей розділ/);
+    assert.match(html, /Не вдалося завантажити дані/);
     assert.doesNotMatch(html, /private failure details/);
     const equipment = await current.service.getDashboardEquipment();
     assert.equal(equipment.overdue, 1);

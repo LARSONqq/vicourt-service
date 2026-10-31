@@ -79,16 +79,16 @@ export async function DashboardObjectWatchlist() {
     console.error("[Dashboard] object watchlist load failed", error);
     return <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
       <h2 className="text-lg font-semibold">Об’єкти під контролем</h2>
-      <p role="status" className="mt-3 text-sm text-gray-600">Не вдалося завантажити цей розділ. Спробуйте оновити сторінку.</p>
+      <p role="status" className="mt-3 text-sm text-gray-600">Не вдалося завантажити дані. Оновіть сторінку та спробуйте ще раз.</p>
     </section>;
   }
   return <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
     <div className="flex min-h-20 flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-5">
       <div className="min-w-0"><h2 className="break-words text-lg font-semibold">Об’єкти під контролем</h2><p className="mt-1 break-words text-sm text-gray-500">До 5 активних об’єктів за пріоритетом</p></div>
-      <Link href="/objects" className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-green-700 hover:underline">Усі об’єкти →</Link>
+      <Link href="/objects" className="inline-flex min-h-11 shrink-0 items-center rounded-md text-sm font-medium text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Усі об’єкти →</Link>
     </div>
     {data.items.length === 0
-      ? <p className="px-4 py-8 text-center text-sm text-gray-500 sm:px-5">Активні об’єкти зараз не потребують окремої уваги.</p>
+      ? <p className="px-4 py-8 text-center text-sm text-gray-500 sm:px-5">Наразі немає активних об’єктів, що потребують уваги.</p>
       : <ul className="min-w-0 divide-y">{data.kind === "management"
         ? data.items.map((item) => <WatchlistRow key={item.objectId} item={item} badges={managementBadges(item, data.currency)} />)
         : data.items.map((item) => <WatchlistRow key={item.objectId} item={item} badges={operationalBadges(item).slice(0, 2)} />)}

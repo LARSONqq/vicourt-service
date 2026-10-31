@@ -204,7 +204,7 @@ test("Attention is a server-rendered dense surface; the separate overdue widget 
     }) },
   });
   const empty = await emptyLoad("components/dashboard/DashboardAttention.tsx").DashboardAttention();
-  assert.match(renderToStaticMarkup(empty), /Зараз немає термінових дій/);
+  assert.match(renderToStaticMarkup(empty), /Наразі немає дій, що потребують уваги/);
 
   const page = read("app/page.tsx");
   assert.match(page, /<DashboardAttention/);
