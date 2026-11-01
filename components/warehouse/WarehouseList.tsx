@@ -694,7 +694,7 @@ export default function WarehouseList({
           </div>
 
           {/* DESKTOP TABLE */}
-          <div className="vc-table-shell hidden overflow-x-auto md:block">
+          <div className="vc-table-shell hidden overflow-x-auto overscroll-x-contain md:block">
             <table
               className={`w-full ${
                 canManage

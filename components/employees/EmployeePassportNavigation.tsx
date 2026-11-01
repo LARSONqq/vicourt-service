@@ -64,7 +64,7 @@ export function EmployeePassportTabs({
   return (
     <nav
       aria-label="Розділи паспорта працівника"
-      className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0"
+      className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:mx-0 sm:px-0"
     >
       <div className="vc-surface flex min-w-max gap-1.5 p-1.5">
         {employeeTabs.map((tab) => {
@@ -81,7 +81,7 @@ export function EmployeePassportTabs({
                   ? "page"
                   : undefined
               }
-              className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-1 sm:px-4 ${
+              className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-1 sm:px-4 ${
                 isActive
                   ? "bg-green-700 text-white shadow-sm"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
@@ -210,7 +210,7 @@ export function EmployeeTabPagination({
               preservedPage
             )}
             scroll={false}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
           >
             ← Назад
           </Link>
@@ -228,7 +228,7 @@ export function EmployeeTabPagination({
               preservedPage
             )}
             scroll={false}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
           >
             Далі →
           </Link>

@@ -112,7 +112,7 @@ export default function ObjectTabs({
     <div className="min-w-0">
       <nav
         aria-label="Розділи паспорта об’єкта"
-        className="-mx-4 mb-5 overflow-x-auto px-4 pb-2 sm:mx-0 sm:mb-6 sm:px-0"
+        className="-mx-4 mb-5 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:mx-0 sm:mb-6 sm:px-0"
       >
         <div className="vc-surface flex min-w-max gap-1.5 p-1.5">
           {tabs.map((item) => {
@@ -129,7 +129,7 @@ export default function ObjectTabs({
                     ? "page"
                     : undefined
                 }
-                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-1 sm:px-4 ${
+                className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-1 sm:px-4 ${
                   isActive
                     ? "bg-green-700 text-white shadow-sm"
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"

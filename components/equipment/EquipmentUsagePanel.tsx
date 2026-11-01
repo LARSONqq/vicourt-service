@@ -730,7 +730,7 @@ export default function EquipmentUsagePanel({
                     </article>
                   ))}
                 </div>
-                <div className="hidden overflow-x-auto md:block">
+                <div className="hidden overflow-x-auto overscroll-x-contain md:block">
                   <table className="w-full min-w-[820px] text-sm">
                     <thead className="bg-gray-50 text-left text-gray-500">
                       <tr>

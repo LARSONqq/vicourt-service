@@ -245,7 +245,7 @@ export default function ObjectPaymentSchedule({
             ))}
           </div>
 
-          <div className="vc-table-shell hidden overflow-x-auto rounded-none border-0 md:block">
+          <div className="vc-table-shell hidden overflow-x-auto overscroll-x-contain rounded-none border-0 md:block">
             <table className="w-full min-w-[980px] text-sm">
               <thead className="bg-gray-50 text-left text-gray-500">
                 <tr>

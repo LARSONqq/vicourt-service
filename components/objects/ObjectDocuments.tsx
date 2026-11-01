@@ -539,7 +539,7 @@ export default function ObjectDocuments({
             )}
           </div>
 
-          <div className="vc-table-shell mt-5 hidden overflow-x-auto md:block">
+          <div className="vc-table-shell mt-5 hidden overflow-x-auto overscroll-x-contain md:block">
             <table className="w-full min-w-[900px]">
               <thead className="bg-gray-50 text-left text-sm text-gray-600">
                 <tr>

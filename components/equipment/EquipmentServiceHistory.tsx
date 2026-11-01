@@ -432,7 +432,7 @@ export default function EquipmentServiceHistory({
           </div>
 
           {/* DESKTOP TABLE */}
-          <div className="hidden overflow-x-auto md:block">
+          <div className="hidden overflow-x-auto overscroll-x-contain md:block">
             <table
               className={`w-full ${
                 canManage

@@ -61,7 +61,7 @@ export default function EquipmentTabPagination({
       )
     : 0;
   const buttonClasses =
-    "inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium";
+    "inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2";
 
   return (
     <nav

@@ -14,7 +14,7 @@ test("Warehouse keeps canonical stock evaluation while distinguishing OUT, LOW, 
   assert.match(navigation, /action="\/warehouse" method="get"/);
   assert.match(navigation, /vc-field/);
   assert.match(list, /getWarehouseStockStatus\(item\)/g);
-  assert.match(list, /status === "OUT"/g);
+  assert.match(list, /status === "OUT_OF_STOCK"/g);
   assert.match(list, /status !== "NORMAL"/g);
   assert.match(list, /border-amber-300/);
   assert.match(list, /vc-table-shell/);
