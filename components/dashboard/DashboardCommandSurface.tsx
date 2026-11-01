@@ -38,28 +38,23 @@ function getKpis(data: DashboardCommandData): Kpi[] {
   ];
 }
 
-const toneClass = {
-  default: "border-gray-200 bg-white",
-  warning: "border-orange-200 bg-orange-50/60",
-  positive: "border-green-200 bg-green-50/50",
-} as const;
-
 function KpiStrip({ data }: { data: DashboardCommandData }) {
-  return <section aria-label="Ключові показники" className="grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-4">
+  return <section aria-label="Ключові показники" className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
     {getKpis(data).map((kpi) => <Link key={kpi.label} href={kpi.href}
       aria-label={`${kpi.label}: ${kpi.value}. ${kpi.context}`}
-      className={`flex min-h-32 min-w-0 flex-col rounded-xl border p-3 transition hover:border-green-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:p-4 ${toneClass[kpi.tone]}`}>
-      <span className="break-words text-xs font-medium leading-5 text-gray-600 sm:text-sm">{kpi.label}</span>
-      <strong className="mt-auto break-words pt-3 text-xl font-semibold leading-tight tabular-nums text-gray-950 sm:text-2xl">{kpi.value}</strong>
-      <span className="mt-1 break-words text-xs text-gray-500">{kpi.context}</span>
+      data-tone={kpi.tone}
+      className="vc-kpi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+      <span className="break-words text-[11px] font-semibold uppercase leading-5 tracking-[0.08em] text-muted-foreground sm:text-xs">{kpi.label}</span>
+      <strong className="mt-auto break-words pt-4 text-xl font-semibold leading-tight tracking-[-0.035em] tabular-nums text-foreground sm:text-2xl">{kpi.value}</strong>
+      <span className="mt-1.5 break-words text-xs text-muted-foreground">{kpi.context}</span>
     </Link>)}
   </section>;
 }
 
 export function DashboardCommandSkeleton() {
   return <section aria-busy="true" aria-label="Ключові показники" className="grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-4">
-    {Array.from({ length: 4 }, (_, index) => <div key={index} className="min-h-32 animate-pulse rounded-xl border bg-white p-4 motion-reduce:animate-none">
-      <div className="h-4 w-3/4 rounded bg-gray-100" /><div className="mt-10 h-7 w-1/2 rounded bg-gray-100" />
+    {Array.from({ length: 4 }, (_, index) => <div key={index} className="vc-kpi-card animate-pulse motion-reduce:animate-none">
+      <div className="h-4 w-3/4 rounded bg-muted" /><div className="mt-10 h-7 w-1/2 rounded bg-muted" />
     </div>)}
   </section>;
 }
@@ -77,7 +72,7 @@ export async function DashboardCommandSurface() {
   }
   return <div className="min-w-0">
     <KpiStrip data={data} />
-    {data.kind === "worker" && !data.employeeLinked && <p role="status" className="mt-3 rounded-lg border bg-gray-50 px-4 py-3 text-sm text-gray-700">
+    {data.kind === "worker" && !data.employeeLinked && <p role="status" className="mt-3 rounded-lg border bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:bg-muted dark:text-foreground">
       Профіль не пов’язаний із працівником. Персональні показники залишаються порожніми до прив’язки адміністратором.
     </p>}
   </div>;

@@ -13,6 +13,7 @@ import {
   createClient,
 } from "@/lib/supabase/client";
 import GlobalSearch from "@/components/search/GlobalSearch";
+import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 
 type UserRole =
   | "admin"
@@ -149,9 +150,9 @@ export function Header() {
     "Користувач";
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-[68px] items-center justify-between gap-3 border-b border-gray-200/90 bg-white/95 px-3 py-3 shadow-[0_1px_0_rgba(15,23,42,0.02)] backdrop-blur sm:px-6 lg:px-8">
+    <header className="vc-shell-header sticky top-0 z-30 flex min-h-[72px] items-center justify-between gap-3 px-3 py-3 sm:px-6 lg:px-8">
       <div className="min-w-0">
-        <h1 className="truncate text-lg font-semibold tracking-tight text-gray-950 sm:text-xl">
+        <h1 className="truncate text-lg font-semibold tracking-[-0.025em] text-foreground sm:text-xl">
           <span className="sm:hidden">
             ViCourt
           </span>
@@ -161,13 +162,15 @@ export function Header() {
           </span>
         </h1>
 
-        <p className="mt-0.5 hidden text-xs text-gray-500 sm:block">
-          Система управління
+        <p className="mt-0.5 hidden text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground sm:block">
+          Service management
         </p>
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
         <GlobalSearch />
+
+        <ThemeSwitcher />
 
         <div className="hidden text-right md:block">
           {isLoadingUser ? (
@@ -176,19 +179,19 @@ export function Header() {
             </p>
           ) : (
             <>
-              <p className="max-w-[220px] truncate text-sm font-semibold text-gray-800">
+              <p className="max-w-[220px] truncate text-sm font-semibold text-foreground">
                 {displayName}
               </p>
 
               <div className="mt-1 flex items-center justify-end gap-2">
                 <span
-                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
                     role === "admin"
-                      ? "bg-green-100 text-green-700"
+                      ? "vc-status-success"
                       : role ===
                           "object_manager"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-600"
+                        ? "vc-status-info"
+                        : "vc-status-neutral"
                   }`}
                 >
                   {getRoleLabel(
@@ -199,7 +202,7 @@ export function Header() {
 
               {fullName &&
                 email && (
-                  <p className="mt-1 max-w-[220px] truncate text-xs text-gray-400">
+                  <p className="mt-1 max-w-[220px] truncate text-xs text-muted-foreground">
                     {email}
                   </p>
                 )}
@@ -211,7 +214,7 @@ export function Header() {
           type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-xs transition hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-xs transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         >
           {isLoggingOut
             ? "..."

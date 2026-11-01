@@ -208,12 +208,21 @@ export default function LoginPage({
           </div>
 
           <div className="min-w-0">
-            <label
-              htmlFor="password"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              Пароль
-            </label>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Пароль
+              </label>
+
+              <Link
+                href="/forgot-password"
+                className="rounded text-sm font-medium text-green-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+              >
+                Забули пароль?
+              </Link>
+            </div>
 
             <input
               id="password"

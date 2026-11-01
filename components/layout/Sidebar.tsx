@@ -106,15 +106,15 @@ export async function Sidebar() {
       : [];
 
   return (
-    <aside className="flex h-dvh w-72 flex-col border-r border-gray-200/90 bg-white px-4 py-5">
-      <div className="mb-5 border-b border-gray-100 px-2 pb-5">
+    <aside className="vc-sidebar flex h-dvh w-72 flex-col px-4 py-5 text-sidebar-foreground">
+      <div className="mb-6 border-b border-white/10 px-2 pb-5">
         <div className="flex min-w-0 items-center gap-3">
-          <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-700 text-sm font-bold tracking-wide text-white shadow-sm">VC</span>
+          <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-300/20 bg-emerald-400/15 text-sm font-bold tracking-[0.12em] text-emerald-300 shadow-sm">VC</span>
           <div className="min-w-0">
-            <h2 className="break-words text-lg font-semibold leading-tight tracking-tight text-gray-950">
+            <h2 className="break-words text-lg font-semibold leading-tight tracking-[-0.025em] text-white">
               {settings.company_name}
             </h2>
-            <p className="mt-1 text-xs text-gray-500">ViCourt Service</p>
+            <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.14em] text-emerald-200/55">ViCourt Service</p>
           </div>
         </div>
       </div>
@@ -123,14 +123,14 @@ export async function Sidebar() {
         <SidebarNavigation items={visibleMenuItems.map(({ name, href }) => ({ name, href }))} />
       </div>
 
-      <div className="mt-5 border-t border-gray-100 px-2 pt-4">
+      <div className="mt-5 border-t border-white/10 px-2 pt-4">
         {currentProfile && (
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
               Ви увійшли як
             </p>
 
-            <p className="mt-1 break-words text-sm font-semibold text-gray-700">
+            <p className="mt-1 break-words text-sm font-semibold text-white/75">
               {getUserRoleLabel(
                 currentProfile.role
               )}

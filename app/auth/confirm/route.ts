@@ -30,36 +30,60 @@ export async function GET(
       "type"
     ) as EmailOtpType | null;
 
+  const code =
+    searchParams.get(
+      "code"
+    );
+
+  const requestedNext =
+    searchParams.get(
+      "next"
+    );
+
+  const isRecovery =
+    type === "recovery" ||
+    (Boolean(code) && requestedNext === "/update-password");
+
   const redirectTo =
     request.nextUrl.clone();
 
   redirectTo.search = "";
 
-  if (
-    tokenHash &&
-    type
-  ) {
+  if ((tokenHash && type) || code) {
     const supabase =
       await createClient();
 
-    const {
-      error,
-    } =
-      await supabase.auth.verifyOtp({
-        token_hash:
-          tokenHash,
+    const result = tokenHash && type
+      ? await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type,
+        })
+      : await supabase.auth.exchangeCodeForSession(code!);
 
-        type,
-      });
-
-    if (!error) {
+    if (!result.error) {
       redirectTo.pathname =
-        "/";
+        isRecovery
+          ? "/update-password"
+          : "/";
 
       return NextResponse.redirect(
         redirectTo
       );
     }
+  }
+
+  if (isRecovery) {
+    redirectTo.pathname =
+      "/update-password";
+
+    redirectTo.searchParams.set(
+      "error",
+      "invalid"
+    );
+
+    return NextResponse.redirect(
+      redirectTo
+    );
   }
 
   redirectTo.pathname =

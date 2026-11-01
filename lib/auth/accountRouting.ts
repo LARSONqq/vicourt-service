@@ -7,8 +7,8 @@ export function accountHome(identity: AccountIdentity): string {
 }
 
 export function accountRedirect(identity: AccountIdentity, pathname: string): string | null {
-  // Confirmation and logout must remain reachable even for a blocked account.
-  if (pathname === "/auth/confirm") return null;
+  // Auth recovery routes must remain reachable before and after Supabase establishes a session.
+  if (pathname === "/auth/confirm" || pathname === "/forgot-password" || pathname === "/update-password") return null;
   const guestPage = pathname === "/login" || pathname === "/register";
   if (identity === "guest") return guestPage ? null : "/login";
   if (identity === "denied") return pathname === "/access-denied" ? null : "/access-denied";

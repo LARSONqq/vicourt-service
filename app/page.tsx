@@ -18,18 +18,18 @@ export default async function HomePage() {
   // Only auth blocks the header. Independent widgets stream under their own boundaries.
   const { profile, permissions, today, activityVisible } = await getDashboardContext();
   return <div className="min-w-0 space-y-5 sm:space-y-6">
-    <header className="vc-surface min-w-0 p-4 sm:p-5 lg:p-6">
+    <header className="vc-surface min-w-0 vc-dashboard-hero p-5 sm:p-6 lg:p-7">
       <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="break-words text-sm font-medium text-green-700">{getUserRoleLabel(profile.role)}</p>
-          <h1 className="vc-page-title mt-1 break-words">Оперативний огляд</h1>
-          <p className="mt-1 break-words text-sm text-gray-500">{profile.full_name ?? "Користувач"} · {formatLongDateValue(today)}</p>
+          <p className="break-words text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">{getUserRoleLabel(profile.role)}</p>
+          <h1 className="vc-page-title mt-2 break-words text-3xl sm:text-4xl">Оперативний огляд</h1>
+          <p className="mt-2 break-words text-sm text-muted-foreground">{profile.full_name ?? "Користувач"} · {formatLongDateValue(today)}</p>
         </div>
         <DashboardQuickActions permissions={permissions} />
       </div>
-      <nav aria-label="Оперативні розділи" className="mt-5 flex flex-wrap gap-x-5 border-t border-gray-200/80 pt-3 text-sm font-medium text-green-700">
-        <Link href="/notifications" className="inline-flex min-h-11 items-center rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Сповіщення →</Link>
-        <Link href="/calendar" className="inline-flex min-h-11 items-center rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Календар →</Link>
+      <nav aria-label="Оперативні розділи" className="mt-6 flex flex-wrap gap-x-6 border-t border-border pt-3 text-sm font-semibold text-primary">
+        <Link href="/notifications" className="inline-flex min-h-11 items-center rounded-md hover:text-primary/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Сповіщення <span aria-hidden="true" className="ml-1">↗</span></Link>
+        <Link href="/calendar" className="inline-flex min-h-11 items-center rounded-md hover:text-primary/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Календар <span aria-hidden="true" className="ml-1">↗</span></Link>
       </nav>
     </header>
     <Suspense fallback={<DashboardCommandSkeleton />}><DashboardCommandSurface /></Suspense>

@@ -8,6 +8,7 @@ import {
 import {
   usePathname,
 } from "next/navigation";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -36,6 +37,8 @@ export default function AppShell({
   const isAuthPage =
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/update-password" ||
     pathname.startsWith(
       "/auth/"
     );
@@ -71,14 +74,17 @@ export default function AppShell({
 
   if (isAuthPage) {
     return (
-      <main className="min-h-dvh bg-background">
-        {children}
-      </main>
+      <ThemeProvider>
+        <main className="min-h-dvh bg-background">
+          {children}
+        </main>
+      </ThemeProvider>
     );
   }
 
   return (
-    <div className="flex h-dvh min-w-0 bg-background">
+    <ThemeProvider>
+    <div className="vc-app-shell flex h-dvh min-w-0 bg-background">
       {/* DESKTOP SIDEBAR */}
       <div className="hidden shrink-0 lg:block">
         {sidebar}
@@ -91,7 +97,7 @@ export default function AppShell({
           setIsMobileMenuOpen(true)
         }
         aria-label="Відкрити меню"
-        className="fixed left-3 top-3 z-40 flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-xl text-gray-700 shadow-sm transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 lg:hidden"
+        className="fixed left-3 top-3 z-40 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card text-xl text-foreground shadow-md transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
       >
         ☰
       </button>
@@ -109,7 +115,7 @@ export default function AppShell({
           />
 
           <div
-            className="absolute inset-y-0 left-0 w-72 max-w-[calc(100vw-3rem)] overflow-y-auto bg-white shadow-2xl"
+            className="absolute inset-y-0 left-0 w-72 max-w-[calc(100vw-3rem)] overflow-y-auto bg-sidebar shadow-2xl"
             onClick={(event) => {
               const target =
                 event.target as HTMLElement;
@@ -131,7 +137,7 @@ export default function AppShell({
                 setIsMobileMenuOpen(false)
               }
               aria-label="Закрити меню"
-              className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-xl text-gray-600 transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+              className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-xl text-white/75 transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
             >
               ×
             </button>
@@ -145,10 +151,11 @@ export default function AppShell({
           {header}
         </div>
 
-        <main className="min-w-0 flex-1 overflow-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <main className="vc-workspace min-w-0 flex-1 overflow-auto px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
           <div className="mx-auto w-full max-w-[1600px] min-w-0">{children}</div>
         </main>
       </div>
     </div>
+    </ThemeProvider>
   );
 }

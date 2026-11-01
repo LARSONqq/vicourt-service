@@ -64,10 +64,10 @@ export default function DashboardQuickActions({
           <Link
             key={action.href}
             href={action.href}
-            className={`inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:px-4 ${
+            className={`inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg px-3 py-2 text-center text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:px-4 ${
               action.primary
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "border bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                : "border border-border bg-card text-foreground shadow-xs hover:bg-muted"
             }`}
           >
             {action.label}

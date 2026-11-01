@@ -4,6 +4,20 @@ import {
   useEffect,
 } from "react";
 
+const themeScript = `
+(() => {
+  try {
+    const stored = localStorage.getItem('vicourt-theme');
+    const theme = stored === 'light' || stored === 'dark' ? stored : 'system';
+    const resolved = theme === 'system'
+      ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : theme;
+    document.documentElement.classList.toggle('dark', resolved === 'dark');
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = resolved;
+  } catch {}
+})();`;
+
 export default function PWARegister() {
   useEffect(() => {
     if (
@@ -48,5 +62,5 @@ export default function PWARegister() {
     };
   }, []);
 
-  return null;
+  return <script dangerouslySetInnerHTML={{ __html: themeScript }} />;
 }

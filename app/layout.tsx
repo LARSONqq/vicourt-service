@@ -52,7 +52,7 @@ export default async function RootLayout({
 }>) {
   const identity = await getAccountIdentity();
   return (
-    <html lang="uk">
+    <html lang="uk" suppressHydrationWarning>
       <body>
         <PWARegister />
 
