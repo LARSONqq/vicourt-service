@@ -104,7 +104,7 @@ export default function EquipmentTasksSection({
             return (
               <article
                 key={task.id}
-                className="min-w-0 rounded-xl border bg-white p-4 sm:p-5"
+                className="vc-surface min-w-0 p-4 sm:p-5"
               >
                 <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">

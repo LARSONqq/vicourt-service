@@ -230,7 +230,7 @@ export default function EquipmentServiceHistory({
     );
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+    <section className="vc-surface min-w-0 overflow-hidden">
       {/* HEADER */}
       <div className="flex min-w-0 flex-col gap-3 border-b p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
@@ -288,7 +288,7 @@ export default function EquipmentServiceHistory({
                   key={
                     record.id
                   }
-                  className="min-w-0 rounded-xl border bg-white p-4"
+                  className="min-w-0 rounded-xl border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white"
                 >
                   {/* TOP */}
                   <div className={`flex min-w-0 items-start gap-3 ${singleEquipment ? "justify-end" : "justify-between"}`}>

@@ -201,7 +201,7 @@ export default function EquipmentMaintenancePanel({
   }
 
   return (
-    <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+    <section className="vc-surface min-w-0 p-4 sm:p-5">
       <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">

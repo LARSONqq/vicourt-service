@@ -132,12 +132,12 @@ export default function EmployeePassportShell({
     <div className="min-w-0 space-y-5 sm:space-y-6">
       <Link
         href="/employees"
-        className="inline-flex min-h-10 items-center text-sm font-medium text-green-700 hover:underline"
+        className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-gray-600 transition hover:bg-white hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
       >
         ← Назад до працівників
       </Link>
 
-      <header className="min-w-0 rounded-2xl border bg-white p-4 sm:p-6">
+      <header className="vc-surface min-w-0 p-4 sm:p-6">
         <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg font-bold text-green-700 sm:h-16 sm:w-16 sm:text-xl">
@@ -146,7 +146,7 @@ export default function EmployeePassportShell({
 
             <div className="min-w-0">
               <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                <h1 className="break-words text-2xl font-bold text-gray-900 sm:text-3xl">
+                <h1 className="vc-page-title break-words">
                   {employeeName}
                 </h1>
                 <span
@@ -190,7 +190,7 @@ export default function EmployeePassportShell({
             {employee.phone ? (
               <a
                 href={`tel:${employee.phone}`}
-                className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
               >
                 Зателефонувати
               </a>
@@ -203,7 +203,7 @@ export default function EmployeePassportShell({
             {employee.email ? (
               <a
                 href={`mailto:${employee.email}`}
-                className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
               >
                 Написати
               </a>
@@ -223,7 +223,7 @@ export default function EmployeePassportShell({
                         !current
                     )
                   }
-                  className="min-h-11 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                  className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                 >
                   {isEditing
                     ? "Закрити"
@@ -231,7 +231,7 @@ export default function EmployeePassportShell({
                 </button>
 
                 <details className="relative min-w-0">
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
                     Ще
                   </summary>
                   <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border bg-white p-2 shadow-lg">
@@ -254,7 +254,7 @@ export default function EmployeePassportShell({
       </header>
 
       {isAdmin && isEditing && (
-        <section className="min-w-0 rounded-2xl border bg-white p-3 sm:p-5">
+        <section className="vc-surface min-w-0 p-3 sm:p-5">
           <div className="min-w-0">
             <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
               Редагування працівника

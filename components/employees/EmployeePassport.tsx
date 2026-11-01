@@ -152,7 +152,7 @@ function EmptyState({
   description?: string;
 }) {
   return (
-    <div className="rounded-xl border border-dashed bg-white p-6 text-center">
+    <div className="vc-surface border-dashed p-6 text-center shadow-none">
       <p className="font-medium text-gray-700">{title}</p>
       {description && (
         <p className="mt-1 text-sm leading-5 text-gray-500">
@@ -204,7 +204,7 @@ function TaskCards({
       {tasks.map((task) => (
         <article
           key={task.id}
-          className="min-w-0 rounded-xl border bg-white p-4"
+          className="vc-surface min-w-0 p-4"
         >
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
@@ -287,7 +287,7 @@ function WorkLogCards({
       {workLogs.map((workLog) => (
         <article
           key={workLog.id}
-          className="min-w-0 rounded-xl border bg-white p-4"
+          className="vc-surface min-w-0 p-4"
         >
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
@@ -337,7 +337,7 @@ function ObjectCards({
         <Link
           key={object.id}
           href={`/objects/${object.id}`}
-          className="min-w-0 rounded-xl border bg-white p-4 transition hover:border-green-200 hover:bg-green-50/40"
+          className="vc-surface min-w-0 p-4 transition hover:border-green-300 hover:bg-green-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
         >
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <h3 className="break-words font-semibold text-gray-900">
@@ -385,7 +385,7 @@ function EquipmentCards({
         return (
           <article
             key={item.id}
-            className="min-w-0 rounded-xl border bg-white p-4"
+            className="vc-surface min-w-0 p-4"
           >
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
@@ -474,7 +474,7 @@ export function EmployeeOverview({
         {kpiItems.map((item) => (
           <div
             key={item.label}
-            className="min-w-0 rounded-xl border bg-white p-3 sm:p-4"
+            className="vc-surface min-w-0 p-3 sm:p-4"
           >
             <p className="text-xs leading-4 text-gray-500">{item.label}</p>
             <p className={`mt-2 break-words text-2xl font-bold ${item.className}`}>
@@ -485,7 +485,7 @@ export function EmployeeOverview({
       </section>
 
       <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+        <div className="vc-surface min-w-0 p-4 sm:p-5">
           <SectionHeader
             title="Найближчі завдання"
             description="До п’яти активних завдань із найближчим терміном."
@@ -494,7 +494,7 @@ export function EmployeeOverview({
             <TaskCards tasks={taskPreview} compact />
           </div>
         </div>
-        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+        <div className="vc-surface min-w-0 p-4 sm:p-5">
           <SectionHeader
             title="Останні роботи"
             description="Три останні записи журналу робіт."
@@ -506,7 +506,7 @@ export function EmployeeOverview({
       </section>
 
       <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+        <div className="vc-surface min-w-0 p-4 sm:p-5">
           <SectionHeader
             title="Відповідальність за огляди"
             description="Об’єкти з налаштованим періодичним наглядом."
@@ -537,7 +537,7 @@ export function EmployeeOverview({
             )}
           </div>
         </div>
-        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+        <div className="vc-surface min-w-0 p-4 sm:p-5">
           <SectionHeader
             title="Остання активність"
             description="Останні зміни профілю та дії пов’язаного акаунта."
@@ -559,7 +559,7 @@ export function EmployeeOverview({
       {(employee.notes || isAdmin) && (
         <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
           {employee.notes && (
-            <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+            <div className="vc-surface min-w-0 p-4 sm:p-5">
               <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                 Примітки
               </p>

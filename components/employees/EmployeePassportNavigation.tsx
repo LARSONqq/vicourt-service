@@ -64,9 +64,9 @@ export function EmployeePassportTabs({
   return (
     <nav
       aria-label="Розділи паспорта працівника"
-      className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0"
+      className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0"
     >
-      <div className="flex min-w-max gap-2">
+      <div className="vc-surface flex min-w-max gap-1.5 p-1.5">
         {employeeTabs.map((tab) => {
           const isActive =
             activeTab === tab.id;
@@ -81,10 +81,10 @@ export function EmployeePassportTabs({
                   ? "page"
                   : undefined
               }
-              className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition sm:px-4 ${
+              className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-1 sm:px-4 ${
                 isActive
-                  ? "border-green-200 bg-green-50 text-green-700"
-                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-green-700 text-white shadow-sm"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
               }`}
             >
               <span aria-hidden="true">
@@ -191,7 +191,7 @@ export function EmployeeTabPagination({
   return (
     <nav
       aria-label="Сторінки розділу працівника"
-      className="mt-4 flex min-w-0 flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+      className="vc-surface mt-4 flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="text-center text-xs text-gray-500 sm:text-left sm:text-sm">
         {hasVisibleItems

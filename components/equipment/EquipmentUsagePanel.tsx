@@ -380,7 +380,7 @@ export default function EquipmentUsagePanel({
   }
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+    <section className="vc-surface min-w-0 overflow-hidden">
       <div className="border-b p-4 sm:p-5">
         <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">

@@ -47,7 +47,7 @@ export default function EquipmentWorkSessionList({
     context === "object";
 
   return (
-    <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+    <section className="vc-surface min-w-0 p-4 sm:p-6">
       <div className="min-w-0">
         <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
           {isObjectContext
@@ -88,7 +88,7 @@ export default function EquipmentWorkSessionList({
             return (
               <article
                 key={item.id}
-                className="min-w-0 rounded-xl border p-4"
+                className="min-w-0 rounded-xl border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white"
               >
                 <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">

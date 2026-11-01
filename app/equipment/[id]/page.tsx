@@ -176,15 +176,15 @@ function EquipmentTabLoading() {
     <div
       role="status"
       aria-live="polite"
-      className="min-w-0 animate-pulse space-y-4"
+      className="min-w-0 animate-pulse space-y-4 motion-reduce:animate-none"
     >
       <span className="sr-only">
         Завантаження розділу…
       </span>
-      <div className="h-28 rounded-xl border bg-gray-50" />
+      <div className="vc-surface h-28 bg-gray-50/70" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="h-36 rounded-xl border bg-gray-50" />
-        <div className="h-36 rounded-xl border bg-gray-50" />
+        <div className="vc-surface h-36 bg-gray-50/70" />
+        <div className="vc-surface h-36 bg-gray-50/70" />
       </div>
     </div>
   );

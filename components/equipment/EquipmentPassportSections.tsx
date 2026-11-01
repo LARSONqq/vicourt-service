@@ -72,9 +72,9 @@ export default function EquipmentPassportSections({
     <div className="min-w-0">
       <nav
         aria-label="Розділи паспорта техніки"
-        className="-mx-4 mb-5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mb-6 sm:px-0"
+        className="-mx-4 mb-5 overflow-x-auto px-4 pb-2 sm:mx-0 sm:mb-6 sm:px-0"
       >
-        <div className="flex min-w-max gap-2">
+        <div className="vc-surface flex min-w-max gap-1.5 p-1.5">
           {visibleTabs.map((tab) => {
             const isActive =
               activeTab === tab.id;
@@ -89,10 +89,10 @@ export default function EquipmentPassportSections({
                     ? "page"
                     : undefined
                 }
-                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition sm:px-4 ${
+                className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-1 sm:px-4 ${
                   isActive
-                    ? "border-green-200 bg-green-50 text-green-700"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-green-700 text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
               >
                 <span aria-hidden="true">

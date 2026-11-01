@@ -207,12 +207,12 @@ export default function EquipmentPassportHeader({
     <div className="min-w-0 space-y-5">
       <Link
         href="/equipment"
-        className="inline-flex min-h-10 items-center text-sm font-medium text-green-700 hover:underline"
+        className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-gray-600 transition hover:bg-white hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
       >
         ← Назад до техніки
       </Link>
 
-      <header className="min-w-0 rounded-2xl border bg-white p-4 sm:p-6">
+      <header className="vc-surface min-w-0 p-4 sm:p-6">
         <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <div
@@ -224,7 +224,7 @@ export default function EquipmentPassportHeader({
 
             <div className="min-w-0">
               <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                <h1 className="break-words text-2xl font-bold text-gray-900 sm:text-3xl">
+                <h1 className="vc-page-title break-words">
                   {equipment.name}
                 </h1>
                 <span
@@ -251,7 +251,7 @@ export default function EquipmentPassportHeader({
                   void handleEditToggle()
                 }
                 disabled={isLoadingEmployees}
-                className="min-h-11 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+                className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
               >
                 {isEditing
                   ? "Закрити"
@@ -261,7 +261,7 @@ export default function EquipmentPassportHeader({
               </button>
 
               <details className="relative min-w-0">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 [&::-webkit-details-marker]:hidden">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
                   Ще
                 </summary>
                 <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border bg-white p-2 shadow-lg">
@@ -338,7 +338,7 @@ export default function EquipmentPassportHeader({
       )}
 
       {canManage && isEditing && (
-        <section className="min-w-0 rounded-2xl border bg-white p-3 sm:p-5">
+        <section className="vc-surface min-w-0 p-3 sm:p-5">
           <EditEquipmentForm
             equipment={equipment}
             employees={employees}
