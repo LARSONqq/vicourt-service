@@ -88,7 +88,7 @@ function KpiCard({
 }) {
   return (
     <article
-      className={`vc-surface min-w-0 p-4 sm:p-5 ${className}`}
+      className={`vc-surface min-w-0 p-4 ${className}`}
     >
       <p className="text-xs font-medium text-gray-500 sm:text-sm">
         {label}
@@ -278,8 +278,8 @@ export default function EquipmentOverview({
         </div>
       </section>
 
-      <section className="vc-surface min-w-0 p-4 sm:p-5">
-        <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+      <section className="vc-surface min-w-0 p-4">
+        <h2 className="text-lg font-semibold text-gray-900">
           Основна інформація
         </h2>
 

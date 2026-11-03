@@ -275,7 +275,7 @@ export default function EquipmentWorkSessionForm({
     );
 
   return (
-    <section className="min-w-0 rounded-xl border bg-gray-50 p-4">
+    <section className="min-w-0 rounded-lg border bg-gray-50 p-4">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="font-semibold text-gray-900">
@@ -298,7 +298,7 @@ export default function EquipmentWorkSessionForm({
           className={`min-h-11 w-full rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
             isOpen
               ? "border bg-white text-gray-700 hover:bg-gray-100"
-              : "bg-green-600 text-white hover:bg-green-700"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
           }`}
         >
           {isOpen
@@ -359,7 +359,7 @@ export default function EquipmentWorkSessionForm({
                     }
                     required
                     disabled={isSubmitting}
-                    className="mt-2 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-2 outline-none transition focus:border-green-600 disabled:bg-gray-100"
+                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 disabled:bg-gray-100"
                   />
                 </label>
 
@@ -379,7 +379,7 @@ export default function EquipmentWorkSessionForm({
                     placeholder="Наприклад: 2.5"
                     required
                     disabled={isSubmitting}
-                    className="mt-2 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-2 outline-none transition placeholder:text-gray-400 focus:border-green-600 disabled:bg-gray-100"
+                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 placeholder:text-gray-400 disabled:bg-gray-100"
                   />
                 </label>
               </div>
@@ -396,7 +396,7 @@ export default function EquipmentWorkSessionForm({
                     }
                     required
                     disabled={isSubmitting}
-                    className="mt-2 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-2 outline-none transition focus:border-green-600 disabled:bg-gray-100"
+                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 disabled:bg-gray-100"
                   >
                     <option value="">
                       Оберіть об’єкт
@@ -425,7 +425,7 @@ export default function EquipmentWorkSessionForm({
                     }
                     required
                     disabled={isSubmitting}
-                    className="mt-2 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-2 outline-none transition focus:border-green-600 disabled:bg-gray-100"
+                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 disabled:bg-gray-100"
                   >
                     <option value="">
                       Оберіть працівника
@@ -459,7 +459,7 @@ export default function EquipmentWorkSessionForm({
                   maxLength={2000}
                   disabled={isSubmitting}
                   placeholder="Необов’язково"
-                  className="mt-2 w-full min-w-0 resize-y rounded-lg border bg-white px-3 py-2 outline-none transition placeholder:text-gray-400 focus:border-green-600 disabled:bg-gray-100"
+                  className="vc-field mt-2 w-full min-w-0 resize-y py-2 placeholder:text-gray-400 disabled:bg-gray-100"
                 />
               </label>
 
@@ -469,7 +469,7 @@ export default function EquipmentWorkSessionForm({
                   isSubmitting ||
                   !hasOptions
                 }
-                className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                className="min-h-11 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {isSubmitting
                   ? "Збереження…"

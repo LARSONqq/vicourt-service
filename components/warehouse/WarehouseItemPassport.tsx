@@ -128,7 +128,7 @@ function HistoryUnavailable({
   return (
     <div
       role="status"
-      className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+      className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"
     >
       {message}
     </div>
@@ -141,8 +141,8 @@ function RecentMovements({
   movements: WarehouseItemMovementPreview[] | null;
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
-      <div className="border-b p-4 sm:p-5">
+    <section className="min-w-0 overflow-hidden rounded-lg border border-border bg-card">
+      <div className="border-b p-4">
         <h2 className="text-lg font-semibold text-gray-900">
           Останні рухи
         </h2>
@@ -152,7 +152,7 @@ function RecentMovements({
       </div>
 
       {movements === null ? (
-        <div className="p-4 sm:p-5">
+        <div className="p-4">
           <HistoryUnavailable message="Не вдалося завантажити рухи матеріалу. Спробуй оновити сторінку." />
         </div>
       ) : movements.length === 0 ? (
@@ -169,7 +169,7 @@ function RecentMovements({
               return (
                 <article
                   key={movement.id}
-                  className="min-w-0 space-y-3 rounded-xl border p-4"
+                  className="min-w-0 space-y-3 rounded-lg border p-4"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <span
@@ -234,15 +234,15 @@ function RecentMovements({
             })}
           </div>
 
-          <div className="hidden overflow-x-auto md:block">
+          <div className="hidden overflow-x-auto overscroll-x-contain md:block">
             <table className="w-full min-w-[820px] text-left text-sm">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
-                  <th className="p-4 font-medium">Дата</th>
-                  <th className="p-4 font-medium">Тип</th>
-                  <th className="p-4 font-medium">Кількість</th>
-                  <th className="p-4 font-medium">Об’єкт</th>
-                  <th className="p-4 font-medium">Виконавець / примітка</th>
+                  <th className="px-3 py-3 font-medium">Дата</th>
+                  <th className="px-3 py-3 font-medium">Тип</th>
+                  <th className="px-3 py-3 font-medium">Кількість</th>
+                  <th className="px-3 py-3 font-medium">Об’єкт</th>
+                  <th className="px-3 py-3 font-medium">Виконавець / примітка</th>
                 </tr>
               </thead>
               <tbody>
@@ -255,12 +255,12 @@ function RecentMovements({
                       key={movement.id}
                       className="border-t align-top"
                     >
-                      <td className="whitespace-nowrap p-4 text-gray-600">
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-600">
                         {formatKyivTimestamp(
                           movement.created_at
                         ) || "Невідома дата"}
                       </td>
-                      <td className="p-4">
+                      <td className="px-3 py-3">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${getMovementBadgeClass(
                             movement
@@ -273,7 +273,7 @@ function RecentMovements({
                           }
                         </span>
                       </td>
-                      <td className="whitespace-nowrap p-4 font-semibold text-gray-900">
+                      <td className="whitespace-nowrap px-3 py-3 font-semibold text-gray-900">
                         {getMovementQuantitySign(
                           movement
                         )}
@@ -282,7 +282,7 @@ function RecentMovements({
                         )}{" "}
                         {movement.unit_snapshot}
                       </td>
-                      <td className="p-4">
+                      <td className="px-3 py-3">
                         {objectName ? (
                           movement.object?.id ? (
                             <Link
@@ -302,7 +302,7 @@ function RecentMovements({
                           </span>
                         )}
                       </td>
-                      <td className="max-w-sm p-4 text-gray-600">
+                      <td className="max-w-sm px-3 py-3 text-gray-600">
                         <p className="break-words">
                           {movement.performed_by_name ||
                             "Система"}
@@ -335,8 +335,8 @@ function Purchases({
   currency: AppCurrency;
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
-      <div className="border-b p-4 sm:p-5">
+    <section className="min-w-0 overflow-hidden rounded-lg border border-border bg-card">
+      <div className="border-b p-4">
         <h2 className="text-lg font-semibold text-gray-900">
           Закупівлі
         </h2>
@@ -346,7 +346,7 @@ function Purchases({
       </div>
 
       {purchases === null ? (
-        <div className="p-4 sm:p-5">
+        <div className="p-4">
           <HistoryUnavailable message="Не вдалося завантажити закупівлі матеріалу. Спробуй оновити сторінку." />
         </div>
       ) : purchases.length === 0 ? (
@@ -367,7 +367,7 @@ function Purchases({
               return (
                 <article
                   key={purchase.id}
-                  className="min-w-0 space-y-3 rounded-xl border p-4"
+                  className="min-w-0 space-y-3 rounded-lg border p-4"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <span
@@ -409,15 +409,15 @@ function Purchases({
             })}
           </div>
 
-          <div className="hidden overflow-x-auto md:block">
+          <div className="hidden overflow-x-auto overscroll-x-contain md:block">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead className="bg-gray-50 text-gray-600">
                 <tr>
-                  <th className="p-4 font-medium">Дата</th>
-                  <th className="p-4 font-medium">Статус</th>
-                  <th className="p-4 font-medium">Кількість</th>
-                  <th className="p-4 font-medium">Постачальник</th>
-                  <th className="p-4 font-medium">Ціна / сума</th>
+                  <th className="px-3 py-3 font-medium">Дата</th>
+                  <th className="px-3 py-3 font-medium">Статус</th>
+                  <th className="px-3 py-3 font-medium">Кількість</th>
+                  <th className="px-3 py-3 font-medium">Постачальник</th>
+                  <th className="px-3 py-3 font-medium">Ціна / сума</th>
                 </tr>
               </thead>
               <tbody>
@@ -434,13 +434,13 @@ function Purchases({
                       key={purchase.id}
                       className="border-t align-top"
                     >
-                      <td className="whitespace-nowrap p-4 text-gray-600">
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-600">
                         {formatKyivTimestamp(
                           purchase.purchased_at ||
                             purchase.created_at
                         ) || "Невідома дата"}
                       </td>
-                      <td className="p-4">
+                      <td className="px-3 py-3">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                             purchase.status === "Закуплено"
@@ -451,15 +451,15 @@ function Purchases({
                           {purchase.status}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap p-4 font-medium">
+                      <td className="whitespace-nowrap px-3 py-3 font-medium">
                         {formatQuantity(quantity)} {unit}
                       </td>
-                      <td className="max-w-xs p-4 text-gray-600">
+                      <td className="max-w-xs px-3 py-3 text-gray-600">
                         <span className="break-words">
                           {purchase.supplier || "—"}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap p-4 text-gray-600">
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-600">
                         <p>
                           {formatMoney(price, currency)} / {unit}
                         </p>
@@ -488,8 +488,8 @@ function ObjectUsage({
   movements: WarehouseItemMovementPreview[] | null;
 }) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
-      <div className="border-b p-4 sm:p-5">
+    <section className="min-w-0 overflow-hidden rounded-lg border border-border bg-card">
+      <div className="border-b p-4">
         <h2 className="text-lg font-semibold text-gray-900">
           Використання на об’єктах
         </h2>
@@ -499,7 +499,7 @@ function ObjectUsage({
       </div>
 
       {movements === null ? (
-        <div className="p-4 sm:p-5">
+        <div className="p-4">
           <HistoryUnavailable message="Не вдалося завантажити використання матеріалу на об’єктах. Спробуй оновити сторінку." />
         </div>
       ) : movements.length === 0 ? (
@@ -521,7 +521,7 @@ function ObjectUsage({
             return (
               <article
                 key={movement.id}
-                className="min-w-0 rounded-xl border p-4"
+                className="min-w-0 rounded-lg border p-4"
               >
                 <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
                   {movement.object?.id ? (
@@ -594,7 +594,7 @@ export default function WarehouseItemPassport({
   const recommended = getRecommendedPurchaseQuantity(item);
 
   return (
-    <main className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-4 sm:p-6">
+    <main className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-4">
       <Link
         href="/warehouse"
         className="inline-flex min-h-10 items-center text-sm font-medium text-green-700 hover:underline"
@@ -602,40 +602,26 @@ export default function WarehouseItemPassport({
         ← Назад до складу
       </Link>
 
-      <header className="min-w-0 rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex min-w-0 flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+      <header className="min-w-0 rounded-lg border border-border bg-card p-4 shadow-sm sm:p-5">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className="min-w-0 break-words text-2xl font-bold text-gray-900 sm:text-3xl">
-                {item.name}
-              </h1>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${stockStatus.badgeClass}`}
-              >
-                {stockStatus.label}
-              </span>
-            </div>
-            <p className="mt-2 break-words text-sm text-gray-500 sm:text-base">
-              {item.category || "Без категорії"} · {item.unit}
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+              Паспорт матеріалу
+            </p>
+            <h1 className="mt-1 min-w-0 break-words text-2xl font-semibold text-gray-900">
+              {item.name}
+            </h1>
+            <p className="mt-1 break-words text-sm text-gray-500">
+              {item.category || "Без категорії"} <span aria-hidden="true">·</span> {item.unit}
             </p>
           </div>
-
-          <div
-            className={`min-w-0 rounded-xl border px-5 py-4 lg:min-w-56 ${stockStatus.panelClass}`}
-          >
-            <p className="text-sm text-gray-600">
-              Поточний залишок
-            </p>
-            <p
-              className={`mt-1 break-words text-3xl font-bold ${stockStatus.valueClass}`}
-            >
-              {formatQuantity(quantity)} {item.unit}
-            </p>
-          </div>
+          <span className={`shrink-0 ${stockStatus.badgeClass}`}>
+            {stockStatus.label}
+          </span>
         </div>
       </header>
 
-      {recommended !== null && <p className="rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm font-medium text-orange-800">Рекомендовано докупити: {formatQuantity(recommended)} {item.unit}</p>}
+      {recommended !== null && <p className="vc-panel-warning rounded-lg border border-border/70 px-4 py-3 text-sm font-medium">Рекомендовано докупити: {formatQuantity(recommended)} {item.unit}</p>}
 
       {canViewManagementHistory && (
         <WarehouseItemOperations
@@ -651,38 +637,38 @@ export default function WarehouseItemPassport({
       )}
 
       <div className="grid min-w-0 gap-5 lg:grid-cols-2">
-        <section className="min-w-0 rounded-xl border bg-white p-5">
+        <section className="min-w-0 rounded-lg border border-border bg-card p-5">
           <h2 className="text-lg font-semibold text-gray-900">
             Основна інформація
           </h2>
-          <dl className="mt-4 divide-y text-sm">
-            <div className="grid gap-1 py-3 sm:grid-cols-2 sm:gap-4">
+          <dl className="mt-3 divide-y text-sm">
+            <div className="grid min-w-0 gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
               <dt className="text-gray-500">Назва</dt>
-              <dd className="break-words font-medium text-gray-900 sm:text-right">
+              <dd className="min-w-0 break-words font-medium text-gray-900">
                 {item.name}
               </dd>
             </div>
-            <div className="grid gap-1 py-3 sm:grid-cols-2 sm:gap-4">
+            <div className="grid min-w-0 gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
               <dt className="text-gray-500">Категорія</dt>
-              <dd className="break-words font-medium text-gray-900 sm:text-right">
+              <dd className="min-w-0 break-words font-medium text-gray-900">
                 {item.category || "Не вказано"}
               </dd>
             </div>
-            <div className="grid gap-1 py-3 sm:grid-cols-2 sm:gap-4">
+            <div className="grid min-w-0 gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
               <dt className="text-gray-500">Одиниця виміру</dt>
-              <dd className="break-words font-medium text-gray-900 sm:text-right">
+              <dd className="min-w-0 break-words font-medium text-gray-900">
                 {item.unit}
               </dd>
             </div>
-            <div className="grid gap-1 py-3 sm:grid-cols-2 sm:gap-4">
+            <div className="grid min-w-0 gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
               <dt className="text-gray-500">Постачальник</dt>
-              <dd className="break-words font-medium text-gray-900 sm:text-right">
+              <dd className="min-w-0 break-words font-medium text-gray-900 [overflow-wrap:anywhere]">
                 {item.supplier || "Не вказано"}
               </dd>
             </div>
-            <div className="grid gap-1 py-3 sm:grid-cols-2 sm:gap-4">
+            <div className="grid min-w-0 gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
               <dt className="text-gray-500">Створено</dt>
-              <dd className="font-medium text-gray-900 sm:text-right">
+              <dd className="font-medium text-gray-900">
                 {formatKyivTimestamp(
                   item.created_at
                 ) || "Не вказано"}
@@ -691,27 +677,27 @@ export default function WarehouseItemPassport({
           </dl>
         </section>
 
-        <section className="min-w-0 rounded-xl border bg-white p-5">
+        <section className="min-w-0 rounded-lg border border-border bg-card p-5">
           <h2 className="text-lg font-semibold text-gray-900">
             Запас
           </h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="min-w-0 rounded-xl bg-gray-50 p-4">
+          <div className={`mt-4 grid overflow-hidden rounded-lg border border-border/70 sm:grid-cols-3 ${stockStatus.panelClass}`}>
+            <div className="min-w-0 p-4">
               <p className="text-xs text-gray-500">Поточний</p>
-              <p className="mt-2 break-words text-xl font-semibold text-gray-900">
+              <p className={`mt-1 break-words text-xl font-semibold ${stockStatus.valueClass}`}>
                 {formatQuantity(quantity)} {item.unit}
               </p>
             </div>
-            <div className="min-w-0 rounded-xl bg-gray-50 p-4">
+            <div className="min-w-0 border-t border-border/70 p-4 sm:border-l sm:border-t-0">
               <p className="text-xs text-gray-500">Мінімальний</p>
-              <p className="mt-2 break-words text-xl font-semibold text-gray-900">
+              <p className="mt-1 break-words text-lg font-semibold text-gray-900">
                 {item.min_quantity == null ? "Не вказано" : formatQuantity(minimumQuantity)}{" "}
                 {item.unit}
               </p>
             </div>
-            <div className="min-w-0 rounded-xl bg-gray-50 p-4">
+            <div className="min-w-0 border-t border-border/70 p-4 sm:border-l sm:border-t-0">
               <p className="text-xs text-gray-500">Цільовий</p>
-              <p className="mt-2 break-words text-xl font-semibold text-gray-900">
+              <p className="mt-1 break-words text-lg font-semibold text-gray-900">
                 {item.target_quantity === null
                   ? "Не вказано"
                   : `${formatQuantity(
@@ -723,18 +709,6 @@ export default function WarehouseItemPassport({
             </div>
           </div>
 
-          <div
-            className={`mt-4 rounded-xl border p-4 ${stockStatus.panelClass}`}
-          >
-            <p className="text-xs text-gray-500">
-              Стан запасу
-            </p>
-            <p
-              className={`mt-1 text-lg font-semibold ${stockStatus.valueClass}`}
-            >
-              {stockStatus.label}
-            </p>
-          </div>
         </section>
       </div>
 
@@ -749,7 +723,7 @@ export default function WarehouseItemPassport({
           <ObjectUsage movements={objectUsage} />
         </div>
       ) : (
-        <section className="rounded-xl border bg-white p-5">
+        <section className="rounded-lg border border-border bg-card p-5">
           <h2 className="font-semibold text-gray-900">
             Історія матеріалу
           </h2>

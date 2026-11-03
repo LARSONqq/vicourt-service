@@ -207,17 +207,17 @@ export default function EquipmentPassportHeader({
     <div className="min-w-0 space-y-5">
       <Link
         href="/equipment"
-        className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-gray-600 transition hover:bg-white hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+        className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-gray-600 transition hover:bg-white hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         ← Назад до техніки
       </Link>
 
-      <header className="vc-surface min-w-0 p-4 sm:p-6">
+      <header className="vc-surface min-w-0 p-4">
         <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <div
               aria-hidden="true"
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-green-100 text-2xl sm:h-16 sm:w-16"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-lg"
             >
               🛠️
             </div>
@@ -251,7 +251,7 @@ export default function EquipmentPassportHeader({
                   void handleEditToggle()
                 }
                 disabled={isLoadingEmployees}
-                className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 {isEditing
                   ? "Закрити"
@@ -261,10 +261,10 @@ export default function EquipmentPassportHeader({
               </button>
 
               <details className="relative min-w-0">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
                   Ще
                 </summary>
-                <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border bg-white p-2 shadow-lg">
+                <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-card p-2 shadow-lg">
                   <button
                     type="button"
                     onClick={() => {
@@ -338,7 +338,7 @@ export default function EquipmentPassportHeader({
       )}
 
       {canManage && isEditing && (
-        <section className="vc-surface min-w-0 p-3 sm:p-5">
+        <section className="vc-surface min-w-0 p-3 sm:p-4">
           <EditEquipmentForm
             equipment={equipment}
             employees={employees}
@@ -359,7 +359,7 @@ export default function EquipmentPassportHeader({
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-equipment-title"
-            className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6"
+            className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl sm:p-4"
           >
             <h2
               id="delete-equipment-title"
@@ -387,7 +387,7 @@ export default function EquipmentPassportHeader({
                 onClick={() =>
                   setShowDelete(false)
                 }
-                className="min-h-11 rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+                className="min-h-11 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
               >
                 Скасувати
               </button>

@@ -124,9 +124,9 @@ export default function WarehouseItemPlanningPanel({
   }
 
   return (
-    <div className="min-w-0 space-y-4 rounded-xl border bg-gray-50 p-3 sm:p-5">
+    <div className="min-w-0 space-y-4 rounded-lg border bg-gray-50 p-3 sm:p-4">
       <div
-        className={`rounded-xl border p-4 ${
+        className={`rounded-lg border p-4 ${
           plan.isLowStock
             ? "border-orange-200 bg-orange-50"
             : "border-green-200 bg-green-50"
@@ -154,7 +154,7 @@ export default function WarehouseItemPlanningPanel({
           {canCreatePurchase && (
             <Link
               href={`/warehouse/${item.id}`}
-              className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700"
+              className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
             >
               Операції та закупівлі →
             </Link>
@@ -265,7 +265,7 @@ export default function WarehouseItemPlanningPanel({
 
       {canViewCosts && (
       <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-lg border bg-white p-3">
+        <div className="rounded-lg border border-border bg-card p-3">
           <p className="text-xs text-gray-500">
             Середня ціна складу
           </p>
@@ -279,7 +279,7 @@ export default function WarehouseItemPlanningPanel({
           </p>
         </div>
 
-        <div className="rounded-lg border bg-white p-3">
+        <div className="rounded-lg border border-border bg-card p-3">
           <p className="text-xs text-gray-500">
             Остання закупівельна ціна
           </p>
@@ -294,7 +294,7 @@ export default function WarehouseItemPlanningPanel({
           </p>
         </div>
 
-        <div className="rounded-lg border bg-white p-3">
+        <div className="rounded-lg border border-border bg-card p-3">
           <p className="text-xs text-gray-500">
             Попередня ціна
           </p>
@@ -309,7 +309,7 @@ export default function WarehouseItemPlanningPanel({
           </p>
         </div>
 
-        <div className="rounded-lg border bg-white p-3">
+        <div className="rounded-lg border border-border bg-card p-3">
           <p className="text-xs text-gray-500">
             Зміна ціни
           </p>
@@ -335,7 +335,7 @@ export default function WarehouseItemPlanningPanel({
       )}
 
       {canViewPurchaseHistory && (
-        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+        <div className="min-w-0 rounded-lg border border-border bg-card p-3 sm:p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <h4 className="font-semibold text-gray-900">

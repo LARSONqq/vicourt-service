@@ -5,7 +5,7 @@ import type { PlannedPurchaseOverview } from "@/services/purchaseService";
 import type { AppCurrency } from "@/types/appSettings";
 
 export default function WarehousePurchaseOverview({ purchases, currency }: { purchases: PlannedPurchaseOverview[]; currency: AppCurrency }) {
-  return <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+  return <section className="min-w-0 rounded-lg border border-border bg-card p-4">
     <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">Заплановані закупівлі</h2><Link href="/purchases" className="text-sm font-medium text-green-700 hover:underline">Усі закупівлі →</Link></div>
     {!purchases.length ? <p className="mt-3 text-sm text-gray-500">Немає закупівель, що очікують отримання.</p> : <div className="mt-4 grid gap-3 lg:grid-cols-2">
       {purchases.map((purchase) => <article key={purchase.id} className="min-w-0 space-y-2 rounded-lg border p-3">

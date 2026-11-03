@@ -90,7 +90,7 @@ export default function AddEquipmentForm({
           type="text"
           name="name"
           placeholder="Наприклад: Газонокосарка Husqvarna LC 247"
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
           required
         />
       </div>
@@ -105,7 +105,7 @@ export default function AddEquipmentForm({
           <select
             name="category"
             defaultValue=""
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             <option
@@ -136,7 +136,7 @@ export default function AddEquipmentForm({
           <select
             name="status"
             defaultValue="Справна"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             {equipmentStatuses.map(
@@ -164,7 +164,7 @@ export default function AddEquipmentForm({
             type="text"
             name="inventory_number"
             placeholder="Автоматично, якщо не вказати"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 uppercase outline-none transition placeholder:normal-case placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 uppercase placeholder:normal-case placeholder:text-gray-400"
           />
 
           <p className="mt-2 text-xs leading-4 text-gray-500">
@@ -182,7 +182,7 @@ export default function AddEquipmentForm({
           <select
             name="responsible_employee_id"
             defaultValue=""
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
           >
             <option value="">
               Не призначати
@@ -223,7 +223,7 @@ export default function AddEquipmentForm({
             type="text"
             name="location"
             placeholder="Склад, офіс або об’єкт"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
           />
         </div>
       </div>
@@ -238,13 +238,13 @@ export default function AddEquipmentForm({
           <input
             type="date"
             name="purchase_date"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
           />
         </div>
       </div>
 
       {/* PLANNED MAINTENANCE */}
-      <fieldset className="min-w-0 rounded-xl border bg-gray-50 p-4 sm:p-5">
+      <fieldset className="min-w-0 rounded-lg border bg-gray-50 p-4">
         <legend className="px-1 text-sm font-semibold text-gray-900">
           Планове ТО
         </legend>
@@ -267,7 +267,7 @@ export default function AddEquipmentForm({
               step="1"
               list="add-maintenance-intervals"
               placeholder="Наприклад: 90"
-              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
             />
 
             <datalist id="add-maintenance-intervals">
@@ -286,7 +286,7 @@ export default function AddEquipmentForm({
             <input
               type="date"
               name="next_service_date"
-              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0"
             />
           </div>
         </div>
@@ -302,7 +302,7 @@ export default function AddEquipmentForm({
           name="notes"
           rows={4}
           placeholder="Стан техніки, комплектація, особливості використання"
-          className="w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field w-full min-w-0 resize-none placeholder:text-gray-400"
         />
       </div>
 
@@ -311,7 +311,7 @@ export default function AddEquipmentForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-lg bg-primary px-5 py-3 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."

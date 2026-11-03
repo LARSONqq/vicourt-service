@@ -81,7 +81,7 @@ export default function AddEquipmentServiceForm({
     0
   ) {
     return (
-      <div className="rounded-xl border border-dashed bg-gray-50 p-6 text-center">
+      <div className="rounded-lg border border-dashed bg-gray-50 p-6 text-center">
         <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white">
           🔧
         </div>
@@ -131,7 +131,7 @@ export default function AddEquipmentServiceForm({
                 event.target.value
               )
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             <option
@@ -167,7 +167,7 @@ export default function AddEquipmentServiceForm({
           <select
             name="service_type"
             defaultValue="Ремонт"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             {manualServiceTypes.map(
@@ -192,7 +192,7 @@ export default function AddEquipmentServiceForm({
             type="date"
             name="service_date"
             defaultValue={today}
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           />
         </div>
@@ -213,7 +213,7 @@ export default function AddEquipmentServiceForm({
             step="0.001"
             defaultValue={selectedEquipment?.current_usage ?? ""}
             placeholder="Необов’язково"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
           />
           <p className="mt-2 text-xs leading-5 text-gray-500">
             Нове значення буде додано до історії показників разом із сервісним записом.
@@ -235,7 +235,7 @@ export default function AddEquipmentServiceForm({
             min="0"
             step="0.01"
             defaultValue="0"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           />
 
@@ -257,7 +257,7 @@ export default function AddEquipmentServiceForm({
             type="text"
             name="performed_by"
             placeholder="Працівник або сервісний центр"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
           />
         </div>
 
@@ -269,7 +269,7 @@ export default function AddEquipmentServiceForm({
           <input
             type="date"
             name="next_service_date"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
           />
 
           <p className="mt-2 text-xs leading-4 text-gray-500">
@@ -289,7 +289,7 @@ export default function AddEquipmentServiceForm({
           name="description"
           rows={4}
           placeholder="Що було зроблено, які запчастини замінено та які проблеми виявлено"
-          className="w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field w-full min-w-0 resize-none placeholder:text-gray-400"
         />
       </div>
 
@@ -298,7 +298,7 @@ export default function AddEquipmentServiceForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-lg bg-primary px-5 py-3 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."

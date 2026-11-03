@@ -46,10 +46,10 @@ export default function EquipmentPassportServiceSection({
   return (
     <section className="min-w-0 space-y-4">
       {canManage && (
-        <div className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+        <div className="min-w-0 rounded-lg border border-border bg-card p-4">
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+              <h2 className="text-lg font-semibold text-gray-900">
                 Новий сервісний запис
               </h2>
               <p className="mt-1 text-sm leading-5 text-gray-500">
@@ -67,7 +67,7 @@ export default function EquipmentPassportServiceSection({
               className={`min-h-11 w-full rounded-lg px-4 py-2 text-sm font-medium transition sm:w-auto ${
                 showForm
                   ? "border bg-white text-gray-700 hover:bg-gray-50"
-                  : "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
               }`}
             >
               {showForm

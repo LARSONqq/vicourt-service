@@ -28,8 +28,11 @@ const labels: Record<WarehouseOperation, string> = {
 const buttons: Record<WarehouseOperation, string> = {
   receipt: "+ Прихід", issue: "− Видача", return: "↩ Повернення", adjustment: "± Коригування",
 };
-const fieldClass = "mt-2 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-2 font-normal text-gray-900 focus:border-green-600";
-const buttonClass = "min-h-11 rounded-lg border px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50";
+const fieldClass = "vc-field mt-2 min-h-11 min-w-0 font-normal";
+const buttonClass = "min-h-11 rounded-md border px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+const primaryActionClass = "border-primary bg-primary text-primary-foreground hover:bg-primary/90";
+const secondaryActionClass = "border-border bg-card text-foreground hover:bg-muted/60";
+const tertiaryActionClass = "border-border bg-muted/40 text-muted-foreground hover:bg-muted";
 
 export default function WarehouseItemOperations({ itemId, name, unit, currency, canAdjust, purchasingOnly = false, recommendedQuantity = null, supplier = null, plannedQuantity = null, purchaseId }: Props) {
   const titleId = useId();
@@ -146,20 +149,20 @@ export default function WarehouseItemOperations({ itemId, name, unit, currency, 
   const canSubmit = Boolean(options) && (!needsSelection || Boolean(selectedId));
 
   return (
-    <section className={purchasingOnly ? "min-w-0" : "min-w-0 rounded-xl border bg-white p-4 sm:p-5"}>
-      {!purchasingOnly && <h2 className="mb-3 font-semibold text-gray-900">Операції з матеріалом</h2>}
-      {!purchasingOnly && <p className="mb-3 text-sm text-gray-600">{plannedQuantity === null ? "План закупівель тимчасово недоступний." : plannedQuantity > 0 ? `Заплановано ${formatWarehouseQuantity(plannedQuantity)} ${unit} · Очікує отримання` : "Закупівлю не створено"}</p>}
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+    <section className={purchasingOnly ? "min-w-0" : "min-w-0 rounded-lg border border-border bg-card p-4"}>
+      {!purchasingOnly && <h2 className="font-semibold text-gray-900">Операції з матеріалом</h2>}
+      {!purchasingOnly && <p className="mb-4 mt-1 text-sm text-gray-600">{plannedQuantity === null ? "План закупівель тимчасово недоступний." : plannedQuantity > 0 ? `Заплановано ${formatWarehouseQuantity(plannedQuantity)} ${unit} · Очікує отримання` : "Оберіть операцію для зміни фактичного залишку."}</p>}
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {!purchasingOnly && <>
-          <button type="button" disabled={busy} onClick={() => open("receipt")} className={`${buttonClass} border-green-600 text-green-700 hover:bg-green-50`}>{Number(plannedQuantity) > 0 ? "Прийняти на склад" : buttons.receipt}</button>
-          <button type="button" disabled={busy} onClick={() => open("issue")} className={`${buttonClass} border-green-600 text-green-700 hover:bg-green-50`}>{buttons.issue}</button>
-          <button type="button" disabled={busy} onClick={() => open("return")} className={`${buttonClass} border-green-600 text-green-700 hover:bg-green-50`}>{buttons.return}</button>
-          {canAdjust && <button type="button" disabled={busy} onClick={() => open("adjustment")} className={`${buttonClass} border-green-600 text-green-700 hover:bg-green-50`}>{buttons.adjustment}</button>}
+          <button type="button" disabled={busy} onClick={() => open("receipt")} className={`${buttonClass} ${primaryActionClass}`}>{Number(plannedQuantity) > 0 ? "Прийняти на склад" : buttons.receipt}</button>
+          <button type="button" disabled={busy} onClick={() => open("issue")} className={`${buttonClass} ${secondaryActionClass}`}>{buttons.issue}</button>
+          <button type="button" disabled={busy} onClick={() => open("return")} className={`${buttonClass} ${secondaryActionClass}`}>{buttons.return}</button>
+          {canAdjust && <button type="button" disabled={busy} onClick={() => open("adjustment")} className={`${buttonClass} ${tertiaryActionClass}`}>{buttons.adjustment}</button>}
         </>}
         {(purchasingOnly || recommendedQuantity !== null) && (Number(plannedQuantity) > 0 && purchasingOnly ? (
-          <button type="button" disabled={busy} onClick={() => open("receipt")} className={`${buttonClass} col-span-2 border-green-600 text-green-700 hover:bg-green-50`}>Прийняти на склад</button>
+          <button type="button" disabled={busy} onClick={() => open("receipt")} className={`${buttonClass} col-span-2 ${primaryActionClass}`}>Прийняти на склад</button>
         ) : (
-          <button type="button" disabled={busy} onClick={() => open("receipt", true)} className={`${buttonClass} col-span-2 bg-green-600 text-white hover:bg-green-700`}>Запланувати закупівлю</button>
+          <button type="button" disabled={busy} onClick={() => open("receipt", true)} className={`${buttonClass} col-span-2 lg:col-span-4 ${secondaryActionClass}`}>Запланувати закупівлю</button>
         ))}
       </div>
       {success && <p role="status" className="mt-3 text-sm text-green-700">{success} {refreshing ? "Оновлення залишку та історії…" : ""}</p>}
@@ -167,7 +170,7 @@ export default function WarehouseItemOperations({ itemId, name, unit, currency, 
       <dialog ref={dialog} aria-labelledby={titleId} onCancel={(event) => {
         event.preventDefault();
         if (!busy) close();
-      }} className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-xl overflow-y-auto rounded-2xl border bg-white p-4 text-gray-900 shadow-xl backdrop:bg-black/40 sm:p-6">
+      }} className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-xl overflow-y-auto rounded-lg border border-border bg-card p-4 text-gray-900 shadow-xl backdrop:bg-black/40">
         <div className="mb-4 flex min-w-0 items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 id={titleId} className="text-xl font-semibold">{planning ? "Запланувати закупівлю" : operation && labels[operation]}</h2>
@@ -212,7 +215,7 @@ export default function WarehouseItemOperations({ itemId, name, unit, currency, 
                       </select>
                     </label>
                     {!options.purchases.length && <p className="text-sm text-gray-500">Запланованих закупівель на цій сторінці немає. Додайте матеріал до плану, щоб оприбуткувати його після отримання.</p>}
-                    {purchase && <div className="space-y-2 rounded-xl border bg-green-50 p-3 text-sm [overflow-wrap:anywhere]">
+                    {purchase && <div className="space-y-2 rounded-lg border bg-green-50 p-3 text-sm [overflow-wrap:anywhere]">
                       <p>Буде отримано: <strong>{formatWarehouseQuantity(Number(purchase.quantity))} {unit}</strong></p>
                       <p>Ціна за одиницю: {money(purchase.purchase_price)}</p>
                       <p>Постачальник: {purchase.supplier || "Не вказано"}</p>
@@ -251,7 +254,7 @@ export default function WarehouseItemOperations({ itemId, name, unit, currency, 
                     <label className="block text-sm font-medium">Постачальник (необов’язково)<input name="supplier" defaultValue={supplier || ""} maxLength={500} className={fieldClass} /></label>
                     <label className="block text-sm font-medium">Примітка (необов’язково)<textarea name="note" maxLength={2000} rows={3} className={fieldClass} /></label>
                   </>}
-                  <button type="submit" disabled={!canSubmit || (operation === "adjustment" && projected < 0)} className={`${buttonClass} w-full bg-green-600 text-white hover:bg-green-700`}>
+                  <button type="submit" disabled={!canSubmit || (operation === "adjustment" && projected < 0)} className={`${buttonClass} w-full bg-primary text-primary-foreground hover:bg-primary/90`}>
                     {submitting ? "Збереження…" : planning ? "Зберегти план закупівлі" : operation === "receipt" ? "Оприбуткувати закупівлю" : operation === "issue" ? "Видати на об’єкт" : operation === "return" ? "Повернути на склад" : "Зберегти коригування"}
                   </button>
                 </fieldset>

@@ -2,9 +2,9 @@ export type WarehouseStockStatus = "OUT_OF_STOCK" | "LOW_STOCK" | "NORMAL";
 type StockItem = { quantity: number; min_quantity: number | null; target_quantity?: number | null };
 
 export const warehouseStockPresentation = {
-  OUT_OF_STOCK: { label: "Закінчився", badgeClass: "bg-red-100 text-red-800", panelClass: "border-red-200 bg-red-50", valueClass: "text-red-700" },
-  LOW_STOCK: { label: "Мало", badgeClass: "bg-orange-100 text-orange-800", panelClass: "border-orange-200 bg-orange-50", valueClass: "text-orange-700" },
-  NORMAL: { label: "Норма", badgeClass: "bg-green-100 text-green-800", panelClass: "border-green-200 bg-green-50", valueClass: "text-green-700" },
+  OUT_OF_STOCK: { label: "Закінчився", badgeClass: "vc-status-danger", panelClass: "vc-panel-danger", valueClass: "text-destructive" },
+  LOW_STOCK: { label: "Мало", badgeClass: "vc-status-warning", panelClass: "vc-panel-warning", valueClass: "vc-text-warning" },
+  NORMAL: { label: "Норма", badgeClass: "vc-status-success", panelClass: "vc-panel-neutral", valueClass: "text-foreground" },
 } as const;
 
 export function getWarehouseStockStatus(item: StockItem): WarehouseStockStatus {

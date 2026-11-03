@@ -152,11 +152,11 @@ export default function EquipmentActions({
             isLoadingEmployees ||
             isLoadingServiceEquipment
           }
-          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
+          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
             activeForm ===
             "equipment"
               ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-              : "bg-green-600 text-white hover:bg-green-700"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
           }`}
         >
           {activeForm ===
@@ -178,7 +178,7 @@ export default function EquipmentActions({
             isLoadingEmployees ||
             isLoadingServiceEquipment
           }
-          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
+          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
             activeForm ===
             "service"
               ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
@@ -206,9 +206,9 @@ export default function EquipmentActions({
       {/* ADD EQUIPMENT */}
       {activeForm ===
         "equipment" && (
-        <div className="vc-surface mt-4 min-w-0 p-4 sm:mt-5 sm:p-5">
+        <div className="vc-surface mt-4 min-w-0 p-4 sm:mt-5 sm:p-4">
           <div className="mb-4 sm:mb-5">
-            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+            <h2 className="text-lg font-semibold text-gray-900">
               Нова одиниця техніки
             </h2>
 
@@ -241,9 +241,9 @@ export default function EquipmentActions({
       {/* ADD SERVICE */}
       {activeForm ===
         "service" && (
-        <div className="vc-surface mt-4 min-w-0 p-4 sm:mt-5 sm:p-5">
+        <div className="vc-surface mt-4 min-w-0 p-4 sm:mt-5 sm:p-4">
           <div className="mb-4 sm:mb-5">
-            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+            <h2 className="text-lg font-semibold text-gray-900">
               Новий запис
               обслуговування
             </h2>

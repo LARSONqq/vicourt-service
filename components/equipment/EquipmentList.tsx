@@ -175,7 +175,7 @@ export default function EquipmentList({
       {/* EMPTY */}
       {safeEquipment.length ===
       0 ? (
-        <div className="vc-surface p-6 text-center sm:p-8">
+        <div className="vc-surface p-6 text-center sm:p-5">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
             🛠️
           </div>
@@ -219,7 +219,7 @@ export default function EquipmentList({
                     key={
                       item.id
                     }
-                    className={`vc-surface min-w-0 p-4 transition hover:shadow-md ${
+                    className={`vc-surface min-w-0 p-4 transition hover:bg-muted/35 ${
                       serviceOverdue
                         ? "border-red-200"
                         : ""
@@ -231,7 +231,7 @@ export default function EquipmentList({
                         <h3 className="break-words font-semibold">
                           <Link
                             href={`/equipment/${item.id}`}
-                            className="rounded-sm text-gray-900 transition hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                            className="rounded-sm text-gray-900 transition hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           >
                             {item.name}
                           </Link>
@@ -431,36 +431,36 @@ export default function EquipmentList({
             >
               <thead className="bg-gray-50 text-left">
                 <tr>
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Назва
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Категорія
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Інвентарний номер
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Статус
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Відповідальний
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Локація
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Планове ТО
                   </th>
 
                   {canManage && (
-                    <th className="p-4 text-right">
+                    <th className="px-3 py-3 text-right">
                       Дії
                     </th>
                   )}
@@ -495,11 +495,11 @@ export default function EquipmentList({
                         }
                       >
                         <tr className={`border-t transition hover:bg-gray-50/80 ${serviceOverdue ? "bg-red-50/25" : ""}`}>
-                          <td className="p-4">
+                          <td className="px-3 py-3">
                             <p className="font-medium">
                               <Link
                                 href={`/equipment/${item.id}`}
-                                className="rounded-sm text-gray-900 transition hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                                className="rounded-sm text-gray-900 transition hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                               >
                                 {item.name}
                               </Link>
@@ -514,17 +514,17 @@ export default function EquipmentList({
                             )}
                           </td>
 
-                          <td className="p-4 text-gray-600">
+                          <td className="px-3 py-3 text-gray-600">
                             {item.category ||
                               "Без категорії"}
                           </td>
 
-                          <td className="p-4 font-medium">
+                          <td className="px-3 py-3 font-medium">
                             {item.inventory_number ||
                               "Не вказано"}
                           </td>
 
-                          <td className="p-4">
+                          <td className="px-3 py-3">
                             <span
                               className={`rounded-full px-3 py-1 text-sm font-medium ${getStatusClasses(
                                 item.status
@@ -536,17 +536,17 @@ export default function EquipmentList({
                             </span>
                           </td>
 
-                          <td className="p-4 text-gray-600">
+                          <td className="px-3 py-3 text-gray-600">
                             {item.responsible ||
                               "Не призначено"}
                           </td>
 
-                          <td className="p-4 text-gray-600">
+                          <td className="px-3 py-3 text-gray-600">
                             {item.location ||
                               "Не вказано"}
                           </td>
 
-                          <td className="p-4">
+                          <td className="px-3 py-3">
                             <span
                               className={
                                 serviceOverdue
@@ -582,7 +582,7 @@ export default function EquipmentList({
                           </td>
 
                           {canManage && (
-                            <td className="p-4">
+                            <td className="px-3 py-3">
                               <div className="flex justify-end gap-2">
                                 <button
                                   type="button"
@@ -639,7 +639,7 @@ export default function EquipmentList({
                               colSpan={
                                 columnCount
                               }
-                              className="p-4"
+                              className="px-3 py-3"
                             >
                               <EditEquipmentForm
                                 equipment={

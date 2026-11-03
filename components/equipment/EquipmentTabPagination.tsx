@@ -61,12 +61,12 @@ export default function EquipmentTabPagination({
       )
     : 0;
   const buttonClasses =
-    "inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2";
+    "inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
   return (
     <nav
       aria-label="Сторінки розділу техніки"
-      className="mt-4 flex min-w-0 flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+      className="mt-4 flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="text-center text-xs text-gray-500 sm:text-left sm:text-sm">
         Сторінка {page}

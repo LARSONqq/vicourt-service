@@ -10,10 +10,10 @@ export default function WarehouseItemError({
   reset,
 }: Props) {
   return (
-    <main className="mx-auto w-full max-w-3xl p-4 sm:p-6">
+    <main className="mx-auto w-full max-w-3xl p-4">
       <section
         role="alert"
-        className="rounded-xl border border-red-200 bg-red-50 p-5 sm:p-6"
+        className="rounded-lg border border-red-200 bg-red-50 p-5 sm:p-4"
       >
         <h1 className="text-xl font-semibold text-red-800">
           Не вдалося завантажити паспорт матеріалу

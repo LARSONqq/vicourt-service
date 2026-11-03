@@ -35,7 +35,7 @@ export default class EquipmentTabErrorBoundary extends Component<
       return (
         <section
           role="alert"
-          className="min-w-0 rounded-xl border border-red-200 bg-red-50 p-4 sm:p-5"
+          className="min-w-0 rounded-lg border border-red-200 bg-red-50 p-4"
         >
           <h2 className="font-semibold text-red-800">
             Не вдалося завантажити розділ

@@ -254,7 +254,7 @@ export default function WarehouseList({
         </p>
 
         {!canManage && (
-          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+          <span className="vc-status-info">
             Тільки перегляд
           </span>
         )}
@@ -263,7 +263,7 @@ export default function WarehouseList({
       {safeItems.length ===
       0 ? (
         /* EMPTY */
-        <div className="vc-surface p-6 text-center sm:p-8">
+        <div className="vc-surface p-6 text-center sm:p-5">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
             📦
           </div>
@@ -343,14 +343,14 @@ export default function WarehouseList({
                     data-warehouse-item-id={
                       item.id
                     }
-                    className={`vc-surface scroll-mt-24 min-w-0 p-4 transition hover:shadow-md ${
+                    className={`vc-surface scroll-mt-24 min-w-0 p-4 transition hover:bg-muted/35 ${
                       isOutOfStock
-                        ? "border-red-300"
+                        ? "border-destructive/30"
                         : isLowStock
-                          ? "border-amber-300"
+                          ? "border-amber-300/40"
                         : focusedItemId ===
                             item.id
-                          ? "border-green-300"
+                          ? "border-primary/30"
                           : ""
                     }`}
                   >
@@ -361,7 +361,7 @@ export default function WarehouseList({
                           <h3 className="break-words font-semibold text-gray-900">
                             <Link
                               href={`/warehouse/${item.id}`}
-                              className="rounded-sm text-green-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                              className="rounded-sm text-foreground transition hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                             >
                               {
                                 item.name
@@ -380,27 +380,13 @@ export default function WarehouseList({
                     </div>
 
                     {/* QUANTITY */}
-                    <div
-                      className={`mt-4 rounded-xl p-3 ${
-                        isOutOfStock
-                          ? "bg-red-50"
-                          : isLowStock
-                            ? "bg-amber-50"
-                          : "bg-green-50"
-                      }`}
-                    >
+                    <div className="mt-4 rounded-md bg-muted/40 p-3">
                       <p className="text-xs text-gray-500">
                         Залишок
                       </p>
 
                       <p
-                        className={`mt-1 text-2xl font-bold ${
-                          isOutOfStock
-                            ? "text-red-700"
-                            : isLowStock
-                              ? "text-amber-700"
-                            : "text-green-700"
-                        }`}
+                        className={`mt-1 text-2xl font-semibold ${badge.valueClass}`}
                       >
                         {formatWarehouseQuantity(
                           quantity
@@ -465,7 +451,7 @@ export default function WarehouseList({
                               Вартість
                             </p>
 
-                            <p className="mt-1 break-words text-sm font-semibold text-green-700">
+                            <p className="mt-1 break-words text-sm font-semibold text-foreground">
                               {formatMoney(
                                 totalValue,
                                 currency
@@ -495,7 +481,7 @@ export default function WarehouseList({
                             item.id
                           )
                         }
-                        className="min-h-10 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                        className="min-h-10 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {isDetailsOpen
                           ? "Сховати деталі"
@@ -517,7 +503,7 @@ export default function WarehouseList({
                               "in"
                             )
                           }
-                          className="min-h-10 rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-100"
+                          className="min-h-10 rounded-md border border-primary/20 bg-accent px-3 py-2 text-sm font-medium text-primary transition hover:bg-accent/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           + Корекція
                         </button>
@@ -534,7 +520,7 @@ export default function WarehouseList({
                             quantity <=
                             0
                           }
-                          className="min-h-10 rounded-lg bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 transition hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="vc-panel-warning min-h-10 rounded-md border border-transparent px-3 py-2 text-sm font-medium transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           − Корекція
                         </button>
@@ -546,7 +532,7 @@ export default function WarehouseList({
                               item.id
                             )
                           }
-                          className="min-h-10 rounded-lg border px-3 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
+                          className="min-h-10 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-primary transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           Редагувати
                         </button>
@@ -574,7 +560,7 @@ export default function WarehouseList({
                         >
                           <button
                             type="submit"
-                            className="min-h-10 w-full rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                            className="min-h-10 w-full rounded-md border border-destructive/20 px-3 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             Видалити
                           </button>
@@ -586,7 +572,7 @@ export default function WarehouseList({
                     {isMovementOpen &&
                       movementEditor && (
                         <div className="mt-4 min-w-0 border-t pt-4">
-                          <div className="rounded-xl border bg-gray-50 p-3">
+                          <div className="rounded-lg border bg-gray-50 p-3">
                             <div className="mb-4 flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <h4 className="break-words font-semibold text-gray-900">
@@ -704,39 +690,39 @@ export default function WarehouseList({
             >
               <thead className="bg-gray-50 text-left">
                 <tr>
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Назва
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Категорія
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Залишок
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Мінімум
                   </th>
 
                   {canViewCosts && (
                     <>
-                      <th className="p-4">
+                      <th className="px-3 py-3">
                         Ціна
                       </th>
 
-                      <th className="p-4">
+                      <th className="px-3 py-3">
                         Вартість
                       </th>
                     </>
                   )}
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Постачальник
                   </th>
 
-                  <th className="p-4 text-right">
+                  <th className="px-3 py-3 text-right">
                     Дії
                   </th>
                 </tr>
@@ -803,18 +789,18 @@ export default function WarehouseList({
                           data-warehouse-item-id={
                             item.id
                           }
-                          className={`scroll-mt-24 border-t transition hover:bg-gray-50/80 ${
+                          className={`scroll-mt-24 border-t transition hover:bg-muted/40 ${
                             focusedItemId ===
                             item.id
-                              ? "bg-green-50/50"
+                              ? "bg-accent/50"
                               : ""
                           }`}
                         >
-                          <td className="p-4">
+                          <td className="px-3 py-3">
                             <div className="flex items-center gap-3">
                               <Link
                                 href={`/warehouse/${item.id}`}
-                                className="rounded-sm font-medium text-green-800 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                                className="rounded-sm font-medium text-foreground transition hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                               >
                                 {
                                   item.name
@@ -826,19 +812,13 @@ export default function WarehouseList({
                             <WarehousePurchaseHint item={item} management={canCreatePurchases} plannedQuantity={insight.plannedQuantity} currency={currency} />
                           </td>
 
-                          <td className="p-4 text-gray-600">
+                          <td className="px-3 py-3 text-gray-600">
                             {item.category ||
                               "Без категорії"}
                           </td>
 
                           <td
-                            className={`p-4 font-semibold ${
-                              isOutOfStock
-                                ? "text-red-700"
-                                : isLowStock
-                                  ? "text-amber-700"
-                                : "text-green-700"
-                            }`}
+                            className={`px-3 py-3 font-semibold ${badge.valueClass}`}
                           >
                             {
                               formatWarehouseQuantity(
@@ -850,7 +830,7 @@ export default function WarehouseList({
                             }
                           </td>
 
-                          <td className="p-4 text-gray-600">
+                          <td className="px-3 py-3 text-gray-600">
                             {
                               item.min_quantity == null ? "Не задано" : formatWarehouseQuantity(minQuantity)
                             }{" "}
@@ -870,14 +850,14 @@ export default function WarehouseList({
 
                           {canViewCosts && (
                             <>
-                              <td className="p-4">
+                              <td className="px-3 py-3">
                                 {formatMoney(
                                   purchasePrice,
                                   currency
                                 )}
                               </td>
 
-                              <td className="p-4 font-medium">
+                              <td className="px-3 py-3 font-medium">
                                 {formatMoney(
                                   quantity *
                                     purchasePrice,
@@ -887,12 +867,12 @@ export default function WarehouseList({
                             </>
                           )}
 
-                          <td className="p-4 text-gray-600">
+                          <td className="px-3 py-3 text-gray-600">
                             {item.supplier ||
                               "Не вказано"}
                           </td>
 
-                          <td className="p-4">
+                          <td className="px-3 py-3">
                             <div className="flex flex-wrap justify-end gap-2">
                               <button
                                 type="button"
@@ -901,7 +881,7 @@ export default function WarehouseList({
                                     item.id
                                   )
                                 }
-                                className="rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                className="rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                               >
                                 {isDetailsOpen
                                   ? "Сховати"
@@ -920,7 +900,7 @@ export default function WarehouseList({
                                       "in"
                                     )
                                   }
-                                  className="rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100"
+                                  className="rounded-md border border-primary/20 bg-accent px-3 py-2 text-sm font-medium text-primary transition hover:bg-accent/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 >
                                   + Корекція
                                 </button>
@@ -937,7 +917,7 @@ export default function WarehouseList({
                                     quantity <=
                                     0
                                   }
-                                  className="rounded-lg bg-orange-50 px-3 py-2 text-sm font-medium text-orange-700 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-40"
+                                  className="vc-panel-warning rounded-md border border-transparent px-3 py-2 text-sm font-medium transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                   − Корекція
                                 </button>
@@ -949,7 +929,7 @@ export default function WarehouseList({
                                       item.id
                                     )
                                   }
-                                  className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+                                  className="rounded-md px-3 py-2 text-sm font-medium text-primary transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 >
                                   Редагувати
                                 </button>
@@ -976,7 +956,7 @@ export default function WarehouseList({
                                 >
                                   <button
                                     type="submit"
-                                    className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                                    className="rounded-md px-3 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                   >
                                     Видалити
                                   </button>
@@ -1008,9 +988,9 @@ export default function WarehouseList({
                                 colSpan={
                                   columnCount
                                 }
-                                className="p-4"
+                                className="px-3 py-3"
                               >
-                                <div className="rounded-xl border bg-gray-50 p-5">
+                                <div className="rounded-lg border bg-gray-50 p-5">
                                   <div className="mb-5 flex items-start justify-between gap-4">
                                     <div>
                                       <h3 className="text-lg font-semibold">
@@ -1044,7 +1024,7 @@ export default function WarehouseList({
                                           null
                                         )
                                       }
-                                      className="rounded-lg border bg-white px-3 py-2 text-sm hover:bg-gray-100"
+                                      className="rounded-lg border border-border bg-card px-3 py-2 text-sm hover:bg-gray-100"
                                     >
                                       Закрити
                                     </button>
@@ -1079,7 +1059,7 @@ export default function WarehouseList({
                               colSpan={
                                 columnCount
                               }
-                              className="p-4"
+                              className="px-3 py-3"
                             >
                               <EditWarehouseItemForm
                                 item={
@@ -1101,7 +1081,7 @@ export default function WarehouseList({
                               colSpan={
                                 columnCount
                               }
-                              className="p-4"
+                              className="px-3 py-3"
                             >
                               <WarehouseItemPlanningPanel
                                 item={

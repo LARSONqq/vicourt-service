@@ -176,7 +176,7 @@ function VoidRecordAction({
           rows={2}
           required
           maxLength={1000}
-          className="mt-1 w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-red-500"
+          className="mt-1 w-full min-w-0 resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-red-500"
         />
       </label>
       {error && (
@@ -232,9 +232,9 @@ export default function EquipmentServiceHistory({
   return (
     <section className="vc-surface min-w-0 overflow-hidden">
       {/* HEADER */}
-      <div className="flex min-w-0 flex-col gap-3 border-b p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+          <h2 className="text-lg font-semibold text-gray-900">
             Історія обслуговування
           </h2>
 
@@ -263,7 +263,7 @@ export default function EquipmentServiceHistory({
       {/* EMPTY */}
       {safeRecords.length ===
       0 ? (
-        <div className="p-6 text-center sm:p-8">
+        <div className="p-6 text-center sm:p-5">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
             🔧
           </div>
@@ -288,7 +288,7 @@ export default function EquipmentServiceHistory({
                   key={
                     record.id
                   }
-                  className="min-w-0 rounded-xl border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white"
+                  className="min-w-0 rounded-lg border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white"
                 >
                   {/* TOP */}
                   <div className={`flex min-w-0 items-start gap-3 ${singleEquipment ? "justify-end" : "justify-between"}`}>
@@ -446,48 +446,48 @@ export default function EquipmentServiceHistory({
             >
               <thead className="bg-gray-50 text-left">
                 <tr>
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Дата
                   </th>
 
                   {!singleEquipment && (
-                    <th className="p-4">
+                    <th className="px-3 py-3">
                       Техніка
                     </th>
                   )}
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Тип
                   </th>
 
                   {showCost && (
-                    <th className="p-4">
+                    <th className="px-3 py-3">
                       Вартість
                     </th>
                   )}
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Хто виконав
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Опис
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Наступний сервіс
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Напрацювання
                   </th>
 
-                  <th className="p-4">
+                  <th className="px-3 py-3">
                     Стан
                   </th>
 
                   {canManage && (
-                    <th className="p-4 text-right">
+                    <th className="px-3 py-3 text-right">
                       Дії
                     </th>
                   )}
@@ -503,14 +503,14 @@ export default function EquipmentServiceHistory({
                       }
                       className="border-t"
                     >
-                      <td className="whitespace-nowrap p-4 text-gray-600">
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-600">
                         {formatDate(
                           record.service_date
                         )}
                       </td>
 
                       {!singleEquipment && (
-                        <td className="p-4">
+                        <td className="px-3 py-3">
                         <p className="font-medium">
                           {record
                             .equipment
@@ -532,7 +532,7 @@ export default function EquipmentServiceHistory({
                         </td>
                       )}
 
-                      <td className="p-4">
+                      <td className="px-3 py-3">
                         <span
                           className={`inline-block rounded-full px-3 py-1 text-sm font-medium ${getTypeClasses(
                             record.service_type
@@ -545,7 +545,7 @@ export default function EquipmentServiceHistory({
                       </td>
 
                       {showCost && (
-                        <td className="p-4 font-medium">
+                        <td className="px-3 py-3 font-medium">
                           {"cost" in record
                             ? formatMoney(
                                 Number(
@@ -557,25 +557,25 @@ export default function EquipmentServiceHistory({
                         </td>
                       )}
 
-                      <td className="p-4 text-gray-600">
+                      <td className="px-3 py-3 text-gray-600">
                         {record.performed_by ||
                           "Не вказано"}
                       </td>
 
-                      <td className="p-4 text-gray-600">
+                      <td className="px-3 py-3 text-gray-600">
                         <p className="max-w-sm whitespace-pre-wrap break-words">
                           {record.description ||
                             "Без опису"}
                         </p>
                       </td>
 
-                      <td className="whitespace-nowrap p-4 text-gray-600">
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-600">
                         {formatDate(
                           record.next_service_date
                         )}
                       </td>
 
-                      <td className="whitespace-nowrap p-4 text-gray-600">
+                      <td className="whitespace-nowrap px-3 py-3 text-gray-600">
                         {record.usage_type_snapshot
                           ? formatEquipmentUsage(
                               record.usage_reading,
@@ -584,7 +584,7 @@ export default function EquipmentServiceHistory({
                           : "—"}
                       </td>
 
-                      <td className="p-4">
+                      <td className="px-3 py-3">
                         <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${record.voided_at ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}>
                           {record.voided_at ? "Анульовано" : "Активний"}
                         </span>
@@ -596,7 +596,7 @@ export default function EquipmentServiceHistory({
                       </td>
 
                       {canManage && (
-                        <td className="p-4">
+                        <td className="px-3 py-3">
                           {!record.voided_at ? (
                             <VoidRecordAction recordId={record.id} />
                           ) : (

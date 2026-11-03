@@ -47,10 +47,10 @@ export default async function WarehousePage({ searchParams }: Props) {
       <div className="min-w-0"><p className="text-sm font-medium text-green-700">Матеріали та запаси</p><h1 className="vc-page-title mt-1 break-words">Склад</h1><p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">Залишки, потреба в матеріалах та очікувані закупівлі</p></div>
       {canManage && <div className="min-w-0"><WarehouseActions items={directory.items} /><p className="mt-2 text-xs text-gray-500">У формі корекції — матеріали поточної сторінки. Інші знайдіть через фільтри або паспорт.</p></div>}
     </header>
-    {!purchasing && <p className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">Режим перегляду: залишки та параметри запасу матеріалів.</p>}
+    {!purchasing && <p className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">Режим перегляду: залишки та параметри запасу матеріалів.</p>}
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {cards.map((card) => <Link key={card.stock} href={warehouseDirectoryHref({ q: "", category: "", stock: card.stock }, 1, query)} aria-current={directory.filters.stock === card.stock ? "page" : undefined} className={`vc-surface min-w-0 p-4 transition hover:border-green-400 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 ${directory.filters.stock === card.stock ? "border-green-600 ring-1 ring-green-600" : ""}`}>
-        <p className="text-sm text-gray-500">{card.label}</p><p className={`mt-2 text-2xl font-bold ${card.stock === "out" ? "text-red-700" : card.stock === "low" ? "text-orange-700" : "text-gray-900"}`}>{card.count}</p>
+      {cards.map((card) => <Link key={card.stock} href={warehouseDirectoryHref({ q: "", category: "", stock: card.stock }, 1, query)} aria-current={directory.filters.stock === card.stock ? "page" : undefined} className={`vc-surface min-w-0 p-4 transition hover:border-primary/40 hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${directory.filters.stock === card.stock ? "border-primary ring-1 ring-primary" : ""}`}>
+        <p className="text-sm text-gray-500">{card.label}</p><p className={`mt-2 text-2xl font-semibold ${card.stock === "out" ? "text-red-700" : card.stock === "low" ? "vc-text-warning" : card.stock === "normal" ? "text-green-700" : "text-gray-900"}`}>{card.count}</p>
       </Link>)}
     </div>
     <p className="text-xs text-gray-500">Постачальників: {directory.supplierCount}{directory.totalValue !== null && <> · Вартість залишків: {new Intl.NumberFormat("uk-UA", { style: "currency", currency: settings.currency }).format(directory.totalValue)}</>}</p>

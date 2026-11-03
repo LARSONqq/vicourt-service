@@ -68,7 +68,7 @@ export default function EquipmentTasksSection({
     <section className="min-w-0 space-y-4">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+          <h2 className="text-lg font-semibold text-gray-900">
             Завдання техніки
           </h2>
           <p className="mt-1 text-sm leading-5 text-gray-500">
@@ -85,7 +85,7 @@ export default function EquipmentTasksSection({
       </div>
 
       {page.items.length === 0 ? (
-        <div className="rounded-xl border border-dashed bg-white p-6 text-center">
+        <div className="rounded-lg border border-dashed bg-white p-6 text-center">
           <p className="font-medium text-gray-700">
             Завдань для цієї техніки немає
           </p>
@@ -104,7 +104,7 @@ export default function EquipmentTasksSection({
             return (
               <article
                 key={task.id}
-                className="vc-surface min-w-0 p-4 sm:p-5"
+                className="vc-surface min-w-0 p-4"
               >
                 <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">

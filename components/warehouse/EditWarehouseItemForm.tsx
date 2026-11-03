@@ -56,7 +56,7 @@ export default function EditWarehouseItemForm({
   return (
     <form
       action={handleSubmit}
-      className="min-w-0 space-y-5 rounded-xl border bg-gray-50 p-3 sm:p-5"
+      className="min-w-0 space-y-5 rounded-lg border bg-gray-50 p-3 sm:p-4"
     >
       <input
         type="hidden"
@@ -91,7 +91,7 @@ export default function EditWarehouseItemForm({
         <input
           name="name"
           defaultValue={item.name}
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+          className="vc-field min-h-11 w-full min-w-0"
           required
         />
       </div>
@@ -108,7 +108,7 @@ export default function EditWarehouseItemForm({
             defaultValue={
               item.category || ""
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             <option
@@ -141,7 +141,7 @@ export default function EditWarehouseItemForm({
             defaultValue={
               item.supplier || ""
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
           />
 
           <p className="mt-2 text-xs text-gray-400">
@@ -152,7 +152,7 @@ export default function EditWarehouseItemForm({
         </div>
       </div>
 
-      <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800 sm:p-4">
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800 sm:p-4">
         <p className="font-medium">
           Залишок: {item.quantity} {item.unit} · облікова ціна:{" "}
           {Number(item.purchase_price).toFixed(2)} ₴
@@ -176,7 +176,7 @@ export default function EditWarehouseItemForm({
             defaultValue={
               item.unit
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             <option value="шт">
@@ -231,7 +231,7 @@ export default function EditWarehouseItemForm({
             defaultValue={
               item.min_quantity ?? ""
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
           />
 
           <p className="mt-2 text-xs text-gray-400">
@@ -256,7 +256,7 @@ export default function EditWarehouseItemForm({
               ""
             }
             placeholder="Не задано"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
           />
 
           <p className="mt-2 text-xs text-gray-400">
@@ -272,7 +272,7 @@ export default function EditWarehouseItemForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."
@@ -283,7 +283,7 @@ export default function EditWarehouseItemForm({
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="min-h-11 w-full rounded-lg border bg-white px-4 py-3 font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-lg border border-border bg-card px-4 py-3 font-medium text-gray-700 transition hover:bg-gray-100 disabled:opacity-60 sm:w-fit"
         >
           Скасувати
         </button>

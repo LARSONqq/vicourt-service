@@ -63,7 +63,7 @@ export function EditEquipmentForm({
   return (
     <form
       action={handleSubmit}
-      className="min-w-0 space-y-5 rounded-xl border bg-gray-50 p-3 sm:p-5"
+      className="min-w-0 space-y-5 rounded-lg border bg-gray-50 p-3 sm:p-4"
     >
       <input
         type="hidden"
@@ -101,7 +101,7 @@ export function EditEquipmentForm({
           defaultValue={
             equipment.name
           }
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+          className="vc-field min-h-11 w-full min-w-0"
           required
         />
       </div>
@@ -119,7 +119,7 @@ export function EditEquipmentForm({
               equipment.category ||
               ""
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             <option
@@ -152,7 +152,7 @@ export function EditEquipmentForm({
             defaultValue={
               equipment.status
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             {equipmentStatuses.map(
@@ -180,7 +180,7 @@ export function EditEquipmentForm({
               equipment.inventory_number ||
               ""
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 uppercase outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 uppercase"
             required
           />
 
@@ -207,7 +207,7 @@ export function EditEquipmentForm({
                   )
                 : ""
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
           >
             <option value="">
               Не призначати
@@ -250,7 +250,7 @@ export function EditEquipmentForm({
               ""
             }
             placeholder="Склад, офіс або об’єкт"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
           />
         </div>
       </div>
@@ -269,13 +269,13 @@ export function EditEquipmentForm({
               equipment.purchase_date ||
               ""
             }
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
           />
         </div>
       </div>
 
       {/* PLANNED MAINTENANCE */}
-      <fieldset className="min-w-0 rounded-xl border bg-white p-4 sm:p-5">
+      <fieldset className="min-w-0 rounded-lg border border-border bg-card p-4">
         <legend className="px-1 text-sm font-semibold text-gray-900">
           Планове ТО
         </legend>
@@ -302,7 +302,7 @@ export function EditEquipmentForm({
                 ""
               }
               placeholder="Наприклад: 90"
-              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
             />
 
             <datalist
@@ -327,7 +327,7 @@ export function EditEquipmentForm({
                 equipment.next_service_date ||
                 ""
               }
-              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0"
             />
           </div>
         </div>
@@ -346,7 +346,7 @@ export function EditEquipmentForm({
             equipment.notes ||
             ""
           }
-          className="w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+          className="vc-field w-full min-w-0 resize-none"
         />
       </div>
 
@@ -357,7 +357,7 @@ export function EditEquipmentForm({
           disabled={
             isSubmitting
           }
-          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-lg bg-primary px-5 py-3 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."
@@ -372,7 +372,7 @@ export function EditEquipmentForm({
           disabled={
             isSubmitting
           }
-          className="min-h-11 w-full rounded-lg border bg-white px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-lg border border-border bg-card px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           Скасувати
         </button>

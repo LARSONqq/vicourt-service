@@ -47,9 +47,9 @@ export default function EquipmentWorkSessionList({
     context === "object";
 
   return (
-    <section className="vc-surface min-w-0 p-4 sm:p-6">
+    <section className="vc-surface min-w-0 p-4">
       <div className="min-w-0">
-        <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+        <h2 className="text-lg font-semibold text-gray-900">
           {isObjectContext
             ? "Використання техніки"
             : "Робота з технікою"}
@@ -65,7 +65,7 @@ export default function EquipmentWorkSessionList({
       </div>
 
       {items.length === 0 ? (
-        <div className="mt-5 rounded-xl border border-dashed bg-gray-50/50 p-6 text-center sm:p-8">
+        <div className="mt-5 rounded-lg border border-dashed bg-gray-50/50 p-6 text-center sm:p-5">
           <p className="font-medium text-gray-700">
             {isObjectContext
               ? "На цьому об’єкті ще немає записів роботи техніки."
@@ -88,7 +88,7 @@ export default function EquipmentWorkSessionList({
             return (
               <article
                 key={item.id}
-                className="min-w-0 rounded-xl border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white"
+                className="min-w-0 rounded-lg border border-gray-200 bg-gray-50/40 p-4 transition hover:border-gray-300 hover:bg-white"
               >
                 <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">

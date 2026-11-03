@@ -207,10 +207,10 @@ export default function WarehouseMovements({
   return (
     <section
       id="materials-ledger"
-      className="scroll-mt-4 overflow-hidden rounded-xl border bg-white"
+      className="scroll-mt-4 overflow-hidden rounded-lg border border-border bg-card"
     >
-      <div className="border-b p-4 sm:p-5">
-        <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+      <div className="border-b p-4">
+        <h2 className="text-lg font-semibold text-gray-900">
           Рух матеріалів
         </h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -232,7 +232,7 @@ export default function WarehouseMovements({
             name="ledger_search"
             defaultValue={filters.search || ""}
             placeholder="Матеріал, об’єкт, виконавець або причина"
-            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
+            className="vc-field mt-2 min-h-11 w-full py-2 font-normal"
           />
         </label>
 
@@ -241,7 +241,7 @@ export default function WarehouseMovements({
           <select
             name="ledger_item"
             defaultValue={filters.item || ""}
-            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
+            className="vc-field mt-2 min-h-11 w-full py-2 font-normal"
           >
             <option value="">Усі матеріали</option>
             {items.map((item) => (
@@ -257,7 +257,7 @@ export default function WarehouseMovements({
           <select
             name="ledger_movement"
             defaultValue={filters.movement || ""}
-            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
+            className="vc-field mt-2 min-h-11 w-full py-2 font-normal"
           >
             <option value="">Усі типи</option>
             {warehouseMovementOptions.map((option) => (
@@ -273,7 +273,7 @@ export default function WarehouseMovements({
           <select
             name="ledger_object"
             defaultValue={filters.object || ""}
-            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
+            className="vc-field mt-2 min-h-11 w-full py-2 font-normal"
           >
             <option value="">Усі об’єкти</option>
             {objects.map((object) => (
@@ -290,7 +290,7 @@ export default function WarehouseMovements({
             type="date"
             name="ledger_from"
             defaultValue={filters.from || ""}
-            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
+            className="vc-field mt-2 min-h-11 w-full py-2 font-normal"
           />
         </label>
 
@@ -300,20 +300,20 @@ export default function WarehouseMovements({
             type="date"
             name="ledger_to"
             defaultValue={filters.to || ""}
-            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 font-normal outline-none focus:border-green-600"
+            className="vc-field mt-2 min-h-11 w-full py-2 font-normal"
           />
         </label>
 
         <div className="flex flex-col gap-2 md:col-span-2 sm:flex-row xl:col-span-3">
           <button
             type="submit"
-            className="min-h-11 rounded-lg bg-green-600 px-5 py-2 font-medium text-white hover:bg-green-700"
+            className="min-h-11 rounded-lg bg-primary px-5 py-2 font-medium text-primary-foreground hover:bg-primary/90"
           >
             Застосувати
           </button>
           <Link
             href={buildPageHref({ q: filters.q, category: filters.category, stock: filters.stock, page: filters.page }, 1)}
-            className="flex min-h-11 items-center justify-center rounded-lg border bg-white px-5 py-2 font-medium text-gray-700 hover:bg-gray-100"
+            className="flex min-h-11 items-center justify-center rounded-lg border border-border bg-card px-5 py-2 font-medium text-gray-700 hover:bg-gray-100"
           >
             Скинути
           </Link>
@@ -335,27 +335,27 @@ export default function WarehouseMovements({
 
           <div className="space-y-3 p-3 md:hidden">
             {movementPage.movements.map((movement) => (
-              <article key={movement.id} className="space-y-3 rounded-xl border p-4">
+              <article key={movement.id} className="space-y-3 rounded-lg border p-4">
                 <MovementDetails movement={movement} currency={currency} />
               </article>
             ))}
           </div>
 
-          <div className="hidden overflow-x-auto md:block">
+          <div className="hidden overflow-x-auto overscroll-x-contain md:block">
             <table className="w-full min-w-[1100px] text-sm">
               <thead className="bg-gray-50 text-left text-gray-600">
                 <tr>
-                  <th className="p-4 font-medium">Матеріал / дата</th>
-                  <th className="p-4 font-medium">Тип</th>
-                  <th className="p-4 font-medium">Кількість / вартість</th>
-                  <th className="p-4 font-medium">Об’єкт / виконавець</th>
-                  <th className="p-4 font-medium">Залишки / причина</th>
+                  <th className="px-3 py-3 font-medium">Матеріал / дата</th>
+                  <th className="px-3 py-3 font-medium">Тип</th>
+                  <th className="px-3 py-3 font-medium">Кількість / вартість</th>
+                  <th className="px-3 py-3 font-medium">Об’єкт / виконавець</th>
+                  <th className="px-3 py-3 font-medium">Залишки / причина</th>
                 </tr>
               </thead>
               <tbody>
                 {movementPage.movements.map((movement) => (
                   <tr key={movement.id} className="border-t align-top">
-                    <td className="p-4">
+                    <td className="px-3 py-3">
                       <p className="break-words font-semibold text-gray-900">
                         {getItemName(movement)}
                       </p>
@@ -363,12 +363,12 @@ export default function WarehouseMovements({
                         {formatKyivTimestamp(movement.created_at) || "Невідома дата"}
                       </p>
                     </td>
-                    <td className="p-4">
+                    <td className="px-3 py-3">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getBadgeClass(movement)}`}>
                         {warehouseMovementLabels[movement.movement_code]}
                       </span>
                     </td>
-                    <td className="p-4">
+                    <td className="px-3 py-3">
                       <p className="font-semibold">
                         {getQuantitySign(movement)}{formatQuantity(Number(movement.quantity))}{" "}
                         {movement.unit_snapshot}
@@ -380,7 +380,7 @@ export default function WarehouseMovements({
                         {formatMoney(Number(movement.total_cost), currency)}
                       </p>
                     </td>
-                    <td className="p-4">
+                    <td className="px-3 py-3">
                       {getObjectName(movement) ? (
                         movement.object_id ? (
                           <Link href={`/objects/${movement.object_id}`} className="font-medium text-green-700 hover:underline">
@@ -396,7 +396,7 @@ export default function WarehouseMovements({
                         {movement.performed_by_name || (movement.performed_by ? "Користувач" : "Система")}
                       </p>
                     </td>
-                    <td className="p-4 text-gray-600">
+                    <td className="px-3 py-3 text-gray-600">
                       {movement.warehouse_quantity_after !== null && (
                         <p>Склад: {formatQuantity(Number(movement.warehouse_quantity_after))} {movement.unit_snapshot}</p>
                       )}

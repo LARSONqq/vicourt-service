@@ -61,7 +61,7 @@ export default function AddWarehouseItemForm({
           type="text"
           name="name"
           placeholder="Наприклад: Кора соснова"
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
           required
         />
       </div>
@@ -76,7 +76,7 @@ export default function AddWarehouseItemForm({
           <select
             name="category"
             defaultValue=""
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             <option
@@ -108,7 +108,7 @@ export default function AddWarehouseItemForm({
             type="text"
             name="supplier"
             placeholder="Назва постачальника"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
           />
 
           <p className="mt-2 text-xs text-gray-400">
@@ -133,7 +133,7 @@ export default function AddWarehouseItemForm({
             min="0"
             step="0.01"
             defaultValue="0"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           />
         </div>
@@ -146,7 +146,7 @@ export default function AddWarehouseItemForm({
           <select
             name="unit"
             defaultValue="шт"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
             required
           >
             <option value="шт">
@@ -199,7 +199,7 @@ export default function AddWarehouseItemForm({
             min="0"
             step="0.01"
             defaultValue="0"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0"
           />
 
           <p className="mt-2 text-xs text-gray-400">
@@ -220,7 +220,7 @@ export default function AddWarehouseItemForm({
             min="0"
             step="0.01"
             placeholder="Не задано"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 placeholder:text-gray-400"
           />
 
           <p className="mt-2 text-xs text-gray-400">
@@ -242,7 +242,7 @@ export default function AddWarehouseItemForm({
               min="0"
               step="0.01"
               defaultValue="0"
-              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+              className="vc-field min-h-11 w-full min-w-0"
             />
 
             <span className="flex min-h-11 items-center rounded-lg bg-gray-100 px-4 text-sm font-medium text-gray-600">
@@ -266,7 +266,7 @@ export default function AddWarehouseItemForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 sm:w-fit"
+          className="min-h-11 w-full rounded-lg bg-primary px-5 py-3 font-medium text-primary-foreground transition hover:bg-primary/90 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження…"

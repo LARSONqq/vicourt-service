@@ -224,13 +224,13 @@ async function EquipmentDirectoryContent({
           ([label, value, className]) => (
             <div
               key={label}
-              className="vc-surface min-w-0 p-3 sm:p-5"
+              className="vc-surface min-w-0 p-3 sm:p-4"
             >
               <p className="text-xs leading-4 text-gray-500 sm:text-sm">
                 {label}
               </p>
               <p
-                className={`mt-2 text-2xl font-bold sm:text-3xl ${className}`}
+                className={`mt-2 text-2xl font-semibold sm:text-2xl ${className}`}
               >
                 {value}
               </p>
@@ -321,7 +321,7 @@ export default async function EquipmentPage({
       </header>
 
       {!canManage && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 sm:px-5">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 sm:px-5">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm">
               👁

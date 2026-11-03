@@ -201,10 +201,10 @@ export default function EquipmentMaintenancePanel({
   }
 
   return (
-    <section className="vc-surface min-w-0 p-4 sm:p-5">
+    <section className="vc-surface min-w-0 p-4">
       <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+          <h2 className="text-lg font-semibold text-gray-900">
             Планове ТО
           </h2>
 
@@ -237,7 +237,7 @@ export default function EquipmentMaintenancePanel({
       )}
 
       {sortedEquipment.length === 0 ? (
-        <div className="mt-4 rounded-xl border border-dashed bg-gray-50 p-6 text-center text-sm text-gray-500">
+        <div className="mt-4 rounded-lg border border-dashed bg-gray-50 p-6 text-center text-sm text-gray-500">
           Спочатку додайте техніку.
         </div>
       ) : (
@@ -259,7 +259,7 @@ export default function EquipmentMaintenancePanel({
               return (
                 <article
                   key={item.id}
-                  className={`min-w-0 rounded-xl border p-4 ${
+                  className={`min-w-0 rounded-lg border p-4 ${
                     overallKind === "overdue" ||
                     overallKind === "due"
                       ? "border-red-200"
@@ -371,7 +371,7 @@ export default function EquipmentMaintenancePanel({
                           )
                         }
                         disabled={isSubmitting}
-                        className="min-h-10 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+                        className="min-h-10 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
                       >
                         {formOpen
                           ? "Закрити"
@@ -417,7 +417,7 @@ export default function EquipmentMaintenancePanel({
                             step="0.001"
                             defaultValue={item.current_usage ?? ""}
                             placeholder="Необов’язково"
-                            className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none transition focus:border-green-600"
+                            className="vc-field mt-2 min-h-11 w-full py-2"
                           />
 
                           <span className="mt-1 block text-xs font-normal leading-5 text-gray-500">
@@ -436,7 +436,7 @@ export default function EquipmentMaintenancePanel({
                           min="0"
                           step="0.01"
                           defaultValue="0"
-                          className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none transition focus:border-green-600"
+                          className="vc-field mt-2 min-h-11 w-full py-2"
                         />
                       </label>
 
@@ -447,14 +447,14 @@ export default function EquipmentMaintenancePanel({
                           name="description"
                           rows={3}
                           placeholder="Виконані роботи або важливі деталі"
-                          className="mt-2 w-full resize-none rounded-lg border bg-white px-3 py-2 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+                          className="vc-field mt-2 w-full resize-none py-2 placeholder:text-gray-400"
                         />
                       </label>
 
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="min-h-10 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="min-h-10 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isSubmitting
                           ? "Збереження…"

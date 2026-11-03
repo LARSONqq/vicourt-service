@@ -14,7 +14,7 @@ export default function EquipmentActivitySection({
   return (
     <section className="min-w-0 space-y-4">
       <div className="min-w-0">
-        <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+        <h2 className="text-lg font-semibold text-gray-900">
           Історія техніки
         </h2>
         <p className="mt-1 text-sm leading-5 text-gray-500">
@@ -23,7 +23,7 @@ export default function EquipmentActivitySection({
       </div>
 
       {page.items.length === 0 ? (
-        <div className="rounded-xl border border-dashed bg-white p-6 text-center">
+        <div className="rounded-lg border border-dashed bg-white p-6 text-center">
           <p className="font-medium text-gray-700">
             Історія поки порожня
           </p>

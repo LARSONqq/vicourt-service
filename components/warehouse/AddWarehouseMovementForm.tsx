@@ -91,7 +91,7 @@ export default function AddWarehouseMovementForm({
 
   if (safeItems.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed bg-gray-50 p-5 text-center">
+      <div className="rounded-lg border border-dashed bg-gray-50 p-5 text-center">
         <p className="font-medium text-gray-700">
           На складі ще немає позицій
         </p>
@@ -121,7 +121,7 @@ export default function AddWarehouseMovementForm({
             Напрям корекції
           </p>
           <div
-            className={`rounded-xl border p-3 font-semibold sm:p-4 ${
+            className={`rounded-lg border p-3 font-semibold sm:p-4 ${
               direction === "in"
                 ? "border-green-200 bg-green-50 text-green-800"
                 : "border-orange-200 bg-orange-50 text-orange-800"
@@ -146,7 +146,7 @@ export default function AddWarehouseMovementForm({
                 setDirection(value);
               }
             }}
-            className="min-h-11 w-full rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            className="vc-field min-h-11 w-full"
           >
             <option value="in">Збільшити залишок</option>
             <option value="out">Зменшити залишок</option>
@@ -160,7 +160,7 @@ export default function AddWarehouseMovementForm({
           <p className="mb-2 text-sm font-medium text-gray-700">
             Позиція складу
           </p>
-          <div className="rounded-xl border bg-white p-3 sm:p-4">
+          <div className="rounded-lg border border-border bg-card p-3 sm:p-4">
             <p className="break-words font-semibold text-gray-900">
               {selectedItem.name}
             </p>
@@ -178,7 +178,7 @@ export default function AddWarehouseMovementForm({
             name="item_id"
             value={selectedItemId}
             onChange={(event) => setSelectedItemId(event.target.value)}
-            className="min-h-11 w-full rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+            className="vc-field min-h-11 w-full"
             required
           >
             <option value="">Обери матеріал</option>
@@ -219,7 +219,7 @@ export default function AddWarehouseMovementForm({
                   ? Number(selectedItem.quantity)
                   : undefined
               }
-              className="min-h-11 min-w-0 rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+              className="min-h-11 min-w-0 rounded-lg border border-border bg-card px-3 py-3 outline-none focus:border-green-600"
               required
             />
             <span className="flex min-h-11 items-center rounded-lg bg-gray-100 px-4 text-sm text-gray-600">
@@ -241,7 +241,7 @@ export default function AddWarehouseMovementForm({
               min="0"
               step="0.01"
               defaultValue={selectedItem?.purchase_price ?? 0}
-              className="min-h-11 w-full rounded-lg border bg-white px-3 py-3 outline-none focus:border-green-600"
+              className="vc-field min-h-11 w-full"
               required
             />
           </div>
@@ -257,7 +257,7 @@ export default function AddWarehouseMovementForm({
           rows={3}
           maxLength={2000}
           placeholder="Наприклад: інвентаризація, знайдений залишок або пошкодження"
-          className="w-full resize-none rounded-lg border bg-white px-3 py-3 outline-none placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field w-full resize-none placeholder:text-gray-400"
           required
         />
       </div>
@@ -268,7 +268,7 @@ export default function AddWarehouseMovementForm({
           disabled={isSubmitting || !selectedItem || isOutOfStock}
           className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit ${
             direction === "in"
-              ? "bg-green-600 hover:bg-green-700"
+              ? "bg-green-600 hover:bg-primary/90"
               : "bg-orange-600 hover:bg-orange-700"
           }`}
         >

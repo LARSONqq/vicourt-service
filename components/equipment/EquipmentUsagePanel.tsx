@@ -381,10 +381,10 @@ export default function EquipmentUsagePanel({
 
   return (
     <section className="vc-surface min-w-0 overflow-hidden">
-      <div className="border-b p-4 sm:p-5">
+      <div className="border-b p-4">
         <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+            <h2 className="text-lg font-semibold text-gray-900">
               Напрацювання техніки
             </h2>
             <p className="mt-1 text-sm leading-5 text-gray-500">
@@ -403,7 +403,7 @@ export default function EquipmentUsagePanel({
                     event.target.value
                   )
                 }
-                className="mt-2 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-2 outline-none transition focus:border-green-600"
+                className="vc-field mt-2 min-h-11 w-full min-w-0 py-2"
               >
                 {equipment.map((item) => (
                   <option
@@ -424,7 +424,7 @@ export default function EquipmentUsagePanel({
           Спочатку додайте техніку.
         </div>
       ) : (
-        <div className="min-w-0 space-y-5 p-3 sm:p-5">
+        <div className="min-w-0 space-y-5 p-3 sm:p-4">
           <div className="grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-5">
             <div className="min-w-0 rounded-lg bg-gray-50 p-3">
               <p className="text-xs text-gray-500">Тип обліку</p>
@@ -512,7 +512,7 @@ export default function EquipmentUsagePanel({
               <form
                 key={`schedule-${selectedEquipment.id}`}
                 action={saveSchedule}
-                className="min-w-0 space-y-4 rounded-xl border bg-gray-50 p-4"
+                className="min-w-0 space-y-4 rounded-lg border bg-gray-50 p-4"
               >
                 <h3 className="font-semibold text-gray-900">
                   Налаштування обліку
@@ -526,7 +526,7 @@ export default function EquipmentUsagePanel({
                         event.target.value as EquipmentUsageType
                       )
                     }
-                    className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600"
+                    className="vc-field mt-2 min-h-11 w-full py-2"
                   >
                     <option value="none">Не використовується</option>
                     <option value="hours">Мотогодини</option>
@@ -544,7 +544,7 @@ export default function EquipmentUsagePanel({
                         step="0.001"
                         defaultValue={selectedEquipment.maintenance_interval_usage ?? ""}
                         placeholder={usageType === "hours" ? "Наприклад: 250" : "Наприклад: 10000"}
-                        className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600"
+                        className="vc-field mt-2 min-h-11 w-full py-2"
                       />
                     </label>
                     <label className="min-w-0 text-sm font-medium text-gray-700">
@@ -556,7 +556,7 @@ export default function EquipmentUsagePanel({
                         step="0.001"
                         defaultValue={selectedEquipment.next_maintenance_usage ?? ""}
                         placeholder="Абсолютний показник"
-                        className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600"
+                        className="vc-field mt-2 min-h-11 w-full py-2"
                       />
                     </label>
                   </div>
@@ -564,7 +564,7 @@ export default function EquipmentUsagePanel({
                 <button
                   type="submit"
                   disabled={isSavingSchedule}
-                  className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 sm:w-fit"
+                  className="min-h-11 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 sm:w-fit"
                 >
                   {isSavingSchedule ? "Збереження…" : "Зберегти налаштування"}
                 </button>
@@ -573,7 +573,7 @@ export default function EquipmentUsagePanel({
               <form
                 key={`reading-${selectedEquipment.id}`}
                 onSubmit={handleReadingSubmit}
-                className="min-w-0 space-y-4 rounded-xl border bg-gray-50 p-4"
+                className="min-w-0 space-y-4 rounded-lg border bg-gray-50 p-4"
               >
                 <div>
                   <h3 className="font-semibold text-gray-900">
@@ -598,7 +598,7 @@ export default function EquipmentUsagePanel({
                           min="0"
                           step="0.001"
                           required
-                          className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600"
+                          className="vc-field mt-2 min-h-11 w-full py-2"
                         />
                       </label>
                       <label className="min-w-0 text-sm font-medium text-gray-700">
@@ -608,7 +608,7 @@ export default function EquipmentUsagePanel({
                           name="reading_date"
                           defaultValue={today}
                           required
-                          className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600"
+                          className="vc-field mt-2 min-h-11 w-full py-2"
                         />
                       </label>
                       <label className="min-w-0 text-sm font-medium text-gray-700">
@@ -622,7 +622,7 @@ export default function EquipmentUsagePanel({
                                 .value as EquipmentUsageEntryType
                             )
                           }
-                          className="mt-2 min-h-11 w-full rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600"
+                          className="vc-field mt-2 min-h-11 w-full py-2"
                         >
                           <option value="reading">Звичайний показник</option>
                           <option value="correction">Корекція</option>
@@ -640,14 +640,14 @@ export default function EquipmentUsagePanel({
                       <textarea
                         name="note"
                         rows={2}
-                        className="mt-2 w-full resize-none rounded-lg border bg-white px-3 py-2 outline-none focus:border-green-600"
+                        className="vc-field mt-2 w-full resize-none py-2"
                       />
                     </label>
                     <button
                       type="submit"
                       data-equipment-reading-submit="true"
                       disabled={isSavingReading}
-                      className="min-h-11 w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 sm:w-fit"
+                      className="min-h-11 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 sm:w-fit"
                     >
                       {isSavingReading ? "Збереження…" : "Додати показник"}
                     </button>
@@ -657,7 +657,7 @@ export default function EquipmentUsagePanel({
             </div>
           )}
 
-          <div className="min-w-0 overflow-hidden rounded-xl border">
+          <div className="min-w-0 overflow-hidden rounded-lg border">
             <div className="border-b bg-gray-50 px-4 py-3">
               <h3 className="font-semibold text-gray-900">
                 Історія показників
@@ -671,7 +671,7 @@ export default function EquipmentUsagePanel({
               <>
                 <div className="space-y-3 p-3 md:hidden">
                   {selectedLogs.map((log) => (
-                    <article key={log.id} className="min-w-0 rounded-lg border bg-white p-3">
+                    <article key={log.id} className="min-w-0 rounded-lg border border-border bg-card p-3">
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-semibold text-gray-900">
