@@ -26,13 +26,13 @@ export default function RecurringTaskBadge({
 
   return (
     <span
-      className={`inline-flex max-w-full items-center rounded-full bg-teal-50 font-medium text-teal-700 ${
+      className={`vc-status-info min-w-0 max-w-full ${
         compact
-          ? "px-2 py-0.5 text-[10px]"
+          ? "px-2 py-0.5 text-xs"
           : "px-2.5 py-1 text-xs"
       }`}
     >
-      <span className="truncate">
+      <span className="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere]">
         ↻ Повторюване
         {detail ? ` · ${detail}` : ""}
       </span>

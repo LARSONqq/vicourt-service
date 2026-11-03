@@ -35,12 +35,12 @@ export default class ObjectTabErrorBoundary extends Component<
       return (
         <section
           role="alert"
-          className="min-w-0 rounded-xl border border-red-200 bg-red-50 p-4 sm:p-5"
+          className="min-w-0 rounded-lg border border-border bg-[var(--vc-danger-bg)] p-4 sm:p-5"
         >
-          <h2 className="font-semibold text-red-800">
+          <h2 className="font-semibold text-[var(--vc-danger-text)]">
             Не вдалося завантажити розділ
           </h2>
-          <p className="mt-1 text-sm text-red-700">
+          <p className="mt-1 text-sm text-[var(--vc-danger-text)]">
             Паспорт об’єкта залишається доступним. Спробуй оновити дані розділу.
           </p>
           <button
@@ -48,7 +48,7 @@ export default class ObjectTabErrorBoundary extends Component<
             onClick={() =>
               window.location.reload()
             }
-            className="mt-4 min-h-10 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100"
+            className="mt-4 min-h-11 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-[var(--vc-danger-text)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:bg-muted"
           >
             Спробувати ще раз
           </button>

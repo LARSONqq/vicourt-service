@@ -21,25 +21,25 @@ function getCategoryStyle(
 ) {
   switch (category) {
     case "objects":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
     case "tasks":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
     case "warehouse":
-      return "bg-amber-50 text-amber-700";
+      return "vc-status-warning";
     case "purchases":
-      return "bg-cyan-50 text-cyan-700";
+      return "vc-status-info";
     case "finance":
-      return "bg-emerald-50 text-emerald-700";
+      return "vc-status-success";
     case "equipment":
-      return "bg-slate-100 text-slate-700";
+      return "vc-status-neutral";
     case "supervision":
-      return "bg-rose-50 text-rose-700";
+      return "vc-status-warning";
     case "documents":
-      return "bg-violet-50 text-violet-700";
+      return "vc-status-info";
     case "employees":
-      return "bg-indigo-50 text-indigo-700";
+      return "vc-status-info";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "vc-status-neutral";
   }
 }
 
@@ -53,20 +53,20 @@ function EntityValue({
   href: string | null;
 }) {
   return (
-    <p className="min-w-0 break-words text-sm text-gray-600">
-      <span className="text-gray-400">
+    <p className="min-w-0 break-words [overflow-wrap:anywhere] text-sm text-muted-foreground">
+      <span className="text-muted-foreground">
         {label}:{" "}
       </span>
 
       {href ? (
         <Link
           href={href}
-          className="font-medium text-green-700 hover:underline"
+          className="inline-flex min-h-11 max-w-full items-center rounded-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {name}
         </Link>
       ) : (
-        <span className="font-medium text-gray-700">
+        <span className="font-medium text-foreground">
           {name}
         </span>
       )}
@@ -94,7 +94,7 @@ export default function ActivityTimelineList({
         return (
           <article
             key={log.id}
-            className={`min-w-0 rounded-xl border bg-white ${
+            className={`min-w-0 rounded-lg border border-border bg-card ${
               compact
                 ? "p-3 sm:p-4"
                 : "p-4 sm:p-5"
@@ -103,7 +103,7 @@ export default function ActivityTimelineList({
             <div className="flex min-w-0 items-start gap-3">
               <div
                 aria-hidden="true"
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm ${getCategoryStyle(
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md !p-0 text-sm ${getCategoryStyle(
                   presentation.category
                 )}`}
               >
@@ -113,11 +113,11 @@ export default function ActivityTimelineList({
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <p className="break-words font-semibold text-gray-900">
+                    <p className="break-words [overflow-wrap:anywhere] font-semibold text-foreground">
                       {presentation.label}
                     </p>
 
-                    <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                    <p className="mt-1 break-words [overflow-wrap:anywhere] text-xs text-muted-foreground sm:text-sm">
                       {formatActivityTimestamp(
                         log.created_at
                       )}
@@ -139,30 +139,30 @@ export default function ActivityTimelineList({
                   </span>
                 </div>
 
-                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-gray-700">
+                <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-6 text-foreground">
                   {presentation.description}
                 </p>
 
                 {presentation.details.length > 0 && (
-                  <dl className="mt-3 grid min-w-0 grid-cols-1 gap-2 rounded-lg bg-gray-50 p-3 text-sm sm:grid-cols-2">
+                  <dl className="mt-3 grid min-w-0 grid-cols-1 gap-2 rounded-lg bg-muted p-3 text-sm sm:grid-cols-2">
                     {presentation.details.map(
                       (detail, index) => (
                         <div
                           key={`${detail.label}-${index}`}
                           className="min-w-0"
                         >
-                          <dt className="text-xs font-medium text-gray-400">
+                          <dt className="text-xs font-medium text-muted-foreground">
                             {detail.label}
                           </dt>
-                          <dd className="mt-0.5 break-words text-gray-700">
+                          <dd className="mt-0.5 break-words [overflow-wrap:anywhere] text-foreground">
                             {detail.value ?? (
                               <>
-                                <span className="text-gray-500">
+                                <span className="text-muted-foreground">
                                   {detail.previousValue}
                                 </span>
                                 <span
                                   aria-label="змінено на"
-                                  className="mx-1.5 text-gray-400"
+                                  className="mx-1.5 text-muted-foreground"
                                 >
                                   →
                                 </span>
@@ -197,7 +197,7 @@ export default function ActivityTimelineList({
                     !presentation.entity?.href && (
                       <Link
                         href={presentation.sectionHref}
-                        className="w-fit text-sm font-medium text-green-700 hover:underline"
+                        className="inline-flex min-h-11 max-w-full items-center rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                       >
                         Відкрити розділ →
                       </Link>
@@ -205,7 +205,7 @@ export default function ActivityTimelineList({
                 </div>
 
                 {!presentation.isKnownEvent && (
-                  <p className="mt-2 break-all text-xs text-gray-400">
+                  <p className="mt-2 break-all text-xs text-muted-foreground">
                     Тип події: {log.action}
                   </p>
                 )}

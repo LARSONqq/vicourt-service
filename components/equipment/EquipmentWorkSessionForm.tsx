@@ -275,13 +275,13 @@ export default function EquipmentWorkSessionForm({
     );
 
   return (
-    <section className="min-w-0 rounded-lg border bg-gray-50 p-4">
+    <section className="min-w-0 rounded-lg border border-border bg-muted/35 p-4">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3 className="font-semibold text-gray-900">
+          <h3 className="font-semibold text-foreground">
             Використання техніки
           </h3>
-          <p className="mt-1 text-xs leading-5 text-gray-500">
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
             Запишіть фактично відпрацьовані години на конкретному об’єкті.
           </p>
         </div>
@@ -295,9 +295,9 @@ export default function EquipmentWorkSessionForm({
             isSubmitting
           }
           aria-expanded={isOpen}
-          className={`min-h-11 w-full rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
+          className={`min-h-11 w-full rounded-lg px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
             isOpen
-              ? "border bg-white text-gray-700 hover:bg-gray-100"
+              ? "border bg-card text-foreground hover:bg-muted"
               : "bg-primary text-primary-foreground hover:bg-primary/90"
           }`}
         >
@@ -312,7 +312,7 @@ export default function EquipmentWorkSessionForm({
       {successMessage && (
         <p
           role="status"
-          className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+          className="mt-4 rounded-lg border border-border bg-[var(--vc-success-bg)] p-3 text-sm text-[var(--vc-success-text)]"
         >
           {successMessage}
         </p>
@@ -321,7 +321,7 @@ export default function EquipmentWorkSessionForm({
       {errorMessage && (
         <p
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="mt-4 rounded-lg border border-border bg-[var(--vc-danger-bg)] p-3 text-sm text-[var(--vc-danger-text)]"
         >
           {errorMessage}
         </p>
@@ -332,12 +332,12 @@ export default function EquipmentWorkSessionForm({
           {isLoading ? (
             <p
               role="status"
-              className="text-sm text-gray-500"
+              className="text-sm text-muted-foreground"
             >
               Завантаження об’єктів і працівників…
             </p>
           ) : !hasOptions ? (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Для запису роботи потрібні хоча б один об’єкт і один працівник.
             </p>
           ) : (
@@ -346,7 +346,7 @@ export default function EquipmentWorkSessionForm({
               className="min-w-0 space-y-4"
             >
               <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="min-w-0 text-sm font-medium text-gray-700">
+                <label className="min-w-0 text-sm font-medium text-foreground">
                   Дата роботи
                   <input
                     type="date"
@@ -359,11 +359,11 @@ export default function EquipmentWorkSessionForm({
                     }
                     required
                     disabled={isSubmitting}
-                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 disabled:bg-gray-100"
+                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 disabled:bg-muted"
                   />
                 </label>
 
-                <label className="min-w-0 text-sm font-medium text-gray-700">
+                <label className="min-w-0 text-sm font-medium text-foreground">
                   Відпрацьовано годин
                   <input
                     type="number"
@@ -379,13 +379,13 @@ export default function EquipmentWorkSessionForm({
                     placeholder="Наприклад: 2.5"
                     required
                     disabled={isSubmitting}
-                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 placeholder:text-gray-400 disabled:bg-gray-100"
+                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 placeholder:text-muted-foreground disabled:bg-muted"
                   />
                 </label>
               </div>
 
               <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-                <label className="min-w-0 text-sm font-medium text-gray-700">
+                <label className="min-w-0 text-sm font-medium text-foreground">
                   Об’єкт
                   <select
                     value={objectId}
@@ -396,7 +396,7 @@ export default function EquipmentWorkSessionForm({
                     }
                     required
                     disabled={isSubmitting}
-                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 disabled:bg-gray-100"
+                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 disabled:bg-muted"
                   >
                     <option value="">
                       Оберіть об’єкт
@@ -414,7 +414,7 @@ export default function EquipmentWorkSessionForm({
                   </select>
                 </label>
 
-                <label className="min-w-0 text-sm font-medium text-gray-700">
+                <label className="min-w-0 text-sm font-medium text-foreground">
                   Працівник
                   <select
                     value={employeeId}
@@ -425,7 +425,7 @@ export default function EquipmentWorkSessionForm({
                     }
                     required
                     disabled={isSubmitting}
-                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 disabled:bg-gray-100"
+                    className="vc-field mt-2 min-h-11 w-full min-w-0 py-2 disabled:bg-muted"
                   >
                     <option value="">
                       Оберіть працівника
@@ -446,7 +446,7 @@ export default function EquipmentWorkSessionForm({
                 </label>
               </div>
 
-              <label className="block min-w-0 text-sm font-medium text-gray-700">
+              <label className="block min-w-0 text-sm font-medium text-foreground">
                 Примітка
                 <textarea
                   value={note}
@@ -459,7 +459,7 @@ export default function EquipmentWorkSessionForm({
                   maxLength={2000}
                   disabled={isSubmitting}
                   placeholder="Необов’язково"
-                  className="vc-field mt-2 w-full min-w-0 resize-y py-2 placeholder:text-gray-400 disabled:bg-gray-100"
+                  className="vc-field mt-2 w-full min-w-0 resize-y py-2 placeholder:text-muted-foreground disabled:bg-muted"
                 />
               </label>
 
@@ -469,7 +469,7 @@ export default function EquipmentWorkSessionForm({
                   isSubmitting ||
                   !hasOptions
                 }
-                className="min-h-11 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                className="min-h-11 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {isSubmitting
                   ? "Збереження…"

@@ -48,7 +48,7 @@ export default class EmployeeTabErrorBoundary extends Component<
             onClick={() =>
               window.location.reload()
             }
-            className="mt-4 min-h-10 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-[var(--vc-danger-text)] transition hover:bg-[var(--vc-danger-bg)]"
+            className="mt-4 min-h-11 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-[var(--vc-danger-text)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background hover:bg-[var(--vc-danger-bg)]"
           >
             Спробувати ще раз
           </button>

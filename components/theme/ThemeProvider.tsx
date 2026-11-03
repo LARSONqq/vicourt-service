@@ -29,6 +29,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const initialTheme: ThemePreference = storedTheme === "light" || storedTheme === "dark"
       ? storedTheme
       : "system";
+    // Keep SSR and initial hydration on "system", then sync the browser-only preference.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Intentional one-time localStorage synchronization after hydration.
     setThemeState(initialTheme);
     applyTheme(initialTheme);
   }, []);
