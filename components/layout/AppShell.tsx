@@ -84,7 +84,7 @@ export default function AppShell({
 
   return (
     <ThemeProvider>
-    <div className="vc-app-shell flex h-dvh min-w-0 bg-background">
+      <div className="vc-app-shell flex h-dvh min-w-0 bg-background">
       {/* DESKTOP SIDEBAR */}
       <div className="hidden shrink-0 lg:block">
         {sidebar}
@@ -97,7 +97,7 @@ export default function AppShell({
           setIsMobileMenuOpen(true)
         }
         aria-label="Відкрити меню"
-        className="fixed left-3 top-3 z-40 flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card text-xl text-foreground shadow-md transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
+        className="fixed left-3 top-2.5 z-40 flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-lg text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
       >
         ☰
       </button>
@@ -111,11 +111,11 @@ export default function AppShell({
             onClick={() =>
               setIsMobileMenuOpen(false)
             }
-            className="absolute inset-0 bg-gray-950/45 backdrop-blur-[1px]"
+            className="absolute inset-0 bg-gray-950/40"
           />
 
           <div
-            className="absolute inset-y-0 left-0 w-72 max-w-[calc(100vw-3rem)] overflow-y-auto bg-sidebar shadow-2xl"
+            className="absolute inset-y-0 left-0 w-64 max-w-[calc(100vw-3rem)] overflow-y-auto bg-sidebar shadow-xl"
             onClick={(event) => {
               const target =
                 event.target as HTMLElement;
@@ -137,7 +137,7 @@ export default function AppShell({
                 setIsMobileMenuOpen(false)
               }
               aria-label="Закрити меню"
-              className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 text-xl text-white/75 transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-md border border-sidebar-border bg-sidebar text-xl text-sidebar-foreground/60 transition hover:bg-muted hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
             >
               ×
             </button>
@@ -151,11 +151,11 @@ export default function AppShell({
           {header}
         </div>
 
-        <main className="vc-workspace min-w-0 flex-1 overflow-auto px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
+        <main className="vc-workspace min-w-0 flex-1 overflow-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
           <div className="mx-auto w-full max-w-[1600px] min-w-0">{children}</div>
         </main>
       </div>
-    </div>
+      </div>
     </ThemeProvider>
   );
 }

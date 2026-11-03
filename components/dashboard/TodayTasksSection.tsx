@@ -30,19 +30,19 @@ type Props = {
 function getPriorityStyle(priority: string) {
   switch (priority) {
     case "Терміновий":
-      return "bg-red-100 text-red-700";
+      return "vc-status-danger";
 
     case "Високий":
-      return "bg-orange-100 text-orange-700";
+      return "vc-status-warning";
 
     case "Середній":
-      return "bg-violet-100 text-violet-700";
+      return "vc-status-info";
 
     case "Низький":
-      return "bg-gray-100 text-gray-600";
+      return "vc-status-neutral";
 
     default:
-      return "bg-violet-100 text-violet-700";
+      return "vc-status-info";
   }
 }
 
@@ -51,13 +51,13 @@ function getStatusStyle(
 ) {
   switch (status) {
     case "Заплановано":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
     case "В роботі":
-      return "bg-yellow-50 text-yellow-700";
+      return "vc-status-warning";
     case "Виконано":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "vc-status-neutral";
   }
 }
 
@@ -166,15 +166,15 @@ export default function TodayTasksSection({
       <section className="vc-surface flex h-full min-h-56 min-w-0 flex-col overflow-hidden">
         <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
           <div className="min-w-0">
-            <h2 className="break-words text-lg font-semibold">Завдання на сьогодні</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="break-words text-lg font-semibold text-foreground">Завдання на сьогодні</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               До 5 відкритих завдань
             </p>
           </div>
-          <Link href={allTasksHref} className="inline-flex min-h-11 shrink-0 items-center rounded-md py-2 text-sm font-medium text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Переглянути всі →</Link>
+          <Link href={allTasksHref} className="inline-flex min-h-11 shrink-0 items-center rounded-md py-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Переглянути всі →</Link>
         </div>
         <div className="flex flex-1 items-center justify-center p-4 text-center sm:p-5">
-          <div><div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-green-50 text-green-700">✓</div><p className="mt-3 text-sm text-gray-500">На сьогодні відкритих завдань немає.</p></div>
+          <div><div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-accent text-primary">✓</div><p className="mt-3 text-sm text-muted-foreground">На сьогодні відкритих завдань немає.</p></div>
         </div>
       </section>
     );
@@ -184,27 +184,27 @@ export default function TodayTasksSection({
     <section className="vc-surface flex h-full min-w-0 flex-col overflow-hidden">
       <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
         <div className="min-w-0">
-          <h2 className="break-words text-lg font-semibold">Завдання на сьогодні</h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <h2 className="break-words text-lg font-semibold text-foreground">Завдання на сьогодні</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Показано: {localTasks.length} · до 5 відкритих
           </p>
         </div>
 
         <Link
           href={allTasksHref}
-          className="inline-flex min-h-11 shrink-0 items-center rounded-md py-2 text-sm font-medium text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-md py-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           Переглянути всі →
         </Link>
       </div>
 
       {errorMessage && (
-        <div className="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:px-5">
+        <div className="vc-panel-danger border-b px-4 py-3 text-sm sm:px-5">
           {errorMessage}
         </div>
       )}
 
-      <div className="flex-1 divide-y">
+      <div className="flex-1 divide-y divide-border">
         {localTasks
           .slice(0, 5)
           .map((task) => {
@@ -226,14 +226,14 @@ export default function TodayTasksSection({
             return (
               <article
                 key={task.id}
-                className="min-w-0 px-3 py-3 transition hover:bg-gray-50 focus-within:bg-gray-50 sm:px-4"
+                className="min-w-0 px-3 py-3 transition hover:bg-muted/60 focus-within:bg-muted/60 sm:px-4"
               >
                 <div className="flex min-w-0 flex-col gap-2">
                   <div className="min-w-0">
                     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <Link
                         href={`/tasks/${task.id}`}
-                        className="min-w-0 flex-1 rounded-sm break-words font-medium hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:line-clamp-2"
+                        className="min-w-0 flex-1 rounded-sm break-words font-medium text-foreground hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:line-clamp-2"
                       >
                         {task.title}
                       </Link>
@@ -254,12 +254,12 @@ export default function TodayTasksSection({
                     {target ? (
                       <Link
                         href={target.href}
-                        className="mt-1 block rounded-sm break-words text-sm text-gray-500 hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:line-clamp-1"
+                        className="mt-1 block rounded-sm break-words text-sm text-muted-foreground hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:line-clamp-1"
                       >
                         {target.type === "equipment" ? "🔧" : "📍"} {target.name}
                       </Link>
                     ) : (
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         Пов’язаний запис не знайдено
                       </p>
                     )}
@@ -267,11 +267,11 @@ export default function TodayTasksSection({
 
                   <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div className="min-w-0">
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-muted-foreground">
                         {formatDateValue(task.due_date)} · Відповідальний
                       </p>
 
-                      <p className="mt-1 break-words text-sm font-medium text-gray-700">
+                      <p className="mt-1 break-words text-sm font-medium text-foreground">
                         {task.assignee || "Не призначено"}
                       </p>
                     </div>
@@ -316,7 +316,7 @@ export default function TodayTasksSection({
                         onClick={() =>
                           handleCompleteTask(task)
                         }
-                        className="inline-flex min-h-10 items-center justify-center rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700 transition hover:bg-green-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 bg-accent px-3 py-2 text-xs font-medium text-primary transition hover:bg-accent/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isUpdating
                           ? "Збереження..."

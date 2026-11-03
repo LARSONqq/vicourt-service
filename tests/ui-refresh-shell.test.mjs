@@ -32,7 +32,7 @@ test("shared primitives and Dashboard consume the R1 foundation without data-lay
   assert.match(read("components/ui/card.tsx"), /cn\("vc-surface", className\)/);
   assert.match(read("components/ui/input.tsx"), /cn\("vc-field", className\)/);
   assert.match(read("components/ui/button.tsx"), /focus-visible:ring-3/);
-  assert.match(read("app/page.tsx"), /className="vc-surface min-w-0/);
+  assert.match(read("app/page.tsx"), /<header className="min-w-0 pb-1 text-foreground">/);
   for (const file of [
     "components/dashboard/DashboardAttention.tsx",
     "components/dashboard/DashboardObjectWatchlist.tsx",

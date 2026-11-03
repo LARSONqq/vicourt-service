@@ -39,14 +39,14 @@ function getKpis(data: DashboardCommandData): Kpi[] {
 }
 
 function KpiStrip({ data }: { data: DashboardCommandData }) {
-  return <section aria-label="Ключові показники" className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+  return <section aria-label="Ключові показники" className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
     {getKpis(data).map((kpi) => <Link key={kpi.label} href={kpi.href}
       aria-label={`${kpi.label}: ${kpi.value}. ${kpi.context}`}
       data-tone={kpi.tone}
       className="vc-kpi-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-      <span className="break-words text-[11px] font-semibold uppercase leading-5 tracking-[0.08em] text-muted-foreground sm:text-xs">{kpi.label}</span>
-      <strong className="mt-auto break-words pt-4 text-xl font-semibold leading-tight tracking-[-0.035em] tabular-nums text-foreground sm:text-2xl">{kpi.value}</strong>
-      <span className="mt-1.5 break-words text-xs text-muted-foreground">{kpi.context}</span>
+      <span className="break-words text-xs font-medium leading-5 text-muted-foreground sm:text-sm">{kpi.label}</span>
+      <strong className="mt-auto break-words pt-3 text-xl font-semibold leading-tight tracking-[-0.02em] tabular-nums text-foreground sm:text-2xl">{kpi.value}</strong>
+      <span className="mt-1 break-words text-xs text-muted-foreground">{kpi.context}</span>
     </Link>)}
   </section>;
 }
@@ -67,12 +67,12 @@ export async function DashboardCommandSurface() {
     unstable_rethrow(error);
     console.error("[Dashboard] command surface load failed", error);
     return <section className="vc-surface p-4 sm:p-5">
-      <p role="status" className="text-sm text-gray-600">Не вдалося завантажити показники. Оновіть сторінку та спробуйте ще раз.</p>
+      <p role="status" className="text-sm text-muted-foreground">Не вдалося завантажити показники. Оновіть сторінку та спробуйте ще раз.</p>
     </section>;
   }
   return <div className="min-w-0">
     <KpiStrip data={data} />
-    {data.kind === "worker" && !data.employeeLinked && <p role="status" className="mt-3 rounded-lg border bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:bg-muted dark:text-foreground">
+    {data.kind === "worker" && !data.employeeLinked && <p role="status" className="vc-panel-neutral mt-3 rounded-lg border px-4 py-3 text-sm">
       Профіль не пов’язаний із працівником. Персональні показники залишаються порожніми до прив’язки адміністратором.
     </p>}
   </div>;

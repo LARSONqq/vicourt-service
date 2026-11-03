@@ -31,7 +31,7 @@ const iconByHref = {
 export default function SidebarNavigation({ items }: { items: NavigationItem[] }) {
   const pathname = usePathname();
 
-  return <nav aria-label="Основна навігація" className="space-y-1">
+  return <nav aria-label="Основна навігація" className="space-y-0.5">
     {items.map((item) => {
       const isActive = item.href === "/"
         ? pathname === "/"
@@ -41,13 +41,13 @@ export default function SidebarNavigation({ items }: { items: NavigationItem[] }
         key={item.href}
         href={item.href}
         aria-current={isActive ? "page" : undefined}
-        className={`group relative flex min-h-11 min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+        className={`vc-nav-item group relative flex min-h-10 min-w-0 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-1 focus-visible:ring-offset-sidebar ${
           isActive
-            ? "bg-emerald-400/14 text-white shadow-[inset_2px_0_0_0_rgb(52_211_153)]"
-            : "text-white/60 hover:bg-white/[0.06] hover:text-white"
+            ? "vc-nav-item-active"
+            : ""
         }`}
       >
-        {Icon && <Icon aria-hidden="true" className={`size-[18px] shrink-0 ${isActive ? "text-emerald-300" : "text-white/40 transition group-hover:text-white/70"}`} />}
+        {Icon && <Icon aria-hidden="true" className="vc-nav-icon size-4 shrink-0 transition" />}
         <span className="min-w-0 break-words">{item.name}</span>
       </Link>;
     })}

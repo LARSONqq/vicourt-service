@@ -150,36 +150,27 @@ export function Header() {
     "Користувач";
 
   return (
-    <header className="vc-shell-header sticky top-0 z-30 flex min-h-[72px] items-center justify-between gap-3 px-3 py-3 sm:px-6 lg:px-8">
+    <header className="vc-shell-header sticky top-0 z-30 flex min-h-16 items-center justify-between gap-2 px-3 py-2.5 sm:px-6 lg:px-8">
       <div className="min-w-0">
-        <h1 className="truncate text-lg font-semibold tracking-[-0.025em] text-foreground sm:text-xl">
-          <span className="sm:hidden">
-            ViCourt
-          </span>
-
-          <span className="hidden sm:inline">
-            ViCourt Service
-          </span>
+        <h1 className="truncate text-base font-semibold tracking-[-0.015em] text-foreground sm:text-lg">
+          Робочий простір
         </h1>
 
-        <p className="mt-0.5 hidden text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground sm:block">
-          Service management
-        </p>
       </div>
 
-      <div className="flex shrink-0 items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2">
         <GlobalSearch />
 
         <ThemeSwitcher />
 
         <div className="hidden text-right md:block">
           {isLoadingUser ? (
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Завантаження...
             </p>
           ) : (
             <>
-              <p className="max-w-[220px] truncate text-sm font-semibold text-foreground">
+              <p className="max-w-[180px] truncate text-sm font-medium text-foreground">
                 {displayName}
               </p>
 
@@ -200,12 +191,7 @@ export function Header() {
                 </span>
               </div>
 
-              {fullName &&
-                email && (
-                  <p className="mt-1 max-w-[220px] truncate text-xs text-muted-foreground">
-                    {email}
-                  </p>
-                )}
+              {fullName && email && <span className="sr-only">{email}</span>}
             </>
           )}
         </div>
@@ -214,7 +200,7 @@ export function Header() {
           type="button"
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-xs transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+          className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 sm:px-3.5"
         >
           {isLoggingOut
             ? "..."

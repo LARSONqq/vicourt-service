@@ -37,7 +37,7 @@ test("Today Tasks keeps row actions separate and removes duplicate bottom naviga
   assert.match(source, /<article[\s\S]*href={`\/tasks\/\$\{task\.id\}`}/);
   assert.match(source, /<RescheduleTaskButton[\s\S]*<button/);
   assert.doesNotMatch(source, /Ще завдань:|href="\/calendar"/);
-  assert.match(source, /focus-within:bg-gray-50/);
+  assert.match(source, /focus-within:bg-muted/);
 });
 
 test("empty and recoverable error states stay concise, neutral and Ukrainian", () => {
@@ -49,7 +49,7 @@ test("empty and recoverable error states stay concise, neutral and Ukrainian", (
   assert.match(watchlist, /Наразі немає активних об’єктів, що потребують уваги/);
   assert.match(operational, /Залишки не потребують уваги/);
   assert.match(operational, /Техніка не потребує уваги/);
-  assert.match(command, /border bg-gray-50[\s\S]*Профіль не пов’язаний/);
+  assert.match(command, /vc-panel-neutral[\s\S]*Профіль не пов’язаний/);
   assert.match(
 command,
   /return <section className="vc-surface p-4 sm:p-5">/

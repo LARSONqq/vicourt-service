@@ -13,17 +13,17 @@ import {
   getDashboardWarehouse, getDashboardEquipment, getDashboardActivity,
 } from "@/services/dashboardService";
 
-const linkClass = "inline-flex min-h-11 shrink-0 items-center rounded-md py-2 text-sm font-medium text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2";
-const compactListClass = "min-w-0 divide-y overflow-hidden rounded-lg border";
-const compactLinkClass = "block min-h-16 min-w-0 px-3 py-3 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-600 sm:px-4";
-const mutedClass = "text-sm text-gray-500";
+const linkClass = "inline-flex min-h-11 shrink-0 items-center rounded-md py-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+const compactListClass = "min-w-0 divide-y divide-border overflow-hidden rounded-lg border border-border";
+const compactLinkClass = "block min-h-16 min-w-0 px-3 py-3 transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-4";
+const mutedClass = "text-sm text-muted-foreground";
 
 export function DashboardSkeleton({ title }: { title: string }) {
   return <section aria-busy="true" aria-label={title} className="vc-surface flex min-h-56 min-w-0 flex-col overflow-hidden">
     <div className="flex min-h-20 items-center border-b px-4 py-3 sm:px-5">
-      <div><h2 className="text-lg font-semibold">{title}</h2><p className="mt-1 text-sm text-gray-500">Завантаження даних…</p></div>
+      <div><h2 className="text-lg font-semibold text-foreground">{title}</h2><p className="mt-1 text-sm text-muted-foreground">Завантаження даних…</p></div>
     </div>
-    <div className="flex-1 p-4 sm:p-5"><div className="h-24 animate-pulse rounded-lg bg-gray-100 motion-reduce:animate-none" /></div>
+    <div className="flex-1 p-4 sm:p-5"><div className="h-24 animate-pulse rounded-lg bg-muted motion-reduce:animate-none" /></div>
   </section>;
 }
 
@@ -40,11 +40,11 @@ async function DashboardSection<T>({ title, subtitle, href, load, children, stan
     console.error(`[Dashboard] ${title}: section load failed`, error);
     return <section className="vc-surface flex h-full min-h-56 min-w-0 flex-col overflow-hidden">
       <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
-        <h2 className="min-w-0 break-words text-lg font-semibold">{title}</h2>
+        <h2 className="min-w-0 break-words text-lg font-semibold text-foreground">{title}</h2>
         <Link href={href} className={linkClass}>Переглянути всі →</Link>
       </div>
       <div className="flex flex-1 flex-col justify-center p-4 sm:p-5">
-        <p role="status" className="text-sm text-gray-600">Не вдалося завантажити дані. Оновіть сторінку та спробуйте ще раз.</p>
+        <p role="status" className="text-sm text-muted-foreground">Не вдалося завантажити дані. Оновіть сторінку та спробуйте ще раз.</p>
       </div>
     </section>;
   }
@@ -52,8 +52,8 @@ async function DashboardSection<T>({ title, subtitle, href, load, children, stan
   return <section className="vc-surface flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
     <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
       <div className="min-w-0">
-        <h2 className="break-words text-lg font-semibold">{title}</h2>
-        {subtitle && <p className="mt-1 break-words text-sm text-gray-500">{subtitle}</p>}
+        <h2 className="break-words text-lg font-semibold text-foreground">{title}</h2>
+        {subtitle && <p className="mt-1 break-words text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       <Link href={href} className={linkClass}>Переглянути всі →</Link>
     </div>
@@ -66,8 +66,8 @@ export function DashboardTaskSummary() {
     <div className="grid grid-cols-2 items-stretch gap-3 lg:grid-cols-4">
       {([
         ["today", "Сьогодні"], ["overdue", "Прострочені"], ["myOpen", "Мої відкриті"], ["open", "Відкриті"],
-      ] as const).map(([key, label]) => <Link key={key} href={taskDashboardLinks[key]} className={`flex min-h-28 min-w-0 flex-col rounded-lg border p-3 transition hover:border-green-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:p-4 ${key === "overdue" && data.overdue > 0 ? "border-orange-200 bg-orange-50" : ""}`}>
-        <span className="block min-h-10 break-words text-sm leading-5 text-gray-600">{label}</span>
+      ] as const).map(([key, label]) => <Link key={key} href={taskDashboardLinks[key]} className={`flex min-h-28 min-w-0 flex-col rounded-lg border border-border p-3 transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-4 ${key === "overdue" && data.overdue > 0 ? "vc-panel-warning" : ""}`}>
+        <span className="block min-h-10 break-words text-sm leading-5 text-muted-foreground">{label}</span>
         <span className="mt-auto block pt-2 text-2xl font-semibold tabular-nums">{data[key]}</span>
       </Link>)}
     </div>
@@ -101,7 +101,7 @@ export async function DashboardOverdueTasks() {
             <span className="min-w-0 flex-1 break-words font-medium sm:line-clamp-2">{task.title}</span>
             <span className={`shrink-0 rounded-full px-2 py-1 text-xs ${getTaskPriorityStyle(task.priority)}`}>{task.priority}</span>
           </div>
-          <p className="mt-1 break-words text-sm text-gray-500"><span className="font-medium text-orange-700">{formatDateValue(task.due_date)}</span> · {task.assignee || "Не призначено"}{target ? ` · ${target.name}` : ""}</p>
+          <p className="mt-1 break-words text-sm text-muted-foreground"><span className="vc-text-warning font-medium">{formatDateValue(task.due_date)}</span> · {task.assignee || "Не призначено"}{target ? ` · ${target.name}` : ""}</p>
         </Link></li>;
       })}
     </ul>}
@@ -111,17 +111,17 @@ export async function DashboardOverdueTasks() {
 export function DashboardWarehouseAttention() {
   return <DashboardSection title="Склад" subtitle="Увага до залишків" href="/warehouse" load={getDashboardWarehouse}>{(data) => <>
     <div className="grid grid-cols-2 gap-2 text-sm">
-      <Link href="/warehouse?stock=out" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:px-3 ${data.out > 0 ? "bg-red-50" : "bg-gray-50"}`}>
-        <span className="break-words text-xs leading-4 text-gray-600 sm:text-sm">Закінчилось</span><strong className="mt-auto pt-1 text-xl font-semibold tabular-nums">{data.out}</strong>
+      <Link href="/warehouse?stock=out" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:px-3 ${data.out > 0 ? "vc-panel-danger" : "vc-panel-neutral"}`}>
+        <span className="break-words text-xs leading-4 opacity-80 sm:text-sm">Закінчилось</span><strong className="mt-auto pt-1 text-xl font-semibold tabular-nums">{data.out}</strong>
       </Link>
-      <Link href="/warehouse?stock=low" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:px-3 ${data.low > 0 ? "bg-orange-50" : "bg-gray-50"}`}>
-        <span className="break-words text-xs leading-4 text-gray-600 sm:text-sm">Мало</span><strong className="mt-auto pt-1 text-xl font-semibold tabular-nums">{data.low}</strong>
+      <Link href="/warehouse?stock=low" className={`flex min-h-16 min-w-0 flex-col rounded-lg p-2 transition hover:ring-1 hover:ring-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:px-3 ${data.low > 0 ? "vc-panel-warning" : "vc-panel-neutral"}`}>
+        <span className="break-words text-xs leading-4 opacity-80 sm:text-sm">Мало</span><strong className="mt-auto pt-1 text-xl font-semibold tabular-nums">{data.low}</strong>
       </Link>
     </div>
     {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>Залишки не потребують уваги.</p> : <ul className={compactListClass}>
       {data.items.map((item) => <li key={item.id}><Link href={`/warehouse/${item.id}`} className={`${compactLinkClass} flex items-center justify-between gap-3`}>
-        <span className="min-w-0"><span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">Залишок: {Number(item.quantity).toLocaleString("uk-UA")}{item.minQuantity === null ? "" : ` · Мінімум: ${Number(item.minQuantity).toLocaleString("uk-UA")}`}</span></span>
-        <span className={`shrink-0 rounded-full px-2 py-1 text-xs ${warehouseStockPresentation[item.stockStatus].badgeClass}`}>{warehouseStockPresentation[item.stockStatus].label}</span>
+        <span className="min-w-0"><span className="block break-words font-medium text-foreground sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-muted-foreground">Залишок: {Number(item.quantity).toLocaleString("uk-UA")}{item.minQuantity === null ? "" : ` · Мінімум: ${Number(item.minQuantity).toLocaleString("uk-UA")}`}</span></span>
+        <span className={`shrink-0 rounded-full px-2 py-1 text-xs ${item.stockStatus === "OUT_OF_STOCK" ? "vc-status-danger" : "vc-status-warning"}`}>{warehouseStockPresentation[item.stockStatus].label}</span>
       </Link></li>)}
     </ul>}
     <p className={`${mutedClass} mt-auto border-t pt-3`}>Точні показники по всьому складу. У списку — до 5 позицій без запасу або з низьким залишком.</p>
@@ -131,8 +131,8 @@ export function DashboardWarehouseAttention() {
 export function DashboardEquipmentAttention() {
   return <DashboardSection title="Техніка" subtitle="ТО та технічний стан" href="/equipment" load={getDashboardEquipment}>{(data) => <>
     <dl className="grid grid-cols-3 gap-2 text-sm">
-      {[["Прострочено", data.overdue], ["Потрібне зараз", data.dueNow], ["За 7 днів", data.upcoming]].map(([label, count]) => <div key={label} className="flex min-h-16 min-w-0 flex-col rounded-lg bg-gray-50 p-2 sm:px-3">
-        <dt className="break-words text-xs leading-4 text-gray-600 sm:text-sm">{label}</dt><dd className="mt-auto pt-1 text-xl font-semibold tabular-nums">{count}</dd>
+      {[["Прострочено", data.overdue], ["Потрібне зараз", data.dueNow], ["За 7 днів", data.upcoming]].map(([label, count]) => <div key={label} className="vc-panel-neutral flex min-h-16 min-w-0 flex-col rounded-lg p-2 sm:px-3">
+        <dt className="break-words text-xs leading-4 text-muted-foreground sm:text-sm">{label}</dt><dd className="mt-auto pt-1 text-xl font-semibold tabular-nums">{count}</dd>
       </div>)}
     </dl>
     {data.items.length === 0 ? <p className={`${mutedClass} my-auto text-center`}>Техніка не потребує уваги.</p> : <ul className={compactListClass}>
@@ -142,10 +142,10 @@ export function DashboardEquipmentAttention() {
             : item.state === "due_now" ? "ТО сьогодні"
               : item.state === "repair_required" ? "Потребує ремонту"
                 : item.state === "in_repair" ? "На ремонті" : "ТО протягом 7 днів";
-        const badgeClass = item.state === "overdue" ? "bg-red-100 text-red-700"
-          : item.state === "due_now" || item.state === "repair_required" ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-700";
+        const badgeClass = item.state === "overdue" ? "vc-status-danger"
+          : item.state === "due_now" || item.state === "repair_required" ? "vc-status-warning" : "vc-status-neutral";
         return <li key={item.id}><Link href={`/equipment/${item.id}`} className={`${compactLinkClass} flex items-center justify-between gap-3`}>
-          <span className="min-w-0"><span className="block break-words font-medium sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-gray-500">{item.date ? formatDateValue(item.date) : "За напрацюванням"}</span></span>
+          <span className="min-w-0"><span className="block break-words font-medium text-foreground sm:line-clamp-2">{item.name}</span><span className="mt-1 block text-sm text-muted-foreground">{item.date ? formatDateValue(item.date) : "За напрацюванням"}</span></span>
           <span className={`shrink-0 rounded-full px-2 py-1 text-right text-xs ${badgeClass}`}>{label}</span>
         </Link></li>;
       })}
@@ -158,9 +158,9 @@ export function DashboardRecentActivity() {
   return <DashboardSection title="Останні дії" subtitle="Останні 5 подій у системі" href="/activity" load={getDashboardActivity}>{(logs) => !logs?.length
     ? <p className={`${mutedClass} py-4 text-center`}>Останніх дій поки немає.</p>
     : <ul className={compactListClass}>{logs.map((log) => {
-      const content = <><p className="break-words text-sm font-medium">{isActivityEventName(log.action) ? activityEventRegistry[log.action].label : "Дія в системі"}</p>
-        {log.entity_name && <p className="mt-1 break-words text-sm text-gray-600">{log.entity_name}</p>}
-        <p className="mt-1 break-words text-xs text-gray-500">{log.actor_name || "Система"} · {formatKyivTimestamp(log.created_at)}</p></>;
+      const content = <><p className="break-words text-sm font-medium text-foreground">{isActivityEventName(log.action) ? activityEventRegistry[log.action].label : "Дія в системі"}</p>
+        {log.entity_name && <p className="mt-1 break-words text-sm text-muted-foreground">{log.entity_name}</p>}
+        <p className="mt-1 break-words text-xs text-muted-foreground">{log.actor_name || "Система"} · {formatKyivTimestamp(log.created_at)}</p></>;
       return <li key={log.id}>{log.href
         ? <Link href={log.href} className={compactLinkClass}>{content}</Link>
         : <div className="min-w-0 px-3 py-3 sm:px-4">{content}</div>}</li>;

@@ -12,7 +12,7 @@ export function Card({ children, className, ...props }: { children: ReactNode } 
 
 export function CardHeader({ children }: { children: ReactNode }) {
   return (
-    <div className="border-b border-border px-4 py-4 sm:px-5">
+    <div className="border-b border-border px-4 py-3.5 sm:px-5">
       {children}
     </div>
   );
