@@ -4,6 +4,8 @@ import DevicePushSettings from "@/components/notifications/DevicePushSettings";
 import AutomaticPushSettings from "@/components/notifications/AutomaticPushSettings";
 
 import {
+  canAccessSection,
+  canManageObjects,
   isWorker,
 } from "@/lib/auth/permissions";
 import {
@@ -85,9 +87,10 @@ function getFirstParam(
 }
 
 function parseFilter(
-  value: string
+  value: string,
+  availableFilters = filters
 ): NotificationFilter {
-  return filters.some(
+  return availableFilters.some(
     (filter) =>
       filter.value === value
   )
@@ -214,11 +217,27 @@ export default async function NotificationsPage({
 
   const params =
     await searchParams;
+  const visibleFilters =
+    filters.filter(
+      (filter) =>
+        filter.value !== "purchases" ||
+        canAccessSection(
+          profile.role,
+          "purchases"
+        )
+    ).filter(
+      (filter) =>
+        filter.value !== "finance" ||
+        canManageObjects(
+          profile.role
+        )
+    );
   const activeFilter =
     parseFilter(
       getFirstParam(
         params.type
-      )
+      ),
+      visibleFilters
     );
   const [
     notificationCenter,
@@ -355,7 +374,7 @@ export default async function NotificationsPage({
         aria-label="Фільтр сповіщень"
         className="flex min-w-0 gap-2 overflow-x-auto pb-1"
       >
-        {filters.map((filter) => {
+        {visibleFilters.map((filter) => {
           const count =
             filter.value === "all"
               ? notificationCenter

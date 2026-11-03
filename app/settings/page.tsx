@@ -1,25 +1,9 @@
 import SettingsForm from "@/components/settings/SettingsForm";
 
 import { requireSectionAccess } from "@/lib/auth/requireAccess";
+import { formatKyivTimestamp } from "@/lib/kyivDate";
 
 import { getAppSettings } from "@/services/settingsService";
-
-function formatUpdatedDate(
-  date: string
-) {
-  return new Intl.DateTimeFormat(
-    "uk-UA",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  ).format(
-    new Date(date)
-  );
-}
 
 export default async function SettingsPage() {
   await requireSectionAccess(
@@ -101,9 +85,9 @@ export default async function SettingsPage() {
             </p>
 
             <p className="mt-2 break-words text-sm font-medium text-gray-800 sm:text-base">
-              {formatUpdatedDate(
+              {formatKyivTimestamp(
                 settings.updated_at
-              )}
+              ) ?? "—"}
             </p>
           </div>
         </aside>
