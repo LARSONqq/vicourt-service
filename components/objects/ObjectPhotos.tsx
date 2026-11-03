@@ -25,14 +25,17 @@ export default function ObjectPhotos({
   totalCount,
   publications,
 }: Props) {
-  const publicationsById = new Map((publications ?? []).map((item) => [item.photo_id, item]));
+  const publicationStateLoaded = publications !== undefined;
+const publicationsById = new Map(
+  (publications ?? []).map((item) => [item.photo_id, item]),
+);
   const [
     showForm,
     setShowForm,
   ] = useState(false);
 
   return (
-    <section className="min-w-0 rounded-xl border bg-white p-4 sm:p-6">
+    <section className="vc-object-panel vc-surface min-w-0 p-4 sm:p-6">
       {/* HEADER */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -40,11 +43,11 @@ export default function ObjectPhotos({
             Фото
           </h2>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Фотографії з об’єкта
           </p>
 
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-muted-foreground">
             Завантажено: {photos.length}
             {totalCount !== undefined &&
             totalCount !==
@@ -63,10 +66,10 @@ export default function ObjectPhotos({
                 !previous
             )
           }
-          className={`w-full rounded-lg px-4 py-2.5 text-sm font-medium transition sm:w-fit ${
+          className={`min-h-11 w-full rounded-md px-4 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-fit ${
             showForm
-              ? "border bg-white text-gray-700 hover:bg-gray-50"
-              : "bg-green-600 text-white hover:bg-green-700"
+              ? "border border-border bg-card text-foreground hover:bg-muted"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
           }`}
         >
           {showForm
@@ -78,7 +81,7 @@ export default function ObjectPhotos({
 
       {/* ADD PHOTO */}
       {showForm && canManage && (
-        <div className="mb-5 min-w-0 rounded-xl border bg-gray-50 p-3 sm:mb-6 sm:p-4">
+        <div className="mb-5 min-w-0 rounded-lg border border-border bg-muted/35 p-3 sm:mb-6 sm:p-4">
           <AddPhotoForm
             objectId={objectId}
             onUploaded={() =>
@@ -90,16 +93,16 @@ export default function ObjectPhotos({
 
       {/* EMPTY */}
       {photos.length === 0 ? (
-        <div className="rounded-xl border border-dashed bg-gray-50/50 p-6 text-center sm:p-8">
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl">
+        <div className="rounded-lg border border-dashed border-border bg-muted/35 p-6 text-center sm:p-8">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-card text-xl">
             📷
           </div>
 
-          <p className="mt-3 font-medium text-gray-700">
+          <p className="mt-3 font-medium text-foreground">
             Фото ще не завантажені
           </p>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {canManage
               ? "Додай фотографії виконаних робіт або стану об’єкта."
               : "Для цього об’єкта фотографій немає."}
@@ -111,7 +114,7 @@ export default function ObjectPhotos({
             (photo) => (
               <article
                 key={photo.id}
-                className="min-w-0 overflow-hidden rounded-xl border bg-white"
+                className="min-w-0 overflow-hidden rounded-lg border border-border bg-card"
               >
                 {/* IMAGE */}
                 <a
@@ -120,7 +123,7 @@ export default function ObjectPhotos({
                   }
                   target="_blank"
                   rel="noreferrer"
-                  className="group block overflow-hidden bg-gray-100"
+                  className="group block overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
                   <img
                     src={
@@ -132,33 +135,45 @@ export default function ObjectPhotos({
                     }
                     loading="lazy"
                     decoding="async"
-                    className="h-64 w-full object-cover transition duration-200 group-hover:scale-105 sm:h-56"
+                    className="h-64 w-full object-cover transition duration-200 group-hover:scale-[1.02] motion-reduce:transition-none sm:h-56"
                   />
                 </a>
 
                 {/* INFO */}
                 <div className="p-3 sm:p-4">
-                  {canManage && <p className="mb-1 text-xs text-gray-400">Внутрішній підпис</p>}
+                  {canManage && <p className="mb-1 text-xs text-muted-foreground">Внутрішній підпис</p>}
                   {photo.caption ? (
-                    <p className="break-words text-sm leading-5 text-gray-700">
+                    <p className="break-words text-sm leading-5 text-foreground">
                       {
                         photo.caption
                       }
                     </p>
                   ) : (
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-muted-foreground">
                       Без підпису
                     </p>
                   )}
 
-                  {canManage && <ClientPhotoPublicationEditor
-                    key={JSON.stringify([objectId, photo.id, publicationsById.get(photo.id) ?? null])}
-                    objectId={objectId}
-                    initialPublication={publicationsById.get(photo.id) ?? null}
-                  />}
+                  {canManage && (
+  publicationStateLoaded ? (
+    <ClientPhotoPublicationEditor
+      key={JSON.stringify([
+        objectId,
+        photo.id,
+        publicationsById.get(photo.id) ?? null,
+      ])}
+      objectId={objectId}
+      initialPublication={publicationsById.get(photo.id) ?? null}
+    />
+  ) : (
+    <p className="vc-panel-warning mt-3 rounded-md px-3 py-2 text-sm">
+      Не вдалося завантажити стан публікації для клієнта.
+    </p>
+  )
+)}
 
                   {canManage && (
-                  <div className="mt-3 border-t pt-3">
+                  <div className="mt-3 border-t border-border pt-3">
                     <form
                       action={deleteObjectPhoto.bind(
                         null,
@@ -182,7 +197,7 @@ export default function ObjectPhotos({
                     >
                       <button
                         type="submit"
-                        className="min-h-10 w-full rounded-lg border border-red-100 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 sm:w-auto"
+                        className="min-h-10 w-full rounded-md border border-destructive/25 px-3 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-auto"
                       >
                         Видалити
                       </button>

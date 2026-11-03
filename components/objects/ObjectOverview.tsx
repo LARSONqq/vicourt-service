@@ -405,7 +405,7 @@ export default function ObjectOverview({
           {paymentAlert && (
             <div
               className={
-                "mt-3 rounded-xl border p-3 " +
+                "mt-3 rounded-md border p-3 " +
                 paymentAlert.className
               }
             >
@@ -425,20 +425,20 @@ export default function ObjectOverview({
       <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
         <section className="vc-object-panel vc-surface min-w-0 p-4 sm:p-5">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
               Найближчі завдання
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               До п’яти активних завдань
             </p>
           </div>
 
           {activeTasks.length === 0 ? (
-            <p className="mt-4 rounded-lg border border-dashed bg-gray-50 p-4 text-sm text-gray-500">
+            <p className="mt-4 rounded-md border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
               Активних завдань немає.
             </p>
           ) : (
-            <div className="mt-4 divide-y">
+            <div className="mt-4 divide-y divide-border">
               {activeTasks.map(
                 (task) => {
                   const due =
@@ -454,10 +454,10 @@ export default function ObjectOverview({
                     >
                       <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                         <div className="min-w-0">
-                          <p className="break-words font-medium text-gray-900">
+                          <p className="break-words font-medium text-foreground">
                             {task.title}
                           </p>
-                          <p className="mt-1 break-words text-xs text-gray-500">
+                          <p className="mt-1 break-words text-xs text-muted-foreground">
                             {task.assignee ||
                               "Не призначено"}
                           </p>
@@ -481,21 +481,21 @@ export default function ObjectOverview({
 
         <section className="vc-object-panel vc-surface min-w-0 p-4 sm:p-5">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
               Останні роботи
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               Три останні записи журналу
             </p>
           </div>
 
           {recentWorkLogs.length ===
           0 ? (
-            <p className="mt-4 rounded-lg border border-dashed bg-gray-50 p-4 text-sm text-gray-500">
+            <p className="mt-4 rounded-md border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">
               Записів робіт ще немає.
             </p>
           ) : (
-            <div className="mt-4 divide-y">
+            <div className="mt-4 divide-y divide-border">
               {recentWorkLogs.map(
                 (workLog) => (
                   <article
@@ -504,23 +504,23 @@ export default function ObjectOverview({
                   >
                     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                       <div className="min-w-0">
-                        <p className="break-words font-medium text-gray-900">
+                        <p className="break-words font-medium text-foreground">
                           {workLog.description}
                         </p>
-                        <p className="mt-1 break-words text-xs text-gray-500">
+                        <p className="mt-1 break-words text-xs text-muted-foreground">
                           {getWorkLogActor(
                             workLog,
                             employeesById
                           )}
                         </p>
                       </div>
-                      <div className="shrink-0 text-left text-xs text-gray-500 sm:text-right">
+                      <div className="shrink-0 text-left text-xs text-muted-foreground sm:text-right">
                         <p>
                           {formatDateValue(
                             workLog.work_date
                           )}
                         </p>
-                        <p className="mt-1 font-medium text-gray-700">
+                        <p className="mt-1 font-medium text-foreground">
                           {formatHours(
                             Number(
                               workLog.hours

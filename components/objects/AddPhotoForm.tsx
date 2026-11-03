@@ -312,11 +312,11 @@ export default function AddPhotoForm({
     >
       {/* HEADER */}
       <div>
-        <h3 className="text-base font-semibold text-gray-800">
+        <h3 className="text-base font-semibold text-foreground">
           Нове фото
         </h3>
 
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Завантаж фотографію з
           галереї або камери телефона
         </p>
@@ -324,7 +324,7 @@ export default function AddPhotoForm({
 
       {/* PHOTO */}
       <div className="min-w-0">
-        <label className="mb-2 block text-sm font-medium text-gray-700">
+        <label className="mb-2 block text-sm font-medium text-foreground">
           Фотографія
         </label>
 
@@ -351,14 +351,14 @@ export default function AddPhotoForm({
               ""
             );
           }}
-          className="block min-h-11 w-full min-w-0 overflow-hidden rounded-lg border bg-white text-sm text-gray-600 file:mr-3 file:border-0 file:border-r file:bg-gray-50 file:px-4 file:py-3 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+          className="block min-h-11 w-full min-w-0 overflow-hidden rounded-md border border-border bg-card text-sm text-muted-foreground file:mr-3 file:border-0 file:border-r file:border-border file:bg-muted file:px-4 file:py-3 file:text-sm file:font-medium file:text-foreground hover:file:bg-accent disabled:cursor-not-allowed disabled:opacity-60"
           required
         />
 
         {selectedFileName && (
-          <p className="mt-2 break-all text-xs text-gray-500">
+          <p className="mt-2 break-all text-xs text-muted-foreground">
             Обрано:{" "}
-            <span className="font-medium text-gray-700">
+            <span className="font-medium text-foreground">
               {
                 selectedFileName
               }
@@ -366,7 +366,7 @@ export default function AddPhotoForm({
           </p>
         )}
 
-        <p className="mt-2 text-xs text-gray-400">
+        <p className="mt-2 text-xs text-muted-foreground">
           Максимальний розмір —
           10 МБ.
         </p>
@@ -374,7 +374,7 @@ export default function AddPhotoForm({
 
       {/* CAPTION */}
       <div className="min-w-0">
-        <label className="mb-2 block text-sm font-medium text-gray-700">
+        <label className="mb-2 block text-sm font-medium text-foreground">
           Підпис
         </label>
 
@@ -385,17 +385,17 @@ export default function AddPhotoForm({
             isUploading
           }
           placeholder="Наприклад: ділянка після висаджування"
-          className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600 disabled:opacity-60"
+          className="vc-field min-h-11 w-full min-w-0 px-3 py-3 disabled:opacity-60"
         />
 
-        <p className="mt-2 text-xs text-gray-400">
+        <p className="mt-2 text-xs text-muted-foreground">
           Необов’язково
         </p>
       </div>
 
       {/* ERROR */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="vc-panel-danger rounded-md border border-border p-3 text-sm">
           {errorMessage}
         </div>
       )}
@@ -407,7 +407,7 @@ export default function AddPhotoForm({
           disabled={
             isUploading
           }
-          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-md bg-primary px-5 py-2.5 font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isUploading
             ? "Завантаження..."
@@ -415,7 +415,7 @@ export default function AddPhotoForm({
         </button>
 
         {isUploading && (
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             Не закривай сторінку,
             поки фото завантажується.
           </p>

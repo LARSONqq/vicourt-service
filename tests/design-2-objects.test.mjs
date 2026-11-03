@@ -49,9 +49,23 @@ test("Object forms preserve payloads while using shared fields and semantic acti
   assert.match(read("components/objects/ObjectInfo.tsx"), /action=\{handleSubmit\}/);
 });
 
-test("Phase 2A dark compatibility is scoped away from ObjectPhotos", () => {
+test("Object overview and photos use semantic dark-compatible presentation", () => {
   const globals = read("app/globals.css");
+  const overview = read("components/objects/ObjectOverview.tsx");
+  const summary = read("components/objects/ObjectSummary.tsx");
   const photos = read("components/objects/ObjectPhotos.tsx");
   assert.match(globals, /\.dark \.vc-object-panel/);
-  assert.doesNotMatch(photos, /vc-object-panel/);
+  assert.doesNotMatch(overview, /text-gray-|bg-gray-|bg-white/);
+  assert.doesNotMatch(summary, /text-gray-|bg-gray-|bg-white/);
+  assert.match(photos, /vc-object-panel vc-surface/);
+  assert.match(photos, /bg-card/);
+  assert.match(photos, /text-muted-foreground/);
+  assert.doesNotMatch(photos, /bg-white|bg-gray-|text-gray-/);
+});
+
+test("Object tab navigation clears the fixed header and resets safely on query navigation", () => {
+  const tabs = read("components/ObjectTabs.tsx");
+  assert.match(tabs, /sticky top-16/);
+  assert.match(tabs, /scroll-mt-32/);
+  assert.doesNotMatch(tabs, /scroll=\{false\}/);
 });

@@ -117,11 +117,11 @@ export default function ObjectSummary({
   return (
     <section className="vc-object-panel vc-surface min-w-0 overflow-hidden">
         <div className="border-b p-4 sm:p-5">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-foreground">
             Фінансовий підсумок
           </h2>
 
-          <p className="mt-1 text-sm leading-5 text-gray-500">
+          <p className="mt-1 text-sm leading-5 text-muted-foreground">
             План, фактична
             собівартість і поточний
             фінансовий результат
@@ -130,62 +130,62 @@ export default function ObjectSummary({
 
         <div className="grid min-w-0 grid-cols-1 gap-3 p-3 sm:grid-cols-2 sm:p-5 xl:grid-cols-4">
           {/* MATERIALS */}
-          <div className="min-w-0 rounded-xl bg-gray-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+          <div className="min-w-0 rounded-lg bg-muted/50 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Матеріали
             </p>
 
-            <p className="mt-2 break-words text-xl font-bold text-gray-900 sm:text-2xl">
+            <p className="mt-2 break-words text-xl font-bold text-foreground sm:text-2xl">
               {formatMoney(
                 materialsCost
               )}
             </p>
 
-            <p className="mt-1 text-xs leading-4 text-gray-500">
+            <p className="mt-1 text-xs leading-4 text-muted-foreground">
               Кількість ×
               зафіксована ціна
             </p>
           </div>
 
           {/* LABOR */}
-          <div className="min-w-0 rounded-xl bg-blue-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-blue-600">
+          <div className="vc-panel-info min-w-0 rounded-lg p-4">
+            <p className="text-xs font-medium uppercase tracking-wide opacity-80">
               Роботи
             </p>
 
-            <p className="mt-2 break-words text-xl font-bold text-blue-700 sm:text-2xl">
+            <p className="mt-2 break-words text-xl font-bold sm:text-2xl">
               {formatMoney(
                 laborCost
               )}
             </p>
 
-            <p className="mt-1 text-xs leading-4 text-blue-700/70">
+            <p className="mt-1 text-xs leading-4 opacity-75">
               Години × ставка
               працівника
             </p>
           </div>
 
           {/* OTHER EXPENSES */}
-          <div className="min-w-0 rounded-xl bg-orange-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-orange-600">
+          <div className="vc-panel-warning min-w-0 rounded-lg p-4">
+            <p className="text-xs font-medium uppercase tracking-wide opacity-80">
               Інші витрати
             </p>
 
-            <p className="mt-2 break-words text-xl font-bold text-orange-700 sm:text-2xl">
+            <p className="mt-2 break-words text-xl font-bold sm:text-2xl">
               {formatMoney(
                 otherExpensesCost
               )}
             </p>
 
-            <p className="mt-1 text-xs leading-4 text-orange-700/70">
+            <p className="mt-1 text-xs leading-4 opacity-75">
               Паливо, доставка,
               оренда та інше
             </p>
           </div>
 
           {/* TOTAL */}
-          <div className="min-w-0 rounded-xl border border-green-200 bg-green-600 p-4 text-white">
-            <p className="text-xs font-medium uppercase tracking-wide text-green-100">
+          <div className="min-w-0 rounded-lg border border-primary/25 bg-primary p-4 text-primary-foreground">
+            <p className="text-xs font-medium uppercase tracking-wide opacity-80">
               Загальні витрати
             </p>
 
@@ -195,14 +195,14 @@ export default function ObjectSummary({
               )}
             </p>
 
-            <p className="mt-1 text-xs leading-4 text-green-100">
+            <p className="mt-1 text-xs leading-4 opacity-80">
               Повна собівартість
               об’єкта
             </p>
           </div>
         </div>
 
-        <div className="border-t bg-gray-50/60 p-3 sm:p-5">
+        <div className="border-t border-border bg-muted/35 p-3 sm:p-5">
           <div
             className={`grid min-w-0 grid-cols-1 gap-3 ${
               paymentSummary
@@ -210,17 +210,17 @@ export default function ObjectSummary({
                 : "lg:grid-cols-3"
             }`}
           >
-            <article className="min-w-0 rounded-xl border border-blue-100 bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+            <article className="min-w-0 rounded-lg border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                 План
               </p>
 
               <dl className="mt-4 space-y-4">
                 <div>
-                  <dt className="text-sm text-gray-500">
+                  <dt className="text-sm text-muted-foreground">
                     Плановий бюджет
                   </dt>
-                  <dd className="mt-1 break-words text-lg font-semibold text-blue-700">
+                  <dd className="mt-1 break-words text-lg font-semibold text-foreground">
                     {financials.costBudget ===
                     null
                       ? "Не вказано"
@@ -231,11 +231,11 @@ export default function ObjectSummary({
                 </div>
 
                 <div>
-                  <dt className="text-sm text-gray-500">
+                  <dt className="text-sm text-muted-foreground">
                     Вартість для
                     клієнта
                   </dt>
-                  <dd className="mt-1 break-words text-lg font-semibold text-blue-700">
+                  <dd className="mt-1 break-words text-lg font-semibold text-foreground">
                     {financials.clientPrice ===
                     null
                       ? "Не вказано"
@@ -247,17 +247,17 @@ export default function ObjectSummary({
               </dl>
             </article>
 
-            <article className="min-w-0 rounded-xl border bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <article className="min-w-0 rounded-lg border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Факт
               </p>
 
               <dl className="mt-4 space-y-4">
                 <div>
-                  <dt className="text-sm text-gray-500">
+                  <dt className="text-sm text-muted-foreground">
                     Фактичні витрати
                   </dt>
-                  <dd className="mt-1 break-words text-lg font-semibold text-gray-900">
+                  <dd className="mt-1 break-words text-lg font-semibold text-foreground">
                     {formatMoney(
                       financials.actualCost
                     )}
@@ -265,7 +265,7 @@ export default function ObjectSummary({
                 </div>
 
                 <div>
-                  <dt className="text-sm text-gray-500">
+                  <dt className="text-sm text-muted-foreground">
                     {financials.budgetOverrun !==
                     null
                       ? "Перевитрата бюджету"
@@ -275,8 +275,8 @@ export default function ObjectSummary({
                     className={`mt-1 break-words text-lg font-semibold ${
                       financials.budgetOverrun !==
                       null
-                        ? "text-red-700"
-                        : "text-gray-900"
+                        ? "text-destructive"
+                        : "text-foreground"
                     }`}
                   >
                     {financials.costBudget ===
@@ -294,7 +294,7 @@ export default function ObjectSummary({
               {budgetUsagePercent !==
                 null && (
                 <div className="mt-5">
-                  <div className="flex items-start justify-between gap-3 text-xs text-gray-500">
+                  <div className="flex items-start justify-between gap-3 text-xs text-muted-foreground">
                     <span className="break-words">
                       {formatMoney(
                         financials.actualCost
@@ -305,7 +305,7 @@ export default function ObjectSummary({
                           0
                       )}
                     </span>
-                    <span className="shrink-0 font-medium text-gray-700">
+                    <span className="shrink-0 font-medium text-foreground">
                       {formatPercent(
                         budgetUsagePercent
                       )}
@@ -313,7 +313,7 @@ export default function ObjectSummary({
                   </div>
 
                   <div
-                    className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200"
+                    className="mt-2 h-2 overflow-hidden rounded-full bg-muted"
                     role="progressbar"
                     aria-label="Використання планового бюджету"
                     aria-valuemin={0}
@@ -328,8 +328,8 @@ export default function ObjectSummary({
                       className={`h-full rounded-full ${
                         financials.budgetOverrun !==
                         null
-                          ? "bg-red-600"
-                          : "bg-green-600"
+                          ? "bg-destructive"
+                          : "bg-primary"
                       }`}
                       style={{
                         width: `${progressWidth}%`,
@@ -340,24 +340,24 @@ export default function ObjectSummary({
               )}
             </article>
 
-            <article className="min-w-0 rounded-xl border bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <article className="min-w-0 rounded-lg border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Результат
               </p>
 
               <dl className="mt-4 space-y-4">
                 <div>
-                  <dt className="text-sm text-gray-500">
+                  <dt className="text-sm text-muted-foreground">
                     Поточний прибуток
                   </dt>
                   <dd
                     className={`mt-1 break-words text-lg font-semibold ${
                       financials.financialResult ===
                       null
-                        ? "text-gray-900"
+                        ? "text-foreground"
                         : resultIsPositive
-                          ? "text-green-700"
-                          : "text-red-700"
+                          ? "text-primary"
+                          : "text-destructive"
                     }`}
                   >
                     {financials.financialResult ===
@@ -370,17 +370,17 @@ export default function ObjectSummary({
                 </div>
 
                 <div>
-                  <dt className="text-sm text-gray-500">
+                  <dt className="text-sm text-muted-foreground">
                     Маржинальність
                   </dt>
                   <dd
                     className={`mt-1 break-words text-lg font-semibold ${
                       financials.marginPercent ===
                       null
-                        ? "text-gray-900"
+                        ? "text-foreground"
                         : resultIsPositive
-                          ? "text-green-700"
-                          : "text-red-700"
+                          ? "text-primary"
+                          : "text-destructive"
                     }`}
                   >
                     {financials.marginPercent ===
@@ -396,7 +396,7 @@ export default function ObjectSummary({
                 </div>
               </dl>
 
-              <p className="mt-5 text-xs leading-5 text-gray-500">
+              <p className="mt-5 text-xs leading-5 text-muted-foreground">
                 Поточний прибуток
                 розрахований від
                 поточної собівартості.
@@ -406,18 +406,18 @@ export default function ObjectSummary({
             </article>
 
             {paymentSummary && (
-              <article className="min-w-0 rounded-xl border border-emerald-100 bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+              <article className="min-w-0 rounded-lg border border-border bg-card p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                   Розрахунки з
                   клієнтом
                 </p>
 
                 <dl className="mt-4 space-y-3">
                   <div>
-                    <dt className="text-sm text-gray-500">
+                    <dt className="text-sm text-muted-foreground">
                       Отримано
                     </dt>
-                    <dd className="mt-1 break-words text-lg font-semibold text-emerald-700">
+                    <dd className="mt-1 break-words text-lg font-semibold text-primary">
                       {formatMoney(
                         paymentSummary.totalPaid
                       )}
@@ -425,7 +425,7 @@ export default function ObjectSummary({
                   </div>
 
                   <div>
-                    <dt className="text-sm text-gray-500">
+                    <dt className="text-sm text-muted-foreground">
                       {paymentSummary.overpayment !==
                         null &&
                       paymentSummary.overpayment >
@@ -439,8 +439,8 @@ export default function ObjectSummary({
                           null &&
                         paymentSummary.overpayment >
                           0
-                          ? "text-violet-700"
-                          : "text-gray-900"
+                          ? "text-primary"
+                          : "text-foreground"
                       }`}
                     >
                       {paymentSummary.clientPrice ===
@@ -459,7 +459,7 @@ export default function ObjectSummary({
                   </div>
                 </dl>
 
-                <p className="mt-4 text-sm font-medium text-gray-700">
+                <p className="mt-4 text-sm font-medium text-foreground">
                   {
                     objectPaymentStatusLabels[
                       paymentSummary.status
@@ -470,7 +470,7 @@ export default function ObjectSummary({
                 {paymentSummary.progressPercent !==
                   null && (
                   <div className="mt-4">
-                    <div className="flex items-start justify-between gap-3 text-xs text-gray-500">
+                    <div className="flex items-start justify-between gap-3 text-xs text-muted-foreground">
                       <span className="break-words">
                         {formatMoney(
                           paymentSummary.totalPaid
@@ -481,7 +481,7 @@ export default function ObjectSummary({
                             0
                         )}
                       </span>
-                      <span className="shrink-0 font-medium text-gray-700">
+                      <span className="shrink-0 font-medium text-foreground">
                         {formatPercent(
                           paymentSummary.progressPercent
                         )}
@@ -489,7 +489,7 @@ export default function ObjectSummary({
                     </div>
 
                     <div
-                      className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200"
+                      className="mt-2 h-2 overflow-hidden rounded-full bg-muted"
                       role="progressbar"
                       aria-label="Отримані платежі від вартості для клієнта"
                       aria-valuemin={0}
@@ -501,7 +501,7 @@ export default function ObjectSummary({
                       }
                     >
                       <div
-                        className="h-full rounded-full bg-emerald-600"
+                        className="h-full rounded-full bg-primary"
                         style={{
                           width: `${paymentProgressWidth}%`,
                         }}
