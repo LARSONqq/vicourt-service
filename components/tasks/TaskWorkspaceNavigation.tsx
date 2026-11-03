@@ -17,41 +17,41 @@ export default function TaskWorkspaceNavigation({ filters, counts, employees }: 
     { name: "source", label: "Джерело", options: [["manual", "Вручну"], ["supervision", "Періодичний огляд"], ["equipment_maintenance", "Планове ТО"]] },
     { name: "recurrence", label: "Повторення", options: [["once", "Разові"], ["recurring", "Повторювані"]] },
   ];
-  return <section className="min-w-0 space-y-3">
+  return <section className="vc-task-panel min-w-0 space-y-3">
     <nav aria-label="Види завдань" className="flex flex-wrap gap-2">
       {Object.entries(taskViews).map(([view, label]) => <Link key={view}
         href={taskWorkspaceHref({ ...filters, view: view as TaskView })}
         aria-current={filters.view === view ? "page" : undefined}
-        className={`inline-flex min-h-11 items-center rounded-lg border px-3 py-2 text-sm font-medium shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 ${filters.view === view ? "border-green-700 bg-green-700 text-white" : "border-gray-200 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50"}`}>
-        {label} <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${filters.view === view ? "bg-white/15 text-white" : "bg-gray-100 text-gray-600"}`}>{counts[view as TaskView]}</span>
+        className={`inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${filters.view === view ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-muted"}`}>
+        {label} <span className={`ml-2 rounded-md px-2 py-0.5 text-xs ${filters.view === view ? "bg-primary-foreground/15 text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{counts[view as TaskView]}</span>
       </Link>)}
     </nav>
-    <p className="text-xs text-gray-500">Лічильники — усі доступні завдання у відповідному виді, без додаткових фільтрів.</p>
+    <p className="text-xs text-muted-foreground">Лічильники — усі доступні завдання у відповідному виді, без додаткових фільтрів.</p>
     <form key={JSON.stringify(filters)} action="/tasks" method="get" className="vc-surface grid min-w-0 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-4">
       <input type="hidden" name="view" value={filters.view} />
-      <label className="min-w-0 text-sm text-gray-600">Пошук
+      <label className="min-w-0 text-sm text-muted-foreground">Пошук
         <input type="search" name="q" defaultValue={filters.q} maxLength={200} placeholder="Назва або опис" className="vc-field mt-1 min-h-11 min-w-0" />
       </label>
-      {selects.map(({ name, label, options }) => <label key={name} className="min-w-0 text-sm text-gray-600">{label}
+      {selects.map(({ name, label, options }) => <label key={name} className="min-w-0 text-sm text-muted-foreground">{label}
         <select name={name} defaultValue={filters[name as keyof TaskWorkspaceFilters]} className="vc-field mt-1 min-h-11 min-w-0">
           <option value="">Усі</option>
           {options.map(([value, text]) => <option key={value} value={value}>{text}</option>)}
         </select>
       </label>)}
       <div className="flex flex-wrap items-end gap-3">
-        <button type="submit" className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Застосувати</button>
-        <Link href={`/tasks?view=${filters.view}`} className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-green-700 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Очистити</Link>
+        <button type="submit" className="min-h-11 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Застосувати</button>
+        <Link href={`/tasks?view=${filters.view}`} className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Очистити</Link>
       </div>
     </form>
   </section>;
 }
 
 export function TaskWorkspacePagination({ filters, page, pageCount, total }: { filters: TaskWorkspaceFilters; page: number; pageCount: number; total: number }) {
-  return <nav aria-label="Сторінки завдань" className="flex flex-wrap items-center justify-between gap-3 text-sm">
-    <p className="text-gray-600">{total ? `${(page - 1) * TASK_WORKSPACE_PAGE_SIZE + 1}–${Math.min(page * TASK_WORKSPACE_PAGE_SIZE, total)}` : "0"} із {total} · Сторінка {page} з {pageCount}</p>
+  return <nav aria-label="Сторінки завдань" className="vc-task-panel flex flex-wrap items-center justify-between gap-3 text-sm">
+    <p className="text-muted-foreground">{total ? `${(page - 1) * TASK_WORKSPACE_PAGE_SIZE + 1}–${Math.min(page * TASK_WORKSPACE_PAGE_SIZE, total)}` : "0"} із {total} · Сторінка {page} з {pageCount}</p>
     <div className="flex gap-2">
-      {page > 1 ? <Link href={taskWorkspaceHref(filters, page - 1)} className="inline-flex min-h-11 items-center rounded-lg border border-gray-200 bg-white px-4 py-2 font-medium shadow-xs hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Назад</Link> : <span aria-disabled="true" className="inline-flex min-h-11 items-center rounded-lg border border-gray-200 px-4 py-2 text-gray-400">Назад</span>}
-      {page < pageCount ? <Link href={taskWorkspaceHref(filters, page + 1)} className="inline-flex min-h-11 items-center rounded-lg border border-gray-200 bg-white px-4 py-2 font-medium shadow-xs hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Далі</Link> : <span aria-disabled="true" className="inline-flex min-h-11 items-center rounded-lg border border-gray-200 px-4 py-2 text-gray-400">Далі</span>}
+      {page > 1 ? <Link href={taskWorkspaceHref(filters, page - 1)} className="inline-flex min-h-11 items-center rounded-md border border-border bg-card px-4 py-2 font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Назад</Link> : <span aria-disabled="true" className="inline-flex min-h-11 items-center rounded-md border border-border px-4 py-2 text-muted-foreground opacity-60">Назад</span>}
+      {page < pageCount ? <Link href={taskWorkspaceHref(filters, page + 1)} className="inline-flex min-h-11 items-center rounded-md border border-border bg-card px-4 py-2 font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Далі</Link> : <span aria-disabled="true" className="inline-flex min-h-11 items-center rounded-md border border-border px-4 py-2 text-muted-foreground opacity-60">Далі</span>}
     </div>
   </nav>;
 }

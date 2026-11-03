@@ -52,7 +52,7 @@ export default function TaskTemplateLookup({ kind, label, value, onChange, initi
     finally { lock.current = false; setPending(false); }
   }
   const choices = selected ? [selected, ...options.filter((option) => option.id !== selected.id)] : options;
-  return <div className="min-w-0 space-y-2">
+  return <div className="vc-task-panel min-w-0 space-y-2">
     <label className="block text-sm font-medium">{label}
       <select required={required} value={value} onChange={(event) => { onChange(event.target.value); setSelected(choices.find((option) => String(option.id) === event.target.value)); }} className="mt-1 min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-2">
         <option value="">{required ? "Оберіть після пошуку" : emptyLabel}</option>

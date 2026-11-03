@@ -1,4 +1,4 @@
 "use client";
 export default function TemplateError({ reset }: { reset: () => void }) {
-  return <section role="alert" className="space-y-3 rounded-xl border bg-white p-6"><h2 className="font-semibold">Не вдалося відкрити повторювані задачі</h2><p className="text-sm text-gray-500">Перевірте доступ і спробуйте ще раз.</p><button type="button" onClick={reset} className="min-h-11 rounded-lg border px-4 py-3">Спробувати ще раз</button></section>;
+  return <section role="alert" className="vc-surface space-y-3 p-6"><h2 className="vc-section-title">Не вдалося відкрити повторювані задачі</h2><p className="text-sm text-muted-foreground">Перевірте доступ і спробуйте ще раз.</p><button type="button" onClick={reset} className="min-h-11 rounded-md border border-border bg-card px-4 py-3 hover:bg-muted">Спробувати ще раз</button></section>;
 }

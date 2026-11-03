@@ -1260,7 +1260,7 @@ export default function TasksList({
     return (
       <article
         key={task.id}
-        className={`min-w-0 rounded-xl border border-l-4 bg-white p-3 transition sm:p-4 ${getPriorityBorderStyle(
+        className={`vc-task-panel min-w-0 rounded-lg border border-l-4 bg-white p-3 transition sm:p-4 ${getPriorityBorderStyle(
           priority
         )} ${
           completed
@@ -1609,7 +1609,7 @@ export default function TasksList({
   }
 
   return (
-    <div className="min-w-0 space-y-5">
+    <div className="vc-task-panel min-w-0 space-y-5">
       {serverPaged && <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex rounded-lg border border-gray-200 bg-white p-1 shadow-xs" aria-label="Вигляд поточної сторінки">
           <button type="button" aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")} className={`min-h-10 rounded-md px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 ${viewMode === "list" ? "bg-green-50 text-green-800" : "text-gray-500 hover:text-gray-800"}`}>Список</button>
@@ -2114,7 +2114,7 @@ export default function TasksList({
                   key={
                     task.id
                   }
-                  className={`min-w-0 rounded-xl border p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:shadow-md sm:p-5 ${
+                  className={`vc-task-panel min-w-0 rounded-lg border p-4 transition sm:p-5 ${
                     completed
                       ? "border-green-200 bg-green-50/50"
                       : overdue
@@ -2463,7 +2463,7 @@ export default function TasksList({
             }
           }}
         >
-          <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:max-w-3xl sm:rounded-2xl">
+          <div className="vc-task-panel flex max-h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-lg sm:max-h-[calc(100dvh-2rem)] sm:max-w-3xl sm:rounded-lg">
             {/* MODAL HEADER */}
             <div className="flex shrink-0 items-start justify-between gap-3 border-b bg-white px-4 py-4 sm:px-5">
               <div className="min-w-0">

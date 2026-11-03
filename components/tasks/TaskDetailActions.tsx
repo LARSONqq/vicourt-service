@@ -89,9 +89,9 @@ export default function TaskDetailActions({ task, assignee, capabilities }: Prop
   }
 
   if (!capabilities.edit && !capabilities.complete && !capabilities.dueDate && !capabilities.status) {
-    return <p className="rounded-xl border bg-gray-50 p-4 text-sm text-gray-600">Для цього завдання доступний перегляд. Завершені повторення та автоматичні цикли не відкриваються повторно.</p>;
+    return <p className="vc-task-panel vc-panel-neutral rounded-md border p-4 text-sm">Для цього завдання доступний перегляд. Завершені повторення та автоматичні цикли не відкриваються повторно.</p>;
   }
-  return <section className="min-w-0 space-y-4 rounded-xl border bg-white p-4 sm:p-5">
+  return <section className="vc-task-panel vc-surface min-w-0 space-y-4 p-4 sm:p-5">
     <h2 className="font-semibold">Дії із завданням</h2>
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {success && <p role="status" className="text-sm text-green-700">{success}</p>}

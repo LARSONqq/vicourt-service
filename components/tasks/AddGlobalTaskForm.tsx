@@ -102,7 +102,7 @@ export default function AddGlobalTaskForm({
   }
 
   return (
-    <div className="min-w-0">
+    <div className="vc-task-panel min-w-0">
       {/* TOGGLE */}
       {!hideToggleButton && (
         <button

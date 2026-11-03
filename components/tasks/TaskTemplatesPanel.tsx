@@ -78,7 +78,7 @@ export default function TaskTemplatesPanel({ template }: { template?: TaskTempla
     finally { lock.current = false; setPending(false); }
   }
 
-  return <section className="min-w-0 space-y-4 rounded-xl border bg-white p-4 sm:p-5">
+  return <section className="vc-task-panel vc-surface min-w-0 space-y-4 p-4 sm:p-5">
     {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     {message && <p role="status" className="text-sm text-green-700">{message}</p>}
     {template && mode === null && <div className="flex flex-wrap gap-3">

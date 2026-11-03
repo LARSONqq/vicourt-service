@@ -33,7 +33,7 @@ export default function TaskRecurrenceFields({
   const intervalId = `${idPrefix}-recurrence-interval`;
 
   return (
-    <div className="min-w-0 rounded-xl border bg-gray-50 p-3 sm:p-4">
+    <div className="vc-task-panel min-w-0 rounded-lg border bg-gray-50 p-3 sm:p-4">
       <label
         htmlFor={typeId}
         className="mb-2 block text-sm font-medium text-gray-700"

@@ -13,9 +13,9 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
   const template = await getTaskTemplateView(id);
   if (!template) notFound();
   const occurrences = await getTemplateOccurrencesPreview(id);
-  return <div className="min-w-0 space-y-5">
-    <Link href="/tasks/templates" className="inline-block py-2 text-sm text-green-700">← {recurringTaskCopy.title}</Link>
-    <header className="min-w-0 space-y-4 rounded-xl border bg-white p-4 sm:p-6">
+  return <div className="vc-task-panel min-w-0 space-y-5">
+    <Link href="/tasks/templates" className="inline-block py-2 text-sm font-medium text-primary hover:underline">← {recurringTaskCopy.title}</Link>
+    <header className="vc-surface min-w-0 space-y-4 p-4 sm:p-6">
       <div className="flex flex-wrap gap-2 text-sm"><span className="rounded-full bg-green-50 px-3 py-1">{templateStateLabel(template)}</span><span className="px-2 py-1">{getTaskRecurrenceLabel(template.recurrence_type, template.recurrence_interval)}</span></div>
       <h1 className="break-words text-2xl font-bold">{template.title}</h1>
       <p className="whitespace-pre-wrap break-words text-sm text-gray-600">{template.description || "Опис не додано."}</p>
@@ -30,7 +30,7 @@ export default async function TemplateDetailPage({ params }: { params: Promise<{
       <p className="text-sm text-gray-500">Це поточне правило, а не історичний знімок розкладу. Наступне повторення створюється після виконання поточного; опорна дата не є прогнозом наступного завдання.</p>
     </header>
     <TaskTemplatesPanel key={`${template.id}:${template.updated_at}:${template.is_active}`} template={template} />
-    <section className="min-w-0 space-y-3 rounded-xl border bg-white p-4 sm:p-5">
+    <section className="vc-surface min-w-0 space-y-3 p-4 sm:p-5">
       <h2 className="font-semibold">Останні повторення · до 5 записів</h2>
       {occurrences === null ? <p role="alert" className="text-sm text-red-700">Не вдалося завантажити повторення. Оновіть сторінку, щоб спробувати ще раз.</p> : occurrences.length === 0 ? <p className="text-sm text-gray-500">Пов’язаних повторень ще немає.</p> : <ul className="divide-y">{occurrences.map((task) => <li key={task.id} className="min-w-0 py-3"><Link href={`/tasks/${task.id}`} className="break-words font-medium text-green-700 hover:underline">№ {task.recurrence_sequence} · {task.title}</Link><p className="mt-1 text-sm text-gray-500">{task.status} · {formatDateValue(task.due_date) ?? "Без терміну"}</p></li>)}</ul>}
       <p className="text-xs text-gray-500">Після зупинки незавершене завдання залишається в робочому просторі як разове й більше не входить до цієї серії. Завершена історія зберігається.</p>

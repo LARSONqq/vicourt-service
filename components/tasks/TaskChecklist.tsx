@@ -309,7 +309,7 @@ export default function TaskChecklist({
   }
 
   return (
-    <section className="min-w-0 rounded-xl border bg-white p-3 sm:p-4">
+    <section className="vc-task-panel min-w-0 rounded-lg border bg-white p-3 sm:p-4">
       {/* HEADER */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">

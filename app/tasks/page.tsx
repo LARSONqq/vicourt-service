@@ -28,14 +28,14 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const templates = recurrence ? await getTaskTemplateSummaries(result.tasks.flatMap((task) => task.task_template_id === null ? [] : [task.task_template_id])) : [];
   return <div className="min-w-0 space-y-5 sm:space-y-6">
     <header className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0"><p className="text-sm font-medium text-green-700">Робочий простір команди</p>
+      <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Робочий простір команди</p>
       <h1 className="vc-page-title mt-1 break-words">Завдання</h1>
-      <p className="mt-1 text-sm text-gray-500">{today.split("-").reverse().join(".")} · Київ</p></div>
-      {recurrence && <Link href="/tasks/templates" className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-green-700 shadow-xs transition hover:border-green-300 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-fit">{recurringTaskCopy.title} →</Link>}
+      <p className="mt-1 text-sm text-muted-foreground">{today.split("-").reverse().join(".")} · Київ</p></div>
+      {recurrence && <Link href="/tasks/templates" className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-border bg-card px-4 py-3 text-sm font-medium text-primary transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-fit">{recurringTaskCopy.title} →</Link>}
     </header>
     <AddGlobalTaskForm objects={objects} equipment={equipment} employees={employees} canManageRecurrence={recurrence} />
     <TaskWorkspaceNavigation filters={filters} counts={result.counts} employees={employees} />
-    {filters.view === "my" && profile.employee_id === null && <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Ваш профіль не прив’язаний до працівника. Для виду «Мої» попросіть адміністратора налаштувати цей зв’язок. Інші види залишаються доступними.</p>}
+    {filters.view === "my" && profile.employee_id === null && <p className="vc-panel-warning rounded-md border p-4 text-sm">Ваш профіль не прив’язаний до працівника. Для виду «Мої» попросіть адміністратора налаштувати цей зв’язок. Інші види залишаються доступними.</p>}
     <TaskWorkspacePagination filters={filters} {...result} />
     <TasksList emptyMessage={taskWorkspaceEmptyMessage(filters)} workspaceReturnTo={taskWorkspaceHref(filters, result.page)} serverPaged businessDate={today} tasks={result.tasks} employees={employees} objects={objects} equipment={equipment}
       canManageSupervision={canManageObjects(profile.role)} canManageEquipment={canManageEquipment(profile.role)} canManageRecurrence={recurrence} taskTemplates={templates} />
