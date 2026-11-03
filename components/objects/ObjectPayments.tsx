@@ -59,7 +59,7 @@ export default function ObjectPayments({
       : [];
 
   return (
-    <section className="vc-surface min-w-0 overflow-hidden">
+    <section className="vc-object-panel vc-surface min-w-0 overflow-hidden">
       <div className="flex min-w-0 flex-col gap-4 border-b p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">

@@ -136,7 +136,7 @@ export default function ObjectSupervisionCard({
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-rose-200 bg-white">
+    <section className="vc-object-panel overflow-hidden rounded-lg border border-rose-200 bg-white">
       <div className="flex flex-col gap-3 border-b border-rose-100 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">

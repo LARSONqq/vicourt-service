@@ -54,19 +54,19 @@ export default function NewObjectStatusFields() {
 
       {status ===
         PERIODIC_SUPERVISION_STATUS && (
-        <fieldset className="rounded-xl border border-rose-200 bg-rose-50 p-4">
-          <legend className="px-1 font-semibold text-gray-900">
+        <fieldset className="rounded-lg border border-border bg-muted/40 p-4">
+          <legend className="px-1 font-semibold text-foreground">
             Періодичний нагляд
           </legend>
 
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-muted-foreground">
             Вкажіть періодичність і
             заплануйте перший огляд.
           </p>
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="min-w-0">
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-foreground">
                 Періодичність, днів
               </label>
 
@@ -89,7 +89,7 @@ export default function NewObjectStatusFields() {
             </div>
 
             <div className="min-w-0">
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-foreground">
                 Дата першого / наступного
                 огляду
               </label>

@@ -120,7 +120,7 @@ export default function ObjectPaymentSchedule({
   }
 
   return (
-    <section id="payment-schedule" className="vc-surface scroll-mt-24 min-w-0 overflow-hidden">
+    <section id="payment-schedule" className="vc-object-panel vc-surface scroll-mt-24 min-w-0 overflow-hidden">
       <div className="flex min-w-0 flex-col gap-4 border-b p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">Графік оплат</h2>

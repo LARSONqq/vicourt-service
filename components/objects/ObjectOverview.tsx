@@ -79,7 +79,7 @@ function getTaskDuePresentation(
     return {
       label: "Без терміну",
       className:
-        "text-gray-500",
+        "text-muted-foreground",
     };
   }
 
@@ -89,7 +89,7 @@ function getTaskDuePresentation(
         "Прострочено · " +
         formatDateValue(dueDate),
       className:
-        "text-red-700",
+        "text-destructive",
     };
   }
 
@@ -97,7 +97,7 @@ function getTaskDuePresentation(
     return {
       label: "Сьогодні",
       className:
-        "text-orange-700",
+        "vc-text-warning",
     };
   }
 
@@ -105,7 +105,7 @@ function getTaskDuePresentation(
     label:
       formatDateValue(dueDate),
     className:
-      "text-gray-600",
+      "text-muted-foreground",
   };
 }
 
@@ -150,18 +150,18 @@ function KpiCard({
     | "negative";
 }) {
   return (
-    <div className="vc-surface min-w-0 p-3 sm:p-4">
-      <p className="text-xs text-gray-500 sm:text-sm">
+    <div className="vc-object-panel vc-surface min-w-0 p-3 sm:p-4">
+      <p className="text-xs text-muted-foreground sm:text-sm">
         {label}
       </p>
       <p
         className={
           "mt-2 break-words text-lg font-bold sm:text-xl " +
           (tone === "positive"
-            ? "text-green-700"
+            ? "text-primary"
             : tone === "negative"
-              ? "text-red-700"
-              : "text-gray-900")
+              ? "text-destructive"
+              : "text-foreground")
         }
       >
         {value}
@@ -221,7 +221,7 @@ export default function ObjectOverview({
             finance.paymentScheduleSummary.overdueAmount
           ),
           className:
-            "border-red-200 bg-red-50 text-red-800",
+            "vc-panel-danger border-border",
         }
       : dueTodayPayment
         ? {
@@ -234,7 +234,7 @@ export default function ObjectOverview({
                 dueTodayPayment.remainingAmount
               ),
             className:
-              "border-orange-200 bg-orange-50 text-orange-800",
+              "vc-panel-warning border-border",
           }
         : finance.paymentScheduleSummary.nextPayment
           ? {
@@ -249,7 +249,7 @@ export default function ObjectOverview({
                   finance.paymentScheduleSummary.nextPayment.remainingAmount
                 ),
               className:
-                "border-blue-200 bg-blue-50 text-blue-800",
+                "vc-panel-info border-border",
             }
           : {
               title:
@@ -260,17 +260,17 @@ export default function ObjectOverview({
                   ? "Усі заплановані платежі покрито"
                   : "Ще не налаштовано",
               className:
-                "border-gray-200 bg-gray-50 text-gray-700",
+                "vc-panel-neutral border-border",
             };
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-5">
       <section>
         <div className="mb-3">
-          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+          <h2 className="text-lg font-semibold text-foreground sm:text-xl">
             Стан об’єкта
           </h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Ключові операційні показники
           </p>
         </div>
@@ -307,12 +307,12 @@ export default function ObjectOverview({
       </section>
 
       {finance && financials && (
-        <section className="min-w-0 rounded-xl border bg-gray-50/60 p-3 sm:p-5">
+        <section className="vc-object-panel min-w-0 rounded-lg border border-border bg-muted/35 p-3 sm:p-5">
           <div className="mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
               Фінанси зараз
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               Короткий план-факт без дублювання детальної вкладки
             </p>
           </div>
@@ -376,25 +376,25 @@ export default function ObjectOverview({
           </div>
 
           <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
-            <p className="rounded-lg bg-white px-3 py-2 text-gray-600">
+            <p className="rounded-md bg-card px-3 py-2 text-muted-foreground">
               Матеріали:{" "}
-              <strong className="text-gray-900">
+              <strong className="text-foreground">
                 {formatMoney(
                   finance.materialsCost
                 )}
               </strong>
             </p>
-            <p className="rounded-lg bg-white px-3 py-2 text-gray-600">
+            <p className="rounded-md bg-card px-3 py-2 text-muted-foreground">
               Робота:{" "}
-              <strong className="text-gray-900">
+              <strong className="text-foreground">
                 {formatMoney(
                   finance.laborCost
                 )}
               </strong>
             </p>
-            <p className="rounded-lg bg-white px-3 py-2 text-gray-600">
+            <p className="rounded-md bg-card px-3 py-2 text-muted-foreground">
               Інші витрати:{" "}
-              <strong className="text-gray-900">
+              <strong className="text-foreground">
                 {formatMoney(
                   finance.otherExpensesCost
                 )}
@@ -423,7 +423,7 @@ export default function ObjectOverview({
       {supervision}
 
       <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
-        <section className="vc-surface min-w-0 p-4 sm:p-5">
+        <section className="vc-object-panel vc-surface min-w-0 p-4 sm:p-5">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
               Найближчі завдання
@@ -479,7 +479,7 @@ export default function ObjectOverview({
           )}
         </section>
 
-        <section className="vc-surface min-w-0 p-4 sm:p-5">
+        <section className="vc-object-panel vc-surface min-w-0 p-4 sm:p-5">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
               Останні роботи

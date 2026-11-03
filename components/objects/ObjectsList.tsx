@@ -35,25 +35,25 @@ function getStatusStyle(
 ) {
   switch (status) {
     case "Новий":
-      return "bg-blue-100 text-blue-700";
+      return "vc-status-info";
 
     case "В роботі":
-      return "bg-green-100 text-green-700";
+      return "vc-status-success";
 
     case "На постійному обслуговуванні":
-      return "bg-purple-100 text-purple-700";
+      return "vc-status-info";
 
     case "Під періодичним наглядом":
-      return "bg-rose-100 text-rose-700";
+      return "vc-status-warning";
 
     case "Призупинено":
-      return "bg-yellow-100 text-yellow-700";
+      return "vc-status-warning";
 
     case "Завершено":
-      return "bg-gray-100 text-gray-700";
+      return "vc-status-neutral";
 
     default:
-      return "bg-gray-100 text-gray-600";
+      return "vc-status-neutral";
   }
 }
 
@@ -79,7 +79,7 @@ function ObjectSupervisionNote({
 
   if (state.kind === "overdue") {
     return (
-      <p className="break-words text-sm font-medium text-red-600">
+      <p className="break-words text-sm font-medium text-destructive">
         Огляд прострочено на {state.overdueDays} дн.
       </p>
     );
@@ -87,14 +87,14 @@ function ObjectSupervisionNote({
 
   if (state.kind === "today") {
     return (
-      <p className="break-words text-sm font-medium text-orange-600">
+      <p className="vc-text-warning break-words text-sm font-medium">
         Огляд сьогодні
       </p>
     );
   }
 
   return (
-    <p className="break-words text-sm text-rose-700">
+    <p className="break-words text-sm text-muted-foreground">
       Наступний огляд: {formatDateValue(
         object.next_supervision_date
       ) || "не заплановано"}
@@ -191,7 +191,7 @@ export default function ObjectsList({
   return (
     <div className="space-y-4 sm:space-y-5">
       {/* FILTERS */}
-      <div className="vc-surface grid grid-cols-1 gap-3 p-3 sm:p-4 md:grid-cols-[1fr_240px]">
+      <div className="vc-surface grid grid-cols-1 gap-3 p-3 sm:p-4 md:grid-cols-[minmax(0,1fr)_240px]">
         <input
           type="search"
           value={search}
@@ -230,9 +230,9 @@ export default function ObjectsList({
 
       {/* COUNT */}
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Знайдено:{" "}
-          <span className="font-medium text-gray-700">
+          <span className="font-semibold text-foreground">
             {
               filteredObjects.length
             }
@@ -245,7 +245,7 @@ export default function ObjectsList({
             onClick={() =>
               setStatus("Усі")
             }
-            className="inline-flex min-h-10 items-center rounded-md px-2 text-sm font-medium text-green-700 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+            className="inline-flex min-h-10 items-center rounded-md px-2 text-sm font-medium text-primary hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Скинути фільтр
           </button>
@@ -256,15 +256,15 @@ export default function ObjectsList({
       {filteredObjects.length ===
       0 ? (
         <div className="vc-surface p-6 text-center sm:p-8">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
             ⌕
           </div>
 
-          <p className="mt-3 font-medium text-gray-700">
+          <p className="mt-3 font-medium text-foreground">
             Нічого не знайдено
           </p>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Спробуйте змінити пошук або
             статус.
           </p>
@@ -276,13 +276,13 @@ export default function ObjectsList({
               <Link
                 key={object.id}
                 href={`/objects/${object.id}`}
-                className="vc-surface group block min-w-0 p-4 transition hover:border-green-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 active:bg-gray-50 sm:p-5"
+                className="vc-surface group block min-w-0 p-4 transition hover:border-primary/35 hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:bg-muted/60 sm:p-5"
               >
                 <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   {/* LEFT */}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-start gap-2 sm:block">
-                      <h2 className="min-w-0 break-words text-base font-semibold text-gray-950 transition group-hover:text-green-800 sm:text-lg">
+                      <h2 className="min-w-0 break-words text-base font-semibold text-foreground transition group-hover:text-primary sm:text-lg">
                         {
                           object.name
                         }
@@ -299,8 +299,8 @@ export default function ObjectsList({
                     </div>
 
                     <div className="mt-2 space-y-1.5">
-                      <p className="break-words text-sm text-gray-600">
-                        <span className="text-gray-400">
+                      <p className="break-words text-sm text-foreground">
+                        <span className="text-muted-foreground">
                           Замовник:{" "}
                         </span>
 
@@ -308,8 +308,8 @@ export default function ObjectsList({
                           "Не вказано"}
                       </p>
 
-                      <p className="break-words text-sm text-gray-600">
-                        <span className="text-gray-400">
+                      <p className="break-words text-sm text-foreground">
+                        <span className="text-muted-foreground">
                           Адреса:{" "}
                         </span>
 
@@ -318,8 +318,8 @@ export default function ObjectsList({
                       </p>
 
                       {object.phone && (
-                        <p className="break-words text-sm text-gray-600">
-                          <span className="text-gray-400">Телефон: </span>
+                        <p className="break-words text-sm text-foreground">
+                          <span className="text-muted-foreground">Телефон: </span>
                           {object.phone}
                         </p>
                       )}
@@ -343,17 +343,17 @@ export default function ObjectsList({
                     </span>
 
                     <div className="min-w-0">
-                      <p className="text-xs text-gray-400 sm:text-right">
+                      <p className="text-xs text-muted-foreground sm:text-right">
                         Відповідальний
                       </p>
 
-                      <p className="mt-1 break-words text-sm font-medium text-gray-700 sm:max-w-[220px] sm:text-right">
+                      <p className="mt-1 break-words text-sm font-medium text-foreground sm:max-w-[220px] sm:text-right">
                         {object.manager ||
                           "Не вказано"}
                       </p>
                     </div>
 
-                    <span aria-hidden="true" className="shrink-0 text-lg text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-green-700 sm:hidden">
+                    <span aria-hidden="true" className="shrink-0 text-lg text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary sm:hidden">
                       ›
                     </span>
                   </div>

@@ -251,7 +251,7 @@ export default function ObjectDocuments({
   }
 
   return (
-    <section className="vc-surface min-w-0 p-4 sm:p-6">
+    <section className="vc-object-panel vc-surface min-w-0 p-4 sm:p-6">
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">

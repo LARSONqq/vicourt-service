@@ -6,14 +6,14 @@ export default async function NewObjectPage() {
   const employees = await getEmployees();
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-5 sm:space-y-6">
       <header>
-        <p className="text-sm font-medium text-green-700">Новий робочий простір</p>
+        <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">Новий робочий простір</p>
         <h1 className="vc-page-title mt-1">
           Новий об&apos;єкт
         </h1>
 
-        <p className="text-gray-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Заповніть інформацію про новий об&apos;єкт.
         </p>
       </header>
@@ -35,19 +35,19 @@ export default async function NewObjectPage() {
           />
         </div>
 
-        <fieldset className="rounded-xl border bg-gray-50 p-4">
-          <legend className="px-1 font-semibold text-gray-900">
+        <fieldset className="rounded-lg border border-border bg-muted/40 p-4">
+          <legend className="px-1 font-semibold text-foreground">
             Фінанси
           </legend>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Необов’язкові планові
             значення для об’єкта.
           </p>
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-foreground">
                 Плановий бюджет
                 витрат, грн
               </label>
@@ -64,7 +64,7 @@ export default async function NewObjectPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-foreground">
                 Вартість для
                 клієнта, грн
               </label>
@@ -151,7 +151,7 @@ export default async function NewObjectPage() {
           </select>
 
           {employees.length === 0 && (
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-muted-foreground">
               Працівників ще не додано. Додай їх у
               розділі «Працівники».
             </p>
@@ -160,7 +160,7 @@ export default async function NewObjectPage() {
 
         <button
           type="submit"
-          className="min-h-11 w-full rounded-lg bg-green-700 px-6 py-3 font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 sm:w-fit"
+          className="min-h-11 w-full rounded-md bg-primary px-5 py-2.5 font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:w-fit"
         >
           Створити об&apos;єкт
         </button>

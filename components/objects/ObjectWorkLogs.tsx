@@ -103,7 +103,7 @@ export default function ObjectWorkLogs({
     }, [employees]);
 
   return (
-    <section className="vc-surface min-w-0 p-4 sm:p-6">
+    <section className="vc-object-panel vc-surface min-w-0 p-4 sm:p-6">
       {/* HEADER */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">

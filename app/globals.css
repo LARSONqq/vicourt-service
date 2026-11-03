@@ -275,7 +275,30 @@
     color: var(--vc-danger-text);
   }
 
+  .vc-panel-info {
+    background: var(--vc-info-bg);
+    color: var(--vc-info-text);
+  }
+
   .vc-text-warning { color: var(--vc-warning-text); }
+
+  .dark .vc-object-panel {
+    border-color: var(--vc-border);
+    background-color: var(--vc-elevated);
+    color: var(--vc-text);
+  }
+  .dark .vc-object-panel :is(.text-gray-950, .text-gray-900, .text-gray-800, .text-gray-700) { color: var(--vc-text); }
+  .dark .vc-object-panel :is(.text-gray-600, .text-gray-500, .text-gray-400, .text-gray-300) { color: var(--vc-text-muted); }
+  .dark .vc-object-panel :is(.bg-white, .bg-gray-50, .bg-gray-50\/40, .bg-gray-50\/50, .bg-gray-50\/60, .bg-gray-100) { background-color: var(--vc-secondary); }
+  .dark .vc-object-panel :is(.border-gray-200, .border-gray-300) { border-color: var(--vc-border); }
+  .dark .vc-object-panel :is(.bg-green-50, .bg-green-100) { background-color: var(--vc-success-bg); }
+  .dark .vc-object-panel :is(.text-green-600, .text-green-700, .text-green-800) { color: var(--vc-success-text); }
+  .dark .vc-object-panel :is(.bg-orange-50, .bg-orange-100, .bg-yellow-50, .bg-yellow-100, .bg-rose-50, .bg-rose-100) { background-color: var(--vc-warning-bg); }
+  .dark .vc-object-panel :is(.text-orange-600, .text-orange-700, .text-orange-800, .text-yellow-700, .text-rose-700) { color: var(--vc-warning-text); }
+  .dark .vc-object-panel :is(.bg-red-50, .bg-red-100) { background-color: var(--vc-danger-bg); }
+  .dark .vc-object-panel :is(.text-red-600, .text-red-700, .text-red-800) { color: var(--vc-danger-text); }
+  .dark .vc-object-panel :is(.bg-blue-50, .bg-blue-100, .bg-purple-50, .bg-purple-100) { background-color: var(--vc-info-bg); }
+  .dark .vc-object-panel :is(.text-blue-600, .text-blue-700, .text-blue-800, .text-purple-600, .text-purple-700, .text-purple-800) { color: var(--vc-info-text); }
 
   .vc-sidebar {
     background: var(--sidebar);

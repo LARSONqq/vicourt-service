@@ -814,10 +814,10 @@ export default async function ObjectPage({
   }
 
   return (
-    <div className="min-w-0 space-y-5 sm:space-y-7">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
       <Link
         href="/objects"
-        className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-medium text-gray-600 transition hover:bg-white hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+        className="inline-flex min-h-10 items-center gap-2 rounded-md px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         ← До об’єктів
       </Link>
@@ -829,7 +829,7 @@ export default async function ObjectPage({
       />
 
       {profile && canManageUsers(profile.role) && (
-        <Link href={`/users/clients?object=${objectId}`} className="inline-flex min-h-11 items-center rounded-lg border border-green-200 bg-white px-4 py-2.5 text-sm font-medium text-green-700 shadow-sm transition hover:border-green-300 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">Доступ клієнта →</Link>
+        <Link href={`/users/clients?object=${objectId}`} className="inline-flex min-h-11 items-center rounded-md border border-border bg-card px-4 py-2.5 text-sm font-medium text-primary transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Доступ клієнта →</Link>
       )}
 
       <ObjectTabs

@@ -64,9 +64,9 @@ export default function ObjectTabPagination({
   return (
     <nav
       aria-label="Сторінки розділу об’єкта"
-      className="vc-surface mt-4 flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
+      className="vc-object-panel vc-surface mt-4 flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
     >
-      <p className="text-center text-xs text-gray-500 sm:text-left sm:text-sm">
+      <p className="text-center text-xs text-muted-foreground sm:text-left sm:text-sm">
         Показано {from}–{to} із {total}
       </p>
 
@@ -79,7 +79,7 @@ export default function ObjectTabPagination({
               page - 1
             )}
             scroll={false}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             ← Новіші
           </Link>
@@ -95,7 +95,7 @@ export default function ObjectTabPagination({
               page + 1
             )}
             scroll={false}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Старіші →
           </Link>

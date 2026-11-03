@@ -113,7 +113,7 @@ export default function ObjectExpenses({
     );
 
   return (
-    <section className="vc-surface min-w-0 p-4 sm:p-6">
+    <section className="vc-object-panel vc-surface min-w-0 p-4 sm:p-6">
       {/* HEADER */}
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">

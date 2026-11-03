@@ -47,19 +47,19 @@ function getStatusStyle(
 ) {
   switch (status) {
     case "Новий":
-      return "bg-blue-100 text-blue-700";
+      return "vc-status-info";
     case "В роботі":
-      return "bg-green-100 text-green-700";
+      return "vc-status-success";
     case "На постійному обслуговуванні":
-      return "bg-purple-100 text-purple-700";
+      return "vc-status-info";
     case "Під періодичним наглядом":
-      return "bg-rose-100 text-rose-700";
+      return "vc-status-warning";
     case "Призупинено":
-      return "bg-yellow-100 text-yellow-700";
+      return "vc-status-warning";
     case "Завершено":
-      return "bg-gray-100 text-gray-700";
+      return "vc-status-neutral";
     default:
-      return "bg-gray-100 text-gray-600";
+      return "vc-status-neutral";
   }
 }
 
@@ -163,7 +163,7 @@ export default function ObjectPassportHeader({
 
   if (isEditing) {
     return (
-      <section className="vc-surface min-w-0 p-4 sm:p-6">
+      <section className="vc-object-panel vc-surface min-w-0 p-4 sm:p-6">
         <div className="mb-5">
           <h2 className="text-lg font-semibold sm:text-xl">
             Редагування об’єкта
@@ -509,11 +509,11 @@ export default function ObjectPassportHeader({
   }
 
   return (
-    <section className="vc-surface min-w-0 overflow-hidden">
+    <section className="vc-object-panel vc-surface min-w-0 overflow-hidden">
       <div className="min-w-0 p-4 sm:p-6">
         <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-green-700">
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
               Паспорт об’єкта
             </p>
 
@@ -535,7 +535,7 @@ export default function ObjectPassportHeader({
               </span>
             </div>
 
-            <p className="mt-2 break-words text-sm text-gray-500 sm:text-base">
+            <p className="mt-2 break-words text-sm text-muted-foreground sm:text-base">
               {object.address ||
                 "Адресу не вказано"}
             </p>
@@ -548,7 +548,7 @@ export default function ObjectPassportHeader({
                   "tel:" +
                   object.phone
                 }
-                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-green-200 px-4 py-2.5 text-sm font-medium text-green-700 transition hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-card px-4 py-2.5 text-sm font-medium text-primary transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Зателефонувати
               </a>
@@ -564,7 +564,7 @@ export default function ObjectPassportHeader({
                   disabled={
                     isSubmitting
                   }
-                  className="min-h-11 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                  className="min-h-11 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   {isSubmitting
                     ? "Завантаження…"
@@ -572,12 +572,12 @@ export default function ObjectPassportHeader({
                 </button>
 
                 <details className="relative col-span-2 sm:col-span-1">
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-md border border-border px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     Ще
                   </summary>
 
-                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border bg-white p-2 shadow-lg">
-                    <p className="px-2 pb-2 text-xs text-gray-500">
+                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-card p-2 shadow-md">
+                    <p className="px-2 pb-2 text-xs text-muted-foreground">
                       Небезпечні дії
                     </p>
                     <DeleteObjectButton
@@ -592,7 +592,7 @@ export default function ObjectPassportHeader({
                 </details>
               </>
             ) : (
-              <span className="col-span-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-600 sm:col-span-1">
+              <span className="col-span-2 inline-flex min-h-11 items-center justify-center rounded-md bg-muted px-4 py-2.5 text-sm font-medium text-muted-foreground sm:col-span-1">
                 Тільки перегляд
               </span>
             )}
@@ -602,39 +602,39 @@ export default function ObjectPassportHeader({
         {errorMessage && (
           <p
             role="alert"
-            className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="vc-panel-danger mt-4 rounded-md border p-3 text-sm"
           >
             {errorMessage}
           </p>
         )}
       </div>
 
-      <dl className="grid min-w-0 grid-cols-1 divide-y border-t bg-gray-50/60 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
+      <dl className="grid min-w-0 grid-cols-1 divide-y divide-border border-t border-border bg-muted/35 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
         <div className="min-w-0 py-4 sm:pr-5">
-          <dt className="text-xs text-gray-500">
+          <dt className="text-xs text-muted-foreground">
             Замовник
           </dt>
-          <dd className="mt-1 break-words font-medium text-gray-900">
+          <dd className="mt-1 break-words font-medium text-foreground">
             {object.customer ||
               "Не вказано"}
           </dd>
         </div>
 
         <div className="min-w-0 py-4 sm:px-5">
-          <dt className="text-xs text-gray-500">
+          <dt className="text-xs text-muted-foreground">
             Телефон
           </dt>
-          <dd className="mt-1 break-all font-medium text-gray-900">
+          <dd className="mt-1 break-all font-medium text-foreground">
             {object.phone ||
               "Не вказано"}
           </dd>
         </div>
 
         <div className="min-w-0 py-4 sm:pl-5">
-          <dt className="text-xs text-gray-500">
+          <dt className="text-xs text-muted-foreground">
             Відповідальний
           </dt>
-          <dd className="mt-1 break-words font-medium text-gray-900">
+          <dd className="mt-1 break-words font-medium text-foreground">
             {object.manager ||
               "Не призначено"}
           </dd>
