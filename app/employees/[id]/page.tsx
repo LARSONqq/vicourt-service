@@ -127,10 +127,10 @@ function EmployeeTabLoading() {
       <span className="sr-only">
         Завантаження розділу…
       </span>
-      <div className="vc-surface h-28 bg-gray-50/70" />
+      <div className="vc-surface h-28 bg-muted/70" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="vc-surface h-36 bg-gray-50/70" />
-        <div className="vc-surface h-36 bg-gray-50/70" />
+        <div className="vc-surface h-36 bg-muted/70" />
+        <div className="vc-surface h-36 bg-muted/70" />
       </div>
     </div>
   );

@@ -61,7 +61,7 @@ export default function AddEmployeeForm({
     >
       {/* ERROR */}
       {errorMessage && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
+        <div className="rounded-lg border border-border bg-[var(--vc-danger-bg)] p-3 text-sm text-[var(--vc-danger-text)] sm:p-4">
           {errorMessage}
         </div>
       )}
@@ -69,7 +69,7 @@ export default function AddEmployeeForm({
       {/* NAME */}
       <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Ім’я
           </label>
 
@@ -77,13 +77,13 @@ export default function AddEmployeeForm({
             type="text"
             name="first_name"
             placeholder="Ім’я працівника"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 rounded-lg border bg-card px-3 py-3 outline-none transition placeholder:text-muted-foreground focus:border-ring"
             required
           />
         </div>
 
         <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Прізвище
           </label>
 
@@ -91,7 +91,7 @@ export default function AddEmployeeForm({
             type="text"
             name="last_name"
             placeholder="Прізвище працівника"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 rounded-lg border bg-card px-3 py-3 outline-none transition placeholder:text-muted-foreground focus:border-ring"
             required
           />
         </div>
@@ -100,7 +100,7 @@ export default function AddEmployeeForm({
       {/* CONTACTS */}
       <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Телефон
           </label>
 
@@ -109,12 +109,12 @@ export default function AddEmployeeForm({
             name="phone"
             inputMode="tel"
             placeholder="+380..."
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 rounded-lg border bg-card px-3 py-3 outline-none transition placeholder:text-muted-foreground focus:border-ring"
           />
         </div>
 
         <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Email
           </label>
 
@@ -123,7 +123,7 @@ export default function AddEmployeeForm({
             name="email"
             inputMode="email"
             placeholder="example@email.com"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 rounded-lg border bg-card px-3 py-3 outline-none transition placeholder:text-muted-foreground focus:border-ring"
           />
         </div>
       </div>
@@ -131,14 +131,14 @@ export default function AddEmployeeForm({
       {/* WORK INFO */}
       <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Посада
           </label>
 
           <select
             name="position"
             defaultValue=""
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 rounded-lg border bg-card px-3 py-3 outline-none transition focus:border-ring"
           >
             <option value="">
               Не вказувати
@@ -158,14 +158,14 @@ export default function AddEmployeeForm({
         </div>
 
         <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Тип роботи
           </label>
 
           <select
             name="employment_type"
             defaultValue="Постійна робота"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 rounded-lg border bg-card px-3 py-3 outline-none transition focus:border-ring"
             required
           >
             {employmentTypes.map(
@@ -182,14 +182,14 @@ export default function AddEmployeeForm({
         </div>
 
         <div className="min-w-0 md:col-span-2 xl:col-span-1">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Статус
           </label>
 
           <select
             name="status"
             defaultValue="Активний"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 rounded-lg border bg-card px-3 py-3 outline-none transition focus:border-ring"
             required
           >
             {employeeStatuses.map(
@@ -209,19 +209,19 @@ export default function AddEmployeeForm({
       {/* DATE + RATE */}
       <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Дата прийняття на роботу
           </label>
 
           <input
             type="date"
             name="hire_date"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 rounded-lg border bg-card px-3 py-3 outline-none transition focus:border-ring"
           />
         </div>
 
         <div className="min-w-0">
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-foreground">
             Погодинна ставка, грн/год
           </label>
 
@@ -233,10 +233,10 @@ export default function AddEmployeeForm({
             inputMode="decimal"
             defaultValue="0"
             placeholder="Наприклад, 250"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            className="vc-field min-h-11 w-full min-w-0 rounded-lg border bg-card px-3 py-3 outline-none transition placeholder:text-muted-foreground focus:border-ring"
           />
 
-          <p className="mt-2 text-xs leading-4 text-gray-400">
+          <p className="mt-2 text-xs leading-4 text-muted-foreground">
             Використовується для
             розрахунку вартості робіт
             на об’єктах.
@@ -246,7 +246,7 @@ export default function AddEmployeeForm({
 
       {/* NOTES */}
       <div className="min-w-0">
-        <label className="mb-2 block text-sm font-medium text-gray-700">
+        <label className="mb-2 block text-sm font-medium text-foreground">
           Примітки
         </label>
 
@@ -254,7 +254,7 @@ export default function AddEmployeeForm({
           name="notes"
           rows={4}
           placeholder="Навички, особливості роботи або інша інформація"
-          className="w-full min-w-0 resize-none rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+          className="vc-field w-full min-w-0 resize-none rounded-lg border bg-card px-3 py-3 outline-none transition placeholder:text-muted-foreground focus:border-ring"
         />
       </div>
 
@@ -263,7 +263,7 @@ export default function AddEmployeeForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="min-h-11 w-full rounded-lg bg-green-600 px-5 py-3 font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+          className="min-h-11 w-full rounded-lg bg-primary px-5 py-3 font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
         >
           {isSubmitting
             ? "Збереження..."

@@ -56,15 +56,15 @@ function getEmployeeStatusClasses(
 ) {
   switch (status) {
     case "Активний":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
     case "У відпустці":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
     case "На лікарняному":
-      return "bg-orange-50 text-orange-700";
+      return "vc-status-warning";
     case "Неактивний":
-      return "bg-red-50 text-red-700";
+      return "vc-status-danger";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "vc-status-neutral";
   }
 }
 
@@ -132,21 +132,21 @@ export default function EmployeePassportShell({
     <div className="min-w-0 space-y-5 sm:space-y-6">
       <Link
         href="/employees"
-        className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-gray-600 transition hover:bg-white hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+        className="inline-flex min-h-10 items-center rounded-lg px-2 text-sm font-medium text-muted-foreground transition hover:bg-muted/35 hover:text-[var(--vc-success-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         ← Назад до працівників
       </Link>
 
-      <header className="vc-surface min-w-0 p-4 sm:p-6">
+      <header className="vc-surface min-w-0 p-4 sm:p-5">
         <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg font-bold text-green-700 sm:h-16 sm:w-16 sm:text-xl">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--vc-success-bg)] text-lg font-bold text-[var(--vc-success-text)] sm:h-12 sm:w-12">
               {getInitials(employee)}
             </div>
 
             <div className="min-w-0">
               <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                <h1 className="vc-page-title break-words">
+                <h1 className="break-words text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
                   {employeeName}
                 </h1>
                 <span
@@ -158,7 +158,7 @@ export default function EmployeePassportShell({
                 </span>
               </div>
 
-              <p className="mt-1 break-words text-sm text-gray-500 sm:text-base">
+              <p className="mt-1 break-words text-sm text-muted-foreground sm:text-base">
                 {employee.position ||
                   "Посаду не вказано"}
                 <span aria-hidden="true">
@@ -167,7 +167,7 @@ export default function EmployeePassportShell({
                 {employee.employment_type}
               </p>
 
-              <div className="mt-3 flex min-w-0 flex-col gap-1.5 text-sm text-gray-600 sm:flex-row sm:flex-wrap sm:gap-x-5">
+              <div className="mt-3 flex min-w-0 flex-col gap-1.5 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-x-5">
                 <span className="break-all">
                   {employee.phone ||
                     "Телефон не вказано"}
@@ -190,12 +190,12 @@ export default function EmployeePassportShell({
             {employee.phone ? (
               <a
                 href={`tel:${employee.phone}`}
-                className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Зателефонувати
               </a>
             ) : (
-              <span className="inline-flex min-h-11 items-center justify-center rounded-lg border bg-gray-50 px-3 py-2 text-sm text-gray-400">
+              <span className="inline-flex min-h-11 items-center justify-center rounded-lg border bg-muted px-3 py-2 text-sm text-muted-foreground">
                 Немає телефону
               </span>
             )}
@@ -203,12 +203,12 @@ export default function EmployeePassportShell({
             {employee.email ? (
               <a
                 href={`mailto:${employee.email}`}
-                className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                className="inline-flex min-h-11 min-w-0 items-center justify-center rounded-lg border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 Написати
               </a>
             ) : (
-              <span className="inline-flex min-h-11 items-center justify-center rounded-lg border bg-gray-50 px-3 py-2 text-sm text-gray-400">
+              <span className="inline-flex min-h-11 items-center justify-center rounded-lg border bg-muted px-3 py-2 text-sm text-muted-foreground">
                 Немає email
               </span>
             )}
@@ -223,7 +223,7 @@ export default function EmployeePassportShell({
                         !current
                     )
                   }
-                  className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                  className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   {isEditing
                     ? "Закрити"
@@ -231,17 +231,17 @@ export default function EmployeePassportShell({
                 </button>
 
                 <details className="relative min-w-0">
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-lg border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
                     Ще
                   </summary>
-                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border bg-white p-2 shadow-lg">
+                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border bg-card p-2 shadow-md">
                     <button
                       type="button"
                       onClick={() => {
                         setDeleteError("");
                         setShowDelete(true);
                       }}
-                      className="min-h-10 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                      className="min-h-10 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-[var(--vc-danger-text)] transition hover:bg-[var(--vc-danger-bg)]"
                     >
                       Видалити працівника
                     </button>
@@ -256,10 +256,10 @@ export default function EmployeePassportShell({
       {isAdmin && isEditing && (
         <section className="vc-surface min-w-0 p-3 sm:p-5">
           <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+            <h2 className="text-base font-semibold text-foreground">
               Редагування працівника
             </h2>
-            <p className="mt-1 text-sm leading-5 text-gray-500">
+            <p className="mt-1 text-sm leading-5 text-muted-foreground">
               Зміни застосовуються до профілю та нових операційних записів.
             </p>
           </div>
@@ -297,22 +297,22 @@ export default function EmployeePassportShell({
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-employee-title"
-            className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl sm:p-6"
+            className="w-full max-w-md rounded-lg bg-card p-5 shadow-md sm:p-6"
           >
             <h2
               id="delete-employee-title"
-              className="text-lg font-semibold text-gray-900"
+              className="text-lg font-semibold text-foreground"
             >
               Видалити працівника?
             </h2>
-            <p className="mt-2 text-sm leading-6 text-gray-600">
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Працівника «{employeeName}» буде видалено. Якщо запис використовується в інших розділах, база даних може заборонити цю дію.
             </p>
 
             {deleteError && (
               <p
                 role="alert"
-                className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                className="mt-4 rounded-lg border border-border bg-[var(--vc-danger-bg)] px-3 py-2 text-sm text-[var(--vc-danger-text)]"
               >
                 {deleteError}
               </p>
@@ -325,7 +325,7 @@ export default function EmployeePassportShell({
                 onClick={() =>
                   setShowDelete(false)
                 }
-                className="min-h-11 rounded-lg border bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+                className="min-h-11 rounded-lg border bg-card px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted disabled:opacity-60"
               >
                 Скасувати
               </button>
@@ -333,7 +333,7 @@ export default function EmployeePassportShell({
                 type="button"
                 disabled={isDeleting}
                 onClick={handleDelete}
-                className="min-h-11 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-11 rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-white transition hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isDeleting
                   ? "Видалення…"

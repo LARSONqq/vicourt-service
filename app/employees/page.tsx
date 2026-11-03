@@ -1,3 +1,5 @@
+import { Eye } from "lucide-react";
+
 import {
   Suspense,
 } from "react";
@@ -119,7 +121,7 @@ function DirectoryLoading() {
           (_, index) => (
             <div
               key={index}
-              className="vc-surface h-24 bg-gray-50/70"
+              className="vc-surface h-24 bg-muted/70"
             />
           )
         )}
@@ -129,7 +131,7 @@ function DirectoryLoading() {
           (_, index) => (
             <div
               key={index}
-              className="vc-surface h-64 bg-gray-50/70"
+              className="vc-surface h-64 bg-muted/70"
             />
           )
         )}
@@ -174,19 +176,19 @@ async function EmployeeDirectoryContent({
     <div className="min-w-0 space-y-5">
       <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {[
-          ["Усього працівників", stats.total, "text-gray-900"],
-          ["Активні", stats.active, "text-green-700"],
-          ["Тимчасово відсутні", stats.unavailable, stats.unavailable > 0 ? "text-orange-600" : "text-gray-900"],
-          ["Підрядники", stats.contractors, "text-blue-700"],
+          ["Усього працівників", stats.total, "text-foreground"],
+          ["Активні", stats.active, "text-[var(--vc-success-text)]"],
+          ["Тимчасово відсутні", stats.unavailable, stats.unavailable > 0 ? "text-[var(--vc-warning-text)]" : "text-foreground"],
+          ["Підрядники", stats.contractors, "text-foreground"],
         ].map(([label, value, className]) => (
           <div
             key={label}
             className="vc-surface min-w-0 p-3 sm:p-5"
           >
-            <p className="text-xs leading-4 text-gray-500 sm:text-sm">
+            <p className="text-xs leading-4 text-muted-foreground sm:text-sm">
               {label}
             </p>
-            <p className={`mt-2 text-2xl font-bold sm:text-3xl ${className}`}>
+            <p className={`mt-2 text-2xl font-semibold tabular-nums ${className}`}>
               {value}
             </p>
           </div>
@@ -229,11 +231,11 @@ export default async function EmployeesPage({
     <div className="min-w-0 space-y-5 sm:space-y-6">
       <header className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-green-700">Команда та навантаження</p>
+          <p className="text-xs font-medium text-muted-foreground">Команда та навантаження</p>
           <h1 className="vc-page-title mt-1 break-words">
             Працівники
           </h1>
-          <p className="mt-1 text-sm leading-5 text-gray-500 sm:text-base">
+          <p className="mt-1 text-sm leading-5 text-muted-foreground sm:text-base">
             Команда, контакти, посади та статуси роботи
           </p>
         </div>
@@ -245,16 +247,16 @@ export default async function EmployeesPage({
       </header>
 
       {!canManage && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 sm:px-5">
+        <div className="rounded-lg border border-border bg-[var(--vc-info-bg)] p-4 sm:px-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm">
-              👁
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--vc-info-bg)] text-sm">
+              <Eye aria-hidden="true" className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <p className="font-medium text-blue-800">
+              <p className="font-medium text-[var(--vc-info-text)]">
                 Режим перегляду
               </p>
-              <p className="mt-1 text-sm leading-5 text-blue-700">
+              <p className="mt-1 text-sm leading-5 text-[var(--vc-info-text)]">
                 Ти можеш переглядати працівників та їхню інформацію. Додавати, редагувати або видаляти працівників може лише адміністратор.
               </p>
             </div>

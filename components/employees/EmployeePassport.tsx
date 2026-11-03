@@ -52,26 +52,26 @@ function formatRate(value: number) {
 function getTaskStatusClasses(status: string) {
   switch (status) {
     case "Заплановано":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
     case "В роботі":
-      return "bg-amber-50 text-amber-700";
+      return "vc-status-warning";
     case "Виконано":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "vc-status-neutral";
   }
 }
 
 function getPriorityClasses(priority: string) {
   switch (priority) {
     case "Терміновий":
-      return "bg-red-50 text-red-700";
+      return "vc-status-danger";
     case "Високий":
-      return "bg-orange-50 text-orange-700";
+      return "vc-status-warning";
     case "Середній":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
     default:
-      return "bg-gray-100 text-gray-600";
+      return "vc-status-neutral";
   }
 }
 
@@ -117,15 +117,15 @@ function getSupervisionClasses(
   );
 
   if (state.kind === "overdue") {
-    return "bg-red-50 text-red-700";
+    return "vc-status-danger";
   }
   if (state.kind === "today") {
-    return "bg-orange-50 text-orange-700";
+    return "vc-status-warning";
   }
   if (state.kind === "planned") {
-    return "bg-blue-50 text-blue-700";
+    return "vc-status-info";
   }
-  return "bg-gray-100 text-gray-600";
+  return "vc-status-neutral";
 }
 
 function getMaintenanceClasses(equipment: Equipment, today: string) {
@@ -133,15 +133,15 @@ function getMaintenanceClasses(equipment: Equipment, today: string) {
   const kind = getEquipmentMaintenanceOverallKind(evaluation);
 
   if (kind === "overdue") {
-    return "bg-red-50 text-red-700";
+    return "vc-status-danger";
   }
   if (kind === "due" || kind === "today") {
-    return "bg-orange-50 text-orange-700";
+    return "vc-status-warning";
   }
   if (kind === "scheduled") {
-    return "bg-blue-50 text-blue-700";
+    return "vc-status-info";
   }
-  return "bg-gray-100 text-gray-600";
+  return "vc-status-neutral";
 }
 
 function EmptyState({
@@ -153,9 +153,9 @@ function EmptyState({
 }) {
   return (
     <div className="vc-surface border-dashed p-6 text-center shadow-none">
-      <p className="font-medium text-gray-700">{title}</p>
+      <p className="font-medium text-foreground">{title}</p>
       {description && (
-        <p className="mt-1 text-sm leading-5 text-gray-500">
+        <p className="mt-1 text-sm leading-5 text-muted-foreground">
           {description}
         </p>
       )}
@@ -172,11 +172,11 @@ function SectionHeader({
 }) {
   return (
     <div className="min-w-0">
-      <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+      <h2 className="text-base font-semibold text-foreground">
         {title}
       </h2>
       {description && (
-        <p className="mt-1 text-sm leading-5 text-gray-500">
+        <p className="mt-1 text-sm leading-5 text-muted-foreground">
           {description}
         </p>
       )}
@@ -208,7 +208,7 @@ function TaskCards({
         >
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <h3 className="break-words font-semibold text-gray-900">
+              <h3 className="break-words font-semibold text-foreground">
                 {task.title}
               </h3>
               <div className="mt-2 flex min-w-0 flex-wrap gap-1.5">
@@ -219,7 +219,7 @@ function TaskCards({
                 >
                   {task.priority}
                 </span>
-                <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
                   {getTaskSourceLabel(task)}
                 </span>
                 {task.task_template_id !== null && (
@@ -237,34 +237,34 @@ function TaskCards({
           </div>
 
           {task.description && !compact && (
-            <p className="mt-3 line-clamp-3 whitespace-pre-wrap break-words text-sm leading-5 text-gray-600">
+            <p className="mt-3 line-clamp-3 whitespace-pre-wrap break-words text-sm leading-5 text-muted-foreground">
               {task.description}
             </p>
           )}
 
           <div className="mt-4 flex min-w-0 flex-col gap-1.5 border-t pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4">
-            <p className="text-gray-500">
+            <p className="text-muted-foreground">
               Термін:{" "}
-              <span className="font-medium text-gray-700">
+              <span className="font-medium text-foreground">
                 {formatDate(task.due_date)}
               </span>
             </p>
             {task.object ? (
               <Link
                 href={`/objects/${task.object.id}`}
-                className="w-fit break-words font-medium text-green-700 hover:underline"
+                className="w-fit break-words font-medium text-[var(--vc-success-text)] hover:underline"
               >
                 {task.object.name}
               </Link>
             ) : task.equipment ? (
               <Link
                 href="/equipment"
-                className="w-fit break-words font-medium text-green-700 hover:underline"
+                className="w-fit break-words font-medium text-[var(--vc-success-text)] hover:underline"
               >
                 {task.equipment.name}
               </Link>
             ) : (
-              <span className="text-gray-400">Ціль не вказано</span>
+              <span className="text-muted-foreground">Ціль не вказано</span>
             )}
           </div>
         </article>
@@ -291,27 +291,27 @@ function WorkLogCards({
         >
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-foreground">
                 {formatDate(workLog.work_date)}
               </p>
               {workLog.object ? (
                 <Link
                   href={`/objects/${workLog.object.id}`}
-                  className="mt-1 inline-block break-words text-sm font-medium text-green-700 hover:underline"
+                  className="mt-1 inline-block break-words text-sm font-medium text-[var(--vc-success-text)] hover:underline"
                 >
                   {workLog.object.name}
                 </Link>
               ) : (
-                <p className="mt-1 text-sm text-gray-400">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Об’єкт не знайдено
                 </p>
               )}
             </div>
-            <span className="w-fit shrink-0 rounded-full bg-purple-50 px-3 py-1 text-sm font-medium text-purple-700">
+            <span className="w-fit shrink-0 rounded-full bg-[var(--vc-info-bg)] px-3 py-1 text-sm font-medium text-[var(--vc-info-text)]">
               {formatHours(Number(workLog.hours || 0))} год.
             </span>
           </div>
-          <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-gray-700">
+          <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
             {workLog.description}
           </p>
         </article>
@@ -337,17 +337,17 @@ function ObjectCards({
         <Link
           key={object.id}
           href={`/objects/${object.id}`}
-          className="vc-surface min-w-0 p-4 transition hover:border-green-300 hover:bg-green-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+          className="vc-surface min-w-0 p-4 transition hover:border-border hover:bg-[var(--vc-success-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <h3 className="break-words font-semibold text-gray-900">
+            <h3 className="break-words font-semibold text-foreground">
               {object.name}
             </h3>
-            <span className="w-fit shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
+            <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
               {object.status}
             </span>
           </div>
-          <p className="mt-2 break-words text-sm text-gray-500">
+          <p className="mt-2 break-words text-sm text-muted-foreground">
             {object.address || "Адресу не вказано"}
           </p>
           <span
@@ -389,15 +389,15 @@ function EquipmentCards({
           >
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <h3 className="break-words font-semibold text-gray-900">
+                <h3 className="break-words font-semibold text-foreground">
                   {item.name}
                 </h3>
-                <p className="mt-1 break-all text-sm text-gray-500">
+                <p className="mt-1 break-all text-sm text-muted-foreground">
                   {item.inventory_number ||
                     "Інвентарний номер не вказано"}
                 </p>
               </div>
-              <span className="w-fit shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
+              <span className="w-fit shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground">
                 {item.status}
               </span>
             </div>
@@ -411,14 +411,14 @@ function EquipmentCards({
                 {getEquipmentMaintenanceOverallLabel(evaluation)}
               </span>
               {item.location && (
-                <span className="max-w-full truncate rounded-full bg-gray-50 px-2.5 py-1 text-xs text-gray-600">
+                <span className="max-w-full truncate rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                   {item.location}
                 </span>
               )}
             </div>
             <Link
               href="/equipment"
-              className="mt-4 inline-flex min-h-10 items-center text-sm font-medium text-green-700 hover:underline"
+              className="mt-4 inline-flex min-h-10 items-center text-sm font-medium text-[var(--vc-success-text)] hover:underline"
             >
               Відкрити техніку →
             </Link>
@@ -455,17 +455,17 @@ export function EmployeeOverview({
     value: string | number;
     className: string;
   }> = [
-    { label: "Активні", value: kpis.activeTasks, className: "text-blue-700" },
+    { label: "Активні", value: kpis.activeTasks, className: "text-[var(--vc-info-text)]" },
     {
       label: "Прострочені",
       value: kpis.overdueTasks,
-      className: kpis.overdueTasks > 0 ? "text-red-700" : "text-gray-900",
+      className: kpis.overdueTasks > 0 ? "text-[var(--vc-danger-text)]" : "text-foreground",
     },
-    { label: "Виконані", value: kpis.completedTasks, className: "text-green-700" },
-    { label: "Годин цього місяця", value: formatHours(kpis.monthlyHours), className: "text-purple-700" },
-    { label: "Годин загалом", value: formatHours(kpis.lifetimeHours), className: "text-purple-700" },
-    { label: "Об’єкти", value: kpis.objects, className: "text-gray-900" },
-    { label: "Техніка", value: kpis.equipment, className: "text-orange-700" },
+    { label: "Виконані", value: kpis.completedTasks, className: "text-[var(--vc-success-text)]" },
+    { label: "Годин цього місяця", value: formatHours(kpis.monthlyHours), className: "text-[var(--vc-info-text)]" },
+    { label: "Годин загалом", value: formatHours(kpis.lifetimeHours), className: "text-[var(--vc-info-text)]" },
+    { label: "Об’єкти", value: kpis.objects, className: "text-foreground" },
+    { label: "Техніка", value: kpis.equipment, className: "text-[var(--vc-warning-text)]" },
   ];
 
   return (
@@ -476,8 +476,8 @@ export function EmployeeOverview({
             key={item.label}
             className="vc-surface min-w-0 p-3 sm:p-4"
           >
-            <p className="text-xs leading-4 text-gray-500">{item.label}</p>
-            <p className={`mt-2 break-words text-2xl font-bold ${item.className}`}>
+            <p className="text-xs leading-4 text-muted-foreground">{item.label}</p>
+            <p className={`mt-2 break-words text-2xl font-semibold tabular-nums ${item.className}`}>
               {item.value}
             </p>
           </div>
@@ -519,9 +519,9 @@ export function EmployeeOverview({
                 <Link
                   key={object.id}
                   href={`/objects/${object.id}`}
-                  className="flex min-w-0 flex-col gap-2 rounded-xl border p-3 transition hover:border-green-200 hover:bg-green-50/40 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex min-w-0 flex-col gap-2 rounded-lg border p-3 transition hover:border-border hover:bg-[var(--vc-success-bg)] sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <span className="min-w-0 break-words font-medium text-gray-800">
+                  <span className="min-w-0 break-words font-medium text-foreground">
                     {object.name}
                   </span>
                   <span
@@ -560,23 +560,23 @@ export function EmployeeOverview({
         <section className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-2">
           {employee.notes && (
             <div className="vc-surface min-w-0 p-4 sm:p-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Примітки
               </p>
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-gray-700">
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
                 {employee.notes}
               </p>
             </div>
           )}
           {isAdmin && (
-            <div className="min-w-0 rounded-xl border border-blue-100 bg-blue-50 p-4 sm:p-5">
-              <p className="text-xs font-medium uppercase tracking-wide text-blue-500">
+            <div className="min-w-0 rounded-lg border border-border bg-[var(--vc-info-bg)] p-4 sm:p-5">
+              <p className="text-xs font-medium uppercase tracking-wide text-[var(--vc-info-text)]">
                 Дані адміністратора
               </p>
-              <p className="mt-2 text-sm text-blue-700">Погодинна ставка</p>
-              <p className="mt-1 break-words text-xl font-bold text-blue-900">
+              <p className="mt-2 text-sm text-[var(--vc-info-text)]">Погодинна ставка</p>
+              <p className="mt-1 break-words text-xl font-bold text-[var(--vc-info-text)]">
                 {formatRate(hourlyRate ?? 0)}
-                <span className="ml-1 text-sm font-medium text-blue-700">
+                <span className="ml-1 text-sm font-medium text-[var(--vc-info-text)]">
                   / год.
                 </span>
               </p>

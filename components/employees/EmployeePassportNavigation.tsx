@@ -1,3 +1,5 @@
+import { CircleUserRound, ListChecks, ClipboardList, MapPin, Wrench, History } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 export type EmployeeTabId =
@@ -17,37 +19,37 @@ type PaginationParam =
 const employeeTabs: Array<{
   id: EmployeeTabId;
   label: string;
-  icon: string;
+  icon: LucideIcon;
 }> = [
   {
     id: "overview",
     label: "Огляд",
-    icon: "◉",
+    icon: CircleUserRound,
   },
   {
     id: "tasks",
     label: "Завдання",
-    icon: "✓",
+    icon: ListChecks,
   },
   {
     id: "work",
     label: "Роботи",
-    icon: "📝",
+    icon: ClipboardList,
   },
   {
     id: "objects",
     label: "Об’єкти",
-    icon: "🏡",
+    icon: MapPin,
   },
   {
     id: "equipment",
     label: "Техніка",
-    icon: "🛠",
+    icon: Wrench,
   },
   {
     id: "history",
     label: "Історія",
-    icon: "🕘",
+    icon: History,
   },
 ];
 
@@ -81,14 +83,14 @@ export function EmployeePassportTabs({
                   ? "page"
                   : undefined
               }
-              className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-1 sm:px-4 ${
+              className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 sm:px-4 ${
                 isActive
-                  ? "bg-green-700 text-white shadow-sm"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               <span aria-hidden="true">
-                {tab.icon}
+                <tab.icon className="h-4 w-4" />
               </span>
               {tab.label}
             </Link>
@@ -193,7 +195,7 @@ export function EmployeeTabPagination({
       aria-label="Сторінки розділу працівника"
       className="vc-surface mt-4 flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
     >
-      <p className="text-center text-xs text-gray-500 sm:text-left sm:text-sm">
+      <p className="text-center text-xs text-muted-foreground sm:text-left sm:text-sm">
         {hasVisibleItems
           ? `Показано ${from}–${to} із ${total}`
           : "На цій сторінці записів немає"}
@@ -210,7 +212,7 @@ export function EmployeeTabPagination({
               preservedPage
             )}
             scroll={false}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             ← Назад
           </Link>
@@ -228,7 +230,7 @@ export function EmployeeTabPagination({
               preservedPage
             )}
             scroll={false}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Далі →
           </Link>

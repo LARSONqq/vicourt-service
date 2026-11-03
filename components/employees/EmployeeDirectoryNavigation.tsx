@@ -100,14 +100,14 @@ export function EmployeeDirectoryFilters({
       <div className="grid grid-cols-2 gap-2 lg:flex">
         <button
           type="submit"
-          className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+          className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           Застосувати
         </button>
         {hasFilters ? (
           <Link
             href="/employees"
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-xs transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Скинути
           </Link>
@@ -193,7 +193,7 @@ export function EmployeeDirectoryPagination({
       aria-label="Сторінки працівників"
       className="vc-surface flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
     >
-      <p className="text-center text-xs text-gray-500 sm:text-left sm:text-sm">
+      <p className="text-center text-xs text-muted-foreground sm:text-left sm:text-sm">
         {hasVisibleItems
           ? `Показано ${from}–${to} із ${total}`
           : "На цій сторінці працівників немає"}
@@ -207,7 +207,7 @@ export function EmployeeDirectoryPagination({
               page - 1
             )}
             scroll={false}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-xs transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             ← Назад
           </Link>
@@ -222,7 +222,7 @@ export function EmployeeDirectoryPagination({
               page + 1
             )}
             scroll={false}
-            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-xs transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground shadow-xs transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Далі →
           </Link>
