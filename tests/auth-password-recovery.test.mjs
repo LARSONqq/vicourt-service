@@ -10,11 +10,18 @@ test("login exposes the canonical forgot-password destination without changing p
   assert.match(login, /href="\/forgot-password"/);
   assert.match(login, /Забули пароль\?/);
   assert.match(login, /supabase\.auth\.signInWithPassword\(/);
+  assert.match(login, /<AuthRecoveryCard/);
+  assert.match(login, /vc-panel-warning/);
+  assert.match(login, /vc-panel-danger/);
+  assert.equal((login.match(/role="alert" aria-live="assertive"/g) ?? []).length, 2);
+  assert.doesNotMatch(login, /(?:bg|text|border)-(?:white|gray|green|red|orange)-(?:\d+)/);
 });
 
 test("forgot-password uses the browser Supabase recovery API and enumeration-safe copy", () => {
   const page = read("app/forgot-password/page.tsx");
   assert.match(page, /supabase\.auth\.resetPasswordForEmail\(normalizedEmail/);
+  assert.match(page, /const \{ error \} = await supabase\.auth\.resetPasswordForEmail/);
+  assert.match(page, /if \(error\) \{[\s\S]*setErrorMessage\([\s\S]*return;/);
   assert.match(page, /window\.location\.origin/);
   assert.match(page, /\/auth\/confirm\?type=recovery&next=/);
   assert.match(page, /encodeURIComponent\("\/update-password"\)/);

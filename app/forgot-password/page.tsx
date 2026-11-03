@@ -31,9 +31,13 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = createClient();
       // Supabase intentionally receives the same response UX whether the account exists or not.
-      await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
         redirectTo: `${window.location.origin}/auth/confirm?type=recovery&next=${encodeURIComponent("/update-password")}`,
       });
+      if (error) {
+        setErrorMessage("Не вдалося надіслати запит. Перевірте з’єднання та спробуйте ще раз.");
+        return;
+      }
       setSuccessMessage(SAFE_SUCCESS_MESSAGE);
     } catch {
       setErrorMessage("Не вдалося надіслати запит. Перевірте з’єднання та спробуйте ще раз.");
