@@ -193,7 +193,7 @@ function getStatusClasses(
       return "bg-yellow-50 text-yellow-700";
 
     case "Виконано":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
 
     default:
       return "bg-gray-100 text-gray-700";
@@ -393,11 +393,11 @@ function TaskCard({
           onOpen();
         }
       }}
-      className={`min-w-0 cursor-pointer rounded-xl border p-3 transition hover:border-green-300 md:cursor-grab md:active:cursor-grabbing ${getPriorityBorderClasses(
+      className={`vc-task-panel min-w-0 cursor-pointer rounded-lg border p-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:border-green-300 md:cursor-grab md:active:cursor-grabbing ${getPriorityBorderClasses(
         priority
       )} ${
         isCompleted
-          ? "bg-green-50/40 opacity-75"
+          ? "vc-task-completed"
           : "bg-white hover:bg-green-50"
       } ${
         isMoving
@@ -425,7 +425,7 @@ function TaskCard({
         <h3
           className={`min-w-0 break-words text-sm font-semibold ${
             isCompleted
-              ? "text-gray-500 line-through"
+              ? "text-foreground line-through decoration-muted-foreground/60"
               : "text-gray-900"
           }`}
         >
@@ -448,7 +448,7 @@ function TaskCard({
         <span
           className={`rounded-full px-2 py-1 text-[10px] font-medium ${
             isCompleted
-              ? "bg-gray-100 text-gray-500"
+              ? "vc-status-neutral"
               : getPriorityClasses(
                   priority
                 )
@@ -485,7 +485,7 @@ function TaskCard({
           }
           className={`mt-3 block break-words text-xs font-medium hover:underline ${
             isCompleted
-              ? "text-gray-400"
+              ? "text-muted-foreground"
               : "text-green-700"
           }`}
         >
@@ -506,7 +506,7 @@ function TaskCard({
         <p
           className={`mt-2 line-clamp-3 whitespace-pre-wrap break-words text-xs leading-5 ${
             isCompleted
-              ? "text-gray-400"
+              ? "text-muted-foreground"
               : "text-gray-600"
           }`}
         >
@@ -549,9 +549,9 @@ function TaskCard({
         ) => {
           event.stopPropagation();
         }}
-        className={`mt-3 min-h-10 w-full rounded-lg border px-3 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`mt-3 min-h-10 w-full rounded-lg border px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${
           isCompleted
-            ? "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+            ? "border-border bg-card text-foreground hover:bg-muted"
             : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
         }`}
       >

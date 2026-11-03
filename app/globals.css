@@ -300,6 +300,14 @@
   .dark .vc-object-panel :is(.bg-blue-50, .bg-blue-100, .bg-purple-50, .bg-purple-100) { background-color: var(--vc-info-bg); }
   .dark .vc-object-panel :is(.text-blue-600, .text-blue-700, .text-blue-800, .text-purple-600, .text-purple-700, .text-purple-800) { color: var(--vc-info-text); }
 
+  /* Completed Tasks and Calendar cards stay secondary without fading children.
+     Two classes keep the semantic surface above legacy card background utilities. */
+  .vc-task-panel.vc-task-completed {
+    background-color: var(--vc-elevated);
+    border-color: var(--vc-border);
+    color: var(--vc-text);
+  }
+
   /* Task workspaces still contain compact, stateful legacy controls. Keep their
      behavior intact while making every nested surface readable in Dark mode. */
   .dark .vc-task-panel {

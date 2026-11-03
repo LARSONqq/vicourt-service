@@ -9,7 +9,7 @@ export function getTaskStatusStyle(status: string) {
   switch (status) {
     case "Заплановано": return "bg-blue-50 text-blue-700";
     case "В роботі": return "bg-yellow-100 text-yellow-800";
-    case COMPLETED_TASK_STATUS: return "bg-green-100 text-green-800";
+    case COMPLETED_TASK_STATUS: return "vc-status-success";
     default: return "bg-gray-100 text-gray-700";
   }
 }

@@ -1264,7 +1264,7 @@ export default function TasksList({
           priority
         )} ${
           completed
-            ? "bg-green-50/40 opacity-80"
+            ? "vc-task-completed"
             : overdue
               ? "border-red-300 bg-red-50/30"
               : dueToday
@@ -1309,7 +1309,7 @@ export default function TasksList({
                 <h3
                   className={`min-w-0 break-words font-semibold ${
                     completed
-                      ? "text-gray-500 line-through"
+                      ? "text-foreground line-through decoration-muted-foreground/60"
                       : "text-gray-900"
                   }`}
                 >
@@ -1344,7 +1344,7 @@ export default function TasksList({
               <span
                 className={`w-fit shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ${
                   completed
-                    ? "bg-gray-100 text-gray-500"
+                    ? "vc-status-neutral"
                     : getPriorityStyle(
                         priority
                       )
@@ -1359,7 +1359,7 @@ export default function TasksList({
                 href={target.href}
                 className={`mt-1 block break-words text-sm font-medium hover:underline ${
                   completed
-                    ? "text-gray-400"
+                    ? "text-muted-foreground"
                     : "text-green-700"
                 }`}
               >
@@ -1377,7 +1377,7 @@ export default function TasksList({
           <p
             className={`mt-3 line-clamp-3 whitespace-pre-wrap break-words text-sm ${
               completed
-                ? "text-gray-400"
+                ? "text-muted-foreground"
                 : "text-gray-600"
             }`}
           >
@@ -1450,7 +1450,7 @@ export default function TasksList({
             <p
               className={`mt-1 break-words font-medium ${
                 completed
-                  ? "text-gray-400"
+                  ? "text-muted-foreground"
                   : overdue
                     ? "text-red-600"
                     : "text-gray-700"
@@ -1470,7 +1470,7 @@ export default function TasksList({
             <p
               className={`mt-1 break-words font-medium ${
                 completed
-                  ? "text-gray-400"
+                  ? "text-muted-foreground"
                   : "text-gray-700"
               }`}
             >
@@ -2116,7 +2116,7 @@ export default function TasksList({
                   }
                   className={`vc-task-panel min-w-0 rounded-lg border p-4 transition sm:p-5 ${
                     completed
-                      ? "border-green-200 bg-green-50/50"
+                      ? "vc-task-completed"
                       : overdue
                         ? "border-red-300 bg-red-50/25"
                         : dueToday
@@ -2137,7 +2137,7 @@ export default function TasksList({
                         <h3
                           className={`min-w-0 break-words text-base font-semibold sm:text-lg ${
                             completed
-                              ? "text-gray-500 line-through"
+                              ? "text-foreground line-through decoration-muted-foreground/60"
                               : "text-gray-900"
                           }`}
                         >
@@ -2173,7 +2173,7 @@ export default function TasksList({
                           href={target.href}
                           className={`mt-1 block break-words text-sm font-medium hover:underline ${
                             completed
-                              ? "text-gray-400"
+                              ? "text-muted-foreground"
                               : "text-green-700"
                           }`}
                         >
@@ -2189,7 +2189,7 @@ export default function TasksList({
                         <p
                           className={`mt-3 whitespace-pre-wrap break-words text-sm leading-6 ${
                             completed
-                              ? "text-gray-400"
+                              ? "text-muted-foreground"
                               : "text-gray-700"
                           }`}
                         >
@@ -2204,7 +2204,7 @@ export default function TasksList({
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium sm:text-sm ${
                           completed
-                            ? "bg-gray-100 text-gray-500"
+                            ? "vc-status-neutral"
                             : getPriorityStyle(
                                 priority
                               )
@@ -2277,7 +2277,7 @@ export default function TasksList({
                       <p
                         className={`mt-1 break-words font-medium ${
                           completed
-                            ? "text-gray-400"
+                            ? "text-muted-foreground"
                             : overdue
                               ? "text-red-600"
                               : dueToday
@@ -2309,7 +2309,7 @@ export default function TasksList({
                       <p
                         className={`mt-1 break-words font-medium ${
                           completed
-                            ? "text-gray-400"
+                            ? "text-muted-foreground"
                             : "text-gray-700"
                         }`}
                       >
