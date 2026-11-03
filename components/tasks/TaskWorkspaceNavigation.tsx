@@ -17,17 +17,34 @@ export default function TaskWorkspaceNavigation({ filters, counts, employees }: 
     { name: "source", label: "Джерело", options: [["manual", "Вручну"], ["supervision", "Періодичний огляд"], ["equipment_maintenance", "Планове ТО"]] },
     { name: "recurrence", label: "Повторення", options: [["once", "Разові"], ["recurring", "Повторювані"]] },
   ];
+  const filterLabels: Record<string, string> = {
+    q: filters.q,
+    status: filters.status === "open" ? "Відкриті" : filters.status,
+    priority: filters.priority,
+    assignee: filters.assignee === "unassigned" ? "Без відповідального" : (() => {
+      const employee = employees.find((item) => String(item.id) === filters.assignee);
+      return employee ? `${employee.last_name} ${employee.first_name}` : filters.assignee;
+    })(),
+    target: filters.target === "object" ? "Об’єкт" : filters.target === "equipment" ? "Техніка" : "",
+    source: ({ manual: "Вручну", supervision: "Періодичний огляд", equipment_maintenance: "Планове ТО" } as Record<string, string>)[filters.source] || "",
+    recurrence: filters.recurrence === "once" ? "Разові" : filters.recurrence === "recurring" ? "Повторювані" : "",
+  };
+  const activeFilters = Object.entries(filterLabels).filter(([, value]) => Boolean(value));
   return <section className="vc-task-panel min-w-0 space-y-3">
-    <nav aria-label="Види завдань" className="flex flex-wrap gap-2">
+    <nav aria-label="Види завдань" className="vc-surface grid grid-cols-2 overflow-hidden p-1 sm:grid-cols-3 lg:grid-cols-6">
       {Object.entries(taskViews).map(([view, label]) => <Link key={view}
         href={taskWorkspaceHref({ ...filters, view: view as TaskView })}
         aria-current={filters.view === view ? "page" : undefined}
-        className={`inline-flex min-h-11 items-center rounded-md border px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${filters.view === view ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-muted"}`}>
-        {label} <span className={`ml-2 rounded-md px-2 py-0.5 text-xs ${filters.view === view ? "bg-primary-foreground/15 text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{counts[view as TaskView]}</span>
+        className={`inline-flex min-h-10 items-center justify-between gap-2 rounded-md border-b-2 px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${filters.view === view ? "border-primary bg-primary text-primary-foreground" : "border-transparent text-foreground hover:bg-muted"}`}>
+        {label} <span className={`tabular-nums ${filters.view === view ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{counts[view as TaskView]}</span>
       </Link>)}
     </nav>
-    <p className="text-xs text-muted-foreground">Лічильники — усі доступні завдання у відповідному виді, без додаткових фільтрів.</p>
-    <form key={JSON.stringify(filters)} action="/tasks" method="get" className="vc-surface grid min-w-0 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="flex flex-wrap items-center gap-2">
+      <details className="group min-w-0 basis-full">
+        <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+          Фільтри <span aria-hidden="true" className="text-muted-foreground transition group-open:rotate-180">⌄</span>
+        </summary>
+        <form key={JSON.stringify(filters)} action="/tasks" method="get" className="vc-surface mt-2 grid min-w-0 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-4">
       <input type="hidden" name="view" value={filters.view} />
       <label className="min-w-0 text-sm text-muted-foreground">Пошук
         <input type="search" name="q" defaultValue={filters.q} maxLength={200} placeholder="Назва або опис" className="vc-field mt-1 min-h-11 min-w-0" />
@@ -42,7 +59,19 @@ export default function TaskWorkspaceNavigation({ filters, counts, employees }: 
         <button type="submit" className="min-h-11 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Застосувати</button>
         <Link href={`/tasks?view=${filters.view}`} className="inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-primary hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Очистити</Link>
       </div>
-    </form>
+        </form>
+      </details>
+      {activeFilters.map(([key, label]) => (
+        <Link
+          key={key}
+          href={taskWorkspaceHref({ ...filters, [key]: "" })}
+          aria-label={`Прибрати фільтр: ${label}`}
+          className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-border bg-muted/60 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span className="truncate">{label}</span><span aria-hidden="true" className="text-muted-foreground">×</span>
+        </Link>
+      ))}
+    </div>
   </section>;
 }
 

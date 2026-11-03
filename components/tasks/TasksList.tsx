@@ -1387,14 +1387,7 @@ export default function TasksList({
 
         {checklistProgress.total >
           0 && (
-          <div
-            className={`mt-4 rounded-lg border p-3 ${
-              checklistProgress.percent ===
-              100
-                ? "border-green-200 bg-green-50"
-                : "bg-gray-50"
-            }`}
-          >
+          <div className="mt-3">
             <div className="flex items-center justify-between gap-3 text-xs">
               <span
                 className={`font-medium ${
@@ -1404,7 +1397,7 @@ export default function TasksList({
                     : "text-gray-600"
                 }`}
               >
-                Чекліст
+                Чекліст · {checklistProgress.completed}/{checklistProgress.total}
               </span>
 
               <span
@@ -1416,21 +1409,13 @@ export default function TasksList({
                 }`}
               >
                 {
-                  checklistProgress.completed
-                }{" "}
-                із{" "}
-                {
-                  checklistProgress.total
-                }{" "}
-                •{" "}
-                {
                   checklistProgress.percent
                 }
                 %
               </span>
             </div>
 
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-gray-200">
               <div
                 className="h-full rounded-full bg-green-600 transition-all"
                 style={{
@@ -2187,7 +2172,7 @@ export default function TasksList({
 
                       {task.description && (
                         <p
-                          className={`mt-3 whitespace-pre-wrap break-words text-sm leading-6 ${
+                          className={`mt-2 line-clamp-2 whitespace-pre-wrap break-words text-sm leading-6 ${
                             completed
                               ? "text-muted-foreground"
                               : "text-gray-700"
@@ -2228,21 +2213,13 @@ export default function TasksList({
                   {/* CHECKLIST */}
                   {checklistProgress.total >
                     0 && (
-                    <div className="mt-4 rounded-lg bg-gray-50 p-3">
+                    <div className="mt-3">
                       <div className="flex items-center justify-between gap-3">
                         <p className="text-xs font-medium text-gray-600">
-                          Чекліст
+                          Чекліст · {checklistProgress.completed}/{checklistProgress.total}
                         </p>
 
                         <p className="text-xs font-semibold text-gray-700">
-                          {
-                            checklistProgress.completed
-                          }{" "}
-                          із{" "}
-                          {
-                            checklistProgress.total
-                          }{" "}
-                          •{" "}
                           {
                             checklistProgress.percent
                           }
@@ -2250,7 +2227,7 @@ export default function TasksList({
                         </p>
                       </div>
 
-                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+                      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-gray-200">
                         <div
                           className="h-full rounded-full bg-green-600"
                           style={{
@@ -2263,7 +2240,7 @@ export default function TasksList({
 
                   {/* INFO */}
                   <div
-                    className={`mt-4 grid grid-cols-1 gap-4 border-t pt-4 sm:grid-cols-2 lg:grid-cols-3 ${
+                    className={`mt-3 grid grid-cols-1 gap-3 border-t pt-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(180px,0.8fr)] ${
                       completed
                         ? "border-green-100"
                         : ""
@@ -2271,7 +2248,7 @@ export default function TasksList({
                   >
                     <div className="min-w-0">
                       <p className="text-xs text-gray-500">
-                        Термін виконання
+                        Термін
                       </p>
 
                       <p
@@ -2321,8 +2298,7 @@ export default function TasksList({
 
                     <div className="min-w-0 sm:col-span-2 lg:col-span-1">
                       <label className="text-xs text-gray-500">
-                        Швидка зміна
-                        статусу
+                        Статус
                       </label>
 
                       <select

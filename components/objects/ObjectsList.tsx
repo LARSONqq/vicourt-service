@@ -57,6 +57,15 @@ function getStatusStyle(
   }
 }
 
+const statusSegmentStyles: Record<string, string> = {
+  "Новий": "bg-[var(--vc-info-text)]",
+  "В роботі": "bg-[var(--vc-success-text)]",
+  "На постійному обслуговуванні": "bg-primary",
+  "Під періодичним наглядом": "bg-[var(--vc-warning-text)]",
+  "Призупинено": "bg-[var(--vc-danger-text)]",
+  "Завершено": "bg-muted-foreground",
+};
+
 function ObjectSupervisionNote({
   object,
   today,
@@ -79,26 +88,26 @@ function ObjectSupervisionNote({
 
   if (state.kind === "overdue") {
     return (
-      <p className="break-words text-sm font-medium text-destructive">
-        Огляд прострочено на {state.overdueDays} дн.
-      </p>
+      <span className="vc-status-danger inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-medium">
+        Огляд прострочено · {state.overdueDays} дн.
+      </span>
     );
   }
 
   if (state.kind === "today") {
     return (
-      <p className="vc-text-warning break-words text-sm font-medium">
+      <span className="vc-status-warning inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-medium">
         Огляд сьогодні
-      </p>
+      </span>
     );
   }
 
   return (
-    <p className="break-words text-sm text-muted-foreground">
-      Наступний огляд: {formatDateValue(
+    <span className="vc-status-warning inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-medium">
+      Огляд · {formatDateValue(
         object.next_supervision_date
       ) || "не заплановано"}
-    </p>
+    </span>
   );
 }
 
@@ -188,8 +197,51 @@ export default function ObjectsList({
       status,
     ]);
 
+  const statusDistribution = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    objects.forEach((object) => {
+      const objectStatus = object.status || "Без статусу";
+      counts.set(objectStatus, (counts.get(objectStatus) || 0) + 1);
+    });
+
+    return Array.from(counts, ([label, count]) => ({ label, count }))
+      .sort((first, second) => {
+        const firstIndex = standardStatuses.indexOf(first.label);
+        const secondIndex = standardStatuses.indexOf(second.label);
+        return (firstIndex < 0 ? standardStatuses.length : firstIndex) -
+          (secondIndex < 0 ? standardStatuses.length : secondIndex);
+      });
+  }, [objects]);
+
   return (
     <div className="space-y-4 sm:space-y-5">
+      {objects.length > 0 && (
+        <section className="vc-surface space-y-2.5 p-3 sm:p-4" aria-label="Розподіл об’єктів за статусом">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-foreground">Статуси об’єктів</h2>
+            <span className="text-xs text-muted-foreground">Усього {objects.length}</span>
+          </div>
+          <div className="flex h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+            {statusDistribution.map(({ label, count }) => (
+              <span
+                key={label}
+                className={statusSegmentStyles[label] || "bg-muted-foreground"}
+                style={{ width: `${(count / objects.length) * 100}%` }}
+              />
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            {statusDistribution.map(({ label, count }) => (
+              <span key={label} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className={`h-2 w-2 rounded-full ${statusSegmentStyles[label] || "bg-muted-foreground"}`} aria-hidden="true" />
+                {label} <strong className="font-semibold text-foreground">{count}</strong>
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* FILTERS */}
       <div className="vc-surface grid grid-cols-1 gap-3 p-3 sm:p-4 md:grid-cols-[minmax(0,1fr)_240px]">
         <input
@@ -298,31 +350,16 @@ export default function ObjectsList({
                       </span>
                     </div>
 
-                    <div className="mt-2 space-y-1.5">
-                      <p className="break-words text-sm text-foreground">
-                        <span className="text-muted-foreground">
-                          Замовник:{" "}
-                        </span>
-
-                        {object.customer ||
-                          "Не вказано"}
+                    <div className="mt-2 space-y-1.5 text-sm">
+                      <p className="break-words font-medium text-foreground">
+                        {object.customer || "Замовника не вказано"}
                       </p>
 
-                      <p className="break-words text-sm text-foreground">
-                        <span className="text-muted-foreground">
-                          Адреса:{" "}
-                        </span>
-
-                        {object.address ||
-                          "Не вказано"}
+                      <p className="break-words text-muted-foreground">
+                        {object.address || "Адресу не вказано"}
                       </p>
 
-                      {object.phone && (
-                        <p className="break-words text-sm text-foreground">
-                          <span className="text-muted-foreground">Телефон: </span>
-                          {object.phone}
-                        </p>
-                      )}
+                      {object.phone && <p className="break-words text-foreground">{object.phone}</p>}
 
                       <ObjectSupervisionNote
                         object={object}
