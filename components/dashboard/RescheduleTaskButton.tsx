@@ -558,13 +558,14 @@ export default function RescheduleTaskButton({
       "undefined"
       ? createPortal(
           isMobile ? (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
+            <div data-vc-workspace className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4">
               <div className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto">
                 {popupContent}
               </div>
             </div>
           ) : (
             <div
+              data-vc-workspace
               style={{
                 position:
                   "fixed",

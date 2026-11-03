@@ -404,3 +404,34 @@
   .dark .vc-surface :is(.bg-white, .bg-gray-50) { background-color: var(--vc-elevated); }
   .dark .vc-surface :is(.border-gray-200, .border-gray-200\/80, .border-gray-200\/90) { border-color: var(--vc-border); }
 }
+
+/* Legacy neutral utilities inside the internal shell only. Utilities layer keeps
+   these ahead of the older panel patches without !important; state/semantic
+   utilities retain their normal specificity. Auth and client pages are excluded.
+   Dark inverse cards and scrims (gray-900/950) intentionally stay unchanged. */
+@layer utilities {
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-white) { background-color: var(--vc-elevated); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-gray-50, .bg-gray-100, .bg-gray-200) { background-color: var(--vc-secondary); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) .bg-gray-50\/40 { background-color: color-mix(in oklch, var(--vc-secondary) 40%, transparent); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) .bg-gray-50\/50 { background-color: color-mix(in oklch, var(--vc-secondary) 50%, transparent); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) .bg-gray-50\/60 { background-color: color-mix(in oklch, var(--vc-secondary) 60%, transparent); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) .bg-gray-50\/70 { background-color: color-mix(in oklch, var(--vc-secondary) 70%, transparent); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) .bg-white\/70 { background-color: color-mix(in oklch, var(--vc-elevated) 70%, transparent); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) .bg-white\/80 { background-color: color-mix(in oklch, var(--vc-elevated) 80%, transparent); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-gray-700, .text-gray-800, .text-gray-900, .text-gray-950) { color: var(--vc-text); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600) { color: var(--vc-text-muted); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-gray-100, .border-gray-200, .border-gray-300) { border-color: var(--vc-border); }
+  @media (hover: hover) {
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.hover\:bg-white):hover { background-color: var(--vc-elevated); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.hover\:bg-gray-50, .hover\:bg-gray-100, .hover\:bg-gray-200, .hover\:bg-gray-50\/80):hover { background-color: var(--vc-hover); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.hover\:text-gray-800, .hover\:text-gray-900):hover { color: var(--vc-text); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.hover\:text-gray-600):hover { color: var(--vc-text-muted); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.hover\:border-gray-300):hover { border-color: var(--vc-border); }
+  }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.disabled\:bg-gray-50, .disabled\:bg-gray-100):disabled { background-color: var(--vc-secondary); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.disabled\:text-gray-400, .disabled\:text-gray-500):disabled { color: var(--vc-text-muted); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.disabled\:border-gray-300):disabled { border-color: var(--vc-border); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.placeholder\:text-gray-400)::placeholder { color: var(--vc-text-muted); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.file\:bg-gray-50, .file\:bg-gray-100)::file-selector-button { background-color: var(--vc-secondary); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.file\:text-gray-700)::file-selector-button { color: var(--vc-text); }
+}
