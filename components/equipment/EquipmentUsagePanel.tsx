@@ -75,13 +75,13 @@ function getStatusClasses(
   switch (kind) {
     case "overdue":
     case "due":
-      return "bg-red-50 text-red-700";
+      return "vc-status-danger";
 
     case "today":
-      return "bg-orange-50 text-orange-700";
+      return "vc-status-warning";
 
     case "scheduled":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
 
     case "unconfigured":
       return "bg-gray-100 text-gray-600";
@@ -486,12 +486,12 @@ export default function EquipmentUsagePanel({
           </p>
 
           {message && (
-            <p role="status" className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+            <p role="status" className="vc-alert-success rounded-lg p-3 text-sm">
               {message}
             </p>
           )}
           {error && (
-            <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <p role="alert" className="vc-alert-danger rounded-lg p-3 text-sm">
               {error}
             </p>
           )}

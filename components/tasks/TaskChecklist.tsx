@@ -449,7 +449,7 @@ export default function TaskChecklist({
                     }
                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                       item.is_completed
-                        ? "border-green-600 bg-green-600 text-white"
+                        ? "vc-control-checked"
                         : "border-gray-300 bg-white text-transparent hover:border-green-500"
                     }`}
                   >

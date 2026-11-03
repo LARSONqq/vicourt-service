@@ -693,7 +693,7 @@ export default function EmployeeWorkReport({
                   event.target.checked
                 )
               }
-              className="h-4 w-4 shrink-0"
+              className="vc-checkbox h-4 w-4 shrink-0"
             />
 
             <span>

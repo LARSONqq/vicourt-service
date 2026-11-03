@@ -339,7 +339,7 @@ export default async function ReportsPage({
           section={section}
         />
       ) : (
-        <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
+        <section className="vc-alert-warning rounded-xl p-5 text-sm leading-6">
           <h2 className="font-semibold">
             Не вдалося завантажити цей розділ звітів
           </h2>

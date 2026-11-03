@@ -229,7 +229,7 @@ export default function ReportsFilters({
       </form>
 
       {filters.employeeId && (
-        <p className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5 text-xs leading-5 text-blue-700 sm:text-sm">
+        <p className="vc-alert-info mt-4 rounded-lg px-3 py-2.5 text-xs leading-5 sm:text-sm">
           Фільтр працівника
           застосовується до годин і
           вартості робіт. Матеріали,

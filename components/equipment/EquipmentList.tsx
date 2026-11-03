@@ -40,16 +40,16 @@ function getStatusClasses(
 ) {
   switch (status) {
     case "Справна":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
 
     case "В роботі":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
 
     case "Потребує ремонту":
-      return "bg-red-50 text-red-700";
+      return "vc-status-danger";
 
     case "На ремонті":
-      return "bg-orange-50 text-orange-700";
+      return "vc-status-warning";
 
     case "Списана":
       return "bg-gray-100 text-gray-600";

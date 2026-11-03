@@ -321,16 +321,16 @@ export default async function EquipmentPage({
       </header>
 
       {!canManage && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 sm:px-5">
+        <div className="vc-alert-info rounded-lg p-4 sm:px-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm">
+            <div className="vc-status-info flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm">
               👁
             </div>
             <div className="min-w-0">
-              <p className="font-medium text-blue-800">
+              <p className="font-medium">
                 Режим перегляду
               </p>
-              <p className="mt-1 text-sm leading-5 text-blue-700">
+              <p className="mt-1 text-sm leading-5">
                 Ти можеш переглядати
                 техніку та її стан.
                 Додавати, редагувати та

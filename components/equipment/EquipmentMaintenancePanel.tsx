@@ -45,14 +45,14 @@ function getStateClasses(
 ) {
   switch (kind) {
     case "today":
-      return "bg-orange-50 text-orange-700";
+      return "vc-status-warning";
 
     case "overdue":
     case "due":
-      return "bg-red-50 text-red-700";
+      return "vc-status-danger";
 
     case "scheduled":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
 
     default:
       return "bg-gray-100 text-gray-600";

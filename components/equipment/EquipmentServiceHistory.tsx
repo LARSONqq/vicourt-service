@@ -96,16 +96,16 @@ function getTypeClasses(
 ) {
   switch (type) {
     case "Планове обслуговування":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
 
     case "Ремонт":
-      return "bg-red-50 text-red-700";
+      return "vc-status-danger";
 
     case "Заміна запчастин":
-      return "bg-orange-50 text-orange-700";
+      return "vc-status-warning";
 
     case "Діагностика":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
 
     default:
       return "bg-gray-100 text-gray-700";
@@ -585,7 +585,7 @@ export default function EquipmentServiceHistory({
                       </td>
 
                       <td className="px-3 py-3">
-                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${record.voided_at ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}>
+                        <span className={record.voided_at ? "vc-status-danger" : "vc-status-success"}>
                           {record.voided_at ? "Анульовано" : "Активний"}
                         </span>
                         {record.voided_at && record.void_reason && (

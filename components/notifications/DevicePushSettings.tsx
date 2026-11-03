@@ -605,7 +605,7 @@ export default function DevicePushSettings({
           {errorMessage && (
             <p
               role="alert"
-              className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm leading-5 text-red-700"
+              className="vc-alert-danger mt-3 rounded-lg px-3 py-2 text-sm leading-5"
             >
               {errorMessage}
             </p>
@@ -614,7 +614,7 @@ export default function DevicePushSettings({
           {successMessage && (
             <p
               role="status"
-              className="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm leading-5 text-green-700"
+              className="vc-alert-success mt-3 rounded-lg px-3 py-2 text-sm leading-5"
             >
               {successMessage}
             </p>

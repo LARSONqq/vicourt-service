@@ -65,7 +65,7 @@ export default function ReportsSectionNavigation({
   return (
     <nav
       aria-label="Розділи звітів"
-      className="min-w-0 overflow-x-auto rounded-xl border bg-white p-1.5"
+      className="vc-surface min-w-0 overflow-x-auto p-1.5"
     >
       <div className="flex min-w-max gap-1">
         {sectionItems.map(
@@ -86,9 +86,9 @@ export default function ReportsSectionNavigation({
                     ? "page"
                     : undefined
                 }
-                className={`flex min-h-11 items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 ${
+                className={`flex min-h-11 items-center justify-center whitespace-nowrap rounded-lg border border-transparent px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                   isActive
-                    ? "bg-green-600 text-white shadow-sm"
+                    ? "vc-tab-active shadow-sm"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
               >

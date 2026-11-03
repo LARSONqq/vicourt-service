@@ -22,11 +22,11 @@ function getStatusClasses(
 ) {
   switch (status) {
     case "Заплановано":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
     case "В роботі":
-      return "bg-amber-50 text-amber-700";
+      return "vc-status-warning";
     case "Виконано":
-      return "bg-green-50 text-green-700";
+      return "vc-status-success";
     default:
       return "bg-gray-100 text-gray-700";
   }
@@ -37,11 +37,11 @@ function getPriorityClasses(
 ) {
   switch (priority) {
     case "Терміновий":
-      return "bg-red-50 text-red-700";
+      return "vc-status-danger";
     case "Високий":
-      return "bg-orange-50 text-orange-700";
+      return "vc-status-warning";
     case "Середній":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
     default:
       return "bg-gray-100 text-gray-600";
   }

@@ -182,24 +182,23 @@ function getNotificationStyle(
   switch (severity) {
     case "critical":
       return {
-        card: "border-red-200",
-        icon: "bg-red-100 text-red-700",
-        badge: "bg-red-50 text-red-700",
+        card: "vc-alert-danger",
+        icon: "vc-status-danger",
+        badge: "vc-status-danger",
       };
 
     case "warning":
       return {
-        card: "border-orange-200",
-        icon: "bg-orange-100 text-orange-700",
-        badge:
-          "bg-orange-50 text-orange-700",
+        card: "vc-alert-warning",
+        icon: "vc-status-warning",
+        badge: "vc-status-warning",
       };
 
     case "info":
       return {
-        card: "border-blue-200",
-        icon: "bg-blue-100 text-blue-700",
-        badge: "bg-blue-50 text-blue-700",
+        card: "vc-alert-info",
+        icon: "vc-status-info",
+        badge: "vc-status-info",
       };
   }
 }
@@ -396,7 +395,7 @@ export default async function NotificationsPage({
               )}
               className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition sm:px-4 ${
                 isActive
-                  ? "border-green-600 bg-green-600 text-white"
+                  ? "vc-tab-active"
                   : "bg-white text-gray-700 hover:border-green-300 hover:bg-green-50"
               }`}
             >
@@ -405,7 +404,7 @@ export default async function NotificationsPage({
               <span
                 className={`rounded-full px-2 py-0.5 text-xs ${
                   isActive
-                    ? "bg-white/20 text-white"
+                    ? "bg-background/25 text-inherit"
                     : "bg-gray-100 text-gray-600"
                 }`}
               >
@@ -452,7 +451,7 @@ export default async function NotificationsPage({
               return (
                 <article
                   key={item.key}
-                  className={`flex min-w-0 flex-col rounded-xl border bg-white p-4 sm:p-5 ${style.card}`}
+                  className={`flex min-w-0 flex-col rounded-xl p-4 sm:p-5 ${style.card}`}
                 >
                   <div className="flex min-w-0 items-start gap-3">
                     <div

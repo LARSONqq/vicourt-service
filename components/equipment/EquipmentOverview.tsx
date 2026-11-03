@@ -63,13 +63,13 @@ function getMaintenanceClasses(
   switch (kind) {
     case "overdue":
     case "due":
-      return "border-red-200 bg-red-50 text-red-700";
+      return "vc-alert-danger";
     case "today":
-      return "border-orange-200 bg-orange-50 text-orange-700";
+      return "vc-alert-warning";
     case "scheduled":
-      return "border-green-200 bg-green-50 text-green-700";
+      return "vc-alert-success";
     case "unconfigured":
-      return "border-gray-200 bg-gray-50 text-gray-700";
+      return "vc-panel-neutral";
   }
 }
 

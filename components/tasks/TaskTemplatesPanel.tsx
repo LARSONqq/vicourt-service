@@ -79,8 +79,8 @@ export default function TaskTemplatesPanel({ template }: { template?: TaskTempla
   }
 
   return <section className="vc-task-panel vc-surface min-w-0 space-y-4 p-4 sm:p-5">
-    {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-    {message && <p role="status" className="text-sm text-green-700">{message}</p>}
+    {error && <p role="alert" className="vc-alert-danger rounded-lg p-3 text-sm">{error}</p>}
+    {message && <p role="status" className="vc-alert-success rounded-lg p-3 text-sm">{message}</p>}
     {template && mode === null && <div className="flex flex-wrap gap-3">
       <button type="button" onClick={() => open("edit")} className="min-h-11 rounded-lg border px-4 py-2">Редагувати {template.is_active ? "серію" : "визначення"}</button>
       {!bound && !template.is_active && <button type="button" onClick={() => open("use")} className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-white">{template.recurrence_type === "none" ? "Створити разове завдання" : "Створити серію з шаблону"}</button>}
@@ -103,7 +103,7 @@ export default function TaskTemplatesPanel({ template }: { template?: TaskTempla
           </div>
           {!template && <label className="block text-sm">Тип цілі<select value={targetType} onChange={(event) => { setTargetType(event.target.value as TaskTargetType); setTarget(""); }} className="mt-1 min-h-11 w-full rounded-lg border bg-white px-3 py-2"><option value="object">Об’єкт</option><option value="equipment">Техніка</option></select></label>}
           <TaskRecurrenceFields idPrefix="template" templateDefinition allowNone={!active && !template?.is_active} value={recurrence} customInterval={interval} onChange={setRecurrence} onCustomIntervalChange={setInterval} />
-          {!template && <div><label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={active} disabled={recurrence === "none"} onChange={(event) => setActive(event.target.checked)} />Одразу запустити серію для обраної цілі</label><p className="text-xs text-gray-500">Без цієї позначки збережеться лише шаблон — завдання ще не створюватимуться.</p></div>}
+          {!template && <div><label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={active} disabled={recurrence === "none"} onChange={(event) => setActive(event.target.checked)} className="vc-checkbox" />Одразу запустити серію для обраної цілі</label><p className="text-xs text-gray-500">Без цієї позначки збережеться лише шаблон — завдання ще не створюватимуться.</p></div>}
         </>}
         {(using || active) && <TaskTemplateLookup key={targetType} kind={targetType} label={targetType === "object" ? "Об’єкт" : "Техніка"} value={target} onChange={setTarget} required />}
         {(recurrence !== "none" || using) && <label className="block text-sm">{recurrence === "none" ? "Термін разового завдання" : "Опорна дата серії"}<input type="date" value={date} required={recurrence !== "none" && (active || using || template?.is_active)} onChange={(event) => setDate(event.target.value)} className="mt-1 min-h-11 w-full min-w-0 rounded-lg border px-3 py-2" /></label>}

@@ -48,7 +48,7 @@ function PreferenceToggle({
             event.target.checked
           )
         }
-        className="mt-0.5 h-5 w-5 shrink-0 accent-green-600"
+        className="vc-checkbox mt-0.5 h-5 w-5 shrink-0"
       />
 
       <span className="min-w-0">
@@ -275,7 +275,7 @@ export default function AutomaticPushSettings({
                     event.target.checked
                   )
                 }
-                className="mt-0.5 h-5 w-5 shrink-0 accent-green-600"
+                className="vc-checkbox mt-0.5 h-5 w-5 shrink-0"
               />
 
               <span>
@@ -337,7 +337,7 @@ export default function AutomaticPushSettings({
       {errorMessage && (
         <p
           role="alert"
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm leading-5 text-red-700"
+          className="vc-alert-danger mt-4 rounded-lg px-3 py-2 text-sm leading-5"
         >
           {errorMessage}
         </p>
@@ -346,7 +346,7 @@ export default function AutomaticPushSettings({
       {successMessage && (
         <p
           role="status"
-          className="mt-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm leading-5 text-green-700"
+          className="vc-alert-success mt-4 rounded-lg px-3 py-2 text-sm leading-5"
         >
           {successMessage}
         </p>

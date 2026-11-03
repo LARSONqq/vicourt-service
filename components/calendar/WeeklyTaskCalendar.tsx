@@ -187,16 +187,16 @@ function getStatusClasses(
 ) {
   switch (status) {
     case "Заплановано":
-      return "bg-blue-50 text-blue-700";
+      return "vc-status-info";
 
     case "В роботі":
-      return "bg-yellow-50 text-yellow-700";
+      return "vc-status-warning";
 
     case "Виконано":
       return "vc-status-success";
 
     default:
-      return "bg-gray-100 text-gray-700";
+      return "vc-status-neutral";
   }
 }
 
@@ -205,19 +205,19 @@ function getPriorityClasses(
 ) {
   switch (priority) {
     case "Терміновий":
-      return "bg-red-100 text-red-700";
+      return "vc-status-danger";
 
     case "Високий":
-      return "bg-orange-100 text-orange-700";
+      return "vc-status-warning";
 
     case "Середній":
-      return "bg-violet-100 text-violet-700";
+      return "vc-status-info";
 
     case "Низький":
-      return "bg-gray-100 text-gray-600";
+      return "vc-status-neutral";
 
     default:
-      return "bg-violet-100 text-violet-700";
+      return "vc-status-info";
   }
 }
 
@@ -1730,7 +1730,7 @@ export default function WeeklyTaskCalendar({
               <span
                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
                   showOnlyActive
-                    ? "border-green-600 bg-green-600 text-white"
+                    ? "vc-control-checked"
                     : "border-gray-300 bg-white text-transparent"
                 }`}
               >
@@ -1755,7 +1755,7 @@ export default function WeeklyTaskCalendar({
 
       {/* ERROR */}
       {quickActionError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
+        <div className="vc-alert-danger rounded-xl p-3 text-sm sm:p-4">
           {quickActionError}
         </div>
       )}
@@ -1824,9 +1824,9 @@ export default function WeeklyTaskCalendar({
                 }
                 className={`min-w-0 overflow-hidden rounded-xl border transition ${
                   isDropTarget
-                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                    ? "vc-alert-info ring-2 ring-[var(--vc-info-border)]"
                     : isToday
-                      ? "border-green-400 bg-white ring-1 ring-green-200"
+                      ? "vc-state-today"
                       : "bg-white"
                 }`}
               >
@@ -1834,9 +1834,9 @@ export default function WeeklyTaskCalendar({
                 <div
                   className={`border-b p-3 sm:p-4 ${
                     isDropTarget
-                      ? "bg-blue-100"
+                      ? "vc-panel-info"
                       : isToday
-                        ? "bg-green-50"
+                        ? "vc-state-selected"
                         : "bg-gray-50"
                   }`}
                 >
@@ -1852,7 +1852,7 @@ export default function WeeklyTaskCalendar({
                         </p>
 
                         {isToday && (
-                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                          <span className="vc-state-selected rounded-full px-2 py-0.5 text-[10px] font-semibold">
                             Сьогодні
                           </span>
                         )}
@@ -1861,7 +1861,7 @@ export default function WeeklyTaskCalendar({
                       <p
                         className={`mt-1 text-sm ${
                           isToday
-                            ? "font-medium text-green-700"
+                            ? "font-medium text-[var(--vc-selected-text)]"
                             : "text-gray-500"
                         }`}
                       >
@@ -1894,7 +1894,7 @@ export default function WeeklyTaskCalendar({
                 {/* DAY TASKS */}
                 <div className="min-h-24 space-y-3 p-3 xl:min-h-32">
                   {isDropTarget && (
-                    <div className="rounded-lg border border-dashed border-blue-400 bg-blue-50 px-3 py-3 text-center text-xs font-medium text-blue-700">
+                    <div className="vc-alert-info rounded-lg border-dashed px-3 py-3 text-center text-xs font-medium">
                       Відпусти
                       завдання тут
                     </div>
@@ -2050,7 +2050,7 @@ export default function WeeklyTaskCalendar({
         className={`min-w-0 rounded-xl border p-4 transition sm:p-5 ${
           dragOverTarget ===
           NO_DATE_DROP_TARGET
-            ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+            ? "vc-alert-info ring-2 ring-[var(--vc-info-border)]"
             : "bg-white"
         }`}
       >
@@ -2357,7 +2357,7 @@ export default function WeeklyTaskCalendar({
             {/* CONTENT */}
             <div className="min-w-0 flex-1 overflow-y-auto p-3 sm:p-4">
               {deleteErrorMessage && (
-                <div className="mb-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
+                <div className="vc-alert-danger mb-3 rounded-xl p-3 text-sm sm:p-4">
                   {
                     deleteErrorMessage
                   }

@@ -93,8 +93,8 @@ export default function TaskDetailActions({ task, assignee, capabilities }: Prop
   }
   return <section className="vc-task-panel vc-surface min-w-0 space-y-4 p-4 sm:p-5">
     <h2 className="font-semibold">Дії із завданням</h2>
-    {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-    {success && <p role="status" className="text-sm text-green-700">{success}</p>}
+    {error && <p role="alert" className="vc-alert-danger rounded-lg p-3 text-sm">{error}</p>}
+    {success && <p role="status" className="vc-alert-success rounded-lg p-3 text-sm">{success}</p>}
     <div className="flex flex-wrap gap-2">
       {capabilities.complete && <button type="button" disabled={pending || editing} onClick={() => void mutate({ kind: "status", status: "Виконано" })} className="min-h-11 rounded-lg bg-green-700 px-4 py-2 text-sm text-white disabled:opacity-50">{pending ? "Збереження…" : "✓ Виконати"}</button>}
       {capabilities.edit && <button type="button" disabled={pending || editing} onClick={() => setEditing(true)} className="min-h-11 rounded-lg border px-4 py-2 text-sm disabled:opacity-50">Редагувати / призначити</button>}

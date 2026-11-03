@@ -85,12 +85,20 @@
   --vc-hover: oklch(0.95 0.006 90);
   --vc-success-bg: oklch(0.94 0.035 150);
   --vc-success-text: oklch(0.37 0.1 151);
+  --vc-success-border: oklch(0.79 0.055 150);
   --vc-warning-bg: oklch(0.95 0.045 82);
   --vc-warning-text: oklch(0.44 0.1 65);
+  --vc-warning-border: oklch(0.8 0.065 82);
   --vc-danger-bg: oklch(0.95 0.027 25);
   --vc-danger-text: oklch(0.48 0.17 27);
+  --vc-danger-border: oklch(0.82 0.065 25);
   --vc-info-bg: oklch(0.95 0.025 235);
   --vc-info-text: oklch(0.43 0.09 240);
+  --vc-info-border: oklch(0.8 0.05 235);
+  --vc-selected-bg: oklch(0.93 0.025 153);
+  --vc-selected-text: oklch(0.34 0.075 153);
+  --vc-selected-border: oklch(0.72 0.07 153);
+  --vc-check: oklch(0.43 0.095 153);
   --vc-focus: oklch(0.52 0.09 153);
   --vc-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.035);
   --vc-shadow-md: 0 4px 14px rgb(15 23 42 / 0.06);
@@ -137,14 +145,22 @@
   --vc-brand: oklch(0.67 0.105 153);
   --vc-brand-hover: oklch(0.72 0.105 153);
   --vc-hover: oklch(0.235 0.007 255);
-  --vc-success-bg: oklch(0.27 0.045 151);
-  --vc-success-text: oklch(0.78 0.12 151);
-  --vc-warning-bg: oklch(0.29 0.04 72);
-  --vc-warning-text: oklch(0.82 0.12 80);
-  --vc-danger-bg: oklch(0.28 0.04 25);
-  --vc-danger-text: oklch(0.78 0.12 25);
-  --vc-info-bg: oklch(0.27 0.035 235);
-  --vc-info-text: oklch(0.76 0.09 235);
+  --vc-success-bg: oklch(0.255 0.025 151);
+  --vc-success-text: oklch(0.76 0.075 151);
+  --vc-success-border: oklch(0.42 0.045 151);
+  --vc-warning-bg: oklch(0.265 0.025 72);
+  --vc-warning-text: oklch(0.79 0.08 80);
+  --vc-warning-border: oklch(0.43 0.045 76);
+  --vc-danger-bg: oklch(0.255 0.025 25);
+  --vc-danger-text: oklch(0.75 0.085 25);
+  --vc-danger-border: oklch(0.42 0.045 25);
+  --vc-info-bg: oklch(0.255 0.022 235);
+  --vc-info-text: oklch(0.74 0.06 235);
+  --vc-info-border: oklch(0.42 0.04 235);
+  --vc-selected-bg: oklch(0.265 0.022 153);
+  --vc-selected-text: oklch(0.78 0.065 153);
+  --vc-selected-border: oklch(0.45 0.05 153);
+  --vc-check: oklch(0.56 0.075 153);
   --vc-focus: oklch(0.67 0.105 153);
   --vc-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.14);
   --vc-shadow-md: 0 5px 18px rgb(0 0 0 / 0.16);
@@ -265,6 +281,11 @@
     color: var(--vc-text);
   }
 
+  .vc-panel-success {
+    background: var(--vc-success-bg);
+    color: var(--vc-success-text);
+  }
+
   .vc-panel-warning {
     background: var(--vc-warning-bg);
     color: var(--vc-warning-text);
@@ -281,6 +302,50 @@
   }
 
   .vc-text-warning { color: var(--vc-warning-text); }
+
+  .vc-state-selected,
+  .vc-state-today,
+  .vc-tab-active,
+  .vc-control-checked {
+    border-color: var(--vc-selected-border);
+    background: var(--vc-selected-bg);
+    color: var(--vc-selected-text);
+  }
+
+  .vc-state-today {
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--vc-selected-border) 58%, transparent);
+  }
+
+  .vc-checkbox {
+    accent-color: var(--vc-check);
+  }
+
+  .vc-alert-success,
+  .vc-alert-warning,
+  .vc-alert-danger,
+  .vc-alert-info {
+    border: 1px solid;
+  }
+  .vc-alert-success {
+    border-color: var(--vc-success-border);
+    background: var(--vc-success-bg);
+    color: var(--vc-success-text);
+  }
+  .vc-alert-warning {
+    border-color: var(--vc-warning-border);
+    background: var(--vc-warning-bg);
+    color: var(--vc-warning-text);
+  }
+  .vc-alert-danger {
+    border-color: var(--vc-danger-border);
+    background: var(--vc-danger-bg);
+    color: var(--vc-danger-text);
+  }
+  .vc-alert-info {
+    border-color: var(--vc-info-border);
+    background: var(--vc-info-bg);
+    color: var(--vc-info-text);
+  }
 
   .dark .vc-object-panel {
     border-color: var(--vc-border);
@@ -429,6 +494,20 @@
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-gray-700, .text-gray-800, .text-gray-900, .text-gray-950) { color: var(--vc-text); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600) { color: var(--vc-text-muted); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-gray-100, .border-gray-200, .border-gray-300) { border-color: var(--vc-border); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-green-50, .bg-green-100, .bg-emerald-50, .bg-teal-50, .bg-teal-100) { background-color: var(--vc-success-bg); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-green-600, .text-green-700, .text-green-800, .text-emerald-700, .text-teal-700, .text-teal-800, .text-teal-900) { color: var(--vc-success-text); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-green-100, .border-green-200, .border-green-300, .border-green-400, .border-green-500, .border-green-600) { border-color: var(--vc-success-border); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-yellow-50, .bg-yellow-100, .bg-orange-50, .bg-orange-100, .bg-amber-50, .bg-amber-100) { background-color: var(--vc-warning-bg); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-yellow-700, .text-orange-600, .text-orange-700, .text-orange-800, .text-amber-700, .text-amber-800, .text-amber-900) { color: var(--vc-warning-text); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-yellow-100, .border-yellow-400, .border-orange-200, .border-amber-100, .border-amber-200, .border-amber-300) { border-color: var(--vc-warning-border); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-red-50, .bg-red-100, .bg-rose-50, .bg-rose-100) { background-color: var(--vc-danger-bg); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-red-600, .text-red-700, .text-red-800, .text-rose-700, .text-rose-800) { color: var(--vc-danger-text); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-red-100, .border-red-200, .border-red-300, .border-red-500, .border-rose-100) { border-color: var(--vc-danger-border); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-blue-50, .bg-blue-100, .bg-cyan-50, .bg-violet-50, .bg-violet-100) { background-color: var(--vc-info-bg); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-blue-600, .text-blue-700, .text-blue-800, .text-cyan-700, .text-violet-700) { color: var(--vc-info-text); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-blue-100, .border-blue-200, .border-blue-400, .border-blue-500) { border-color: var(--vc-info-border); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-green-600, .bg-green-700, .bg-green-800) { background-color: var(--vc-selected-bg); color: var(--vc-selected-text); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.accent-green-600) { accent-color: var(--vc-check); }
   @media (hover: hover) {
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.hover\:bg-white):hover { background-color: var(--vc-elevated); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.hover\:bg-gray-50, .hover\:bg-gray-100, .hover\:bg-gray-200, .hover\:bg-gray-50\/80):hover { background-color: var(--vc-hover); }
