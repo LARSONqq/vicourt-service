@@ -269,35 +269,39 @@ export default async function NotificationsPage({
         </p>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
-        <DevicePushSettings
-          vapidPublicKey={
-            process.env
-              .NEXT_PUBLIC_VAPID_PUBLIC_KEY ??
-            ""
-          }
-        />
+      <div className="flex min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:items-start">
+        <div className="min-w-0 xl:max-w-md xl:shrink-0">
+          <DevicePushSettings
+            vapidPublicKey={
+              process.env
+                .NEXT_PUBLIC_VAPID_PUBLIC_KEY ??
+              ""
+            }
+          />
+        </div>
 
-        <AutomaticPushSettings
-          initialPreferences={
-            pushPreferences
-          }
-          showLowStock={
-            !isWorker(
-              profile.role
-            )
-          }
-          showEquipmentMaintenance={
-            !isWorker(
-              profile.role
-            )
-          }
-          showClientPayments={
-            !isWorker(
-              profile.role
-            )
-          }
-        />
+        <div className="min-w-0 xl:flex-1">
+          <AutomaticPushSettings
+            initialPreferences={
+              pushPreferences
+            }
+            showLowStock={
+              !isWorker(
+                profile.role
+              )
+            }
+            showEquipmentMaintenance={
+              !isWorker(
+                profile.role
+              )
+            }
+            showClientPayments={
+              !isWorker(
+                profile.role
+              )
+            }
+          />
+        </div>
       </div>
 
       <section className="grid min-w-0 grid-cols-3 gap-2 sm:gap-4">

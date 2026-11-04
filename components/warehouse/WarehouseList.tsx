@@ -680,14 +680,20 @@ export default function WarehouseList({
           </div>
 
           {/* DESKTOP TABLE */}
-          <div className="vc-table-shell hidden overflow-x-auto overscroll-x-contain md:block">
-            <table
-              className={`w-full ${
-                canManage
-                  ? "min-w-[1250px]"
-                  : "min-w-[1000px]"
-              }`}
+          <div className="hidden min-w-0 md:block">
+            <p className="mb-2 text-xs text-muted-foreground lg:hidden">
+              Прокрутіть таблицю горизонтально, щоб переглянути всі дані та дії.
+            </p>
+
+            <div
+              className="vc-table-shell max-w-full overflow-x-auto overscroll-x-contain pb-1"
+              role="region"
+              aria-label="Таблиця складських позицій"
+              tabIndex={0}
             >
+              <table
+                className="w-max min-w-full"
+              >
               <thead className="bg-gray-50 text-left">
                 <tr>
                   <th className="px-3 py-3">
@@ -873,7 +879,7 @@ export default function WarehouseList({
                           </td>
 
                           <td className="px-3 py-3">
-                            <div className="flex flex-wrap justify-end gap-2">
+                            <div className="flex flex-nowrap justify-end gap-2 whitespace-nowrap">
                               <button
                                 type="button"
                                 onClick={() =>
@@ -1111,7 +1117,8 @@ export default function WarehouseList({
                   }
                 )}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         </>
       )}

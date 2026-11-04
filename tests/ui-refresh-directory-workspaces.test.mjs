@@ -18,6 +18,9 @@ test("Warehouse keeps canonical stock evaluation while distinguishing OUT, LOW, 
   assert.match(list, /status !== "NORMAL"/g);
   assert.match(list, /border-amber-300/);
   assert.match(list, /vc-table-shell/);
+  assert.match(list, /max-w-full overflow-x-auto overscroll-x-contain/);
+  assert.match(list, /className="w-max min-w-full"/);
+  assert.doesNotMatch(list, /min-w-\[1250px\]|min-w-\[1000px\]/);
 });
 
 test("Equipment presentation reuses canonical maintenance logic and preserves directory query controls", () => {

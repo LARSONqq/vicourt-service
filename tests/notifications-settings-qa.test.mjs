@@ -23,3 +23,11 @@ test("settings formats its visible update timestamp with the shared Kyiv helper"
   assert.match(dates, /const KYIV_TIME_ZONE\s*=\s*"Europe\/Kyiv"/);
   assert.match(dates, /export function formatKyivTimestamp/);
 });
+
+test("notification settings use a content-driven responsive layout", () => {
+  const page = read("app/notifications/page.tsx");
+  assert.match(page, /xl:flex-row xl:items-start/);
+  assert.match(page, /xl:max-w-md xl:shrink-0/);
+  assert.match(page, /xl:flex-1/);
+  assert.doesNotMatch(page, /grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2/);
+});

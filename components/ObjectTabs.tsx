@@ -112,9 +112,13 @@ export default function ObjectTabs({
     <div className="min-w-0">
       <nav
         aria-label="Розділи паспорта об’єкта"
-        className="sticky top-16 z-20 -mx-4 mb-5 overflow-x-auto overscroll-x-contain bg-background/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:mx-0 sm:mb-6 sm:px-0"
+        className="sticky top-16 z-20 -mx-4 mb-5 max-w-[calc(100%+2rem)] overflow-x-auto overscroll-x-contain bg-background/95 px-4 pb-2 pt-1 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:mx-0 sm:mb-6 sm:max-w-full sm:px-0"
       >
-        <div className="vc-surface flex min-w-max gap-1 p-1">
+        <span className="mb-1 block text-[11px] text-muted-foreground sm:hidden">
+          Розділи можна гортати горизонтально →
+        </span>
+
+        <div className="vc-surface flex w-max min-w-full gap-1 p-1">
           {tabs.map((item) => {
             const isActive =
               activeTab === item.id;

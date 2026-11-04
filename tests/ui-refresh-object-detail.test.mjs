@@ -20,6 +20,9 @@ test("object passport keeps role-gated tabs and loaders while adopting the R1 sh
   assert.match(tabs, /href=\{`\/objects\/\$\{objectId\}\?tab=\$\{item\.id\}`\}/);
   assert.match(tabs, /aria-current=/);
   assert.match(tabs, /focus-visible:ring-2/);
+  assert.match(tabs, /overflow-x-auto overscroll-x-contain/);
+  assert.match(tabs, /w-max min-w-full/);
+  assert.match(tabs, /Розділи можна гортати горизонтально/);
   assert.match(header, /vc-page-title/);
   assert.match(header, /vc-surface/);
 });

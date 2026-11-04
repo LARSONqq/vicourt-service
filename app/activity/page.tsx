@@ -205,6 +205,14 @@ export default async function ActivityPage({
       activityPage.logs.length - 1,
       0
     );
+  const hasSecondaryFilters = Boolean(
+    filters.category ||
+      filters.event ||
+      filters.actor ||
+      filters.objectId ||
+      filters.dateFrom ||
+      filters.dateTo
+  );
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -220,27 +228,63 @@ export default async function ActivityPage({
 
       <form
         method="get"
-        className="grid min-w-0 grid-cols-1 gap-3 rounded-xl border bg-white p-3 sm:grid-cols-2 sm:p-4 xl:grid-cols-4"
+        className="min-w-0 rounded-xl border bg-white p-3 sm:p-4"
       >
-        <div className="min-w-0 sm:col-span-2">
-          <label
-            htmlFor="activity-search"
-            className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400"
-          >
-            Пошук
-          </label>
-          <input
-            id="activity-search"
-            type="search"
-            name="q"
-            maxLength={100}
-            defaultValue={filters.q}
-            placeholder="Подія, сутність, об’єкт або користувач"
-            className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
-          />
+        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="min-w-0">
+            <label
+              htmlFor="activity-search"
+              className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400"
+            >
+              Пошук
+            </label>
+            <input
+              id="activity-search"
+              type="search"
+              name="q"
+              maxLength={100}
+              defaultValue={filters.q}
+              placeholder="Подія, сутність, об’єкт або користувач"
+              className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition placeholder:text-gray-400 focus:border-green-600"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="submit"
+              className="min-h-11 rounded-lg bg-green-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-green-700"
+            >
+              Застосувати
+            </button>
+            <Link
+              href="/activity"
+              className="flex min-h-11 items-center justify-center rounded-lg border px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            >
+              Скинути
+            </Link>
+          </div>
         </div>
 
-        <div className="min-w-0">
+        <details
+          className="group mt-3 border-t pt-3"
+          open={hasSecondaryFilters}
+        >
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 [&::-webkit-details-marker]:hidden">
+            <span>
+              Додаткові фільтри
+              {hasSecondaryFilters && (
+                <span className="ml-2 rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-700">
+                  Активні
+                </span>
+              )}
+            </span>
+            <span aria-hidden="true" className="transition group-open:rotate-180">
+              ↓
+            </span>
+          </summary>
+
+          <div className="mt-3 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="min-w-0">
           <label
             htmlFor="activity-category"
             className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400"
@@ -269,9 +313,9 @@ export default async function ActivityPage({
               )
             )}
           </select>
-        </div>
+            </div>
 
-        <div className="min-w-0">
+            <div className="min-w-0">
           <label
             htmlFor="activity-event"
             className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400"
@@ -298,9 +342,9 @@ export default async function ActivityPage({
               )
             )}
           </select>
-        </div>
+            </div>
 
-        <div className="min-w-0">
+            <div className="min-w-0">
           <label
             htmlFor="activity-actor"
             className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400"
@@ -327,9 +371,9 @@ export default async function ActivityPage({
               )
             )}
           </select>
-        </div>
+            </div>
 
-        <div className="min-w-0">
+            <div className="min-w-0">
           <label
             htmlFor="activity-object"
             className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400"
@@ -358,9 +402,9 @@ export default async function ActivityPage({
               )
             )}
           </select>
-        </div>
+            </div>
 
-        <div className="min-w-0">
+            <div className="min-w-0">
           <label
             htmlFor="activity-date-from"
             className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400"
@@ -376,9 +420,9 @@ export default async function ActivityPage({
             }
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           />
-        </div>
+            </div>
 
-        <div className="min-w-0">
+            <div className="min-w-0">
           <label
             htmlFor="activity-date-to"
             className="mb-2 block text-xs font-medium uppercase tracking-wide text-gray-400"
@@ -392,22 +436,10 @@ export default async function ActivityPage({
             defaultValue={filters.dateTo}
             className="min-h-11 w-full min-w-0 rounded-lg border bg-white px-3 py-3 outline-none transition focus:border-green-600"
           />
-        </div>
+            </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:col-span-2 xl:col-span-1 xl:self-end">
-          <button
-            type="submit"
-            className="min-h-11 rounded-lg bg-green-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-green-700"
-          >
-            Застосувати
-          </button>
-          <Link
-            href="/activity"
-            className="flex min-h-11 items-center justify-center rounded-lg border px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-          >
-            Скинути
-          </Link>
-        </div>
+          </div>
+        </details>
       </form>
 
       <div className="flex flex-col gap-1 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
