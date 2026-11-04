@@ -12,6 +12,12 @@ const severityClass = {
   info: "bg-muted-foreground",
 } as const;
 
+const severityLabel = {
+  critical: "Критично",
+  warning: "Увага",
+  info: "Інформація",
+} as const;
+
 function formatMoney(value: number, currency: AppCurrency) {
   return new Intl.NumberFormat("uk-UA", {
     style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 2,
@@ -21,14 +27,14 @@ function formatMoney(value: number, currency: AppCurrency) {
 function AttentionRow({ item, currency }: { item: DashboardAttentionItem; currency: AppCurrency | null }) {
   const date = item.relevantDate ? formatDateValue(item.relevantDate) : null;
   return <li>
-    <Link href={item.href} aria-label={`${item.title}: ${item.description}`} className="flex min-h-16 min-w-0 items-start gap-3 px-4 py-3 transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5">
-      <span aria-hidden="true" className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${severityClass[item.severity]}`} />
+    <Link href={item.href} aria-label={`${item.title}: ${item.description}`} className="flex min-h-16 min-w-0 items-start gap-3 px-4 py-2.5 transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5">
+      <span aria-hidden="true" className={`mt-2 h-2 w-2 shrink-0 rounded-full ${severityClass[item.severity]}`} />
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <strong className="break-words text-sm font-semibold text-foreground">{item.title}</strong>
-          {date && <span className="shrink-0 text-xs text-muted-foreground">{date}</span>}
+          <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground"><span className="font-medium">{severityLabel[item.severity]}</span>{date && <span>· {date}</span>}</span>
         </span>
-        <span className="mt-1 block break-words text-sm text-muted-foreground">{item.description}</span>
+        <span className="mt-0.5 block break-words text-sm leading-5 text-muted-foreground">{item.description}</span>
         {item.source === "finance" && currency && <span className="mt-1 block text-sm font-medium tabular-nums text-foreground">{formatMoney(item.amount, currency)}</span>}
       </span>
       <span aria-hidden="true" className="mt-1 shrink-0 text-muted-foreground">→</span>
@@ -57,8 +63,8 @@ export async function DashboardAttention() {
   }
   const currency = data.kind === "management" ? data.currency : null;
   return <section className="vc-surface min-w-0 overflow-hidden">
-    <div className="flex min-h-20 flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-5">
-      <div><h2 className="text-lg font-semibold text-foreground">Потребує уваги</h2><p className="mt-1 text-sm text-muted-foreground">До 8 пріоритетних дій</p></div>
+    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5">
+      <div><h2 className="text-lg font-semibold text-foreground">Потребує уваги</h2><p className="mt-0.5 text-sm text-muted-foreground">{data.items.length} пріоритетних {data.items.length === 1 ? "дія" : "дій"}</p></div>
       <Link href="/notifications" className="inline-flex min-h-11 items-center rounded-md text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Усі сповіщення →</Link>
     </div>
     {data.items.length === 0

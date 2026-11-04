@@ -136,14 +136,14 @@ export default function ObjectSupervisionCard({
   }
 
   return (
-    <section className="vc-object-panel overflow-hidden rounded-lg border border-rose-200 bg-white">
-      <div className="flex flex-col gap-3 border-b border-rose-100 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+    <section className="vc-object-panel vc-surface overflow-hidden">
+      <div className="flex flex-col gap-3 bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+          <h2 className="text-lg font-semibold text-foreground sm:text-xl">
             Періодичний нагляд
           </h2>
 
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-muted-foreground">
             Планування регулярних оглядів
             об’єкта
           </p>
@@ -158,36 +158,36 @@ export default function ObjectSupervisionCard({
 
       <div className="p-4 sm:p-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="min-w-0 rounded-lg bg-gray-50 p-3">
-            <p className="text-xs text-gray-500">
+          <div className="min-w-0 p-2">
+            <p className="text-xs text-muted-foreground">
               Періодичність
             </p>
 
-            <p className="mt-1 break-words font-medium text-gray-900">
+            <p className="mt-1 break-words font-medium text-foreground">
               {hasInterval
                 ? `кожні ${intervalDays} днів`
                 : "Не вказано"}
             </p>
           </div>
 
-          <div className="min-w-0 rounded-lg bg-gray-50 p-3">
-            <p className="text-xs text-gray-500">
+          <div className="min-w-0 border-t border-border p-2 sm:border-l sm:border-t-0 sm:pl-4">
+            <p className="text-xs text-muted-foreground">
               Останній огляд
             </p>
 
-            <p className="mt-1 break-words font-medium text-gray-900">
+            <p className="mt-1 break-words font-medium text-foreground">
               {formatDateValue(
                 currentLastDate
               ) || "Ще не виконувався"}
             </p>
           </div>
 
-          <div className="min-w-0 rounded-lg bg-gray-50 p-3">
-            <p className="text-xs text-gray-500">
+          <div className="min-w-0 border-t border-border p-2 sm:border-l sm:border-t-0 sm:pl-4">
+            <p className="text-xs text-muted-foreground">
               Наступний огляд
             </p>
 
-            <p className="mt-1 break-words font-medium text-gray-900">
+            <p className="mt-1 break-words font-medium text-foreground">
               {formatDateValue(
                 currentNextDate
               ) || "Не заплановано"}

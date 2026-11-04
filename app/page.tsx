@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   // Only auth blocks the header. Independent widgets stream under their own boundaries.
   const { profile, permissions, today, activityVisible } = await getDashboardContext();
-  return <div className="min-w-0 space-y-4 sm:space-y-5">
+  return <div className="min-w-0 space-y-5 sm:space-y-6">
     <header className="min-w-0 pb-1 text-foreground">
       <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
@@ -33,8 +33,10 @@ export default async function HomePage() {
       </nav>
     </header>
     <Suspense fallback={<DashboardCommandSkeleton />}><DashboardCommandSurface /></Suspense>
-    <Suspense fallback={<DashboardAttentionSkeleton />}><DashboardAttention /></Suspense>
-    <Suspense fallback={<DashboardSkeleton title="Сьогодні" />}><DashboardTodayTasks /></Suspense>
+    <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <Suspense fallback={<DashboardAttentionSkeleton />}><DashboardAttention /></Suspense>
+      <Suspense fallback={<DashboardSkeleton title="Сьогодні" />}><DashboardTodayTasks /></Suspense>
+    </div>
     <div className="grid min-w-0 items-stretch gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
       <Suspense fallback={<DashboardSkeleton title="Склад" />}><DashboardWarehouseAttention /></Suspense>
       <Suspense fallback={<DashboardSkeleton title="Техніка" />}><DashboardEquipmentAttention /></Suspense>

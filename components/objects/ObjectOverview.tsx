@@ -150,13 +150,13 @@ function KpiCard({
     | "negative";
 }) {
   return (
-    <div className="vc-object-panel vc-surface min-w-0 p-3 sm:p-4">
+    <div className="min-w-0 border-l-2 border-border px-3 py-2 first:border-primary sm:px-4">
       <p className="text-xs text-muted-foreground sm:text-sm">
         {label}
       </p>
       <p
         className={
-          "mt-2 break-words text-lg font-bold sm:text-xl " +
+          "mt-1 break-words text-lg font-semibold tabular-nums sm:text-xl " +
           (tone === "positive"
             ? "text-primary"
             : tone === "negative"
@@ -275,7 +275,7 @@ export default function ObjectOverview({
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-y-3 rounded-lg bg-muted/30 py-2 lg:grid-cols-4">
           <KpiCard
             label="Активні завдання"
             value={String(
@@ -307,7 +307,7 @@ export default function ObjectOverview({
       </section>
 
       {finance && financials && (
-        <section className="vc-object-panel min-w-0 rounded-lg border border-border bg-muted/35 p-3 sm:p-5">
+        <section className="vc-object-panel min-w-0 rounded-lg bg-muted/35 p-3 sm:p-5">
           <div className="mb-3">
             <h2 className="text-lg font-semibold text-foreground">
               Фінанси зараз
@@ -317,7 +317,7 @@ export default function ObjectOverview({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-y-3 xl:grid-cols-5">
             <KpiCard
               label="Ціна для клієнта"
               value={

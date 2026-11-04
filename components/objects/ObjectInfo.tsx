@@ -510,11 +510,11 @@ export default function ObjectPassportHeader({
 
   return (
     <section className="vc-object-panel vc-surface min-w-0 overflow-hidden">
-      <div className="min-w-0 p-4 sm:p-6">
+      <div className="min-w-0 p-4 sm:p-5">
         <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-              Паспорт об’єкта
+            <p className="text-xs font-medium text-muted-foreground">
+              Об’єкт · #{object.id}
             </p>
 
             <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
@@ -535,7 +535,7 @@ export default function ObjectPassportHeader({
               </span>
             </div>
 
-            <p className="mt-2 break-words text-sm text-muted-foreground sm:text-base">
+            <p className="mt-1.5 break-words text-sm text-muted-foreground sm:text-base">
               {object.address ||
                 "Адресу не вказано"}
             </p>
@@ -609,8 +609,8 @@ export default function ObjectPassportHeader({
         )}
       </div>
 
-      <dl className="grid min-w-0 grid-cols-1 divide-y divide-border border-t border-border bg-muted/35 px-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:px-6">
-        <div className="min-w-0 py-4 sm:pr-5">
+      <dl className="grid min-w-0 grid-cols-1 gap-x-6 border-t border-border bg-muted/35 px-4 sm:grid-cols-3 sm:px-5">
+        <div className="min-w-0 border-b border-border/70 py-3 sm:border-b-0">
           <dt className="text-xs text-muted-foreground">
             Замовник
           </dt>
@@ -620,7 +620,7 @@ export default function ObjectPassportHeader({
           </dd>
         </div>
 
-        <div className="min-w-0 py-4 sm:px-5">
+        <div className="min-w-0 border-b border-border/70 py-3 sm:border-b-0">
           <dt className="text-xs text-muted-foreground">
             Телефон
           </dt>
@@ -630,7 +630,7 @@ export default function ObjectPassportHeader({
           </dd>
         </div>
 
-        <div className="min-w-0 py-4 sm:pl-5">
+        <div className="min-w-0 py-3">
           <dt className="text-xs text-muted-foreground">
             Відповідальний
           </dt>

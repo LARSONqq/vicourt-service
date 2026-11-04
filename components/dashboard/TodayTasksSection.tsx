@@ -164,7 +164,7 @@ export default function TodayTasksSection({
   if (localTasks.length === 0) {
     return (
       <section className="vc-surface flex h-full min-h-56 min-w-0 flex-col overflow-hidden">
-        <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-muted/30 px-4 py-3 sm:px-5">
           <div className="min-w-0">
             <h2 className="break-words text-lg font-semibold text-foreground">Завдання на сьогодні</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -182,11 +182,11 @@ export default function TodayTasksSection({
 
   return (
     <section className="vc-surface flex h-full min-w-0 flex-col overflow-hidden">
-      <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-muted/30 px-4 py-3 sm:px-5">
         <div className="min-w-0">
           <h2 className="break-words text-lg font-semibold text-foreground">Завдання на сьогодні</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Показано: {localTasks.length} · до 5 відкритих
+            {localTasks.length} відкритих · пріоритет на сьогодні
           </p>
         </div>
 
