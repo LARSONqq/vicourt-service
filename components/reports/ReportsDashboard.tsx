@@ -154,58 +154,204 @@ function EmptyState({
   );
 }
 
+function clampPercent(
+  value: number
+) {
+  return Math.max(
+    0,
+    Math.min(value, 100)
+  );
+}
+
+function CostComposition({
+  materials,
+  labor,
+  other,
+  compact = false,
+}: {
+  materials: number;
+  labor: number;
+  other: number;
+  compact?: boolean;
+}) {
+  const total =
+    materials + labor + other;
+  const parts = [
+    {
+      label: "Матеріали",
+      value: materials,
+      color: "vc-chart-materials",
+    },
+    {
+      label: "Роботи",
+      value: labor,
+      color: "vc-chart-labor",
+    },
+    {
+      label: "Інше",
+      value: other,
+      color: "vc-chart-other",
+    },
+  ];
+  const canCompose =
+    total > 0 &&
+    parts.every(
+      (part) => part.value >= 0
+    );
+
+  return (
+    <div className="min-w-0">
+      <div
+        className={`${
+          compact ? "h-1.5" : "h-2"
+        } flex overflow-hidden rounded-full bg-muted`}
+        aria-label="Склад витрат"
+      >
+        {canCompose &&
+          parts.map((part) => (
+            <span
+              key={part.label}
+              className={part.color}
+              style={{
+                width: `${clampPercent(
+                  (part.value /
+                    total) *
+                    100
+                )}%`,
+              }}
+              title={`${part.label}: ${formatMoney(
+                part.value
+              )}`}
+            />
+          ))}
+      </div>
+
+      {!compact && (
+        <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+          {parts.map((part) => (
+            <div
+              key={part.label}
+              className="min-w-0"
+            >
+              <p className="flex items-center gap-1.5 text-muted-foreground">
+                <span
+                  className={`size-2 shrink-0 rounded-sm ${part.color}`}
+                />
+                {part.label}
+              </p>
+              <p className="mt-0.5 break-words font-semibold text-foreground">
+                {formatMoney(
+                  part.value
+                )}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProgressMeter({
+  value,
+  total,
+  tone,
+  label,
+}: {
+  value: number;
+  total: number | null;
+  tone:
+    | "success"
+    | "warning"
+    | "danger";
+  label: string;
+}) {
+  if (
+    total === null ||
+    total <= 0
+  ) {
+    return null;
+  }
+
+  const percent =
+    (value / total) * 100;
+  const toneClass = {
+    success: "vc-progress-success",
+    warning: "vc-progress-warning",
+    danger: "vc-progress-danger",
+  }[tone];
+
+  return (
+    <div className="mt-2">
+      <div className="mb-1 flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
+        <span>{label}</span>
+        <span className="tabular-nums">
+          {formatPercent(
+            percent / 100
+          )}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full ${toneClass}`}
+          style={{
+            width: `${clampPercent(
+              percent
+            )}%`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function getBudgetTone(
+  actual: number,
+  budget: number | null
+) {
+  if (
+    budget === null ||
+    budget <= 0
+  ) {
+    return "success" as const;
+  }
+
+  if (actual > budget) {
+    return "danger" as const;
+  }
+
+  return actual / budget >= 0.9
+    ? ("warning" as const)
+    : ("success" as const);
+}
+
+function getBudgetLabel(
+  actual: number,
+  budget: number | null
+) {
+  if (
+    budget === null ||
+    budget <= 0
+  ) {
+    return "Використано бюджет";
+  }
+
+  if (actual > budget) {
+    return "Перевищено бюджет";
+  }
+
+  return actual / budget >= 0.9
+    ? "Бюджет майже вичерпано"
+    : "Використано бюджет";
+}
+
 export default function ReportsDashboard({
   data,
   section,
 }: Props) {
-  const kpiCards = [
+  const overviewCards = [
     {
-      label:
-        "Витрати на матеріали",
-      value:
-        formatMoney(
-          data.kpis
-            .materialsCost
-        ),
-      note:
-        data.materialAccounting.periodMode ===
-        "exact"
-            ? "Точні історичні рухи Ledger"
-          : data.materialAccounting.periodMode ===
-              "mixed"
-            ? "Лише підтверджена exact-частина після cutover"
-            : "Legacy approximation",
-      style:
-        "bg-amber-50 text-amber-700",
-    },
-    {
-      label:
-        "Витрати на роботи",
-      value:
-        formatMoney(
-          data.kpis.laborCost
-        ),
-      note:
-        "Години × зафіксована ставка",
-      style:
-        "bg-blue-50 text-blue-700",
-    },
-    {
-      label:
-        "Інші витрати",
-      value:
-        formatMoney(
-          data.kpis
-            .otherExpensesCost
-        ),
-      note:
-        "Витрати об’єктів за категоріями",
-      style:
-        "bg-orange-50 text-orange-700",
-    },
-    {
-      label:
-        "Загальні витрати об’єктів",
+      label: "Загальні витрати",
       value:
         formatMoney(
           data.kpis
@@ -213,8 +359,7 @@ export default function ReportsDashboard({
         ),
       note:
         "Без закупівель складу",
-      style:
-        "bg-green-600 text-white",
+      tone: "primary",
     },
     {
       label:
@@ -225,8 +370,7 @@ export default function ReportsDashboard({
         ) + " год",
       note:
         "За датою виконання робіт",
-      style:
-        "bg-violet-50 text-violet-700",
+      tone: "neutral",
     },
     {
       label:
@@ -238,8 +382,7 @@ export default function ReportsDashboard({
         ),
       note:
         "Лише фактично оприбутковані",
-      style:
-        "bg-cyan-50 text-cyan-700",
+      tone: "neutral",
     },
     {
       label:
@@ -251,8 +394,7 @@ export default function ReportsDashboard({
         ),
       note:
         "За вибраний період",
-      style:
-        "bg-emerald-50 text-emerald-700",
+      tone: "positive",
     },
     {
       label:
@@ -268,8 +410,7 @@ export default function ReportsDashboard({
         0
           ? `Поточний стан · без ціни: ${data.kpis.objectsWithoutClientPrice}`
           : "Поточний стан за встановленими цінами",
-      style:
-        "bg-teal-50 text-teal-700",
+      tone: "neutral",
     },
     {
       label:
@@ -280,18 +421,40 @@ export default function ReportsDashboard({
       ),
       note:
         "Поточний стан, не дохід за період",
-      style:
+      tone:
         data.kpis
           .overdueScheduleAmount > 0
-          ? "bg-red-50 text-red-700"
-          : "bg-gray-50 text-gray-700",
+          ? "danger"
+          : "neutral",
     },
   ];
+  const employeeWorkByHours = [
+    ...data.employeeWork,
+  ].sort(
+    (left, right) =>
+      right.hours - left.hours ||
+      left.employeeName.localeCompare(
+        right.employeeName,
+        "uk"
+      )
+  );
+  const maximumEmployeeHours =
+    employeeWorkByHours.reduce(
+      (maximum, employee) =>
+        Math.max(
+          maximum,
+          employee.hours
+        ),
+      0
+    );
 
   return (
-    <div className="min-w-0 space-y-6 sm:space-y-8">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
       {data.invalidPeriod && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700 sm:px-5">
+        <div
+          role="alert"
+          className="vc-alert-danger rounded-lg px-3 py-2.5 text-sm leading-5"
+        >
           Дата «від» не може бути
           пізнішою за дату «до».
           Зміни період і застосуй
@@ -307,7 +470,7 @@ export default function ReportsDashboard({
         ].includes(section) &&
         data.materialAccounting
           .limitation && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900 sm:px-5">
+          <div className="vc-alert-warning rounded-lg px-3 py-2.5 text-xs leading-5 sm:text-sm">
             <span className="font-semibold">
               Метод обліку матеріалів. {" "}
             </span>
@@ -337,31 +500,61 @@ export default function ReportsDashboard({
           </p>
         </div>
 
-        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {kpiCards.map(
+        <div className="grid min-w-0 grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-5">
+          {overviewCards.map(
             (card) => (
               <article
                 key={card.label}
-                className={
-                  "min-w-0 rounded-xl border p-4 sm:p-5 " +
-                  card.style
-                }
+                data-tone={card.tone}
+                className="vc-kpi-card min-w-0 rounded-lg border p-3 sm:p-4"
               >
-                <p className="text-xs font-medium uppercase tracking-wide opacity-75">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                   {card.label}
                 </p>
 
-                <p className="mt-2 break-words text-xl font-bold sm:text-2xl">
+                <p className="mt-1.5 break-words text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                   {card.value}
                 </p>
 
-                <p className="mt-2 text-xs leading-5 opacity-75">
+                <p className="mt-1.5 text-xs leading-4 text-muted-foreground">
                   {card.note}
                 </p>
               </article>
             )
           )}
         </div>
+
+        <article className="vc-surface mt-3 min-w-0 p-4">
+          <div className="mb-3 flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-foreground">
+                Склад витрат
+              </h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Матеріали, роботи та інші витрати за вибраний період
+              </p>
+            </div>
+            <strong className="break-words text-sm text-foreground sm:shrink-0 sm:text-right">
+              {formatMoney(
+                data.kpis
+                  .totalObjectCost
+              )}
+            </strong>
+          </div>
+          <CostComposition
+            materials={
+              data.kpis
+                .materialsCost
+            }
+            labor={
+              data.kpis.laborCost
+            }
+            other={
+              data.kpis
+                .otherExpensesCost
+            }
+          />
+        </article>
       </section>
       )}
 
@@ -494,6 +687,24 @@ export default function ReportsDashboard({
                       </strong>
                     </div>
 
+                    <div className="mt-3 rounded-lg bg-muted/60 p-3">
+                      <CostComposition
+                        compact
+                        materials={
+                          object.materialsCost
+                        }
+                        labor={
+                          object.laborCost
+                        }
+                        other={
+                          object.otherExpensesCost
+                        }
+                      />
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                        Матеріали {formatMoney(object.materialsCost)} · роботи {formatMoney(object.laborCost)} · інше {formatMoney(object.otherExpensesCost)}
+                      </p>
+                    </div>
+
                     <div className="mt-4 border-t pt-4">
                       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                         Фінанси об’єкта
@@ -510,6 +721,22 @@ export default function ReportsDashboard({
                               object.costBudget
                             )}
                           </dd>
+                          <ProgressMeter
+                            value={
+                              object.lifetimeActualCost
+                            }
+                            total={
+                              object.costBudget
+                            }
+                            tone={getBudgetTone(
+                              object.lifetimeActualCost,
+                              object.costBudget
+                            )}
+                            label={getBudgetLabel(
+                              object.lifetimeActualCost,
+                              object.costBudget
+                            )}
+                          />
                         </div>
 
                         <div>
@@ -643,6 +870,17 @@ export default function ReportsDashboard({
                         </div>
                       </dl>
 
+                      <ProgressMeter
+                        value={
+                          object.lifetimePaid
+                        }
+                        total={
+                          object.clientPrice
+                        }
+                        tone="success"
+                        label="Сплачено від вартості"
+                      />
+
                       <p className="mt-3 text-xs font-medium text-gray-600">
                         {
                           objectPaymentStatusLabels[
@@ -767,6 +1005,20 @@ export default function ReportsDashboard({
                           {formatMoney(
                             object.totalCost
                           )}
+                          <div className="mt-2 w-44">
+                            <CostComposition
+                              compact
+                              materials={
+                                object.materialsCost
+                              }
+                              labor={
+                                object.laborCost
+                              }
+                              other={
+                                object.otherExpensesCost
+                              }
+                            />
+                          </div>
                         </td>
                         <td className="p-4">
                           <p className="text-xs text-gray-500">
@@ -824,6 +1076,22 @@ export default function ReportsDashboard({
                                 : "Залишок"}
                             </p>
                           )}
+                          <ProgressMeter
+                            value={
+                              object.lifetimeActualCost
+                            }
+                            total={
+                              object.costBudget
+                            }
+                            tone={getBudgetTone(
+                              object.lifetimeActualCost,
+                              object.costBudget
+                            )}
+                            label={getBudgetLabel(
+                              object.lifetimeActualCost,
+                              object.costBudget
+                            )}
+                          />
                         </td>
                         <td className="p-4">
                           <p className="font-semibold text-emerald-700">
@@ -858,6 +1126,16 @@ export default function ReportsDashboard({
                               ]
                             }
                           </p>
+                          <ProgressMeter
+                            value={
+                              object.lifetimePaid
+                            }
+                            total={
+                              object.clientPrice
+                            }
+                            tone="success"
+                            label="Сплачено"
+                          />
                         </td>
                         <td className="p-4">
                           <p
@@ -913,7 +1191,7 @@ export default function ReportsDashboard({
           </p>
         </div>
 
-        {data.employeeWork.length ===
+        {employeeWorkByHours.length ===
         0 ? (
           <div className="p-3 sm:p-5">
             <EmptyState>
@@ -921,134 +1199,58 @@ export default function ReportsDashboard({
             </EmptyState>
           </div>
         ) : (
-          <>
-            <div className="space-y-3 p-3 md:hidden">
-              {data.employeeWork.map(
-                (employee) => (
-                  <article
-                    key={
-                      employee.employeeId ||
-                      "unassigned"
-                    }
-                    className="rounded-xl border p-4"
-                  >
-                    <p className="break-words font-semibold text-gray-900">
-                      {
-                        employee.employeeName
-                      }
-                    </p>
-
-                    <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-lg bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">
-                          Записів
-                        </p>
-                        <p className="mt-1 font-semibold">
-                          {
-                            employee.recordsCount
-                          }
-                        </p>
-                      </div>
-                      <div className="rounded-lg bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">
-                          Об’єктів
-                        </p>
-                        <p className="mt-1 font-semibold">
-                          {
-                            employee.objectsCount
-                          }
-                        </p>
-                      </div>
-                      <div className="rounded-lg bg-blue-50 p-3">
-                        <p className="text-xs text-blue-700/70">
-                          Години
-                        </p>
-                        <p className="mt-1 font-semibold text-blue-700">
-                          {formatNumber(
-                            employee.hours
-                          )}
-                        </p>
-                      </div>
-                      <div className="rounded-lg bg-green-50 p-3">
-                        <p className="text-xs text-green-700/70">
-                          Вартість
-                        </p>
-                        <p className="mt-1 break-words font-semibold text-green-700">
-                          {formatMoney(
-                            employee.laborCost
-                          )}
-                        </p>
-                      </div>
+          <div className="divide-y">
+            {employeeWorkByHours.map(
+              (employee) => (
+                <article
+                  key={
+                    employee.employeeId ||
+                    "unassigned"
+                  }
+                  className="min-w-0 p-4 sm:px-5"
+                >
+                  <div className="flex min-w-0 items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="break-words font-semibold text-foreground">
+                        {employee.employeeName}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {employee.objectsCount} об’єктів · {employee.recordsCount} записів
+                      </p>
                     </div>
-                  </article>
-                )
-              )}
-            </div>
-
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[760px] text-sm">
-                <thead className="bg-gray-50 text-left text-gray-500">
-                  <tr>
-                    <th className="p-4 font-medium">
-                      Працівник
-                    </th>
-                    <th className="p-4 font-medium">
-                      Записів
-                    </th>
-                    <th className="p-4 font-medium">
-                      Години
-                    </th>
-                    <th className="p-4 font-medium">
-                      Вартість робіт
-                    </th>
-                    <th className="p-4 font-medium">
-                      Об’єктів
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {data.employeeWork.map(
-                    (employee) => (
-                      <tr
-                        key={
-                          employee.employeeId ||
-                          "unassigned"
-                        }
-                        className="border-t"
-                      >
-                        <td className="p-4 font-semibold text-gray-900">
-                          {
-                            employee.employeeName
-                          }
-                        </td>
-                        <td className="p-4">
-                          {
-                            employee.recordsCount
-                          }
-                        </td>
-                        <td className="p-4 font-medium text-blue-700">
-                          {formatNumber(
-                            employee.hours
-                          )}
-                        </td>
-                        <td className="p-4 font-semibold text-green-700">
-                          {formatMoney(
-                            employee.laborCost
-                          )}
-                        </td>
-                        <td className="p-4">
-                          {
-                            employee.objectsCount
-                          }
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
+                    <div className="shrink-0 text-right">
+                      <p className="font-semibold tabular-nums text-foreground">
+                        {formatNumber(
+                          employee.hours
+                        )} год
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {formatMoney(
+                          employee.laborCost
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="vc-progress-success h-full rounded-full"
+                      style={{
+                        width:
+                          maximumEmployeeHours >
+                          0
+                            ? `${clampPercent(
+                                (employee.hours /
+                                  maximumEmployeeHours) *
+                                  100
+                              )}%`
+                            : "0%",
+                      }}
+                    />
+                  </div>
+                </article>
+              )
+            )}
+          </div>
         )}
       </section>
       )}
@@ -1088,10 +1290,7 @@ export default function ReportsDashboard({
                         {
                           category.recordsCount
                         }{" "}
-                        записів ·{" "}
-                        {formatPercent(
-                          category.share
-                        )}
+                        записів
                       </p>
                     </div>
 
@@ -1193,6 +1392,55 @@ export default function ReportsDashboard({
           )}
         </div>
       </section>
+      )}
+
+      {section === "cashflow" &&
+        data.expenseDetails.length >
+          0 && (
+        <section className="min-w-0 overflow-hidden rounded-xl border bg-white">
+          <div className="border-b p-4 sm:p-5">
+            <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
+              Деталізація інших витрат
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Усі записи за вибраними фільтрами
+            </p>
+          </div>
+          <div className="divide-y">
+            {data.expenseDetails.map(
+              (expense) => (
+                <article
+                  key={expense.id}
+                  className="flex min-w-0 flex-col gap-2 p-4 sm:flex-row sm:items-start sm:justify-between sm:px-5"
+                >
+                  <div className="min-w-0">
+                    <p className="break-words font-medium text-foreground">
+                      {expense.description}
+                    </p>
+                    <p className="mt-1 break-words text-xs leading-5 text-muted-foreground">
+                      {formatDate(
+                        expense.expenseDate
+                      )} · {expense.category} · {expense.objectName}
+                      {expense.createdBy
+                        ? ` · ${expense.createdBy}`
+                        : ""}
+                    </p>
+                    {expense.note && (
+                      <p className="mt-1 whitespace-pre-wrap break-words text-xs text-muted-foreground">
+                        {expense.note}
+                      </p>
+                    )}
+                  </div>
+                  <strong className="shrink-0 text-sm text-foreground">
+                    {formatMoney(
+                      expense.amount
+                    )}
+                  </strong>
+                </article>
+              )
+            )}
+          </div>
+        </section>
       )}
 
       {section === "cashflow" && (
@@ -1383,6 +1631,20 @@ export default function ReportsDashboard({
               </p>
             </div>
           ))}
+          <div className="col-span-2 xl:col-span-4">
+            <ProgressMeter
+              value={
+                data.paymentScheduleSummary
+                  .paidAmount
+              }
+              total={
+                data.paymentScheduleSummary
+                  .plannedAmount
+              }
+              tone="success"
+              label="Покрито за графіком"
+            />
+          </div>
         </div>
 
         {data.paymentScheduleDetails.length === 0 ? (

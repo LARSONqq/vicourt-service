@@ -471,6 +471,15 @@
   }
   .vc-kpi-card[data-tone="warning"] { border-left: 2px solid var(--vc-warning-text); }
   .vc-kpi-card[data-tone="positive"] { border-left: 2px solid var(--vc-brand); }
+  .vc-kpi-card[data-tone="primary"] { border-left: 2px solid var(--vc-text); }
+  .vc-kpi-card[data-tone="danger"] { border-left: 2px solid var(--vc-danger-text); }
+
+  .vc-chart-materials { background: var(--vc-warning-text); }
+  .vc-chart-labor { background: var(--vc-info-text); }
+  .vc-chart-other { background: color-mix(in oklch, var(--vc-warning-text) 68%, var(--vc-text-muted)); }
+  .vc-progress-success { background: var(--vc-brand); }
+  .vc-progress-warning { background: var(--vc-warning-text); }
+  .vc-progress-danger { background: var(--vc-danger-text); }
 
   .dark .vc-surface :is(.text-gray-950, .text-gray-900, .text-gray-800, .text-gray-700) { color: var(--vc-text); }
   .dark .vc-surface :is(.text-gray-600, .text-gray-500, .text-gray-400) { color: var(--vc-text-muted); }
