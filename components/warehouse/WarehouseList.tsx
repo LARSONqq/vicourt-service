@@ -237,8 +237,7 @@ export default function WarehouseList({
     );
   }
 
-  const columnCount =
-    canViewCosts ? 8 : 6;
+  const columnCount = 5;
 
   return (
     <div className="min-w-0 space-y-5">
@@ -397,10 +396,20 @@ export default function WarehouseList({
                       </p>
                     </div>
 
-                    <WarehousePurchaseHint item={item} management={canCreatePurchases} plannedQuantity={insight.plannedQuantity} currency={currency} />
-
                     {/* DETAILS */}
-                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t pt-4">
+                    <div className="mt-3 border-t pt-3">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <span>Мінімум: <strong className="font-medium text-foreground">{item.min_quantity == null ? "не задано" : `${formatWarehouseQuantity(minQuantity)} ${item.unit}`}</strong></span>
+                        <span>Ціль: <strong className="font-medium text-foreground">{plan.targetQuantity === null ? "не задано" : `${formatWarehouseQuantity(plan.targetQuantity)} ${item.unit}`}</strong></span>
+                      </div>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" aria-label={`Рівень запасу: ${formatWarehouseQuantity(quantity)} з ${plan.targetQuantity === null ? "невизначеної цілі" : formatWarehouseQuantity(plan.targetQuantity)}`}>
+                        <div className={`h-full rounded-full ${isOutOfStock ? "bg-destructive" : isLowStock ? "bg-amber-500" : "bg-primary/75"}`} style={{ width: `${plan.targetQuantity && plan.targetQuantity > 0 ? Math.min(100, Math.max(quantity > 0 ? 6 : 0, (quantity / plan.targetQuantity) * 100)) : quantity > 0 ? 100 : 0}%` }} />
+                      </div>
+                    </div>
+
+                    {isDetailsOpen && <div className="mt-3 border-t pt-3">
+                      <WarehousePurchaseHint item={item} management={canCreatePurchases} plannedQuantity={insight.plannedQuantity} currency={currency} />
+                      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
                       <div className="min-w-0">
                         <p className="text-xs text-gray-500">
                           Мінімум
@@ -471,7 +480,8 @@ export default function WarehouseList({
                             "Не вказано"}
                         </p>
                       </div>
-                    </div>
+                      </div>
+                    </div>}
 
                     <div className="mt-4 grid grid-cols-1 gap-2 border-t pt-4 sm:grid-cols-2">
                       <button
@@ -708,24 +718,12 @@ export default function WarehouseList({
                     Залишок
                   </th>
 
-                  <th className="px-3 py-3">
-                    Мінімум
+                      <th className="px-3 py-3">
+                        Рівень запасу
                   </th>
 
-                  {canViewCosts && (
-                    <>
-                      <th className="px-3 py-3">
-                        Ціна
-                      </th>
-
-                      <th className="px-3 py-3">
-                        Вартість
-                      </th>
-                    </>
-                  )}
-
                   <th className="px-3 py-3">
-                    Постачальник
+                    Статус
                   </th>
 
                   <th className="px-3 py-3 text-right">
@@ -745,11 +743,6 @@ export default function WarehouseList({
                     const minQuantity =
                       Number(
                         item.min_quantity
-                      );
-
-                    const purchasePrice =
-                      Number(
-                        item.purchase_price
                       );
 
                     const status = getWarehouseStockStatus(item);
@@ -812,10 +805,7 @@ export default function WarehouseList({
                                   item.name
                                 }
                               </Link>
-
-                              <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badge.badgeClass}`}>{badge.label}</span>
                             </div>
-                            <WarehousePurchaseHint item={item} management={canCreatePurchases} plannedQuantity={insight.plannedQuantity} currency={currency} />
                           </td>
 
                           <td className="px-3 py-3 text-gray-600">
@@ -836,46 +826,18 @@ export default function WarehouseList({
                             }
                           </td>
 
-                          <td className="px-3 py-3 text-gray-600">
-                            {
-                              item.min_quantity == null ? "Не задано" : formatWarehouseQuantity(minQuantity)
-                            }{" "}
-                            {
-                              item.unit
-                            }
-
-                            <p className="mt-1 text-xs text-gray-500">
-                              Ціль: {plan.targetQuantity ===
-                              null
-                                ? "не задано"
-                                : `${formatWarehouseQuantity(
-                                    plan.targetQuantity
-                                  )} ${item.unit}`}
-                            </p>
+                          <td className="min-w-48 px-3 py-3 text-gray-600">
+                            <div className="flex justify-between gap-3 text-xs text-muted-foreground">
+                              <span>Мін. {item.min_quantity == null ? "—" : formatWarehouseQuantity(minQuantity)}</span>
+                              <span>Ціль {plan.targetQuantity === null ? "—" : formatWarehouseQuantity(plan.targetQuantity)}</span>
+                            </div>
+                            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                              <div className={`h-full rounded-full ${isOutOfStock ? "bg-destructive" : isLowStock ? "bg-amber-500" : "bg-primary/75"}`} style={{ width: `${plan.targetQuantity && plan.targetQuantity > 0 ? Math.min(100, Math.max(quantity > 0 ? 6 : 0, (quantity / plan.targetQuantity) * 100)) : quantity > 0 ? 100 : 0}%` }} />
+                            </div>
                           </td>
 
-                          {canViewCosts && (
-                            <>
-                              <td className="px-3 py-3">
-                                {formatMoney(
-                                  purchasePrice,
-                                  currency
-                                )}
-                              </td>
-
-                              <td className="px-3 py-3 font-medium">
-                                {formatMoney(
-                                  quantity *
-                                    purchasePrice,
-                                  currency
-                                )}
-                              </td>
-                            </>
-                          )}
-
-                          <td className="px-3 py-3 text-gray-600">
-                            {item.supplier ||
-                              "Не вказано"}
+                          <td className="px-3 py-3">
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${badge.badgeClass}`}>{badge.label}</span>
                           </td>
 
                           <td className="px-3 py-3">

@@ -37,10 +37,10 @@ export default async function WarehousePage({ searchParams }: Props) {
   const insights: WarehousePurchaseInsights = {};
   for (const [id, quantity] of Object.entries(planned)) insights[Number(id)] = { plannedQuantity: quantity, lastPurchasePrice: null, previousPurchasePrice: null, priceChangePercent: null };
   const cards = [
-    { label: "Всього позицій", count: directory.stats.total, stock: "all" as const },
-    { label: "Закінчилось", count: directory.stats.out, stock: "out" as const },
-    { label: "Мало", count: directory.stats.low, stock: "low" as const },
-    { label: "Норма", count: directory.stats.normal, stock: "normal" as const },
+    { label: "Всього", count: directory.stats.total, stock: "all" as const, dot: "bg-foreground/45" },
+    { label: "Закінчилось", count: directory.stats.out, stock: "out" as const, dot: "bg-destructive" },
+    { label: "Мало", count: directory.stats.low, stock: "low" as const, dot: "bg-amber-500" },
+    { label: "Норма", count: directory.stats.normal, stock: "normal" as const, dot: "bg-primary" },
   ];
   return <div className="min-w-0 space-y-5 sm:space-y-6">
     <header className="flex min-w-0 flex-col justify-between gap-4 xl:flex-row xl:items-end">
@@ -48,9 +48,9 @@ export default async function WarehousePage({ searchParams }: Props) {
       {canManage && <div className="min-w-0"><WarehouseActions items={directory.items} /><p className="mt-2 text-xs text-gray-500">У формі корекції — матеріали поточної сторінки. Інші знайдіть через фільтри або паспорт.</p></div>}
     </header>
     {!purchasing && <p className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">Режим перегляду: залишки та параметри запасу матеріалів.</p>}
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {cards.map((card) => <Link key={card.stock} href={warehouseDirectoryHref({ q: "", category: "", stock: card.stock }, 1, query)} aria-current={directory.filters.stock === card.stock ? "page" : undefined} className={`vc-surface min-w-0 p-4 transition hover:border-primary/40 hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${directory.filters.stock === card.stock ? "border-primary ring-1 ring-primary" : ""}`}>
-        <p className="text-sm text-gray-500">{card.label}</p><p className={`mt-2 text-2xl font-semibold ${card.stock === "out" ? "text-red-700" : card.stock === "low" ? "vc-text-warning" : card.stock === "normal" ? "text-green-700" : "text-gray-900"}`}>{card.count}</p>
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {cards.map((card) => <Link key={card.stock} href={warehouseDirectoryHref({ q: "", category: "", stock: card.stock }, 1, query)} aria-current={directory.filters.stock === card.stock ? "page" : undefined} className={`vc-surface flex min-w-0 items-center justify-between gap-3 px-3 py-3 transition hover:border-primary/40 hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${directory.filters.stock === card.stock ? "border-primary ring-1 ring-primary" : ""}`}>
+        <span className="flex min-w-0 items-center gap-2"><span className={`h-2 w-2 shrink-0 rounded-full ${card.dot}`} aria-hidden="true" /><span className="truncate text-sm text-muted-foreground">{card.label}</span></span><span className="text-xl font-semibold tabular-nums text-foreground">{card.count}</span>
       </Link>)}
     </div>
     <p className="text-xs text-gray-500">Постачальників: {directory.supplierCount}{directory.totalValue !== null && <> · Вартість залишків: {new Intl.NumberFormat("uk-UA", { style: "currency", currency: settings.currency }).format(directory.totalValue)}</>}</p>

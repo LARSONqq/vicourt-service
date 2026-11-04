@@ -200,27 +200,6 @@ function getStatusClasses(
   }
 }
 
-function getPriorityClasses(
-  priority: string
-) {
-  switch (priority) {
-    case "Терміновий":
-      return "vc-status-danger";
-
-    case "Високий":
-      return "vc-status-warning";
-
-    case "Середній":
-      return "vc-status-info";
-
-    case "Низький":
-      return "vc-status-neutral";
-
-    default:
-      return "vc-status-info";
-  }
-}
-
 function getPriorityBorderClasses(
   priority: string
 ) {
@@ -433,8 +412,8 @@ function TaskCard({
         </h3>
       </div>
 
-      {/* BADGES */}
-      <div className="mt-2 flex flex-wrap gap-1.5">
+      {/* STATUS */}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {isSupervisionTask && (
           <SupervisionTaskBadge compact />
         )}
@@ -446,25 +425,28 @@ function TaskCard({
         )}
 
         <span
-          className={`rounded-full px-2 py-1 text-[10px] font-medium ${
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
             isCompleted
               ? "vc-status-neutral"
-              : getPriorityClasses(
-                  priority
+              : getStatusClasses(
+                  task.status
                 )
           }`}
-        >
-          {priority}
-        </span>
-
-        <span
-          className={`rounded-full px-2 py-1 text-[10px] font-medium ${getStatusClasses(
-            task.status
-          )}`}
         >
           {isCompleted
             ? "✓ Виконано"
             : task.status}
+        </span>
+      </div>
+
+      {/* EMPLOYEE */}
+      <div className="mt-2 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+        <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+        <span className="min-w-0 break-words">
+          {getEmployeeName(
+            task,
+            employeesById
+          )}
         </span>
       </div>
 
@@ -473,47 +455,16 @@ function TaskCard({
         <Link
           href={target.href}
           draggable={false}
-          onPointerDown={(
-            event
-          ) =>
-            event.stopPropagation()
-          }
-          onClick={(
-            event
-          ) =>
-            event.stopPropagation()
-          }
-          className={`mt-3 block break-words text-xs font-medium hover:underline ${
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+          className={`mt-1.5 block break-words text-xs hover:text-primary hover:underline ${
             isCompleted
               ? "text-muted-foreground"
-              : "text-green-700"
+              : "text-muted-foreground"
           }`}
         >
-          {target.type === "equipment" ? "🔧" : "📍"} {target.name}
+          {target.name}
         </Link>
-      )}
-
-      {/* EMPLOYEE */}
-      <p className="mt-2 break-words text-xs text-gray-500">
-        {getEmployeeName(
-          task,
-          employeesById
-        )}
-      </p>
-
-      {/* DESCRIPTION */}
-      {task.description && (
-        <p
-          className={`mt-2 line-clamp-3 whitespace-pre-wrap break-words text-xs leading-5 ${
-            isCompleted
-              ? "text-muted-foreground"
-              : "text-gray-600"
-          }`}
-        >
-          {
-            task.description
-          }
-        </p>
       )}
 
       {/* QUICK STATUS */}
@@ -549,7 +500,7 @@ function TaskCard({
         ) => {
           event.stopPropagation();
         }}
-        className={`mt-3 min-h-10 w-full rounded-lg border px-3 py-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`mt-3 min-h-9 w-full rounded-md border px-2.5 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60 ${
           isCompleted
             ? "border-border bg-card text-foreground hover:bg-muted"
             : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
@@ -562,13 +513,6 @@ function TaskCard({
             : "✓ Виконано"}
       </button>
 
-      <p className="mt-3 border-t pt-2 text-[11px] text-gray-400">
-        {isSupervisionTask
-          ? "Натисни картку, щоб відкрити деталі"
-          : isMaintenanceTask
-            ? "Автоматичне завдання планового ТО"
-          : "Натисни картку, щоб редагувати"}
-      </p>
     </article>
   );
 }
@@ -1498,6 +1442,16 @@ export default function WeeklyTaskCalendar({
       new Date()
     );
 
+  const maxDayTaskCount = Math.max(
+    1,
+    ...weekDates.map(
+      (date) =>
+        tasksByDate.get(
+          formatInputDate(date)
+        )?.length || 0
+    )
+  );
+
   return (
     <div className="min-w-0 space-y-5">
       {/* CONTROLS */}
@@ -1760,6 +1714,43 @@ export default function WeeklyTaskCalendar({
         </div>
       )}
 
+      {/* WEEKLY WORKLOAD */}
+      <section className="vc-surface min-w-0 p-3 sm:p-4" aria-labelledby="weekly-workload-title">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 id="weekly-workload-title" className="text-sm font-semibold text-foreground">
+            Навантаження тижня
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            {weekDates.reduce((total, date) => total + (tasksByDate.get(formatInputDate(date))?.length || 0), 0)} завд.
+          </p>
+        </div>
+
+        <div className="mt-3 grid grid-cols-7 gap-1.5 sm:gap-2">
+          {weekDates.map((date, index) => {
+            const dateValue = formatInputDate(date);
+            const count = tasksByDate.get(dateValue)?.length || 0;
+            const isToday = dateValue === today;
+
+            return (
+              <div key={dateValue} className="min-w-0 text-center">
+                <div className={`rounded-md border px-1.5 py-2 ${isToday ? "vc-state-today border-primary/40" : "bg-muted/25"}`}>
+                  <p className="truncate text-[10px] font-medium text-muted-foreground sm:text-xs">
+                    {weekDays[index].slice(0, 2)}
+                  </p>
+                  <p className="mt-0.5 text-base font-semibold text-foreground">{count}</p>
+                  <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                    <div
+                      className="h-full rounded-full bg-primary/70"
+                      style={{ width: `${count === 0 ? 0 : Math.max(14, (count / maxDayTaskCount) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* WEEK */}
       <div className="grid min-w-0 grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 2xl:grid-cols-7">
         {weekDates.map(
@@ -1826,7 +1817,7 @@ export default function WeeklyTaskCalendar({
                   isDropTarget
                     ? "vc-alert-info ring-2 ring-[var(--vc-info-border)]"
                     : isToday
-                      ? "vc-state-today"
+                      ? "vc-state-today border-primary/40"
                       : "bg-white"
                 }`}
               >
@@ -1835,9 +1826,7 @@ export default function WeeklyTaskCalendar({
                   className={`border-b p-3 sm:p-4 ${
                     isDropTarget
                       ? "vc-panel-info"
-                      : isToday
-                        ? "vc-state-selected"
-                        : "bg-gray-50"
+                      : "bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -1861,7 +1850,7 @@ export default function WeeklyTaskCalendar({
                       <p
                         className={`mt-1 text-sm ${
                           isToday
-                            ? "font-medium text-[var(--vc-selected-text)]"
+                            ? "font-medium text-foreground"
                             : "text-gray-500"
                         }`}
                       >
