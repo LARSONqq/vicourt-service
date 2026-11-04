@@ -41,6 +41,13 @@ type NotificationFilter =
   | "all"
   | NotificationCategory;
 
+type NotificationGroup = {
+  key: "urgent" | "actionable" | "informational";
+  label: string;
+  description: string;
+  items: NotificationItem[];
+};
+
 const filters: Array<{
   value: NotificationFilter;
   label: string;
@@ -203,6 +210,52 @@ function getNotificationStyle(
   }
 }
 
+function groupNotifications(
+  items: NotificationItem[]
+): NotificationGroup[] {
+  const urgent = items.filter(
+    (item) =>
+      item.timing === "overdue" ||
+      item.severity === "critical"
+  );
+  const actionable = items.filter(
+    (item) =>
+      !urgent.includes(item) &&
+      (item.timing === "today" ||
+        item.severity === "warning")
+  );
+  const informational = items.filter(
+    (item) =>
+      !urgent.includes(item) &&
+      !actionable.includes(item)
+  );
+
+  const groups: NotificationGroup[] = [
+    {
+      key: "urgent",
+      label: "Термінові та прострочені",
+      description: "Потребують першочергової уваги",
+      items: urgent,
+    },
+    {
+      key: "actionable",
+      label: "Сьогодні та до виконання",
+      description: "Актуальні операційні дії",
+      items: actionable,
+    },
+    {
+      key: "informational",
+      label: "Інформаційні",
+      description: "Решта поточних повідомлень",
+      items: informational,
+    },
+  ];
+
+  return groups.filter(
+    (group) => group.items.length > 0
+  );
+}
+
 export const dynamic =
   "force-dynamic";
 
@@ -255,6 +308,8 @@ export default async function NotificationsPage({
             item.category ===
             activeFilter
         );
+  const notificationGroups =
+    groupNotifications(visibleItems);
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
@@ -269,48 +324,13 @@ export default async function NotificationsPage({
         </p>
       </div>
 
-      <div className="flex min-w-0 flex-col items-stretch gap-4 xl:flex-row xl:items-start">
-        <div className="min-w-0 xl:max-w-md xl:shrink-0">
-          <DevicePushSettings
-            vapidPublicKey={
-              process.env
-                .NEXT_PUBLIC_VAPID_PUBLIC_KEY ??
-              ""
-            }
-          />
-        </div>
-
-        <div className="min-w-0 xl:flex-1">
-          <AutomaticPushSettings
-            initialPreferences={
-              pushPreferences
-            }
-            showLowStock={
-              !isWorker(
-                profile.role
-              )
-            }
-            showEquipmentMaintenance={
-              !isWorker(
-                profile.role
-              )
-            }
-            showClientPayments={
-              !isWorker(
-                profile.role
-              )
-            }
-          />
-        </div>
-      </div>
-
-      <section className="grid min-w-0 grid-cols-3 gap-2 sm:gap-4">
-        <div className="min-w-0 rounded-xl border bg-white p-3 sm:p-5">
+      <section className="grid min-w-0 grid-cols-3 divide-x rounded-lg border border-border bg-card">
+        <div className="min-w-0 px-3 py-3 sm:px-4">
           <p className="text-xs text-gray-500 sm:text-sm">
             Всього
           </p>
 
-          <p className="mt-2 text-xl font-bold text-gray-900 sm:text-3xl">
+          <p className="mt-1 text-xl font-semibold text-foreground sm:text-2xl">
             {
               notificationCenter
                 .summary.total
@@ -319,19 +339,14 @@ export default async function NotificationsPage({
         </div>
 
         <div
-          className={`min-w-0 rounded-xl border bg-white p-3 sm:p-5 ${
-            notificationCenter
-              .summary.critical > 0
-              ? "border-red-200"
-              : ""
-          }`}
+          className="min-w-0 px-3 py-3 sm:px-4"
         >
           <p className="text-xs text-gray-500 sm:text-sm">
             Термінові
           </p>
 
           <p
-            className={`mt-2 text-xl font-bold sm:text-3xl ${
+            className={`mt-1 text-xl font-semibold sm:text-2xl ${
               notificationCenter
                 .summary.critical > 0
                 ? "text-red-600"
@@ -346,19 +361,14 @@ export default async function NotificationsPage({
         </div>
 
         <div
-          className={`min-w-0 rounded-xl border bg-white p-3 sm:p-5 ${
-            notificationCenter
-              .summary.today > 0
-              ? "border-orange-200"
-              : ""
-          }`}
+          className="min-w-0 px-3 py-3 sm:px-4"
         >
           <p className="text-xs text-gray-500 sm:text-sm">
             На сьогодні
           </p>
 
           <p
-            className={`mt-2 text-xl font-bold sm:text-3xl ${
+            className={`mt-1 text-xl font-semibold sm:text-2xl ${
               notificationCenter
                 .summary.today > 0
                 ? "text-orange-600"
@@ -440,9 +450,25 @@ export default async function NotificationsPage({
           </p>
         </section>
       ) : (
-        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
-          {visibleItems.map(
-            (item) => {
+        <div className="min-w-0 space-y-6">
+          {notificationGroups.map((group) => (
+            <section key={group.key} className="min-w-0">
+              <div className="mb-2 flex min-w-0 items-end justify-between gap-3 px-1">
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-foreground">
+                    {group.label}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    {group.description}
+                  </p>
+                </div>
+                <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                  {group.items.length}
+                </span>
+              </div>
+
+              <div className="overflow-hidden rounded-lg border border-border bg-card">
+                {group.items.map((item) => {
               const style =
                 getNotificationStyle(
                   item.severity
@@ -455,12 +481,12 @@ export default async function NotificationsPage({
               return (
                 <article
                   key={item.key}
-                  className={`flex min-w-0 flex-col rounded-xl p-4 sm:p-5 ${style.card}`}
+                  className={`relative flex min-w-0 flex-col border-b border-border p-4 last:border-b-0 sm:p-5 ${style.card}`}
                 >
                   <div className="flex min-w-0 items-start gap-3">
                     <div
                       aria-hidden="true"
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold ${style.icon}`}
+                      className={`mt-1 flex h-2.5 w-2.5 shrink-0 rounded-full text-[0px] ${style.icon}`}
                     >
                       {getNotificationIcon(
                         item.type
@@ -469,9 +495,9 @@ export default async function NotificationsPage({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                        <h2 className="break-words font-semibold text-gray-900">
+                        <h3 className="break-words font-semibold text-foreground">
                           {item.title}
-                        </h2>
+                        </h3>
 
                         {item.detail && (
                           <span
@@ -482,13 +508,9 @@ export default async function NotificationsPage({
                         )}
                       </div>
 
-                      <p className="mt-2 break-words text-sm leading-5 text-gray-700">
-                        {item.message}
-                      </p>
-
                       {(item.contextLabel ||
                         formattedDate) && (
-                        <div className="mt-3 flex min-w-0 flex-col gap-1 text-xs text-gray-500 sm:flex-row sm:flex-wrap sm:gap-x-4">
+                        <div className="mt-1.5 flex min-w-0 flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-x-4">
                           {item.contextLabel && (
                             <span className="break-words">
                               {
@@ -504,23 +526,63 @@ export default async function NotificationsPage({
                           )}
                         </div>
                       )}
+
+                      <details className="group mt-2">
+                        <summary className="w-fit cursor-pointer list-none text-xs font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+                          <span className="group-open:hidden">Деталі ↓</span>
+                          <span className="hidden group-open:inline">Сховати ↑</span>
+                        </summary>
+                        <p className="mt-2 break-words text-sm leading-5 text-muted-foreground">
+                          {item.message}
+                        </p>
+                      </details>
                     </div>
                   </div>
 
-                  <div className="mt-4 border-t pt-4 sm:text-right">
+                  <div className="mt-3 pl-5 sm:text-right">
                     <Link
                       href={item.href}
-                      className="inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 sm:w-fit"
+                      className="inline-flex min-h-10 w-full items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted sm:w-fit"
                     >
                       Відкрити
                     </Link>
                   </div>
                 </article>
               );
-            }
-          )}
+              })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
+
+      <details className="group rounded-lg border border-border bg-muted/30">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
+          <span>
+            Налаштування сповіщень
+            <span className="ml-2 font-normal text-muted-foreground">
+              Push і автоматичні нагадування
+            </span>
+          </span>
+          <span aria-hidden="true" className="text-muted-foreground transition group-open:rotate-180">↓</span>
+        </summary>
+
+        <div className="flex min-w-0 flex-col items-stretch gap-4 border-t border-border p-4 xl:flex-row xl:items-start">
+          <div className="min-w-0 xl:max-w-md xl:shrink-0">
+            <DevicePushSettings
+              vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""}
+            />
+          </div>
+          <div className="min-w-0 xl:flex-1">
+            <AutomaticPushSettings
+              initialPreferences={pushPreferences}
+              showLowStock={!isWorker(profile.role)}
+              showEquipmentMaintenance={!isWorker(profile.role)}
+              showClientPayments={!isWorker(profile.role)}
+            />
+          </div>
+        </div>
+      </details>
     </div>
   );
 }

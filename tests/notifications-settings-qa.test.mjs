@@ -31,3 +31,21 @@ test("notification settings use a content-driven responsive layout", () => {
   assert.match(page, /xl:flex-1/);
   assert.doesNotMatch(page, /grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2/);
 });
+
+test("notification inbox groups only by existing timing and severity fields", () => {
+  const page = read("app/notifications/page.tsx");
+  assert.match(page, /function groupNotifications/);
+  assert.match(page, /item\.timing === "overdue"/);
+  assert.match(page, /item\.severity === "critical"/);
+  assert.match(page, /item\.timing === "today"/);
+  assert.match(page, /item\.severity === "warning"/);
+  assert.match(page, /Термінові та прострочені/);
+  assert.match(page, /Сьогодні та до виконання/);
+  assert.match(page, /Інформаційні/);
+});
+
+test("notification explanations and settings remain secondary", () => {
+  const page = read("app/notifications/page.tsx");
+  assert.match(page, /<details className="group mt-2">[\s\S]*\{item\.message\}/);
+  assert.match(page, /<details className="group rounded-lg[\s\S]*Налаштування сповіщень/);
+});

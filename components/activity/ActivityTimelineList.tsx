@@ -16,6 +16,39 @@ type Props = {
   compact?: boolean;
 };
 
+function getActivityDayKey(
+  value: string
+) {
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Kyiv",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(date);
+}
+
+function formatActivityDay(
+  value: string
+) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Без дати";
+  }
+
+  return new Intl.DateTimeFormat("uk-UA", {
+    timeZone: "Europe/Kyiv",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 function getCategoryStyle(
   category: ActivityCategory
 ) {
@@ -81,10 +114,49 @@ export default function ActivityTimelineList({
 }: Props) {
   const existingObjects =
     new Set(existingObjectIds);
+  const groupedLogs = logs.reduce<
+    Array<{
+      key: string;
+      label: string;
+      logs: ActivityLog[];
+    }>
+  >((groups, log) => {
+    const key = getActivityDayKey(
+      log.created_at
+    );
+    const current =
+      groups[groups.length - 1];
+
+    if (current?.key === key) {
+      current.logs.push(log);
+    } else {
+      groups.push({
+        key,
+        label: formatActivityDay(
+          log.created_at
+        ),
+        logs: [log],
+      });
+    }
+
+    return groups;
+  }, []);
 
   return (
-    <div className="space-y-3">
-      {logs.map((log) => {
+    <div className="space-y-6">
+      {groupedLogs.map((group) => (
+        <section key={group.key}>
+          <div className="mb-3 flex items-center gap-3">
+            <h2 className="text-sm font-semibold capitalize text-foreground">
+              {group.label}
+            </h2>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {group.logs.length}
+            </span>
+          </div>
+
+          <div className="relative space-y-0 before:absolute before:bottom-5 before:left-[7px] before:top-5 before:w-px before:bg-border">
+            {group.logs.map((log) => {
         const presentation =
           getActivityPresentation(
             log,
@@ -94,39 +166,36 @@ export default function ActivityTimelineList({
         return (
           <article
             key={log.id}
-            className={`min-w-0 rounded-lg border border-border bg-card ${
+            className={`relative min-w-0 pl-7 ${
               compact
-                ? "p-3 sm:p-4"
-                : "p-4 sm:p-5"
+                ? "pb-4"
+                : "pb-5"
             }`}
           >
-            <div className="flex min-w-0 items-start gap-3">
-              <div
-                aria-hidden="true"
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md !p-0 text-sm ${getCategoryStyle(
-                  presentation.category
-                )}`}
-              >
-                {presentation.icon}
-              </div>
+            <span
+              aria-hidden="true"
+              className={`absolute left-0 top-5 z-10 h-[15px] w-[15px] rounded-full border-4 border-background ${getCategoryStyle(
+                presentation.category
+              )}`}
+            />
 
-              <div className="min-w-0 flex-1">
+            <div className="min-w-0 rounded-lg border border-border bg-card p-4 sm:px-5">
                 <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <p className="break-words [overflow-wrap:anywhere] font-semibold text-foreground">
-                      {presentation.label}
-                    </p>
-
-                    <p className="mt-1 break-words [overflow-wrap:anywhere] text-xs text-muted-foreground sm:text-sm">
+                    <p className="break-words [overflow-wrap:anywhere] text-xs text-muted-foreground sm:text-sm">
                       {formatActivityTimestamp(
                         log.created_at
                       )}
                       <span aria-hidden="true">
                         {" · "}
                       </span>
-                      <span>
-                        Хто: {presentation.actorName}
+                      <span className="font-medium text-foreground">
+                        {presentation.actorName}
                       </span>
+                    </p>
+
+                    <p className="mt-1 break-words [overflow-wrap:anywhere] font-semibold text-foreground">
+                      {presentation.label}
                     </p>
                   </div>
 
@@ -139,12 +208,17 @@ export default function ActivityTimelineList({
                   </span>
                 </div>
 
-                <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-6 text-foreground">
+                <p className="mt-2 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm leading-5 text-muted-foreground">
                   {presentation.description}
                 </p>
 
                 {presentation.details.length > 0 && (
-                  <dl className="mt-3 grid min-w-0 grid-cols-1 gap-2 rounded-lg bg-muted p-3 text-sm sm:grid-cols-2">
+                  <details className="group mt-3 rounded-md border border-border bg-muted/40">
+                    <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+                      <span>Деталі змін ({presentation.details.length})</span>
+                      <span aria-hidden="true" className="transition group-open:rotate-180">↓</span>
+                    </summary>
+                    <dl className="grid min-w-0 grid-cols-1 gap-2 border-t border-border p-3 text-sm sm:grid-cols-2">
                     {presentation.details.map(
                       (detail, index) => (
                         <div
@@ -175,7 +249,8 @@ export default function ActivityTimelineList({
                         </div>
                       )
                     )}
-                  </dl>
+                    </dl>
+                  </details>
                 )}
 
                 <div className="mt-3 flex min-w-0 flex-col gap-1.5 border-t pt-3 sm:flex-row sm:flex-wrap sm:gap-x-5">
@@ -209,11 +284,13 @@ export default function ActivityTimelineList({
                     Тип події: {log.action}
                   </p>
                 )}
-              </div>
             </div>
           </article>
         );
-      })}
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
