@@ -132,8 +132,28 @@ test("worker cannot query management templates; dashboard does not invoke templa
   assert.equal(worker.clients(), 0);
   await worker.service.getTaskDashboardSummary();
   assert.ok(worker.requests.every((query) => query.table === "object_tasks"));
-  const workspace = readFileSync("app/tasks/page.tsx", "utf8");
-  assert.match(workspace, /const templates = recurrence \? await getTaskTemplateSummaries/);
+  const workspace = readFileSync("app/tasks/(workspace)/page.tsx", "utf8");
+  assert.match(workspace, /const templates = canManageTasks\(profile\.role\)/);
+});
+
+test("workspace tab results avoid reloading shared counts and selectors", async () => {
+  const { normalizeTaskWorkspace } = loader()("lib/taskWorkspace.ts");
+  const { service, requests } = fixture();
+  const result = await service.getTaskWorkspaceResults(
+    normalizeTaskWorkspace({ view: "today" }).filters,
+    1,
+    7,
+    today
+  );
+  assert.deepEqual(result.tasks.map((row) => row.id), [1, 6]);
+  assert.equal(requests.filter((request) => request.options?.head).length, 1);
+  assert.equal(requests.filter((request) => !request.options?.head).length, 1);
+
+  const layout = readFileSync("app/tasks/(workspace)/layout.tsx", "utf8");
+  const loading = readFileSync("app/tasks/(workspace)/loading.tsx", "utf8");
+  assert.match(layout, /getTaskWorkspaceCounts/);
+  assert.match(layout, /<TaskWorkspaceShell/);
+  assert.match(loading, /Завантаження списку завдань/);
 });
 
 test("summary failure is not converted to misleading zero counts or leaked database errors", async () => {
@@ -155,4 +175,21 @@ test("Kyiv date boundary, canonical overdue presentation, terminology and return
   const { safeTaskReturnTo } = load("lib/taskDetail.ts");
   for (const url of ["https://evil.invalid", "//evil.invalid", "/tasks/1", "/tasks\\evil", "/tasks\n"]) assert.equal(safeTaskReturnTo(url), "/tasks");
   assert.equal(safeTaskReturnTo("/tasks?view=my&page=2"), "/tasks?view=my&page=2");
+});
+
+test("all six workspace views keep filter state, reset pagination and remain history-safe links", () => {
+  const { normalizeTaskWorkspace, taskViews, taskWorkspaceHref } = loader()("lib/taskWorkspace.ts");
+  const initial = normalizeTaskWorkspace({ view: "all", status: "open", priority: "Високий", page: "3" }).filters;
+  const hrefs = Object.keys(taskViews).map((view) => taskWorkspaceHref({ ...initial, view }));
+  assert.deepEqual(hrefs, [
+    "/tasks?view=my&status=open&priority=%D0%92%D0%B8%D1%81%D0%BE%D0%BA%D0%B8%D0%B9",
+    "/tasks?view=all&status=open&priority=%D0%92%D0%B8%D1%81%D0%BE%D0%BA%D0%B8%D0%B9",
+    "/tasks?view=today&status=open&priority=%D0%92%D0%B8%D1%81%D0%BE%D0%BA%D0%B8%D0%B9",
+    "/tasks?view=overdue&status=open&priority=%D0%92%D0%B8%D1%81%D0%BE%D0%BA%D0%B8%D0%B9",
+    "/tasks?view=upcoming&status=open&priority=%D0%92%D0%B8%D1%81%D0%BE%D0%BA%D0%B8%D0%B9",
+    "/tasks?view=completed&status=open&priority=%D0%92%D0%B8%D1%81%D0%BE%D0%BA%D0%B8%D0%B9",
+  ]);
+  const navigation = readFileSync("components/tasks/TaskWorkspaceNavigation.tsx", "utf8");
+  assert.match(navigation, /scroll=\{false\}/);
+  assert.doesNotMatch(navigation, /replace=|window\.location|<a /);
 });

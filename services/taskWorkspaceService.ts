@@ -69,9 +69,12 @@ export async function getTaskDashboardPreview(
   return data ?? [];
 }
 
-// All filters/counts/ranges run under the request user's existing RLS, never service_role.
-export async function getTaskWorkspacePage(filters: TaskWorkspaceFilters, requestedPage: number, employeeId: number | null, today: string) {
-  const supabase = await createClient();
+function workspaceQuerySet(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  filters: TaskWorkspaceFilters,
+  employeeId: number | null,
+  today: string
+) {
   const base = (head = false) => taskQuery(supabase, head);
   const viewQuery = (query: ReturnType<typeof base>, view: TaskView) => applyTaskView(query, view, employeeId, today);
   const filtered = (head = false) => {
@@ -92,17 +95,47 @@ export async function getTaskWorkspacePage(filters: TaskWorkspaceFilters, reques
     return query;
   };
 
-  const hasFilters = Object.entries(filters).some(([key, value]) => key !== "view" && Boolean(value));
+  return { base, filtered, viewQuery };
+}
+
+// All filters/counts/ranges run under the request user's existing RLS, never service_role.
+export async function getTaskWorkspaceCounts(employeeId: number | null, today: string) {
+  const supabase = await createClient();
+  const emptyFilters = {
+    view: "all", q: "", status: "", priority: "", assignee: "",
+    target: "", source: "", recurrence: "",
+  } satisfies TaskWorkspaceFilters;
+  const { base, viewQuery } = workspaceQuerySet(supabase, emptyFilters, employeeId, today);
   const views = Object.keys(taskViews) as TaskView[];
-  const [filteredCount, ...viewResults] = await Promise.all([
-    hasFilters ? filtered(true) : Promise.resolve(null),
-    ...views.map((view) => view === "my" && employeeId === null ? Promise.resolve({ count: 0, error: null }) : viewQuery(base(true), view)),
-  ]);
-  const countResult = filteredCount ?? viewResults[views.indexOf(filters.view)];
-  if (countResult.error || viewResults.some((result) => result.error)) {
+  const viewResults = await Promise.all(views.map((view) =>
+    view === "my" && employeeId === null
+      ? Promise.resolve({ count: 0, error: null })
+      : viewQuery(base(true), view)
+  ));
+  if (viewResults.some((result) => result.error)) {
     throw new Error("Не вдалося завантажити завдання. Спробуйте ще раз.");
   }
-  const total = countResult.count ?? 0;
+  return Object.fromEntries(views.map((view, index) => [view, viewResults[index].count ?? 0])) as Record<TaskView, number>;
+}
+
+async function loadTaskWorkspaceResults(
+  filters: TaskWorkspaceFilters,
+  requestedPage: number,
+  employeeId: number | null,
+  today: string,
+  knownTotal?: number
+) {
+  if (filters.view === "my" && employeeId === null) {
+    return { tasks: [], page: 1, pageCount: 1, total: 0 };
+  }
+
+  const supabase = await createClient();
+  const { filtered } = workspaceQuerySet(supabase, filters, employeeId, today);
+  const countResult = knownTotal === undefined ? await filtered(true) : null;
+  if (countResult?.error) {
+    throw new Error("Не вдалося завантажити завдання. Спробуйте ще раз.");
+  }
+  const total = knownTotal ?? countResult?.count ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / TASK_WORKSPACE_PAGE_SIZE));
   const page = Math.min(Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1, pageCount);
   const from = (page - 1) * TASK_WORKSPACE_PAGE_SIZE;
@@ -112,6 +145,28 @@ export async function getTaskWorkspacePage(filters: TaskWorkspaceFilters, reques
     .range(from, from + TASK_WORKSPACE_PAGE_SIZE - 1)
     .overrideTypes<TaskWithObject[], { merge: false }>();
   if (error) throw new Error("Не вдалося завантажити завдання. Спробуйте ще раз.");
-  const counts = Object.fromEntries(Object.keys(taskViews).map((view, index) => [view, viewResults[index].count ?? 0])) as Record<TaskView, number>;
-  return { tasks: data ?? [], page, pageCount, total, counts };
+  return { tasks: data ?? [], page, pageCount, total };
+}
+
+export async function getTaskWorkspaceResults(
+  filters: TaskWorkspaceFilters,
+  requestedPage: number,
+  employeeId: number | null,
+  today: string
+) {
+  return loadTaskWorkspaceResults(filters, requestedPage, employeeId, today);
+}
+
+export async function getTaskWorkspacePage(filters: TaskWorkspaceFilters, requestedPage: number, employeeId: number | null, today: string) {
+  const counts = await getTaskWorkspaceCounts(employeeId, today);
+
+  const hasFilters = Object.entries(filters).some(([key, value]) => key !== "view" && Boolean(value));
+  const result = await loadTaskWorkspaceResults(
+    filters,
+    requestedPage,
+    employeeId,
+    today,
+    hasFilters ? undefined : counts[filters.view]
+  );
+  return { ...result, counts };
 }

@@ -2,11 +2,15 @@ import {
   createClient,
 } from "@/lib/supabase/server";
 
+import {
+  cache,
+} from "react";
+
 import type {
   UserProfile,
 } from "@/types/userProfile";
 
-export async function getCurrentUserProfile(): Promise<
+async function loadCurrentUserProfile(): Promise<
   UserProfile | null
 > {
   const supabase =
@@ -61,6 +65,10 @@ export async function getCurrentUserProfile(): Promise<
 
   return data as UserProfile;
 }
+
+export const getCurrentUserProfile = cache(
+  loadCurrentUserProfile
+);
 
 export async function getUserProfiles(): Promise<
   UserProfile[]

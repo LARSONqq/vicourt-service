@@ -6,10 +6,11 @@ import { test } from "node:test";
 const read = (file) => readFileSync(file, "utf8");
 
 test("Tasks workspace uses semantic navigation without changing query contracts", () => {
-  const page = read("app/tasks/page.tsx");
+  const page = read("app/tasks/(workspace)/page.tsx");
+  const results = read("components/tasks/TaskWorkspaceResults.tsx");
   const navigation = read("components/tasks/TaskWorkspaceNavigation.tsx");
-  assert.match(page, /normalizeTaskWorkspace\(await searchParams\)/);
-  assert.match(page, /taskWorkspaceHref\(filters, result\.page\)/);
+  assert.match(page, /normalizeTaskWorkspace\(query\)/);
+  assert.match(results, /taskWorkspaceHref\(filters, page\)/);
   assert.match(navigation, /action="\/tasks" method="get"/);
   assert.match(navigation, /aria-current=\{filters\.view === view \? "page" : undefined\}/);
   assert.match(navigation, /border-primary bg-primary text-primary-foreground/);

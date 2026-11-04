@@ -34,6 +34,7 @@ export default function TaskWorkspaceNavigation({ filters, counts, employees }: 
     <nav aria-label="Види завдань" className="vc-surface grid grid-cols-2 overflow-hidden p-1 sm:grid-cols-3 lg:grid-cols-6">
       {Object.entries(taskViews).map(([view, label]) => <Link key={view}
         href={taskWorkspaceHref({ ...filters, view: view as TaskView })}
+        scroll={false}
         aria-current={filters.view === view ? "page" : undefined}
         className={`inline-flex min-h-10 items-center justify-between gap-2 rounded-md border-b-2 px-3 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${filters.view === view ? "border-primary bg-primary text-primary-foreground" : "border-transparent text-foreground hover:bg-muted"}`}>
         {label} <span className={`tabular-nums ${filters.view === view ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{counts[view as TaskView]}</span>
