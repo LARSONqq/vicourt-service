@@ -140,7 +140,7 @@ export default function EmployeePassportShell({
       <header className="vc-surface min-w-0 p-4 sm:p-5">
         <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--vc-success-bg)] text-lg font-bold text-[var(--vc-success-text)] sm:h-12 sm:w-12">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-[var(--vc-success-bg)] text-xl font-bold tracking-wide text-[var(--vc-success-text)] sm:h-20 sm:w-20 sm:text-2xl">
               {getInitials(employee)}
             </div>
 
@@ -158,31 +158,22 @@ export default function EmployeePassportShell({
                 </span>
               </div>
 
-              <p className="mt-1 break-words text-sm text-muted-foreground sm:text-base">
+              <p className="mt-1 break-words text-sm font-medium text-muted-foreground sm:text-base">
                 {employee.position ||
                   "Посаду не вказано"}
-                <span aria-hidden="true">
-                  {" · "}
-                </span>
-                {employee.employment_type}
               </p>
 
-              <div className="mt-3 flex min-w-0 flex-col gap-1.5 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-x-5">
-                <span className="break-all">
-                  {employee.phone ||
-                    "Телефон не вказано"}
-                </span>
-                <span className="break-all">
-                  {employee.email ||
-                    "Email не вказано"}
-                </span>
-                <span>
-                  Працює з:{" "}
-                  {formatDate(
-                    employee.hire_date
-                  )}
-                </span>
-              </div>
+              <details className="group mt-3 text-sm text-muted-foreground">
+                <summary className="w-fit cursor-pointer list-none rounded-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                  Контакти та дані <span aria-hidden="true" className="inline-block transition group-open:rotate-180">⌄</span>
+                </summary>
+                <div className="mt-2 grid min-w-0 gap-1.5 sm:grid-cols-2 sm:gap-x-5">
+                  <span className="break-all">{employee.phone || "Телефон не вказано"}</span>
+                  <span className="break-all">{employee.email || "Email не вказано"}</span>
+                  <span>{employee.employment_type}</span>
+                  <span>Працює з: {formatDate(employee.hire_date)}</span>
+                </div>
+              </details>
             </div>
           </div>
 

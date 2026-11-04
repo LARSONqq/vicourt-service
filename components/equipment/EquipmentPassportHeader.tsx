@@ -16,6 +16,9 @@ import {
   EditEquipmentForm,
 } from "@/components/equipment/EditEquipmentForm";
 import {
+  EquipmentCategoryIcon,
+} from "@/components/equipment/EquipmentVisuals";
+import {
   formatEquipmentUsage,
 } from "@/lib/equipmentMaintenance";
 import {
@@ -215,12 +218,7 @@ export default function EquipmentPassportHeader({
       <header className="vc-surface min-w-0 p-4">
         <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-            <div
-              aria-hidden="true"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-lg"
-            >
-              🛠️
-            </div>
+            <EquipmentCategoryIcon category={equipment.category} className="h-12 w-12" />
 
             <div className="min-w-0">
               <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">

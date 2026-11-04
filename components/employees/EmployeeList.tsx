@@ -289,7 +289,7 @@ export default function EmployeeList({
                           <div className="flex min-w-0 items-center gap-3">
                             <Link
                               href={`/employees/${employee.id}`}
-                              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--vc-success-bg)] text-sm font-semibold text-[var(--vc-success-text)] transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border bg-[var(--vc-success-bg)] text-base font-semibold tracking-wide text-[var(--vc-success-text)] transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                               title="Відкрити сторінку працівника"
                             >
                               {getInitials(
@@ -328,7 +328,27 @@ export default function EmployeeList({
                           </span>
                         </div>
 
-                        <div className="mt-5 space-y-3 border-t pt-4 text-sm">
+                        <div className="mt-4 grid grid-cols-3 gap-2 border-t pt-4">
+                          <div className="min-w-0 border-r border-border px-1 text-center">
+                            <p className="text-xl font-semibold tabular-nums text-foreground">{workload.activeTasks}</p>
+                            <p className="truncate text-xs text-muted-foreground">Активні</p>
+                          </div>
+                          <div className="min-w-0 border-r border-border px-1 text-center">
+                            <p className="text-xl font-semibold tabular-nums text-foreground">{workload.objects}</p>
+                            <p className="truncate text-xs text-muted-foreground">Об’єкти</p>
+                          </div>
+                          <div className="min-w-0 px-1 text-center">
+                            <p className="text-xl font-semibold tabular-nums text-foreground">{workload.equipment}</p>
+                            <p className="truncate text-xs text-muted-foreground">Техніка</p>
+                          </div>
+                        </div>
+
+                        <details className="group mt-4 border-t pt-3 text-sm">
+                          <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between gap-3 text-xs font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">
+                            Контакти та деталі
+                            <span aria-hidden="true" className="transition group-open:rotate-180">⌄</span>
+                          </summary>
+                          <div className="mt-2 space-y-3 pb-1">
                           {employee.phone && (
                             <div className="grid min-w-0 grid-cols-[90px_minmax(0,1fr)] gap-3">
                               <span className="text-muted-foreground">
@@ -388,51 +408,8 @@ export default function EmployeeList({
                               </span>
                             </div>
                           )}
-                        </div>
-
-                        <div className="mt-5 border-t pt-4">
-                          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Навантаження
-                          </p>
-
-                          <div className="grid grid-cols-3 gap-2">
-                              <div className="min-w-0 rounded-lg bg-muted/50 p-2 text-center">
-                                <p className="text-lg font-semibold tabular-nums text-foreground">
-                                  {
-                                    workload.activeTasks
-                                  }
-                                </p>
-
-                                <p className="truncate text-xs text-muted-foreground">
-                                  Завдань
-                                </p>
-                              </div>
-
-                              <div className="min-w-0 rounded-lg bg-muted/50 p-2 text-center">
-                                <p className="text-lg font-semibold tabular-nums text-foreground">
-                                  {
-                                    workload.objects
-                                  }
-                                </p>
-
-                                <p className="truncate text-xs text-muted-foreground">
-                                  Об’єктів
-                                </p>
-                              </div>
-
-                              <div className="min-w-0 rounded-lg bg-muted/50 p-2 text-center">
-                                <p className="text-lg font-semibold tabular-nums text-foreground">
-                                  {
-                                    workload.equipment
-                                  }
-                                </p>
-
-                                <p className="truncate text-xs text-muted-foreground">
-                                  Техніки
-                                </p>
-                              </div>
-                            </div>
-                        </div>
+                          </div>
+                        </details>
 
                         {employee.notes && (
                           <div className="mt-4 border-t pt-4">

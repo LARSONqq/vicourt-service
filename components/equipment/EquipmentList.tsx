@@ -26,6 +26,10 @@ import type { Employee } from "@/types/employee";
 import type { Equipment } from "@/types/equipment";
 
 import { EditEquipmentForm } from "./EditEquipmentForm";
+import {
+  EquipmentCategoryIcon,
+  EquipmentUsageProgress,
+} from "./EquipmentVisuals";
 
 type Props = {
   equipment: Equipment[];
@@ -227,7 +231,9 @@ export default function EquipmentList({
                   >
                     {/* TOP */}
                     <div className="flex min-w-0 items-start justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="flex min-w-0 gap-3">
+                        <EquipmentCategoryIcon category={item.category} />
+                        <div className="min-w-0">
                         <h3 className="break-words font-semibold">
                           <Link
                             href={`/equipment/${item.id}`}
@@ -241,6 +247,7 @@ export default function EquipmentList({
                           {item.category ||
                             "Без категорії"}
                         </p>
+                        </div>
                       </div>
 
                       <span
@@ -327,6 +334,7 @@ export default function EquipmentList({
                               )}`
                             : ""}
                         </p>
+                        <EquipmentUsageProgress equipment={item} compact />
                       </div>
                     </div>
 
@@ -496,6 +504,9 @@ export default function EquipmentList({
                       >
                         <tr className={`border-t transition hover:bg-gray-50/80 ${serviceOverdue ? "bg-red-50/25" : ""}`}>
                           <td className="px-3 py-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <EquipmentCategoryIcon category={item.category} className="h-9 w-9" />
+                              <div className="min-w-0">
                             <p className="font-medium">
                               <Link
                                 href={`/equipment/${item.id}`}
@@ -512,6 +523,8 @@ export default function EquipmentList({
                                 }
                               </p>
                             )}
+                              </div>
+                            </div>
                           </td>
 
                           <td className="px-3 py-3 text-gray-600">
@@ -579,6 +592,7 @@ export default function EquipmentList({
                                   )}`
                                 : ""}
                             </p>
+                            <EquipmentUsageProgress equipment={item} compact />
                           </td>
 
                           {canManage && (

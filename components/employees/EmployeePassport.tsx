@@ -450,31 +450,29 @@ export function EmployeeOverview({
   supervisionPreview: EmployeeSupervisionPreview[];
   recentActivity: ActivityLog[];
 }) {
-  const kpiItems: Array<{
+  const workloadItems: Array<{
     label: string;
     value: string | number;
     className: string;
   }> = [
-    { label: "Активні", value: kpis.activeTasks, className: "text-[var(--vc-info-text)]" },
+    { label: "Активні завдання", value: kpis.activeTasks, className: "text-foreground" },
     {
       label: "Прострочені",
       value: kpis.overdueTasks,
       className: kpis.overdueTasks > 0 ? "text-[var(--vc-danger-text)]" : "text-foreground",
     },
-    { label: "Виконані", value: kpis.completedTasks, className: "text-[var(--vc-success-text)]" },
-    { label: "Годин цього місяця", value: formatHours(kpis.monthlyHours), className: "text-[var(--vc-info-text)]" },
-    { label: "Годин загалом", value: formatHours(kpis.lifetimeHours), className: "text-[var(--vc-info-text)]" },
     { label: "Об’єкти", value: kpis.objects, className: "text-foreground" },
-    { label: "Техніка", value: kpis.equipment, className: "text-[var(--vc-warning-text)]" },
+    { label: "Техніка", value: kpis.equipment, className: "text-foreground" },
   ];
 
   return (
     <div className="min-w-0 space-y-5 sm:space-y-6">
-      <section className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
-        {kpiItems.map((item) => (
+      <section className="vc-surface min-w-0 p-4 sm:p-5">
+        <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-4">
+        {workloadItems.map((item) => (
           <div
             key={item.label}
-            className="vc-surface min-w-0 p-3 sm:p-4"
+            className="min-w-0 border-r border-border pr-3 last:border-r-0"
           >
             <p className="text-xs leading-4 text-muted-foreground">{item.label}</p>
             <p className={`mt-2 break-words text-2xl font-semibold tabular-nums ${item.className}`}>
@@ -482,6 +480,12 @@ export function EmployeeOverview({
             </p>
           </div>
         ))}
+        </div>
+        <div className="mt-4 flex min-w-0 flex-wrap gap-x-5 gap-y-2 border-t pt-3 text-sm text-muted-foreground">
+          <span>Годин цього місяця: <strong className="font-semibold tabular-nums text-foreground">{formatHours(kpis.monthlyHours)}</strong></span>
+          <span>Годин загалом: <strong className="font-semibold tabular-nums text-foreground">{formatHours(kpis.lifetimeHours)}</strong></span>
+          <span>Виконано завдань: <strong className="font-semibold tabular-nums text-foreground">{kpis.completedTasks}</strong></span>
+        </div>
       </section>
 
       <section className="grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">

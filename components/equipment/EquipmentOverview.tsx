@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { EquipmentUsageProgress } from "@/components/equipment/EquipmentVisuals";
+
 import {
   formatEquipmentUsage,
   getEquipmentDateMaintenanceLabel,
@@ -169,6 +171,7 @@ export default function EquipmentOverview({
                 )}
               </p>
             )}
+            <EquipmentUsageProgress equipment={equipment} />
           </KpiCard>
 
           <KpiCard
