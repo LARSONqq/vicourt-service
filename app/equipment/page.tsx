@@ -193,7 +193,7 @@ async function EquipmentDirectoryContent({
 
   return (
     <div className="min-w-0 space-y-5">
-      <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+      <div className="vc-surface grid min-w-0 grid-cols-2 gap-px overflow-hidden bg-border sm:contents xl:grid xl:grid-cols-4 xl:gap-4 xl:bg-transparent">
         {[
           [
             "Усього техніки",
@@ -224,13 +224,13 @@ async function EquipmentDirectoryContent({
           ([label, value, className]) => (
             <div
               key={label}
-              className="vc-surface min-w-0 p-3 sm:p-4"
+              className="min-w-0 bg-card p-2.5 sm:vc-surface sm:p-4"
             >
               <p className="text-xs leading-4 text-gray-500 sm:text-sm">
                 {label}
               </p>
               <p
-                className={`mt-2 text-2xl font-semibold sm:text-2xl ${className}`}
+                className={`mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl ${className}`}
               >
                 {value}
               </p>

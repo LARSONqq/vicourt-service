@@ -429,13 +429,13 @@ export default function EquipmentList({
           </div>
 
           {/* DESKTOP TABLE */}
-          <div className="vc-table-shell hidden overflow-x-auto overscroll-x-contain md:block">
+          <div
+            className="vc-table-shell hidden max-w-full overflow-x-auto overscroll-x-contain md:block"
+            tabIndex={0}
+            aria-label="Таблиця техніки. Прокручуйте горизонтально, щоб побачити всі стовпці та дії."
+          >
             <table
-              className={`w-full ${
-                canManage
-                  ? "min-w-[1250px]"
-                  : "min-w-[1100px]"
-              }`}
+              className="w-max min-w-full"
             >
               <thead className="bg-gray-50 text-left">
                 <tr>
@@ -596,8 +596,8 @@ export default function EquipmentList({
                           </td>
 
                           {canManage && (
-                            <td className="px-3 py-3">
-                              <div className="flex justify-end gap-2">
+                            <td className="whitespace-nowrap px-3 py-3">
+                              <div className="flex min-w-max justify-end gap-2">
                                 <button
                                   type="button"
                                   onClick={() =>

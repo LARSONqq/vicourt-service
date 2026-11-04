@@ -140,7 +140,7 @@ export default function EquipmentActions({
   return (
     <div className="min-w-0">
       {/* ACTION BUTTONS */}
-      <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+      <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
         <button
           type="button"
           onClick={() =>
@@ -152,7 +152,7 @@ export default function EquipmentActions({
             isLoadingEmployees ||
             isLoadingServiceEquipment
           }
-          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
+          className={`min-h-10 w-full rounded-lg px-3 py-2 text-sm font-medium shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-11 sm:w-auto sm:px-5 sm:py-3 sm:text-base ${
             activeForm ===
             "equipment"
               ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
@@ -164,7 +164,7 @@ export default function EquipmentActions({
             ? "Закрити форму"
             : isLoadingEmployees
               ? "Завантаження…"
-              : "+ Додати техніку"}
+              : <><span className="sm:hidden">+ Техніку</span><span className="hidden sm:inline">+ Додати техніку</span></>}
         </button>
 
         <button
@@ -178,7 +178,7 @@ export default function EquipmentActions({
             isLoadingEmployees ||
             isLoadingServiceEquipment
           }
-          className={`min-h-11 w-full rounded-lg px-5 py-3 font-medium shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
+          className={`min-h-10 w-full rounded-lg px-3 py-2 text-sm font-medium shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-11 sm:w-auto sm:px-5 sm:py-3 sm:text-base ${
             activeForm ===
             "service"
               ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
@@ -190,7 +190,7 @@ export default function EquipmentActions({
             ? "Закрити форму"
             : isLoadingServiceEquipment
               ? "Завантаження…"
-              : "+ Додати обслуговування"}
+              : <><span className="sm:hidden">+ Обслуговування</span><span className="hidden sm:inline">+ Додати обслуговування</span></>}
         </button>
       </div>
 

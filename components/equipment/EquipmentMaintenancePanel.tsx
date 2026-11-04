@@ -201,22 +201,25 @@ export default function EquipmentMaintenancePanel({
   }
 
   return (
-    <section className="vc-surface min-w-0 p-4">
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <details className="group vc-surface min-w-0">
+      <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
         <div className="min-w-0">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="font-semibold text-gray-900">
             Планове ТО
           </h2>
-
-          <p className="mt-1 text-sm leading-5 text-gray-500">
-            Графік технічного обслуговування та швидке завершення поточного циклу.
+          <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">
+            {equipment.length} одиниць на сторінці · відкрити графік і дії
           </p>
         </div>
-
-        <span className="w-fit rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-          На сторінці: {equipment.length}
+        <span aria-hidden="true" className="shrink-0 text-muted-foreground transition group-open:rotate-180">
+          ⌄
         </span>
-      </div>
+      </summary>
+
+      <section className="border-t border-border p-4" aria-label="Повний графік планового ТО">
+        <p className="text-sm leading-5 text-gray-500">
+          Графік технічного обслуговування та швидке завершення поточного циклу.
+        </p>
 
       {successMessage && (
         <p
@@ -468,6 +471,7 @@ export default function EquipmentMaintenancePanel({
           )}
         </div>
       )}
-    </section>
+      </section>
+    </details>
   );
 }

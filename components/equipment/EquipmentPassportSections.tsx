@@ -72,9 +72,13 @@ export default function EquipmentPassportSections({
     <div className="min-w-0">
       <nav
         aria-label="Розділи паспорта техніки"
-        className="-mx-4 mb-5 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:mx-0 sm:mb-6 sm:px-0"
+        className="sticky top-16 z-20 -mx-4 mb-5 max-w-[calc(100%+2rem)] overflow-x-auto overscroll-x-contain bg-background/95 px-4 pb-2 pt-1 backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:mx-0 sm:mb-6 sm:max-w-full sm:px-0"
       >
-        <div className="vc-surface flex min-w-max gap-1.5 p-1.5">
+        <span className="mb-1 block text-[11px] text-muted-foreground sm:hidden">
+          Розділи можна гортати горизонтально →
+        </span>
+
+        <div className="vc-surface flex w-max min-w-full gap-1.5 p-1.5">
           {visibleTabs.map((tab) => {
             const isActive =
               activeTab === tab.id;
