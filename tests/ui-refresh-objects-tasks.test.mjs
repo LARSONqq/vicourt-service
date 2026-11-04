@@ -12,6 +12,14 @@ test("Objects workspace uses the R1 foundation with accessible filters and uncha
   assert.match(page, /vc-page-title/);
   assert.match(list, /aria-label="Пошук об’єкта"/);
   assert.match(list, /aria-label="Фільтр за статусом"/);
+  assert.match(list, /aria-pressed=\{isActive\}/);
+  assert.match(list, /statusFilterLabels/);
+  assert.match(list, /Обслуговування/);
+  assert.match(list, /Нагляд/);
+  assert.match(list, /Завершені/);
+  assert.match(list, /Пауза/);
+  assert.doesNotMatch(list, /<select/);
+  assert.doesNotMatch(list, /style=\{\{ width:/);
   assert.match(list, /href={`\/objects\/\$\{object\.id\}`}/);
   assert.match(list, /vc-surface group block/);
   assert.match(list, /focus-visible:ring-2/);

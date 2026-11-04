@@ -21,14 +21,23 @@ type Props = {
   today: string;
 };
 
-const standardStatuses = [
+const statusFilterOrder = [
   "Новий",
   "В роботі",
   "На постійному обслуговуванні",
   "Під періодичним наглядом",
-  "Призупинено",
   "Завершено",
+  "Призупинено",
 ];
+
+const statusFilterLabels: Record<string, string> = {
+  "Новий": "Нові",
+  "В роботі": "В роботі",
+  "На постійному обслуговуванні": "Обслуговування",
+  "Під періодичним наглядом": "Нагляд",
+  "Завершено": "Завершені",
+  "Призупинено": "Пауза",
+};
 
 function getStatusStyle(
   status: string | null
@@ -57,7 +66,7 @@ function getStatusStyle(
   }
 }
 
-const statusSegmentStyles: Record<string, string> = {
+const statusDotStyles: Record<string, string> = {
   "Новий": "bg-[var(--vc-info-text)]",
   "В роботі": "bg-[var(--vc-success-text)]",
   "На постійному обслуговуванні": "bg-primary",
@@ -125,34 +134,6 @@ export default function ObjectsList({
     setStatus,
   ] = useState("Усі");
 
-  const statuses =
-    useMemo(() => {
-      const objectStatuses =
-        objects
-          .map(
-            (object) =>
-              object.status
-          )
-          .filter(
-            (
-              value
-            ): value is string =>
-              Boolean(value)
-          );
-
-      return [
-        "Усі",
-        ...Array.from(
-          new Set(
-            [
-              ...standardStatuses,
-              ...objectStatuses,
-            ]
-          )
-        ),
-      ];
-    }, [objects]);
-
   const filteredObjects =
     useMemo(() => {
       const normalizedSearch =
@@ -207,43 +188,64 @@ export default function ObjectsList({
 
     return Array.from(counts, ([label, count]) => ({ label, count }))
       .sort((first, second) => {
-        const firstIndex = standardStatuses.indexOf(first.label);
-        const secondIndex = standardStatuses.indexOf(second.label);
-        return (firstIndex < 0 ? standardStatuses.length : firstIndex) -
-          (secondIndex < 0 ? standardStatuses.length : secondIndex);
+        const firstIndex = statusFilterOrder.indexOf(first.label);
+        const secondIndex = statusFilterOrder.indexOf(second.label);
+        return (firstIndex < 0 ? statusFilterOrder.length : firstIndex) -
+          (secondIndex < 0 ? statusFilterOrder.length : secondIndex);
       });
   }, [objects]);
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      {objects.length > 0 && (
-        <section className="vc-surface space-y-2.5 p-3 sm:p-4" aria-label="Розподіл об’єктів за статусом">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-foreground">Статуси об’єктів</h2>
-            <span className="text-xs text-muted-foreground">Усього {objects.length}</span>
-          </div>
-          <div className="flex h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-            {statusDistribution.map(({ label, count }) => (
-              <span
-                key={label}
-                className={statusSegmentStyles[label] || "bg-muted-foreground"}
-                style={{ width: `${(count / objects.length) * 100}%` }}
-              />
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            {statusDistribution.map(({ label, count }) => (
-              <span key={label} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className={`h-2 w-2 rounded-full ${statusSegmentStyles[label] || "bg-muted-foreground"}`} aria-hidden="true" />
-                {label} <strong className="font-semibold text-foreground">{count}</strong>
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
+      <section
+        className="vc-surface p-3 sm:p-4"
+        aria-label="Фільтр за статусом"
+      >
+        <div className="flex flex-wrap gap-2">
+          {[
+            {
+              label: "Усі",
+              value: "Усі",
+              count: objects.length,
+            },
+            ...statusDistribution.map((item) => ({
+              label: statusFilterLabels[item.label] || item.label,
+              value: item.label,
+              count: item.count,
+            })),
+          ].map((item) => {
+            const isActive = status === item.value;
+
+            return (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setStatus(item.value)}
+                aria-pressed={isActive}
+                className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                  isActive
+                    ? "border-primary/30 bg-accent text-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/25 hover:bg-muted/35 hover:text-foreground"
+                }`}
+              >
+                {item.value !== "Усі" && (
+                  <span
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${statusDotStyles[item.value] || "bg-muted-foreground"}`}
+                    aria-hidden="true"
+                  />
+                )}
+                <span>{item.label}</span>
+                <span className={isActive ? "text-primary" : "text-foreground"}>
+                  {item.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {/* FILTERS */}
-      <div className="vc-surface grid grid-cols-1 gap-3 p-3 sm:p-4 md:grid-cols-[minmax(0,1fr)_240px]">
+      <div className="vc-surface p-3 sm:p-4">
         <input
           type="search"
           value={search}
@@ -256,32 +258,10 @@ export default function ObjectsList({
           aria-label="Пошук об’єкта"
           className="vc-field min-h-11 min-w-0 px-4 py-3 sm:text-base"
         />
-
-        <select
-          value={status}
-          onChange={(event) =>
-            setStatus(
-              event.target.value
-            )
-          }
-          aria-label="Фільтр за статусом"
-          className="vc-field min-h-11 px-4 py-3 sm:text-base"
-        >
-          {statuses.map(
-            (item) => (
-              <option
-                key={item}
-                value={item}
-              >
-                {item}
-              </option>
-            )
-          )}
-        </select>
       </div>
 
       {/* COUNT */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
         <p className="text-sm text-muted-foreground">
           Знайдено:{" "}
           <span className="font-semibold text-foreground">
@@ -290,18 +270,6 @@ export default function ObjectsList({
             }
           </span>
         </p>
-
-        {status !== "Усі" && (
-          <button
-            type="button"
-            onClick={() =>
-              setStatus("Усі")
-            }
-            className="inline-flex min-h-10 items-center rounded-md px-2 text-sm font-medium text-primary hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            Скинути фільтр
-          </button>
-        )}
       </div>
 
       {/* EMPTY */}
