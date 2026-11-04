@@ -132,8 +132,8 @@ test("worker cannot query management templates; dashboard does not invoke templa
   assert.equal(worker.clients(), 0);
   await worker.service.getTaskDashboardSummary();
   assert.ok(worker.requests.every((query) => query.table === "object_tasks"));
-  const workspace = readFileSync("app/tasks/(workspace)/page.tsx", "utf8");
-  assert.match(workspace, /const templates = canManageTasks\(profile\.role\)/);
+  const workspace = readFileSync("app/tasks/page.tsx", "utf8");
+  assert.match(workspace, /const templates = canManageRecurrence/);
 });
 
 test("workspace tab results avoid reloading shared counts and selectors", async () => {
@@ -149,11 +149,12 @@ test("workspace tab results avoid reloading shared counts and selectors", async 
   assert.equal(requests.filter((request) => request.options?.head).length, 1);
   assert.equal(requests.filter((request) => !request.options?.head).length, 1);
 
-  const layout = readFileSync("app/tasks/(workspace)/layout.tsx", "utf8");
-  const loading = readFileSync("app/tasks/(workspace)/loading.tsx", "utf8");
-  assert.match(layout, /getTaskWorkspaceCounts/);
-  assert.match(layout, /<TaskWorkspaceShell/);
-  assert.match(loading, /Завантаження списку завдань/);
+  const action = readFileSync("app/actions/taskWorkspaceActions.ts", "utf8");
+  const shell = readFileSync("components/tasks/TaskWorkspaceShell.tsx", "utf8");
+  assert.match(action, /requireSectionAccess\("tasks"\)/);
+  assert.match(action, /getTaskWorkspaceResults/);
+  assert.match(shell, /cache\.current\.get\(href\)/);
+  assert.match(shell, /loadTaskWorkspaceAction/);
 });
 
 test("summary failure is not converted to misleading zero counts or leaked database errors", async () => {
@@ -177,7 +178,7 @@ test("Kyiv date boundary, canonical overdue presentation, terminology and return
   assert.equal(safeTaskReturnTo("/tasks?view=my&page=2"), "/tasks?view=my&page=2");
 });
 
-test("all six workspace views keep filter state, reset pagination and remain history-safe links", () => {
+test("all six workspace views keep filter state and reset pagination", () => {
   const { normalizeTaskWorkspace, taskViews, taskWorkspaceHref } = loader()("lib/taskWorkspace.ts");
   const initial = normalizeTaskWorkspace({ view: "all", status: "open", priority: "Високий", page: "3" }).filters;
   const hrefs = Object.keys(taskViews).map((view) => taskWorkspaceHref({ ...initial, view }));
@@ -190,6 +191,10 @@ test("all six workspace views keep filter state, reset pagination and remain his
     "/tasks?view=completed&status=open&priority=%D0%92%D0%B8%D1%81%D0%BE%D0%BA%D0%B8%D0%B9",
   ]);
   const navigation = readFileSync("components/tasks/TaskWorkspaceNavigation.tsx", "utf8");
-  assert.match(navigation, /scroll=\{false\}/);
-  assert.doesNotMatch(navigation, /replace=|window\.location|<a /);
+  const shell = readFileSync("components/tasks/TaskWorkspaceShell.tsx", "utf8");
+  assert.match(navigation, /onViewChange\(view as TaskView\)/);
+  assert.doesNotMatch(navigation, /next\/link|router\.(push|replace)|<a /);
+  assert.match(shell, /window\.history\.pushState\(null, "", href\)/);
+  assert.match(shell, /window\.addEventListener\("popstate", handlePopState\)/);
+  assert.match(shell, /openWorkspace\(nextFilters, 1, "push"\)/);
 });

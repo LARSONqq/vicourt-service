@@ -27,12 +27,14 @@ test("Objects workspace uses the R1 foundation with accessible filters and uncha
 });
 
 test("Tasks workspace preserves query controls while applying consistent fields and navigation focus", () => {
-  const page = read("app/tasks/(workspace)/page.tsx");
+  const page = read("app/tasks/page.tsx");
+  const shell = read("components/tasks/TaskWorkspaceShell.tsx");
   const results = read("components/tasks/TaskWorkspaceResults.tsx");
   const navigation = read("components/tasks/TaskWorkspaceNavigation.tsx");
   assert.match(page, /normalizeTaskWorkspace\(query\)/);
-  assert.match(results, /taskWorkspaceHref\(filters, page\)/);
-  assert.match(navigation, /action="\/tasks" method="get"/);
+  assert.match(results, /taskWorkspaceHref\(filters, result\.page\)/);
+  assert.match(shell, /window\.history\.pushState/);
+  assert.match(navigation, /onSubmit=\{\(event\) =>/);
   assert.match(navigation, /<input type="hidden" name="view" value=\{filters\.view\}/);
   assert.match(navigation, /vc-field/);
   assert.match(navigation, /aria-current=\{filters\.view === view \? "page" : undefined\}/);
