@@ -58,14 +58,32 @@ test("Dark base surfaces are achromatic before semantic accents are applied", ()
     "--popover",
     "--secondary",
     "--muted",
+    "--accent",
     "--vc-app",
     "--vc-elevated",
     "--vc-secondary",
     "--vc-hover",
     "--vc-topbar",
     "--sidebar",
+    "--sidebar-accent",
   ]) {
     assert.match(darkTokens, new RegExp(`${token}: oklch\\([^;]* 0 0(?: \\/ [^)]+)?\\);`));
+  }
+});
+
+test("Dark structural lightness stays in a subtle ladder anchored to the sidebar", () => {
+  const globals = read("app/globals.css");
+  const darkTokens = globals.slice(globals.indexOf(".dark {"), globals.indexOf("@layer base"));
+
+  for (const declaration of [
+    "--sidebar: oklch(0.165 0 0)",
+    "--vc-app: oklch(0.175 0 0)",
+    "--vc-topbar: oklch(0.18 0 0)",
+    "--vc-elevated: oklch(0.19 0 0)",
+    "--vc-secondary: oklch(0.205 0 0)",
+    "--vc-hover: oklch(0.205 0 0)",
+  ]) {
+    assert.ok(darkTokens.includes(`${declaration};`));
   }
 });
 

@@ -52,9 +52,9 @@ test("shared shell uses tighter workspace rhythm and semantic light/dark surface
   assert.match(globals, /\.vc-account-cluster\s*\{/);
   assert.match(globals, /--sidebar: oklch\(0\.165/);
   assert.match(globals, /--vc-topbar: oklch\(0\.995 0\.002 255\)/);
-  assert.match(globals, /--vc-topbar: oklch\(0\.195 0 0\)/);
+  assert.match(globals, /--vc-topbar: oklch\(0\.18 0 0\)/);
   assert.match(globals, /--sidebar-accent: oklch\(0\.95 0\.022 153\)/);
-  assert.match(globals, /--sidebar-accent: oklch\(0\.225 0\.022 153\)/);
+  assert.match(globals, /--sidebar-accent: oklch\(0\.205 0 0\)/);
   assert.match(globals, /\.vc-nav-item-active\s*\{[\s\S]*?background: var\(--sidebar-accent\)/);
   assert.match(globals, /\.vc-shell-header\s*\{[\s\S]*?background: var\(--vc-topbar\)/);
   assert.doesNotMatch(shell, /bg-black/);
