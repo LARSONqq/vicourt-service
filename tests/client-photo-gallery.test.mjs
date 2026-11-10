@@ -47,7 +47,7 @@ function nodes(tree, match) {
   return [...(match(tree) ? [tree] : []), ...nodes(tree.props?.children, match)];
 }
 function fixture() {
-  let identity = "client", session = "A", galleryResult, fileResult, afterProgress = () => {};
+  let identity = "client", session = "A", galleryResult, fileResult, afterObject = () => {};
   let downloadResult = { data: new Blob(["mock-image"], { type: "image/jpeg" }), error: null };
   const calls = [], downloads = [], grants = { A: new Set([47]), B: new Set([48]) };
   const load = loader({
@@ -59,10 +59,12 @@ function fixture() {
       rpc: async (name, args) => {
         calls.push([name, args]);
         const id = args.p_object_id;
-        if (name === "get_client_object") return { data: grants[session].has(id)
-          ? [{ id, name: `Сад ${id}`, address: "Садова", status: "В роботі" }] : [], error: null };
+        if (name === "get_client_object") {
+          const response = { data: grants[session].has(id) ? [{ id, name: `Сад ${id}`, address: "Садова", status: "В роботі" }] : [], error: null };
+          afterObject(); return response;
+        }
         if (!grants[session].has(id)) return denied();
-        if (name === "get_client_object_progress") { afterProgress(); return { data: [], error: null }; }
+        if (name === "get_client_object_progress") return { data: [], error: null };
         if (name === "get_client_object_photos") return typeof galleryResult === "function" ? galleryResult(args)
           : galleryResult ?? { data: [photo(11, id)], error: null };
         if (name === "get_client_object_documents") return { data: [], error: null };
@@ -81,12 +83,12 @@ function fixture() {
   const Gallery = load("components/client/ClientObjectPhotos.tsx").default;
   const { GET } = load("app/client/objects/[id]/photos/[photoId]/file/route.ts");
   return {
-    page: (id = "47", photoPage) => Page({ params: Promise.resolve({ id }), searchParams: Promise.resolve({ photoPage }) }),
+    page: (id = "47", photoPage) => Page({ params: Promise.resolve({ id }), searchParams: Promise.resolve({ section: "photos", photoPage }) }),
     file: (id = "47", photoId = "11") => GET(new Request("https://example.test/client/photo"), { params: Promise.resolve({ id, photoId }) }),
     service: load("services/clientPhotoService.ts"), Gallery, calls, downloads, grants,
     identity: (v) => { identity = v; }, session: (v) => { session = v; },
     gallery: (v) => { galleryResult = v; }, fileResult: (v) => { fileResult = v; },
-    download: (v) => { downloadResult = v; }, afterProgress: (v) => { afterProgress = v; },
+    download: (v) => { downloadResult = v; }, afterObject: (v) => { afterObject = v; },
   };
 }
 
@@ -99,7 +101,7 @@ test("published gallery renders only client caption and same-origin lazy image; 
   assert.match(html, /Клієнтський підпис/);
   assert.match(html, /src="\/client\/objects\/47\/photos\/11\/file"/);
   assert.match(html, /loading="lazy"/);
-  assert.ok(html.indexOf("Прогрес об’єкта") < html.indexOf('id="client-photos-title"'));
+  assert.match(html, /id="client-photos-title"/);
   assert.doesNotMatch(html, /SECRET_|supabase|storage_path/);
   f.gallery({ data: [{ ...photo(), caption: null }], error: null });
   assert.doesNotMatch(renderToStaticMarkup(await f.page()), /Клієнтський підпис|SECRET_CAPTION/);
@@ -128,14 +130,14 @@ test("photo 42501 (returned or thrown) aborts whole page; post-object/progress r
   for (const result of [denied(), () => { throw { code: "42501", message: "SECRET" }; }]) {
     const f = fixture(); f.gallery(result);
     await assert.rejects(() => f.page(), is404);
-    assert.deepEqual(f.calls.map(([name]) => name), ["get_client_object", "get_client_object_progress", "get_client_object_photos"]);
+    assert.deepEqual(f.calls.map(([name]) => name), ["get_client_object", "get_client_object_photos"]);
   }
-  const revoked = fixture(); revoked.afterProgress(() => revoked.grants.A.delete(47));
+  const revoked = fixture(); revoked.afterObject(() => revoked.grants.A.delete(47));
   await assert.rejects(() => revoked.page(), is404);
   assert.equal(revoked.calls.at(-1)[0], "get_client_object_photos");
-  const inactive = fixture(); inactive.afterProgress(() => inactive.identity("denied"));
+  const inactive = fixture(); inactive.afterObject(() => inactive.identity("denied"));
   await assert.rejects(() => inactive.page(), (error) => error.digest.startsWith("NEXT_REDIRECT;"));
-  assert.equal(inactive.calls.length, 2);
+  assert.equal(inactive.calls.length, 1);
 });
 
 test("mocked A/B grants are independent on direct gallery service and file route; inactive/revoked identities fail closed", async () => {
@@ -166,15 +168,15 @@ test("pagination stays scoped at 12/page with URL links, normalized invalid page
   assert.equal(gallery.props.photos.items.length, 12); assert.equal(gallery.props.photos.hasNextPage, true);
   assert.deepEqual(f.calls.filter(([name]) => name === "get_client_object_photos").at(-1), ["get_client_object_photos", { p_object_id: 47, p_page: 2 }]);
   const html = renderToStaticMarkup(tree);
-  assert.match(html, /href="\/client\/objects\/47\?photoPage=1#client-photos-title"/);
-  assert.match(html, /href="\/client\/objects\/47\?photoPage=3#client-photos-title"/);
+  assert.match(html, /href="\/client\/objects\/47\?section=photos&amp;photoPage=1"/);
+  assert.match(html, /href="\/client\/objects\/47\?section=photos&amp;photoPage=3"/);
   assert.deepEqual(f.downloads, [], "Metadata never prefetches image binaries");
   for (const page of [undefined, "0", "-1", "1.5", "abc", "100001", ["2", "3"]]) {
     await f.page("47", page);
     assert.equal(f.calls.filter(([name]) => name === "get_client_object_photos").at(-1)[1].p_page, 1);
   }
   f.gallery({ data: [], error: null });
-  await assert.rejects(() => f.page("47", "99"), (error) => error.digest.startsWith("NEXT_REDIRECT;") && error.digest.includes("/client/objects/47?photoPage=1"));
+  await assert.rejects(() => f.page("47", "99"), (error) => error.digest.startsWith("NEXT_REDIRECT;") && error.digest.includes("/client/objects/47?section=photos&photoPage=1"));
 });
 
 test("gallery rejects duplicate IDs, wrong-object rows and inconsistent totals rather than forwarding them", async () => {

@@ -51,7 +51,7 @@ function nodes(tree, match) {
   return [...(match(tree) ? [tree] : []), ...nodes(tree.props?.children, match)];
 }
 function fixture() {
-  let identity = "client", session = "A", listResult, fileResult, photoResult, authResult, afterPhotos = () => {}, afterLookup = () => {};
+  let identity = "client", session = "A", listResult, fileResult, photoResult, authResult, afterObject = () => {}, afterLookup = () => {};
   let downloadResult = { data: new Blob(["mock-document"], { type: "application/pdf" }), error: null };
   const calls = [], metadataCalls = [], downloads = [], grants = { A: new Set([47]), B: new Set([48]) };
   const docs = new Map([[11, { objectId: 47, published: true, ready: true }], [12, { objectId: 48, published: true, ready: true }]]);
@@ -89,8 +89,10 @@ function fixture() {
         rpc: async (name, args) => {
           calls.push([name, args]);
           const id = args.p_object_id;
-          if (name === "get_client_object") return { data: grants[session].has(id)
-            ? [{ id, name: `Сад ${id}`, address: "Садова", status: "В роботі" }] : [], error: null };
+          if (name === "get_client_object") {
+            const response = { data: grants[session].has(id) ? [{ id, name: `Сад ${id}`, address: "Садова", status: "В роботі" }] : [], error: null };
+            afterObject(); return response;
+          }
           if (!grants[session].has(id)) return denied();
           if (name === "get_client_object_progress") return { data: [], error: null };
           if (name === "get_client_object_photos") { afterPhotos(); return photoResult ?? { data: [], error: null }; }
@@ -114,12 +116,12 @@ function fixture() {
   const Component = load("components/client/ClientObjectDocuments.tsx").default;
   const { GET } = load("app/client/objects/[id]/documents/[documentId]/file/route.ts");
   return {
-    page: (id = "47", query = {}) => Page({ params: Promise.resolve({ id }), searchParams: Promise.resolve(query) }),
+    page: (id = "47", query = {}) => Page({ params: Promise.resolve({ id }), searchParams: Promise.resolve({ section: "documents", ...query }) }),
     file: (id = "47", documentId = "11") => GET(new Request("https://example.test/client/document"), { params: Promise.resolve({ id, documentId }) }),
     service: load("services/clientDocumentService.ts"), Component, calls, metadataCalls, downloads, grants, docs,
     identity: (v) => { identity = v; }, session: (v) => { session = v; }, list: (v) => { listResult = v; },
     fileResult: (v) => { fileResult = v; }, download: (v) => { downloadResult = v; }, photos: (v) => { photoResult = v; },
-    afterPhotos: (v) => { afterPhotos = v; }, afterLookup: (v) => { afterLookup = v; },
+    afterObject: (v) => { afterObject = v; }, afterLookup: (v) => { afterLookup = v; },
     auth: (v) => { authResult = v; },
   };
 }
@@ -157,29 +159,27 @@ test("documents have distinct empty/technical error states; authorization errors
   for (const result of [denied(), () => { throw { code: "42501", message: "SECRET" }; }, { data: [document(11, 48)], error: null }]) {
     f.list(result); await assert.rejects(() => f.page(), is404);
   }
-  const revoked = fixture(); revoked.afterPhotos(() => revoked.grants.A.delete(47));
+  const revoked = fixture(); revoked.afterObject(() => revoked.grants.A.delete(47));
   await assert.rejects(() => revoked.page(), is404);
   assert.equal(revoked.calls.at(-1)[0], "get_client_object_documents");
 });
 
-test("document pagination is DB-scoped 20/page, normalizes invalid values and preserves photo pagination both ways", async () => {
+test("document pagination is DB-scoped 20/page, normalized and section-specific", async () => {
   const f = fixture();
   f.list({ data: Array.from({ length: 20 }, (_, i) => ({ ...document(i + 1), total_count: 42 })), error: null });
   f.photos({ data: [{ id: 111, object_id: 47, caption: null, published_at: time, total_count: 30 }], error: null });
-  const tree = await f.page("47", { documentPage: "2", photoPage: "2" }), html = renderToStaticMarkup(tree);
+  const tree = await f.page("47", { documentPage: "2" }), html = renderToStaticMarkup(tree);
   assert.deepEqual(f.calls.at(-1), ["get_client_object_documents", { p_object_id: 47, p_page: 2 }]);
   const result = nodes(tree, (n) => n.type === f.Component)[0].props.documents;
   assert.equal(result.page, 2); assert.equal(result.items.length, 20); assert.equal(result.hasNextPage, true);
-  assert.match(html, /documentPage=1&amp;photoPage=2#client-documents-title/);
-  assert.match(html, /documentPage=3&amp;photoPage=2#client-documents-title/);
-  assert.match(html, /photoPage=1&amp;documentPage=2/); assert.match(html, /photoPage=3&amp;documentPage=2/);
+  assert.match(html, /section=documents&amp;documentPage=1/);
+  assert.match(html, /section=documents&amp;documentPage=3/);
+  assert.doesNotMatch(html, /photoPage=/);
   for (const documentPage of [undefined, "0", "-1", "1.5", "abc", "100001", "999999999999999999999", ["2", "3"]]) {
     await f.page("47", { documentPage }); assert.equal(f.calls.at(-1)[1].p_page, 1);
   }
   f.list({ data: [], error: null });
-  await assert.rejects(() => f.page("47", { documentPage: "100000", photoPage: "2" }), (e) => e.digest.includes("/client/objects/47?photoPage=2&documentPage=1"));
-  f.list({ data: [{ ...document(), total_count: 42 }], error: null }); f.photos({ data: [], error: null });
-  await assert.rejects(() => f.page("47", { documentPage: "2", photoPage: "99" }), (e) => e.digest.includes("/client/objects/47?photoPage=1&documentPage=2"));
+  await assert.rejects(() => f.page("47", { documentPage: "100000" }), (e) => e.digest.includes("/client/objects/47?section=documents&documentPage=1"));
 });
 
 test("mocked A/B isolation and internal/inactive/guest rejection apply independently to listing and file lookup", async () => {

@@ -8,6 +8,16 @@ export type ClientObjectSummary = {
 
 export type ClientObjectProfile = ClientObjectSummary;
 
+// Client-home projection derived only from the published progress DTO.
+// It intentionally excludes stages and summaries that the object card does not render.
+export type ClientObjectHomeSummary = ClientObjectSummary & {
+  published_progress: {
+    overall_percent: number;
+    updated_at: string;
+  } | null;
+  progress_unavailable: boolean;
+};
+
 export type ClientProfile = {
   user_id: string;
   display_name: string;

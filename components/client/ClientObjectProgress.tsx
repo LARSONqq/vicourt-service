@@ -10,16 +10,16 @@ type Props = {
 };
 
 const stagePresentation: Record<ClientProgressStageStatus, { label: string; badge: string; marker: string }> = {
-  planned: { label: "Заплановано", badge: "bg-gray-100 text-gray-600", marker: "border-gray-200 bg-white text-gray-500" },
-  in_progress: { label: "В роботі", badge: "bg-amber-50 text-amber-800", marker: "border-amber-300 bg-amber-50 text-amber-800" },
-  completed: { label: "Завершено", badge: "bg-green-50 text-green-800", marker: "border-green-600 bg-green-600 text-white" },
+  planned: { label: "Далі", badge: "bg-gray-100 text-gray-600", marker: "border-gray-200 bg-white text-gray-500" },
+  in_progress: { label: "Зараз", badge: "bg-amber-50 text-amber-800", marker: "border-amber-300 bg-amber-50 text-amber-800" },
+  completed: { label: "Готово", badge: "bg-emerald-50 text-emerald-800", marker: "border-emerald-600 bg-emerald-600 text-white" },
 };
 
 export default function ClientObjectProgress({ progress, unavailable = false }: Props) {
   if (unavailable || !progress) {
     return (
-      <section aria-labelledby="client-progress-title" className="min-w-0 space-y-3 rounded-2xl border bg-white p-5 sm:p-8">
-        <h2 id="client-progress-title" className="scroll-mt-24 text-lg font-semibold text-gray-900">Прогрес об’єкта</h2>
+      <section aria-labelledby="client-progress-title" className="min-w-0 space-y-3 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200/80 sm:p-8">
+        <h1 id="client-progress-title" className="text-xl font-semibold text-gray-950 sm:text-2xl">Оновлення робіт</h1>
         <ClientPortalState error={unavailable} title={unavailable
             ? "Не вдалося завантажити оновлення прогресу. Спробуйте оновити сторінку пізніше."
             : "Оновлення прогресу ще не опубліковано."} />
@@ -28,20 +28,20 @@ export default function ClientObjectProgress({ progress, unavailable = false }: 
   }
 
   return (
-    <section aria-labelledby="client-progress-title" className="min-w-0 space-y-6 rounded-2xl border bg-white p-5 sm:space-y-8 sm:p-8">
-      <div className="space-y-5 rounded-xl bg-green-50/70 p-4 sm:p-6">
+    <section aria-labelledby="client-progress-title" className="min-w-0 space-y-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200/80 sm:space-y-8 sm:p-8">
+      <div className="space-y-5 rounded-xl bg-emerald-50/70 p-4 sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="space-y-1"><h2 id="client-progress-title" className="scroll-mt-24 text-lg font-semibold text-gray-900">Прогрес об’єкта</h2><p className="text-sm text-green-900/70">Загальний стан виконання робіт</p></div>
-          <p className="text-5xl font-bold tabular-nums tracking-tight text-green-800 sm:text-6xl">{progress.overall_percent}%</p>
+          <div className="space-y-1"><h1 id="client-progress-title" className="text-xl font-semibold text-gray-950 sm:text-2xl">Оновлення робіт</h1><p className="text-sm text-emerald-900/70">Як просуваються роботи на об’єкті</p></div>
+          <p className="text-4xl font-bold tabular-nums tracking-tight text-emerald-800 sm:text-5xl">{progress.overall_percent}%</p>
         </div>
         <div role="progressbar" aria-label="Загальний прогрес об’єкта" aria-valuemin={0} aria-valuemax={100}
-          aria-valuenow={progress.overall_percent} className="h-3 overflow-hidden rounded-full bg-green-100">
-          <div className="h-full rounded-full bg-green-600" style={{ width: `${progress.overall_percent}%` }} />
+          aria-valuenow={progress.overall_percent} className="h-2 overflow-hidden rounded-full bg-emerald-100">
+          <div className="h-full rounded-full bg-emerald-600" style={{ width: `${progress.overall_percent}%` }} />
         </div>
       </div>
 
       {progress.stages.length > 0 && <div className="min-w-0 space-y-4">
-        <h3 className="font-semibold text-gray-900">Етапи проєкту</h3>
+        <h2 className="font-semibold text-gray-900">Хід робіт</h2>
         {/* The client-safe mapper already sorts by sort_order, then id. */}
         <ol className="min-w-0">
           {progress.stages.map((stage, index) => {
@@ -52,7 +52,7 @@ export default function ClientObjectProgress({ progress, unavailable = false }: 
                 <span aria-hidden="true" className={`relative flex size-8 shrink-0 items-center justify-center rounded-full border text-sm font-medium ${presentation.marker}`}>
                   {stage.status === "completed" ? "✓" : index + 1}
                 </span>
-                <div className={`min-w-0 flex-1 space-y-2 rounded-xl p-3 ${stage.status === "in_progress" ? "bg-amber-50 ring-1 ring-amber-200" : stage.status === "completed" ? "bg-green-50/60" : "bg-gray-50"}`}>
+                <div className={`min-w-0 flex-1 space-y-2 rounded-xl p-3 ${stage.status === "in_progress" ? "bg-amber-50 ring-1 ring-amber-200" : stage.status === "completed" ? "bg-emerald-50/60" : "bg-gray-50"}`}>
                   <p className="break-words font-medium leading-relaxed text-gray-900 [overflow-wrap:anywhere]">{stage.title}</p>
                   <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${presentation.badge}`}>{presentation.label}</span>
                 </div>
@@ -61,18 +61,9 @@ export default function ClientObjectProgress({ progress, unavailable = false }: 
           })}
         </ol>
       </div>}
-      {progress.stages.length === 0 && <ClientPortalState title="Етапи проєкту ще не додано." description="Загальний прогрес показано вище. Деталі етапів з’являться після наступних оновлень." />}
+      {progress.stages.length === 0 && <ClientPortalState title="Деталі етапів ще не опубліковано." description="Загальний прогрес показано вище. Більше інформації з’явиться після наступного оновлення." />}
 
-      {(progress.completed_summary || progress.next_summary) && <div className="grid min-w-0 gap-5 border-t border-gray-100 pt-5 sm:grid-cols-2">
-        {progress.completed_summary && <div className="min-w-0 space-y-2">
-          <h3 className="font-semibold text-gray-900">Що виконано</h3>
-          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">{progress.completed_summary}</p>
-        </div>}
-        {progress.next_summary && <div className="min-w-0 space-y-2">
-          <h3 className="font-semibold text-gray-900">Що далі</h3>
-          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">{progress.next_summary}</p>
-        </div>}
-      </div>}
+      {progress.next_summary && <div className="min-w-0 border-t border-gray-100 pt-5"><h2 className="font-semibold text-gray-900">Найближчі кроки</h2><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">{progress.next_summary}</p></div>}
 
       <p className="text-xs leading-relaxed text-gray-500">
         Останнє оновлення: <time dateTime={progress.updated_at}>{formatKyivTimestamp(progress.updated_at)}</time>

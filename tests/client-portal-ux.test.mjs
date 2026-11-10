@@ -41,16 +41,18 @@ const nodes = (tree, match) => !tree || typeof tree !== "object" ? [] : Array.is
   ? tree.flatMap((n) => nodes(n, match)) : [...(match(tree) ? [tree] : []), ...nodes(tree.props?.children, match)];
 const html = (Component, props = {}) => renderToStaticMarkup(React.createElement(Component, props));
 
-test("landing uses only supplied client objects, no single-object redirect; touch card/name/address/status and empty pagination", async () => {
+test("landing uses client-safe home cards with published progress/update and keeps pagination", async () => {
   const calls = [];
-  let items = [{ id: 47, name: "Назва".repeat(70), address: "Адреса".repeat(70), status: "В роботі" }];
-  const Page = loader({ "@/services/clientPortalService": { getClientObjectsPage: async (page) => {
+  let items = [{ id: 47, name: "Назва".repeat(70), address: "Адреса".repeat(70), status: "В роботі",
+    published_progress: { overall_percent: 42, updated_at: "2026-09-28T10:00:00Z" }, progress_unavailable: false }];
+  const Page = loader({ "@/services/clientPortalService": { getClientObjectHomePage: async (page) => {
     calls.push(page); return { items, page, hasMore: page === 2 };
   } } })("app/client/page.tsx").default;
   const tree = await Page({ searchParams: Promise.resolve({ page: "2" }) });
   const markup = renderToStaticMarkup(tree);
   assert.deepEqual(calls, [2]);
-  assert.match(markup, /Відкрити об’єкт/); assert.match(markup, /href="\/client\/objects\/47"/);
+  assert.match(markup, /Переглянути об’єкт/); assert.match(markup, /href="\/client\/objects\/47"/);
+  assert.match(markup, /42%/); assert.match(markup, /28\.09\.2026 13:00/);
   assert.ok(markup.includes(items[0].name)); assert.ok(markup.includes(items[0].address));
   assert.match(markup, /href="\/client\?page=1"/); assert.match(markup, /href="\/client\?page=3"/);
   assert.match(markup, /min-w-0/); assert.match(markup, /overflow-wrap:anywhere/);
@@ -59,36 +61,24 @@ test("landing uses only supplied client objects, no single-object redirect; touc
   assert.match(empty, /Поки немає доступних об’єктів/); assert.doesNotMatch(empty, /Сторінки об’єктів/);
 });
 
-test("section anchors retain query params; active hash supports deep links, unknown hash and Back/Forward, with cleanup", () => {
-  const previous = globalThis.window, events = new Map();
-  let subscription, snapshot, serverSnapshot, changes = 0;
-  globalThis.window = { location: { hash: "" },
-    addEventListener: (event, fn) => events.set(event, fn), removeEventListener: (event) => events.delete(event) };
-  try {
-    const Navigation = loader({ react: { ...React, useSyncExternalStore: (subscribe, getSnapshot, getServerSnapshot) => {
-      subscription = subscribe; snapshot = getSnapshot; serverSnapshot = getServerSnapshot;
-      return getSnapshot();
-    } } })("components/client/ClientObjectNavigation.tsx").default;
-    const ids = ["client-overview", "client-progress-title", "client-photos-title", "client-documents-title"];
-    for (const id of [...ids, "unknown"]) {
-      window.location.hash = `#${id}`;
-      const tree = Navigation(), links = nodes(tree, (n) => n.type === "a");
-      assert.equal(links.length, 4);
-      assert.equal(links.filter((n) => n.props["aria-current"] === "location").length, 1);
-      assert.equal(links.find((n) => n.props["aria-current"]).props.href, `#${ids.includes(id) ? id : ids[0]}`);
-      for (const link of links) {
-        const url = new URL(link.props.href, "https://example.test/client/objects/47?photoPage=2&documentPage=3");
-        assert.equal(url.search, "?photoPage=2&documentPage=3");
-        assert.match(link.props.className, /min-h-11/);
-      }
-    }
-    const cleanup = subscription(() => { changes++; });
-    window.location.hash = "#client-photos-title"; events.get("hashchange")();
-    assert.equal(snapshot(), "client-photos-title");
-    window.location.hash = "#client-documents-title"; events.get("popstate")();
-    assert.equal(snapshot(), "client-documents-title"); assert.equal(serverSnapshot(), "client-overview");
-    assert.equal(changes, 2); cleanup(); assert.equal(events.size, 0);
-  } finally { if (previous === undefined) delete globalThis.window; else globalThis.window = previous; }
+test("section navigation uses direct URL links, a single selected section and touch targets", () => {
+  const navigation = loader()("components/client/ClientObjectNavigation.tsx");
+  const expected = {
+    overview: "/client/objects/47",
+    updates: "/client/objects/47?section=updates",
+    photos: "/client/objects/47?section=photos",
+    documents: "/client/objects/47?section=documents",
+  };
+  for (const active of Object.keys(expected)) {
+    const links = nodes(navigation.default({ objectId: 47, active }), (n) => n.type?.name === "default" || n.props?.href);
+    const sectionLinks = links.filter((n) => n.props?.href);
+    assert.deepEqual(sectionLinks.map((n) => n.props.href), Object.values(expected));
+    assert.equal(sectionLinks.filter((n) => n.props["aria-current"] === "page").length, 1);
+    assert.equal(sectionLinks.find((n) => n.props["aria-current"]).props.href, expected[active]);
+    for (const link of sectionLinks) assert.match(link.props.className, /min-h-11/);
+  }
+  assert.equal(navigation.clientObjectSection("unknown"), "overview");
+  assert.equal(navigation.clientObjectSection("photos"), "photos");
 });
 
 test("manual percent remains authoritative even when all stages completed; 0/100, no stages and unpublished stay distinct", () => {
@@ -99,7 +89,7 @@ test("manual percent remains authoritative even when all stages completed; 0/100
   for (const overall_percent of [0, 100]) {
     const markup = html(Progress, { progress: { ...progress, overall_percent, stages: [] } });
     assert.ok(markup.includes(`aria-valuenow="${overall_percent}"`));
-    assert.match(markup, /Етапи проєкту ще не додано/); assert.doesNotMatch(markup, /<ol/);
+    assert.match(markup, /Деталі етапів ще не опубліковано/); assert.doesNotMatch(markup, /<ol/);
   }
   assert.doesNotMatch(html(Progress, { progress: null }), /role="progressbar"|Останнє оновлення/);
 });

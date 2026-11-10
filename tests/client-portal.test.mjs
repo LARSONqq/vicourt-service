@@ -113,6 +113,32 @@ test("pagination is bounded; 21st row is only a hasMore sentinel", async () => {
   assert.equal(page.items.length, 20); assert.equal(page.hasMore, true);
 });
 
+test("client home derives a narrow card update only from the published progress RPC", async () => {
+  const calls = [];
+  const { getClientObjectHomePage } = loader({
+    "next/navigation": navigation,
+    "@/services/accountIdentityService": { getAccountIdentity: async () => "client" },
+    "@/lib/supabase/server": { createClient: async () => ({
+      from: () => assert.fail("No direct table access"),
+      rpc: async (name, args) => {
+        calls.push([name, args]);
+        if (name === "get_client_objects") return { data: [{ id: 47, name: "Сад", address: "Садова", status: "В роботі", cost: "SECRET" }], error: null };
+        assert.equal(name, "get_client_object_progress");
+        return { data: [{ object_id: 47, overall_percent: 42, completed_summary: "Готово", next_summary: "Далі",
+          updated_at: "2026-09-28T10:00:00Z", stages: [{ id: 1, title: "Етап", status: "completed", sort_order: 0 }], created_by: "SECRET" }], error: null };
+      },
+    }) },
+  })("services/clientPortalService.ts");
+  const page = await getClientObjectHomePage(1);
+  assert.deepEqual(page.items, [{ id: 47, name: "Сад", address: "Садова", status: "В роботі",
+    published_progress: { overall_percent: 42, updated_at: "2026-09-28T10:00:00Z" }, progress_unavailable: false }]);
+  assert.doesNotMatch(JSON.stringify(page), /SECRET|completed_summary|next_summary|stages|created_by/);
+  assert.deepEqual(calls, [
+    ["get_client_objects", { p_page: 1 }],
+    ["get_client_object_progress", { p_object_id: 47 }],
+  ]);
+});
+
 test("admin-only management denies worker, object_manager and no-profile clients before queries", async () => {
   let role = "admin", queries = 0;
   const service = loader({

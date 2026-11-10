@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import type { ClientObjectPhoto, ClientObjectPhotosPage } from "@/types/clientPhoto";
 import { ImageOff, Expand } from "lucide-react";
 import ClientPortalState from "@/components/client/ClientPortalState";
+import { formatKyivTimestamp } from "@/lib/kyivDate";
 
 const fileUrl = (photo: ClientObjectPhoto) => `/client/objects/${photo.object_id}/photos/${photo.id}/file`;
 
@@ -24,36 +25,39 @@ function PhotoImage({ photo, preview = false }: { photo: ClientObjectPhoto; prev
   </span>;
 }
 
-export default function ClientObjectPhotos({ objectId, photos, documentPage = 1 }: {
+export default function ClientObjectPhotos({ objectId, photos }: {
   objectId: number;
   // null means technical failure, not an empty/unpublished gallery.
   photos: ClientObjectPhotosPage | null;
-  documentPage?: number;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [selected, setSelected] = useState<ClientObjectPhoto | null>(null);
   const close = () => { dialog.current?.close(); setSelected(null); };
 
-  return <section aria-labelledby="client-photos-title" className="min-w-0 space-y-5 rounded-2xl border bg-white p-5 sm:p-8">
-    <div className="space-y-1"><h2 id="client-photos-title" className="scroll-mt-24 text-lg font-semibold text-gray-900">Фото</h2><p className="text-sm text-gray-600">Погляньте, як змінюється ваш об’єкт. Натисніть на фото, щоб роздивитися ближче.</p></div>
+  const visiblePhotos = photos ? [...photos.items].sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at)) : [];
+  return <section aria-labelledby="client-photos-title" className="min-w-0 space-y-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200/80 sm:p-8">
+    <div className="flex flex-wrap items-start justify-between gap-3"><div className="space-y-1"><h1 id="client-photos-title" className="text-xl font-semibold text-gray-950 sm:text-2xl">Фото об’єкта</h1><p className="text-sm leading-6 text-gray-600">Останні опубліковані фото — спочатку. Натисніть на знімок, щоб відкрити його.</p></div>
+      {photos && photos.totalCount !== null && <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">{photos.totalCount} фото</span>}
+    </div>
     {!photos ? <ClientPortalState error title="Не вдалося завантажити фото. Спробуйте оновити сторінку пізніше." />
       : photos.items.length === 0 ? <ClientPortalState title="Фото ще не опубліковано." description="Нові знімки з’являться тут після публікації менеджером." /> : <>
       <ul className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {photos.items.map((photo) => <li key={photo.id} className="min-w-0 overflow-hidden rounded-xl border border-gray-100">
+        {visiblePhotos.map((photo) => <li key={photo.id} className="min-w-0 overflow-hidden rounded-xl bg-gray-50 ring-1 ring-gray-200/80">
           <button type="button" aria-haspopup="dialog" aria-label={photo.caption ? `Відкрити фото: ${photo.caption}` : "Відкрити фото"}
             className="relative block w-full rounded-xl focus-visible:outline-2 focus-visible:outline-green-700 focus-visible:-outline-offset-2"
             onClick={() => { setSelected(photo); dialog.current?.showModal(); }}>
             <PhotoImage key={photo.id} photo={photo} />
             <span aria-hidden="true" className="absolute bottom-2 right-2 rounded-lg bg-white/95 p-2 text-green-900 shadow-sm"><Expand className="size-4" /></span>
           </button>
-          {photo.caption && <p className="whitespace-pre-wrap break-words p-3 text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">{photo.caption}</p>}
+          <div className="space-y-1 p-3">{photo.caption && <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-700 [overflow-wrap:anywhere]">{photo.caption}</p>}
+            <p className="text-xs text-gray-500">Опубліковано <time dateTime={photo.published_at}>{formatKyivTimestamp(photo.published_at)}</time></p></div>
         </li>)}
       </ul>
       {(photos.page > 1 || photos.hasNextPage) && <nav aria-label="Сторінки фото" className="flex flex-wrap items-center justify-between gap-3 text-sm">
         <span className="w-full text-center text-gray-500">Сторінка {photos.page}</span>
-        {photos.page > 1 && <Link prefetch={false} href={`/client/objects/${objectId}?photoPage=${photos.page - 1}${documentPage > 1 ? `&documentPage=${documentPage}` : ""}#client-photos-title`}
+        {photos.page > 1 && <Link prefetch={false} href={`/client/objects/${objectId}?section=photos&photoPage=${photos.page - 1}`}
           className="min-h-11 rounded-lg border px-3 py-3 focus-visible:outline-2 focus-visible:outline-green-700">← Назад</Link>}
-        {photos.hasNextPage && <Link prefetch={false} href={`/client/objects/${objectId}?photoPage=${photos.page + 1}${documentPage > 1 ? `&documentPage=${documentPage}` : ""}#client-photos-title`}
+        {photos.hasNextPage && <Link prefetch={false} href={`/client/objects/${objectId}?section=photos&photoPage=${photos.page + 1}`}
           className="min-h-11 rounded-lg border px-3 py-3 focus-visible:outline-2 focus-visible:outline-green-700">Далі →</Link>}
       </nav>}
     </>}
@@ -67,7 +71,7 @@ export default function ClientObjectPhotos({ objectId, photos, documentPage = 1 
       </div>
       {selected && <figure className="min-w-0">
         <PhotoImage key={selected.id} photo={selected} preview />
-        {selected.caption && <figcaption className="mt-3 whitespace-pre-wrap break-words text-sm [overflow-wrap:anywhere]">{selected.caption}</figcaption>}
+        <figcaption className="mt-3 space-y-1">{selected.caption && <p className="whitespace-pre-wrap break-words text-sm [overflow-wrap:anywhere]">{selected.caption}</p>}<p className="text-xs text-gray-500">Опубліковано <time dateTime={selected.published_at}>{formatKyivTimestamp(selected.published_at)}</time></p></figcaption>
       </figure>}
     </dialog>
   </section>;

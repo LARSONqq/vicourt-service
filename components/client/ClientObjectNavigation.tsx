@@ -1,35 +1,32 @@
-"use client";
+import "server-only";
 
-import { useSyncExternalStore } from "react";
+import Link from "next/link";
+import { Camera, FileText, LayoutDashboard, ListChecks } from "lucide-react";
+
+export const clientObjectSections = ["overview", "updates", "photos", "documents"] as const;
+export type ClientObjectSection = (typeof clientObjectSections)[number];
 
 const sections = [
-  ["client-overview", "Огляд"],
-  ["client-progress-title", "Прогрес"],
-  ["client-photos-title", "Фото"],
-  ["client-documents-title", "Документи"],
+  { id: "overview", label: "Огляд", Icon: LayoutDashboard },
+  { id: "updates", label: "Оновлення", Icon: ListChecks },
+  { id: "photos", label: "Фото", Icon: Camera },
+  { id: "documents", label: "Документи", Icon: FileText },
 ] as const;
 
-function currentSection() {
-  const id = window.location.hash.slice(1);
-  return sections.some(([section]) => section === id) ? id : "client-overview";
-}
-function subscribe(onChange: () => void) {
-  window.addEventListener("hashchange", onChange);
-  window.addEventListener("popstate", onChange);
-  return () => {
-    window.removeEventListener("hashchange", onChange);
-    window.removeEventListener("popstate", onChange);
-  };
+export function clientObjectSection(value: string | string[] | undefined): ClientObjectSection {
+  const section = Array.isArray(value) ? value[0] : value;
+  return clientObjectSections.includes(section as ClientObjectSection) ? section as ClientObjectSection : "overview";
 }
 
-export default function ClientObjectNavigation() {
-  const active = useSyncExternalStore(subscribe, currentSection, () => "client-overview");
-  // Native fragment links retain BOTH pagination query parameters, support
-  // browser Back/Forward and work before hydration. No data/router refactor.
-  return <nav aria-label="Розділи об’єкта" className="sticky top-2 z-10 grid min-w-0 grid-cols-4 gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
-    {sections.map(([id, label]) => <a key={id} href={`#${id}`} aria-current={active === id ? "location" : undefined}
-      className={`flex min-h-11 min-w-0 items-center justify-center rounded-lg px-1 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700 sm:text-sm ${active === id ? "bg-green-800 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}>
-      {label}
-    </a>)}
+export default function ClientObjectNavigation({ objectId, active }: { objectId: number; active: ClientObjectSection }) {
+  return <nav aria-label="Розділи об’єкта" className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+    <div className="flex w-max min-w-full gap-1 rounded-xl bg-gray-200/70 p-1">
+      {sections.map(({ id, label, Icon }) => <Link key={id}
+        href={id === "overview" ? `/client/objects/${objectId}` : `/client/objects/${objectId}?section=${id}`}
+        aria-current={active === id ? "page" : undefined} scroll={false}
+        className={`inline-flex min-h-11 min-w-[7rem] flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${active === id ? "bg-white text-gray-950 shadow-sm" : "text-gray-600 hover:bg-white/60 hover:text-gray-950"}`}>
+        <Icon aria-hidden="true" className={`size-4 ${active === id ? "text-emerald-700" : "text-gray-400"}`} />{label}
+      </Link>)}
+    </div>
   </nav>;
 }

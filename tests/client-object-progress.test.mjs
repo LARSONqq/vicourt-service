@@ -55,7 +55,10 @@ function fixture() {
   const calls = [];
   const load = loader({
     "next/navigation": { notFound, redirect, unstable_rethrow },
-    "next/link": { __esModule: true, default: ({ href, children, ...props }) => createElement("a", { ...props, href }, children) },
+    "next/link": { __esModule: true, default: ({ href, children, ...props }) => {
+      delete props.scroll;
+      return createElement("a", { ...props, href }, children);
+    } },
     "@/services/accountIdentityService": { getAccountIdentity: async () => identity },
     "@/lib/supabase/server": { createClient: async () => ({
       from: () => assert.fail("No direct table queries"),
@@ -86,7 +89,7 @@ function fixture() {
   const Component = load("components/client/ClientObjectProgress.tsx").default;
   const service = load("services/clientPortalService.ts");
   return {
-    page: (id = "47") => Page({ params: Promise.resolve({ id }) }), Component, service, calls, grants,
+    page: (id = "47") => Page({ params: Promise.resolve({ id }), searchParams: Promise.resolve({ section: "updates" }) }), Component, service, calls, grants,
     session: (value) => { session = value; }, identity: (value) => { identity = value; },
     result: (value) => { result = value; }, afterObject: (value) => { afterObject = value; },
   };
@@ -102,19 +105,17 @@ test("published progress renders below object header: manual percentage, ordered
   const f = fixture();
   const tree = await f.page();
   const html = renderToStaticMarkup(tree);
-  assert.ok(html.indexOf("Сад 47") < html.indexOf("Прогрес об’єкта"));
+  assert.ok(html.indexOf("Сад 47") < html.indexOf("Оновлення робіт"));
   assert.match(html, /35%/);
   assert.match(html, /role="progressbar"[^>]*aria-valuemin="0"[^>]*aria-valuemax="100"[^>]*aria-valuenow="35"/);
   assert.match(html, /width:35%/);
   assert.ok(html.indexOf("Підготовка") < html.indexOf("Посадка"));
   assert.ok(html.indexOf("Посадка") < html.indexOf("Догляд"));
-  for (const label of ["Заплановано", "В роботі", "Завершено", "Що виконано", "Що далі"]) assert.ok(html.includes(label));
+  for (const label of ["Далі", "Зараз", "Готово", "Найближчі кроки"]) assert.ok(html.includes(label));
   assert.match(html, /21\.09\.2026 13:00/); // 10:00 UTC -> Kyiv, regardless of host timezone.
   assert.match(html, /dateTime="2026-09-21T10:00:00.000Z"/);
   assert.deepEqual(f.calls.map(({ name, args }) => [name, args]), [
     ["get_client_object", { p_object_id: 47 }], ["get_client_object_progress", { p_object_id: 47 }],
-    ["get_client_object_photos", { p_object_id: 47, p_page: 1 }],
-    ["get_client_object_documents", { p_object_id: 47, p_page: 1 }],
   ]);
   const progressHtml = renderToStaticMarkup(nodes(tree, (n) => n.type === f.Component)[0]);
   assert.doesNotMatch(progressHtml, /<(?:form|input|textarea|select|button)\b/);
@@ -133,7 +134,7 @@ test("unpublished is not fabricated 0%; published 0 and 100 are valid; optional 
     assert.ok(html.includes(`aria-valuenow="${value}"`));
     assert.ok(html.includes(`width:${value}%`));
     assert.doesNotMatch(html, /Оновлення прогресу ще не опубліковано|Що виконано|Що далі|<ol/);
-    assert.match(html, /Етапи проєкту ще не додано/);
+    assert.match(html, /Деталі етапів ще не опубліковано/);
   }
 });
 
@@ -203,7 +204,7 @@ test("ordinary RPC/network/malformed-result failures preserve authorized object 
 
 test("public text is escaped, queries are repeated per request, invalid IDs never reach RPC", async () => {
   const f = fixture();
-  f.result({ data: [{ ...progress(), completed_summary: "<script>alert('x')</script>", next_summary: null }], error: null });
+  f.result({ data: [{ ...progress(), completed_summary: null, next_summary: "<script>alert('x')</script>" }], error: null });
   const html = renderToStaticMarkup(await f.page());
   assert.match(html, /&lt;script&gt;/); assert.doesNotMatch(html, /<script>/);
   f.result({ data: [{ ...progress(), overall_percent: 72 }], error: null });
@@ -211,8 +212,6 @@ test("public text is escaped, queries are repeated per request, invalid IDs neve
   const perRequest = [
     ["get_client_object", { p_object_id: 47 }],
     ["get_client_object_progress", { p_object_id: 47 }],
-    ["get_client_object_photos", { p_object_id: 47, p_page: 1 }],
-    ["get_client_object_documents", { p_object_id: 47, p_page: 1 }],
   ];
   assert.deepEqual(f.calls.map(({ name, args }) => [name, args]), [...perRequest, ...perRequest]);
   const beforeInvalidRequests = f.calls.length;

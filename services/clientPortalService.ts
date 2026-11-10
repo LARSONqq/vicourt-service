@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAccountIdentity } from "@/services/accountIdentityService";
 import { accountHome } from "@/lib/auth/accountRouting";
 import { clientObjectDto, clientObjectProgressDto } from "@/lib/clientPortal";
-import type { ClientObjectProfile, ClientObjectProgress } from "@/types/clientPortal";
+import type { ClientObjectHomeSummary, ClientObjectProfile, ClientObjectProgress } from "@/types/clientPortal";
 
 export class ClientObjectProgressLoadError extends Error {
   constructor() {
@@ -28,6 +28,27 @@ export async function getClientObjectsPage(page: number) {
   if (error) throw new Error("Не вдалося завантажити ваші об’єкти. Спробуйте пізніше.");
   const rows: unknown[] = Array.isArray(data) ? data : [];
   return { items: rows.slice(0, 20).map(clientObjectDto), page: safePage, hasMore: rows.length > 20 };
+}
+
+export async function getClientObjectHomePage(page: number) {
+  const objectPage = await getClientObjectsPage(page);
+  const items: ClientObjectHomeSummary[] = await Promise.all(objectPage.items.map(async (object) => {
+    try {
+      const progress = await getClientObjectProgress(object.id);
+      return {
+        ...object,
+        published_progress: progress ? {
+          overall_percent: progress.overall_percent,
+          updated_at: progress.updated_at,
+        } : null,
+        progress_unavailable: false,
+      };
+    } catch (error) {
+      if (!(error instanceof ClientObjectProgressLoadError)) throw error;
+      return { ...object, published_progress: null, progress_unavailable: true };
+    }
+  }));
+  return { ...objectPage, items };
 }
 
 export async function getClientObject(id: number): Promise<ClientObjectProfile> {
