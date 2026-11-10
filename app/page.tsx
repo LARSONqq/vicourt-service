@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import DashboardQuickActions from "@/components/dashboard/DashboardQuickActions";
 import { DashboardCommandSkeleton, DashboardCommandSurface } from "@/components/dashboard/DashboardCommandSurface";
@@ -10,37 +9,31 @@ import {
 } from "@/components/dashboard/OperationalDashboard";
 import { getDashboardContext } from "@/services/dashboardService";
 import { formatLongDateValue } from "@/lib/kyivDate";
-import { getUserRoleLabel } from "@/types/userProfile";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   // Only auth blocks the header. Independent widgets stream under their own boundaries.
-  const { profile, permissions, today, activityVisible } = await getDashboardContext();
+  const { permissions, today, activityVisible } = await getDashboardContext();
   return <div className="min-w-0 space-y-5 sm:space-y-6">
     <header className="min-w-0 pb-1 text-foreground">
-      <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <p className="break-words text-xs font-medium text-muted-foreground">{getUserRoleLabel(profile.role)}</p>
-          <h1 className="vc-page-title mt-1 break-words">Оперативний огляд</h1>
-          <p className="mt-1 break-words text-sm text-muted-foreground">{profile.full_name ?? "Користувач"} · {formatLongDateValue(today)}</p>
+          <h1 className="vc-page-title break-words">Оперативний огляд</h1>
+          <p className="mt-1.5 break-words text-sm text-muted-foreground">{formatLongDateValue(today)}</p>
         </div>
         <DashboardQuickActions permissions={permissions} />
       </div>
-      <nav aria-label="Оперативні розділи" className="mt-2 flex flex-wrap gap-x-5 text-sm font-medium text-muted-foreground">
-        <Link href="/notifications" className="inline-flex min-h-10 items-center rounded hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Сповіщення <span aria-hidden="true" className="ml-1">→</span></Link>
-        <Link href="/calendar" className="inline-flex min-h-10 items-center rounded hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Календар <span aria-hidden="true" className="ml-1">→</span></Link>
-      </nav>
     </header>
     <Suspense fallback={<DashboardCommandSkeleton />}><DashboardCommandSurface /></Suspense>
-    <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+    <div className="grid min-w-0 items-stretch gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
       <Suspense fallback={<DashboardAttentionSkeleton />}><DashboardAttention /></Suspense>
       <Suspense fallback={<DashboardSkeleton title="Сьогодні" />}><DashboardTodayTasks /></Suspense>
     </div>
-    <div className="grid min-w-0 items-stretch gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid min-w-0 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
       <Suspense fallback={<DashboardSkeleton title="Склад" />}><DashboardWarehouseAttention /></Suspense>
       <Suspense fallback={<DashboardSkeleton title="Техніка" />}><DashboardEquipmentAttention /></Suspense>
-      <div className="h-full md:col-span-2 xl:col-span-1">
+      <div className="md:col-span-2 xl:col-span-1">
         <Suspense fallback={<DashboardObjectWatchlistSkeleton />}><DashboardObjectWatchlist /></Suspense>
       </div>
     </div>

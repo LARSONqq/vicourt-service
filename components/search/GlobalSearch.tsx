@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Search } from "lucide-react";
 import {
   useRouter,
 } from "next/navigation";
@@ -509,13 +510,14 @@ export default function GlobalSearch() {
         aria-label="Відкрити глобальний пошук"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="hidden min-h-10 w-44 items-center justify-between gap-3 rounded-md border border-border bg-card px-3 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:inline-flex xl:w-64"
+        className="vc-search-trigger hidden h-9 w-40 items-center justify-between gap-2 rounded-md px-2.5 text-sm text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 sm:inline-flex lg:w-48 xl:w-56"
       >
-        <span className="truncate">
-          🔍 Пошук...
+        <span className="flex min-w-0 items-center gap-2 truncate">
+          <Search aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.8} />
+          <span className="truncate">Пошук</span>
         </span>
-        <kbd className="shrink-0 rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-          ⌘/Ctrl K
+        <kbd className="vc-search-shortcut shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          ⌘ K
         </kbd>
       </button>
 
@@ -525,9 +527,9 @@ export default function GlobalSearch() {
         aria-label="Відкрити глобальний пошук"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-base text-muted-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:hidden"
+        className="vc-search-trigger flex size-10 items-center justify-center rounded-md text-muted-foreground transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 sm:hidden"
       >
-        🔍
+        <Search aria-hidden="true" className="size-4" strokeWidth={1.8} />
       </button>
 
       {isOpen && (

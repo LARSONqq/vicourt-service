@@ -12,6 +12,7 @@ import {
 import {
   createClient,
 } from "@/lib/supabase/client";
+import { LogOut, UserRound } from "lucide-react";
 import GlobalSearch from "@/components/search/GlobalSearch";
 import { ThemeSwitcher } from "@/components/theme/ThemeSwitcher";
 
@@ -150,62 +151,47 @@ export function Header() {
     "Користувач";
 
   return (
-    <header className="vc-shell-header sticky top-0 z-30 flex min-h-16 items-center justify-between gap-2 px-3 py-2.5 sm:px-6 lg:px-8">
-      <div className="min-w-0">
-        <h1 className="truncate text-base font-semibold tracking-[-0.015em] text-foreground sm:text-lg">
+    <header className="vc-shell-header sticky top-0 z-30 flex min-h-14 items-center justify-between gap-3 px-3 py-2 sm:px-6 lg:px-8">
+      <div className="hidden min-w-0 sm:block">
+        <p className="truncate text-xs font-medium text-muted-foreground">
           Робочий простір
-        </h1>
-
+        </p>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2">
         <GlobalSearch />
 
         <ThemeSwitcher />
 
-        <div className="hidden text-right md:block">
-          {isLoadingUser ? (
-            <p className="text-sm text-muted-foreground">
-              Завантаження...
-            </p>
-          ) : (
-            <>
-              <p className="max-w-[180px] truncate text-sm font-medium text-foreground">
-                {displayName}
-              </p>
+        <div className="vc-account-cluster flex min-w-0 items-center gap-1 rounded-lg p-0.5 md:pl-2">
+          <div className="hidden min-w-0 items-center gap-2 pr-1 md:flex">
+            <span aria-hidden="true" className="vc-account-avatar flex size-8 shrink-0 items-center justify-center rounded-md">
+              <UserRound className="size-4" strokeWidth={1.8} />
+            </span>
+            <div className="min-w-0 leading-tight">
+              {isLoadingUser ? (
+                <p className="text-xs text-muted-foreground">Завантаження...</p>
+              ) : (
+                <>
+                  <p className="max-w-36 truncate text-xs font-semibold text-foreground xl:max-w-44">{displayName}</p>
+                  <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{getRoleLabel(role)}</p>
+                  {fullName && email && <span className="sr-only">{email}</span>}
+                </>
+              )}
+            </div>
+          </div>
 
-              <div className="mt-1 flex items-center justify-end gap-2">
-                <span
-                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-                    role === "admin"
-                      ? "vc-status-success"
-                      : role ===
-                          "object_manager"
-                        ? "vc-status-info"
-                        : "vc-status-neutral"
-                  }`}
-                >
-                  {getRoleLabel(
-                    role
-                  )}
-                </span>
-              </div>
-
-              {fullName && email && <span className="sr-only">{email}</span>}
-            </>
-          )}
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            aria-label={isLoggingOut ? "Вихід з облікового запису" : "Вийти"}
+            className="inline-flex size-10 shrink-0 items-center justify-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-auto sm:px-2.5"
+          >
+            {isLoggingOut ? <span aria-hidden="true">...</span> : <LogOut aria-hidden="true" className="size-4" strokeWidth={1.8} />}
+            <span className="hidden lg:inline">Вийти</span>
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 sm:px-3.5"
-        >
-          {isLoggingOut
-            ? "..."
-            : "Вийти"}
-        </button>
       </div>
     </header>
   );

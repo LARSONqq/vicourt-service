@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Building2, CalendarClock, ListTodo, WalletCards } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { unstable_rethrow } from "next/navigation";
 
 import { taskDashboardLinks } from "@/lib/taskWorkspace";
@@ -12,6 +14,7 @@ type Kpi = {
   context: string;
   href: string;
   tone: "default" | "warning" | "positive";
+  icon: LucideIcon;
   primary?: boolean;
 };
 
@@ -26,31 +29,40 @@ function formatMoney(value: number, currency: AppCurrency) {
 
 function getKpis(data: DashboardCommandData): Kpi[] {
   if (data.kind === "worker") return [
-    { label: "Мої сьогодні", value: String(data.kpis.myTodayTasks), context: "Відкриті завдання", href: data.taskLinks.today, tone: "positive" },
-    { label: "Мої прострочені", value: String(data.kpis.myOverdueTasks), context: "Потребують уваги", href: data.taskLinks.overdue, tone: "warning" },
-    { label: "Мої відкриті", value: String(data.kpis.myOpenTasks), context: "Усі призначені", href: data.taskLinks.open, tone: "default" },
-    { label: "Призначені об’єкти", value: String(data.kpis.assignedActiveObjects), context: "Активні об’єкти", href: "/objects", tone: "default" },
+    { label: "Мої сьогодні", value: String(data.kpis.myTodayTasks), context: "Відкриті завдання", href: data.taskLinks.today, tone: "positive", icon: CalendarClock },
+    { label: "Мої прострочені", value: String(data.kpis.myOverdueTasks), context: "Потребують уваги", href: data.taskLinks.overdue, tone: "warning", icon: ListTodo },
+    { label: "Мої відкриті", value: String(data.kpis.myOpenTasks), context: "Усі призначені", href: data.taskLinks.open, tone: "default", icon: ListTodo },
+    { label: "Призначені об’єкти", value: String(data.kpis.assignedActiveObjects), context: "Активні об’єкти", href: "/objects", tone: "default", icon: Building2 },
   ];
   return [
-    { label: "Дебіторська заборгованість", value: formatMoney(data.kpis.outstandingReceivables, data.currency), context: "Поточний залишок", href: "/reports?section=cashflow", tone: "default", primary: true },
-    { label: "Прострочено за графіком", value: formatMoney(data.kpis.overdueScheduleAmount, data.currency), context: "На поточну дату", href: "/reports?section=cashflow", tone: "warning" },
-    { label: "Прострочені завдання", value: String(data.kpis.overdueTasks), context: "Відкриті завдання", href: taskDashboardLinks.overdue, tone: "warning" },
-    { label: "Активні об’єкти", value: String(data.kpis.activeObjects), context: "У поточній роботі", href: "/objects", tone: "positive" },
+    { label: "Дебіторська заборгованість", value: formatMoney(data.kpis.outstandingReceivables, data.currency), context: "Поточний залишок", href: "/reports?section=cashflow", tone: "default", primary: true, icon: WalletCards },
+    { label: "Прострочено за графіком", value: formatMoney(data.kpis.overdueScheduleAmount, data.currency), context: "На поточну дату", href: "/reports?section=cashflow", tone: "warning", icon: CalendarClock },
+    { label: "Прострочені завдання", value: String(data.kpis.overdueTasks), context: "Відкриті завдання", href: taskDashboardLinks.overdue, tone: "warning", icon: ListTodo },
+    { label: "Активні об’єкти", value: String(data.kpis.activeObjects), context: "У поточній роботі", href: "/objects", tone: "positive", icon: Building2 },
   ];
 }
 
 function KpiStrip({ data }: { data: DashboardCommandData }) {
   return <section aria-label="Ключові показники" className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-2 lg:grid-cols-4">
-    {getKpis(data).map((kpi) => <Link key={kpi.label} href={kpi.href}
-      aria-label={`${kpi.label}: ${kpi.value}. ${kpi.context}`}
-      data-tone={kpi.tone}
-      className={kpi.primary
-        ? "vc-kpi-card border-primary/25 bg-primary/[0.045] sm:col-span-2 lg:col-span-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        : "group flex min-w-0 flex-col rounded-lg px-1 py-3 transition hover:bg-muted/45 sm:px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"}>
-      <span className="break-words text-xs font-medium leading-5 text-muted-foreground sm:text-sm">{kpi.label}</span>
-      <strong className="mt-auto break-words pt-3 text-xl font-semibold leading-tight tracking-[-0.02em] tabular-nums text-foreground sm:text-2xl">{kpi.value}</strong>
-      <span className="mt-1 break-words text-xs text-muted-foreground">{kpi.context}</span>
-    </Link>)}
+    {getKpis(data).map((kpi) => {
+      const Icon = kpi.icon;
+      return <Link
+        key={kpi.label}
+        href={kpi.href}
+        aria-label={`${kpi.label}: ${kpi.value}. ${kpi.context}`}
+        data-tone={kpi.tone}
+        className={`vc-kpi-card group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${kpi.primary ? "vc-dashboard-kpi-primary sm:col-span-2 lg:col-span-1" : ""}`}
+      >
+        <span className="flex min-w-0 items-start justify-between gap-3">
+          <span className="break-words text-xs font-medium leading-5 text-muted-foreground sm:text-sm">{kpi.label}</span>
+          <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted/50 text-muted-foreground transition group-hover:text-foreground">
+            <Icon className="size-4" strokeWidth={1.8} />
+          </span>
+        </span>
+        <strong className="mt-auto break-words pt-3 text-xl font-semibold leading-tight tracking-[-0.025em] tabular-nums text-foreground sm:text-2xl">{kpi.value}</strong>
+        <span className="mt-1 break-words text-xs text-muted-foreground">{kpi.context}</span>
+      </Link>;
+    })}
   </section>;
 }
 

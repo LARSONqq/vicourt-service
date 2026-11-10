@@ -163,18 +163,17 @@ export default function TodayTasksSection({
 
   if (localTasks.length === 0) {
     return (
-      <section className="vc-surface flex h-full min-h-56 min-w-0 flex-col overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-muted/30 px-4 py-3 sm:px-5">
+      <section className="vc-surface flex h-full min-w-0 flex-col overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border/70 px-4 py-3 sm:px-5">
           <div className="min-w-0">
-            <h2 className="break-words text-lg font-semibold text-foreground">Завдання на сьогодні</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              До 5 відкритих завдань
-            </p>
+            <h2 className="break-words text-lg font-semibold tracking-[-0.015em] text-foreground">Завдання на сьогодні</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">0 відкритих</p>
           </div>
           <Link href={allTasksHref} className="inline-flex min-h-11 shrink-0 items-center rounded-md py-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Переглянути всі →</Link>
         </div>
-        <div className="flex flex-1 items-center justify-center p-4 text-center sm:p-5">
-          <div><div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-accent text-primary">✓</div><p className="mt-3 text-sm text-muted-foreground">На сьогодні відкритих завдань немає.</p></div>
+        <div className="flex items-center gap-3 px-4 py-6 sm:px-5">
+          <div aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-md border border-primary/20 bg-accent/60 text-primary">✓</div>
+          <p className="text-sm text-muted-foreground">На сьогодні відкритих завдань немає.</p>
         </div>
       </section>
     );
@@ -182,12 +181,10 @@ export default function TodayTasksSection({
 
   return (
     <section className="vc-surface flex h-full min-w-0 flex-col overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-muted/30 px-4 py-3 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border/70 px-4 py-3 sm:px-5">
         <div className="min-w-0">
-          <h2 className="break-words text-lg font-semibold text-foreground">Завдання на сьогодні</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {localTasks.length} відкритих · пріоритет на сьогодні
-          </p>
+          <h2 className="break-words text-lg font-semibold tracking-[-0.015em] text-foreground">Завдання на сьогодні</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">{localTasks.length} відкритих · показано до 5</p>
         </div>
 
         <Link
@@ -204,7 +201,7 @@ export default function TodayTasksSection({
         </div>
       )}
 
-      <div className="flex-1 divide-y divide-border">
+      <div className="flex-1 divide-y divide-border/70">
         {localTasks
           .slice(0, 5)
           .map((task) => {
@@ -226,7 +223,7 @@ export default function TodayTasksSection({
             return (
               <article
                 key={task.id}
-                className="min-w-0 px-3 py-3 transition hover:bg-muted/60 focus-within:bg-muted/60 sm:px-4"
+                className="min-w-0 px-4 py-3 transition hover:bg-muted/45 focus-within:bg-muted/45 sm:px-5"
               >
                 <div className="flex min-w-0 flex-col gap-2">
                   <div className="min-w-0">
@@ -237,9 +234,9 @@ export default function TodayTasksSection({
                       >
                         {task.title}
                       </Link>
-                      <div className="flex shrink-0 flex-wrap gap-2">
-                        <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${getPriorityStyle(priority)}`}>{priority}</span>
-                        <span className={`rounded-full px-2 py-1 text-[11px] font-medium ${getStatusStyle(task.status)}`}>{task.status}</span>
+                      <div className="flex shrink-0 flex-wrap gap-1.5">
+                        <span className={`px-2 py-0.5 text-[11px] font-medium ${getPriorityStyle(priority)}`}>{priority}</span>
+                        <span className={`px-2 py-0.5 text-[11px] font-medium ${getStatusStyle(task.status)}`}>{task.status}</span>
                       </div>
                     </div>
 
@@ -265,15 +262,9 @@ export default function TodayTasksSection({
                     )}
                   </div>
 
-                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">
-                        {formatDateValue(task.due_date)} · Відповідальний
-                      </p>
-
-                      <p className="mt-1 break-words text-sm font-medium text-foreground">
-                        {task.assignee || "Не призначено"}
-                      </p>
+                      <p className="break-words text-xs text-muted-foreground">{formatDateValue(task.due_date)} · {task.assignee || "Не призначено"}</p>
                     </div>
 
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -316,7 +307,7 @@ export default function TodayTasksSection({
                         onClick={() =>
                           handleCompleteTask(task)
                         }
-                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/20 bg-accent px-3 py-2 text-xs font-medium text-primary transition hover:bg-accent/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-9 items-center justify-center rounded-md border border-primary/20 bg-accent/60 px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isUpdating
                           ? "Збереження..."

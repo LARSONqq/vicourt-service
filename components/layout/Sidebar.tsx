@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getAppSettings } from "@/services/settingsService";
 import { getCurrentUserProfile } from "@/services/profileService";
 
@@ -106,31 +107,33 @@ export async function Sidebar() {
       : [];
 
   return (
-    <aside className="vc-sidebar flex h-dvh w-64 flex-col px-3 py-4 text-sidebar-foreground">
-      <div className="mb-4 border-b border-sidebar-border px-2 pb-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-sidebar-border bg-sidebar-accent text-xs font-bold tracking-[0.1em] text-sidebar-accent-foreground">VC</span>
+    <aside className="vc-sidebar flex h-dvh w-64 flex-col px-3 py-3.5 text-sidebar-foreground">
+      <div className="mb-3 border-b border-sidebar-border px-2 pb-3.5 pr-10 lg:pr-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="vc-sidebar-mark flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
+            <Image src="/icons/vicourt-192.png" alt="" width={32} height={32} className="size-8" priority />
+          </span>
           <div className="min-w-0">
             <h2 className="break-words text-sm font-semibold leading-tight tracking-[-0.015em] text-sidebar-foreground">
               {settings.company_name}
             </h2>
-            <p className="vc-sidebar-secondary mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em]">ViCourt Service</p>
+            <p className="vc-sidebar-secondary mt-0.5 text-[10px] font-medium tracking-[0.02em]">ViCourt Service</p>
           </div>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <div className="min-h-0 flex-1 overflow-y-auto pr-0.5">
         <SidebarNavigation items={visibleMenuItems.map(({ name, href }) => ({ name, href }))} />
       </div>
 
-      <div className="mt-4 shrink-0 border-t border-sidebar-border px-2 pt-4 pb-[env(safe-area-inset-bottom)]">
+      <div className="mt-3 shrink-0 border-t border-sidebar-border px-2 pt-3 pb-[env(safe-area-inset-bottom)]">
         {currentProfile && (
           <div>
-            <p className="vc-sidebar-secondary text-[10px] font-medium uppercase tracking-[0.12em]">
+            <p className="vc-sidebar-secondary text-[10px] font-medium tracking-[0.02em]">
               Ви увійшли як
             </p>
 
-            <p className="mt-1 break-words text-sm font-medium text-sidebar-foreground">
+            <p className="mt-0.5 break-words text-sm font-medium text-sidebar-foreground">
               {getUserRoleLabel(
                 currentProfile.role
               )}

@@ -14,14 +14,14 @@ import {
 } from "@/services/dashboardService";
 
 const linkClass = "inline-flex min-h-11 shrink-0 items-center rounded-md py-2 text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
-const compactListClass = "min-w-0 divide-y divide-border overflow-hidden rounded-lg border border-border";
-const compactLinkClass = "block min-h-16 min-w-0 px-3 py-3 transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-4";
+const compactListClass = "min-w-0 divide-y divide-border/70 overflow-hidden border-y border-border/70";
+const compactLinkClass = "block min-h-16 min-w-0 px-1 py-2.5 transition hover:bg-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
 const mutedClass = "text-sm text-muted-foreground";
 
 export function DashboardSkeleton({ title }: { title: string }) {
-  return <section aria-busy="true" aria-label={title} className="vc-surface flex min-h-56 min-w-0 flex-col overflow-hidden">
-    <div className="flex min-h-20 items-center border-b px-4 py-3 sm:px-5">
-      <div><h2 className="text-lg font-semibold text-foreground">{title}</h2><p className="mt-1 text-sm text-muted-foreground">Завантаження даних…</p></div>
+  return <section aria-busy="true" aria-label={title} className="vc-surface flex min-h-44 min-w-0 flex-col overflow-hidden">
+    <div className="flex min-h-16 items-center border-b border-border/70 px-4 py-3 sm:px-5">
+      <div><h2 className="text-lg font-semibold text-foreground">{title}</h2><p className="mt-0.5 text-xs text-muted-foreground">Завантаження даних…</p></div>
     </div>
     <div className="flex-1 p-4 sm:p-5"><div className="h-24 animate-pulse rounded-lg bg-muted motion-reduce:animate-none" /></div>
   </section>;
@@ -38,8 +38,8 @@ async function DashboardSection<T>({ title, subtitle, href, load, children, stan
   } catch (error) {
     unstable_rethrow(error);
     console.error(`[Dashboard] ${title}: section load failed`, error);
-    return <section className="vc-surface flex h-full min-h-56 min-w-0 flex-col overflow-hidden">
-      <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
+    return <section className="vc-surface flex min-h-44 min-w-0 flex-col overflow-hidden">
+      <div className="flex min-h-16 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border/70 px-4 py-3 sm:px-5">
         <h2 className="min-w-0 break-words text-lg font-semibold text-foreground">{title}</h2>
         <Link href={href} className={linkClass}>Переглянути всі →</Link>
       </div>
@@ -49,15 +49,15 @@ async function DashboardSection<T>({ title, subtitle, href, load, children, stan
     </section>;
   }
   if (standalone) return children(data);
-  return <section className="vc-surface flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-    <div className="flex min-h-20 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-3 sm:px-5">
+  return <section className="vc-surface flex min-h-0 min-w-0 flex-col overflow-hidden">
+    <div className="flex min-h-16 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border/70 px-4 py-3 sm:px-5">
       <div className="min-w-0">
-        <h2 className="break-words text-lg font-semibold text-foreground">{title}</h2>
-        {subtitle && <p className="mt-1 break-words text-sm text-muted-foreground">{subtitle}</p>}
+        <h2 className="break-words text-lg font-semibold tracking-[-0.015em] text-foreground">{title}</h2>
+        {subtitle && <p className="mt-0.5 break-words text-xs text-muted-foreground">{subtitle}</p>}
       </div>
       <Link href={href} className={linkClass}>Переглянути всі →</Link>
     </div>
-    <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">{children(data)}</div>
+    <div className="flex flex-1 flex-col gap-3 p-4">{children(data)}</div>
   </section>;
 }
 
@@ -124,7 +124,6 @@ export function DashboardWarehouseAttention() {
         <span className={`shrink-0 rounded-full px-2 py-1 text-xs ${item.stockStatus === "OUT_OF_STOCK" ? "vc-status-danger" : "vc-status-warning"}`}>{warehouseStockPresentation[item.stockStatus].label}</span>
       </Link></li>)}
     </ul>}
-    <p className={`${mutedClass} mt-auto border-t pt-3`}>Точні показники по всьому складу. У списку — до 5 позицій без запасу або з низьким залишком.</p>
   </>}</DashboardSection>;
 }
 
@@ -150,7 +149,7 @@ export function DashboardEquipmentAttention() {
         </Link></li>;
       })}
     </ul>}
-    <div className="mt-auto border-t pt-3"><p className={mutedClass}>Точні показники враховують дату й поріг напрацювання. У списку — до 5 найважливіших записів.</p><Link href="/tasks?view=all&status=open&source=equipment_maintenance" className={linkClass}>Усі відкриті завдання ТО →</Link></div>
+    <Link href="/tasks?view=all&status=open&source=equipment_maintenance" className={`${linkClass} mt-auto`}>Усі відкриті завдання ТО →</Link>
   </>}</DashboardSection>;
 }
 

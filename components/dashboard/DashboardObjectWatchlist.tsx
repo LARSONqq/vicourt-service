@@ -48,7 +48,7 @@ function WatchlistRow({
   badges: { label: string; className: string }[];
 }) {
   return <li>
-    <Link href={item.href} className="block min-h-20 min-w-0 px-4 py-3 transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5">
+    <Link href={item.href} className="block min-h-20 min-w-0 px-4 py-2.5 transition hover:bg-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:min-h-0 sm:px-5">
       <span className="flex min-w-0 items-start justify-between gap-3">
         <strong className="min-w-0 break-words text-sm font-semibold text-foreground sm:text-base">{item.name}</strong>
         <span aria-hidden="true" className="shrink-0 text-muted-foreground">→</span>
@@ -83,13 +83,13 @@ export async function DashboardObjectWatchlist() {
     </section>;
   }
   return <section className="vc-surface min-w-0 overflow-hidden">
-    <div className="flex min-h-20 flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-5">
-      <div className="min-w-0"><h2 className="break-words text-lg font-semibold text-foreground">Об’єкти під контролем</h2><p className="mt-1 break-words text-sm text-muted-foreground">До 5 активних об’єктів за пріоритетом</p></div>
+    <div className="flex min-h-16 flex-wrap items-center justify-between gap-2 border-b border-border/70 px-4 py-3 sm:px-5">
+      <div className="min-w-0"><h2 className="break-words text-lg font-semibold tracking-[-0.015em] text-foreground">Об’єкти під контролем</h2><p className="mt-0.5 break-words text-xs text-muted-foreground">До 5 за пріоритетом</p></div>
       <Link href="/objects" className="inline-flex min-h-11 shrink-0 items-center rounded-md text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">Усі об’єкти →</Link>
     </div>
     {data.items.length === 0
-      ? <p className="px-4 py-8 text-center text-sm text-muted-foreground sm:px-5">Наразі немає активних об’єктів, що потребують уваги.</p>
-      : <ul className="min-w-0 divide-y divide-border">{data.kind === "management"
+      ? <p className="px-4 py-6 text-center text-sm text-muted-foreground sm:px-5">Наразі немає активних об’єктів, що потребують уваги.</p>
+      : <ul className="min-w-0 divide-y divide-border/70">{data.kind === "management"
         ? data.items.map((item) => <WatchlistRow key={item.objectId} item={item} badges={managementBadges(item, data.currency)} />)
         : data.items.map((item) => <WatchlistRow key={item.objectId} item={item} badges={operationalBadges(item).slice(0, 2)} />)}
       </ul>}

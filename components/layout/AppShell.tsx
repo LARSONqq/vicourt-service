@@ -8,6 +8,7 @@ import {
 import {
   usePathname,
 } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 type Props = {
@@ -97,9 +98,9 @@ export default function AppShell({
           setIsMobileMenuOpen(true)
         }
         aria-label="Відкрити меню"
-        className="fixed left-3 top-2.5 z-40 flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-lg text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
+        className="vc-shell-control fixed left-3 top-2 z-40 flex size-10 items-center justify-center rounded-md text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 lg:hidden"
       >
-        ☰
+        <Menu aria-hidden="true" className="size-5" strokeWidth={1.8} />
       </button>
 
       {/* MOBILE OVERLAY */}
@@ -111,11 +112,11 @@ export default function AppShell({
             onClick={() =>
               setIsMobileMenuOpen(false)
             }
-            className="absolute inset-0 bg-gray-950/40"
+            className="absolute inset-0 bg-slate-900/35 dark:bg-slate-950/55"
           />
 
           <div
-            className="absolute inset-y-0 left-0 w-64 max-w-[calc(100vw-3rem)] overflow-y-auto bg-sidebar shadow-xl"
+            className="absolute inset-y-0 left-0 w-64 max-w-[calc(100vw-3rem)] overflow-y-auto bg-sidebar shadow-lg"
             onClick={(event) => {
               const target =
                 event.target as HTMLElement;
@@ -137,9 +138,9 @@ export default function AppShell({
                 setIsMobileMenuOpen(false)
               }
               aria-label="Закрити меню"
-              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-md border border-sidebar-border bg-sidebar text-xl text-sidebar-foreground/60 transition hover:bg-muted hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+              className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-md text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
             >
-              ×
+              <X aria-hidden="true" className="size-4" strokeWidth={1.8} />
             </button>
           </div>
         </div>
@@ -151,7 +152,7 @@ export default function AppShell({
           {header}
         </div>
 
-        <main className="vc-workspace min-w-0 flex-1 overflow-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-7">
+        <main className="vc-workspace min-w-0 flex-1 overflow-auto px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-5">
           <div className="mx-auto w-full max-w-[1600px] min-w-0">{children}</div>
         </main>
       </div>

@@ -102,11 +102,12 @@
   --vc-focus: oklch(0.52 0.09 153);
   --vc-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.035);
   --vc-shadow-md: 0 4px 14px rgb(15 23 42 / 0.06);
-  --sidebar: oklch(0.985 0.003 90);
+  --vc-topbar: oklch(0.995 0.002 255);
+  --sidebar: oklch(0.988 0.003 90);
   --sidebar-foreground: oklch(0.28 0.012 255);
   --sidebar-primary: oklch(0.43 0.095 153);
   --sidebar-primary-foreground: oklch(0.99 0.003 145);
-  --sidebar-accent: oklch(0.945 0.012 153);
+  --sidebar-accent: oklch(0.95 0.022 153);
   --sidebar-accent-foreground: oklch(0.34 0.065 153);
   --sidebar-border: oklch(0.885 0.005 90);
   --sidebar-ring: oklch(0.52 0.09 153);
@@ -164,11 +165,12 @@
   --vc-focus: oklch(0.67 0.105 153);
   --vc-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.14);
   --vc-shadow-md: 0 5px 18px rgb(0 0 0 / 0.16);
-  --sidebar: oklch(0.19 0.006 255);
+  --vc-topbar: oklch(0.195 0 0);
+  --sidebar: oklch(0.165 0.006 255);
   --sidebar-foreground: oklch(0.9 0.006 255);
   --sidebar-primary: oklch(0.67 0.105 153);
   --sidebar-primary-foreground: oklch(0.16 0.025 155);
-  --sidebar-accent: oklch(0.245 0.012 153);
+  --sidebar-accent: oklch(0.225 0.022 153);
   --sidebar-accent-foreground: oklch(0.9 0.012 153);
   --sidebar-border: oklch(0.33 0.008 255 / 70%);
   --sidebar-ring: oklch(0.67 0.105 153);
@@ -402,19 +404,29 @@
     color: color-mix(in oklch, var(--sidebar-foreground) 58%, var(--sidebar));
   }
 
+  .vc-sidebar-mark {
+    border: 1px solid color-mix(in oklch, var(--sidebar-primary) 28%, var(--sidebar-border));
+    background: var(--sidebar-primary);
+  }
+
+  .vc-nav-section-label {
+    color: color-mix(in oklch, var(--sidebar-foreground) 45%, var(--sidebar));
+  }
+
   .vc-nav-item {
-    color: color-mix(in oklch, var(--sidebar-foreground) 76%, var(--sidebar));
+    color: color-mix(in oklch, var(--sidebar-foreground) 68%, var(--sidebar));
   }
   .vc-nav-item:hover {
-    background: color-mix(in oklch, var(--sidebar-foreground) 5%, var(--sidebar));
+    background: color-mix(in oklch, var(--sidebar-foreground) 4.5%, var(--sidebar));
     color: var(--sidebar-foreground);
   }
   .vc-nav-item-active {
     background: var(--sidebar-accent);
     color: var(--sidebar-accent-foreground);
+    box-shadow: inset 2px 0 0 color-mix(in oklch, var(--sidebar-primary) 72%, transparent);
   }
   .vc-nav-icon {
-    color: color-mix(in oklch, var(--sidebar-foreground) 54%, var(--sidebar));
+    color: color-mix(in oklch, var(--sidebar-foreground) 46%, var(--sidebar));
   }
   .vc-nav-item:hover .vc-nav-icon {
     color: color-mix(in oklch, var(--sidebar-foreground) 78%, var(--sidebar));
@@ -424,8 +436,8 @@
   }
 
   .vc-shell-header {
-    border-bottom: 1px solid var(--vc-border);
-    background: var(--vc-elevated);
+    border-bottom: 1px solid color-mix(in oklch, var(--vc-border) 78%, transparent);
+    background: var(--vc-topbar);
   }
 
   .vc-workspace {
@@ -433,13 +445,12 @@
   }
 
   .vc-theme-switcher {
-    @apply hidden items-center gap-0.5 rounded-md border p-0.5 sm:flex;
-    border-color: var(--vc-border);
+    @apply hidden h-9 items-center gap-0.5 rounded-md p-0.5 sm:flex;
     background: var(--vc-secondary);
   }
 
   .vc-theme-option {
-    @apply flex size-8 items-center justify-center rounded outline-none transition focus-visible:ring-2 focus-visible:ring-ring;
+    @apply flex size-7 items-center justify-center rounded outline-none transition focus-visible:ring-2 focus-visible:ring-ring;
     color: var(--vc-text-muted);
   }
   .vc-theme-option:hover { color: var(--vc-text); }
@@ -450,12 +461,32 @@
   }
 
   .vc-theme-mobile {
-    @apply flex size-10 items-center justify-center rounded-md border outline-none transition focus-visible:ring-2 focus-visible:ring-ring sm:hidden;
-    border-color: var(--vc-border);
+    @apply flex size-10 items-center justify-center rounded-md outline-none transition focus-visible:ring-2 focus-visible:ring-ring sm:hidden;
     background: var(--vc-secondary);
     color: var(--vc-text-muted);
   }
   .vc-theme-mobile:hover { color: var(--vc-brand); }
+
+  .vc-search-trigger,
+  .vc-shell-control {
+    border: 1px solid color-mix(in oklch, var(--vc-border) 82%, transparent);
+    background: var(--vc-secondary);
+  }
+
+  .vc-search-shortcut {
+    border: 1px solid color-mix(in oklch, var(--vc-border) 84%, transparent);
+    background: var(--vc-elevated);
+  }
+
+  .vc-account-cluster {
+    background: color-mix(in oklch, var(--vc-secondary) 82%, transparent);
+  }
+
+  .vc-account-avatar {
+    background: var(--vc-elevated);
+    color: var(--vc-text-muted);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--vc-border) 80%, transparent);
+  }
 
   .vc-kpi-card {
     @apply flex min-h-28 min-w-0 flex-col rounded-lg border p-3.5 outline-none transition sm:p-4;
@@ -473,6 +504,11 @@
   .vc-kpi-card[data-tone="positive"] { border-left: 2px solid var(--vc-brand); }
   .vc-kpi-card[data-tone="primary"] { border-left: 2px solid var(--vc-text); }
   .vc-kpi-card[data-tone="danger"] { border-left: 2px solid var(--vc-danger-text); }
+
+  .vc-dashboard-kpi-primary {
+    border-color: color-mix(in oklch, var(--vc-brand) 34%, var(--vc-border));
+    background: color-mix(in oklch, var(--vc-elevated) 92%, var(--vc-success-bg));
+  }
 
   .vc-chart-materials { background: var(--vc-warning-text); }
   .vc-chart-labor { background: var(--vc-info-text); }
