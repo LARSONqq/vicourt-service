@@ -55,7 +55,7 @@ function KpiStrip({ data }: { data: DashboardCommandData }) {
       >
         <span className="flex min-w-0 items-start justify-between gap-3">
           <span className="break-words text-xs font-medium leading-5 text-muted-foreground sm:text-sm">{kpi.label}</span>
-          <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted/50 text-muted-foreground transition group-hover:text-foreground">
+          <span aria-hidden="true" className={`flex size-8 shrink-0 items-center justify-center rounded-md border transition group-hover:text-foreground ${kpi.primary ? "border-primary/25 bg-accent/60 text-primary" : "border-border bg-muted/50 text-muted-foreground"}`}>
             <Icon className="size-4" strokeWidth={1.8} />
           </span>
         </span>

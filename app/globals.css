@@ -114,51 +114,51 @@
 }
 
 .dark {
-  --background: oklch(0.18 0.006 255);
+  --background: oklch(0.18 0 0);
   --foreground: oklch(0.92 0.006 255);
-  --card: oklch(0.205 0.007 255);
+  --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.92 0.006 255);
-  --popover: oklch(0.205 0.007 255);
+  --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.92 0.006 255);
   --primary: oklch(0.67 0.105 153);
   --primary-foreground: oklch(0.17 0.018 153);
-  --secondary: oklch(0.235 0.007 255);
+  --secondary: oklch(0.235 0 0);
   --secondary-foreground: oklch(0.9 0.006 255);
-  --muted: oklch(0.235 0.007 255);
+  --muted: oklch(0.235 0 0);
   --muted-foreground: oklch(0.68 0.008 255);
   --accent: oklch(0.245 0.012 153);
   --accent-foreground: oklch(0.9 0.012 153);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.33 0.008 255 / 70%);
-  --input: oklch(0.36 0.008 255 / 78%);
+  --border: oklch(0.33 0 0 / 70%);
+  --input: oklch(0.36 0 0 / 78%);
   --ring: oklch(0.67 0.105 153);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --vc-app: oklch(0.18 0.006 255);
-  --vc-elevated: oklch(0.205 0.007 255);
-  --vc-secondary: oklch(0.235 0.007 255);
-  --vc-border: oklch(0.33 0.008 255 / 70%);
+  --vc-app: oklch(0.18 0 0);
+  --vc-elevated: oklch(0.205 0 0);
+  --vc-secondary: oklch(0.235 0 0);
+  --vc-border: oklch(0.33 0 0 / 70%);
   --vc-text: oklch(0.92 0.006 255);
   --vc-text-muted: oklch(0.68 0.008 255);
   --vc-brand: oklch(0.67 0.105 153);
   --vc-brand-hover: oklch(0.72 0.105 153);
-  --vc-hover: oklch(0.235 0.007 255);
-  --vc-success-bg: oklch(0.255 0.025 151);
+  --vc-hover: oklch(0.235 0 0);
+  --vc-success-bg: var(--vc-secondary);
   --vc-success-text: oklch(0.76 0.075 151);
   --vc-success-border: oklch(0.42 0.045 151);
-  --vc-warning-bg: oklch(0.265 0.025 72);
+  --vc-warning-bg: var(--vc-secondary);
   --vc-warning-text: oklch(0.79 0.08 80);
   --vc-warning-border: oklch(0.43 0.045 76);
-  --vc-danger-bg: oklch(0.255 0.025 25);
+  --vc-danger-bg: var(--vc-secondary);
   --vc-danger-text: oklch(0.75 0.085 25);
   --vc-danger-border: oklch(0.42 0.045 25);
-  --vc-info-bg: oklch(0.255 0.022 235);
+  --vc-info-bg: var(--vc-secondary);
   --vc-info-text: oklch(0.74 0.06 235);
   --vc-info-border: oklch(0.42 0.04 235);
-  --vc-selected-bg: oklch(0.265 0.022 153);
+  --vc-selected-bg: var(--vc-secondary);
   --vc-selected-text: oklch(0.78 0.065 153);
   --vc-selected-border: oklch(0.45 0.05 153);
   --vc-check: oklch(0.56 0.075 153);
@@ -166,13 +166,13 @@
   --vc-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.14);
   --vc-shadow-md: 0 5px 18px rgb(0 0 0 / 0.16);
   --vc-topbar: oklch(0.195 0 0);
-  --sidebar: oklch(0.165 0.006 255);
+  --sidebar: oklch(0.165 0 0);
   --sidebar-foreground: oklch(0.9 0.006 255);
   --sidebar-primary: oklch(0.67 0.105 153);
   --sidebar-primary-foreground: oklch(0.16 0.025 155);
   --sidebar-accent: oklch(0.225 0.022 153);
   --sidebar-accent-foreground: oklch(0.9 0.012 153);
-  --sidebar-border: oklch(0.33 0.008 255 / 70%);
+  --sidebar-border: oklch(0.33 0 0 / 70%);
   --sidebar-ring: oklch(0.67 0.105 153);
 }
 
@@ -507,7 +507,7 @@
 
   .vc-dashboard-kpi-primary {
     border-color: color-mix(in oklch, var(--vc-brand) 34%, var(--vc-border));
-    background: color-mix(in oklch, var(--vc-elevated) 92%, var(--vc-success-bg));
+    background: var(--vc-elevated);
   }
 
   .vc-chart-materials { background: var(--vc-warning-text); }
@@ -540,12 +540,15 @@
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600) { color: var(--vc-text-muted); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-gray-100, .border-gray-200, .border-gray-300) { border-color: var(--vc-border); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-green-50, .bg-green-100, .bg-emerald-50, .bg-teal-50, .bg-teal-100) { background-color: var(--vc-success-bg); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-green-50\/60) { background-color: color-mix(in oklch, var(--vc-secondary) 60%, transparent); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-green-600, .text-green-700, .text-green-800, .text-emerald-700, .text-teal-700, .text-teal-800, .text-teal-900) { color: var(--vc-success-text); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-green-100, .border-green-200, .border-green-300, .border-green-400, .border-green-500, .border-green-600) { border-color: var(--vc-success-border); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-yellow-50, .bg-yellow-100, .bg-orange-50, .bg-orange-100, .bg-amber-50, .bg-amber-100) { background-color: var(--vc-warning-bg); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-amber-50\/30, .bg-orange-50\/30, .bg-yellow-50\/30) { background-color: color-mix(in oklch, var(--vc-secondary) 30%, transparent); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-yellow-700, .text-orange-600, .text-orange-700, .text-orange-800, .text-amber-700, .text-amber-800, .text-amber-900) { color: var(--vc-warning-text); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-yellow-100, .border-yellow-400, .border-orange-200, .border-amber-100, .border-amber-200, .border-amber-300) { border-color: var(--vc-warning-border); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-red-50, .bg-red-100, .bg-rose-50, .bg-rose-100) { background-color: var(--vc-danger-bg); }
+  :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-red-50\/25, .bg-red-50\/30, .bg-rose-50\/60) { background-color: color-mix(in oklch, var(--vc-secondary) 30%, transparent); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.text-red-600, .text-red-700, .text-red-800, .text-rose-700, .text-rose-800) { color: var(--vc-danger-text); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.border-red-100, .border-red-200, .border-red-300, .border-red-500, .border-rose-100) { border-color: var(--vc-danger-border); }
   :where(.dark .vc-app-shell, .dark [data-vc-workspace]) :is(.bg-blue-50, .bg-blue-100, .bg-cyan-50, .bg-violet-50, .bg-violet-100) { background-color: var(--vc-info-bg); }

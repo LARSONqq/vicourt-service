@@ -7,11 +7,15 @@ const read = (file) => readFileSync(file, "utf8");
 
 test("management KPI cards use supported finance, task and object destinations", () => {
   const source = read("components/dashboard/DashboardCommandSurface.tsx");
+  const globals = read("app/globals.css");
   assert.equal((source.match(/href: "\/reports\?section=cashflow"/g) ?? []).length, 2);
   assert.doesNotMatch(source, /href: "\/reports\?section=overview"/);
   assert.match(source, /href: taskDashboardLinks\.overdue/);
   assert.match(source, /label: "Активні об’єкти"[\s\S]*href: "\/objects"/);
   assert.match(source, /aria-label={`\$\{kpi\.label\}: \$\{kpi\.value\}\. \$\{kpi\.context\}`}/);
+  assert.match(source, /kpi\.primary \? "border-primary\/25 bg-accent\/60 text-primary"/);
+  assert.match(globals, /\.vc-dashboard-kpi-primary\s*\{[\s\S]*background: var\(--vc-elevated\);[\s\S]*\}/);
+  assert.doesNotMatch(globals, /\.vc-dashboard-kpi-primary\s*\{[^}]*var\(--vc-(?:warning|danger)-bg\)/);
 });
 
 test("Dashboard actionable surfaces expose keyboard focus and whole-row Link semantics", () => {
